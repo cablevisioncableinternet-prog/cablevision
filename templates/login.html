@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cablevision | Login</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<!-- MAIN CSS (kasama na ang styles para sa 6-digit boxes) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+<link rel="icon" href="{{ url_for('static', filename='cablevision.jpg') }}">
+</head>
+
+<body>
+
+<div class="login-container">
+
+   <!-- BRAND HEADER -->
+   <div class="brand-header">
+      <img src="/static/logo.png" alt="Cablevision Logo" class="brand-image">
+      <h1 class="brand-title">CABLEVISION</h1>
+      <p class="brand-subtitle">SYSTEMS CORP.</p>
+   </div>
+
+   <!-- LOGIN FORM -->
+   <form id="loginForm" autocomplete="off">
+
+      <div class="input-group">
+         <i class="fas fa-user"></i>
+         <input type="text" id="username" placeholder="Enter username" autocomplete="username" required>
+      </div>
+
+      <div class="input-group password-wrapper">
+         <i class="fas fa-lock"></i>
+         <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" class="login-btn" id="loginBtn">
+         <span id="btnText">Login</span>
+         <span id="loader" class="loader hidden"></span>
+      </button>
+
+      <div class="error-message" id="error"></div>
+
+      <div class="forgot-password-container">
+         <a href="#" id="forgotPasswordLink" class="forgot-password-link">Forgot your password?</a>
+      </div>
+
+   </form>
+
+   <div class="footer-text">© Cablevision Cable-Internet</div>
+
+</div>
+
+<!-- ================= FORGOT PASSWORD MODAL (KATULAD NG USER) ================= -->
+<div id="forgotPasswordModal" class="forgot-modal">
+    <div class="forgot-modal-content">
+        <div class="forgot-modal-header">
+            <img src="/static/logo.png" alt="Cablevision Logo" class="forgot-modal-logo">
+            <h3>CABLEVISION SYSTEMS CORP.</h3>
+            <button type="button" class="forgot-modal-close">&times;</button>
+        </div>
+        <div class="forgot-modal-body">
+            <!-- STEP 1: Send code -->
+            <div id="fpStep1" class="forgot-step">
+                <p class="forgot-step-title">Forgot Password</p>
+                <p class="forgot-step-desc">Enter your registered email address to receive a verification code.</p>
+                <div class="forgot-input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="text" id="fpIdentifier" placeholder="Email Address" autocomplete="off">
+                </div>
+                <button id="sendCodeBtn" class="forgot-btn-primary">Send Verification Code</button>
+                <div id="fpMessage" class="forgot-message"></div>
+            </div>
+
+            <!-- STEP 2: 6-digit OTP boxes + new password -->
+            <!-- STEP 2: 6-digit OTP boxes + new password -->
+            <div id="fpStep2" class="forgot-step" style="display: none;">
+                <p class="forgot-step-title">Reset Password</p>
+                <p class="forgot-step-desc">Enter the 6‑digit code sent to your email, then set a new password.</p>
+                
+                <!-- 6 DIGIT BOXES -->
+                <div class="verification-code-inputs">
+                    <input type="text" maxlength="1" class="code-digit" id="fpDigit1" autofocus>
+                    <input type="text" maxlength="1" class="code-digit" id="fpDigit2">
+                    <input type="text" maxlength="1" class="code-digit" id="fpDigit3">
+                    <input type="text" maxlength="1" class="code-digit" id="fpDigit4">
+                    <input type="text" maxlength="1" class="code-digit" id="fpDigit5">
+                    <input type="text" maxlength="1" class="code-digit" id="fpDigit6">
+                </div>
+
+                <div class="forgot-input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="fpNewPassword" placeholder="New Password">
+                </div>
+
+                <!-- ADD THIS - Confirm Password Field -->
+                <div class="forgot-input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="fpConfirmPassword" placeholder="Confirm New Password">
+                </div>
+
+                <div class="forgot-timer-wrapper">
+                    <span class="forgot-timer-label">Code expires in</span>
+                    <span id="otpTimer" class="forgot-timer">05:00</span>
+                </div>
+
+                <button id="resetPasswordBtn" class="forgot-btn-primary">Reset Password</button>
+                <button id="resendOtpBtn" class="forgot-btn-secondary" disabled>Resend Code</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Modules -->
+<script type="module" src="/static/login.js"></script>
+<script type="module" src="/static/session-manager.js"></script>
+
+<script>
+// Clear any leftover session data on login page
+(function() {
+    sessionStorage.clear();
+    const keepKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!keepKeys.includes(key)) localStorage.removeItem(key);
+    }
+    const logoutMessage = sessionStorage.getItem('logoutMessage');
+    if (logoutMessage) console.log(logoutMessage);
+    sessionStorage.removeItem('logoutMessage');
+    history.replaceState(null, null, window.location.href);
+})();
+</script>
+
+</body>
+</html>

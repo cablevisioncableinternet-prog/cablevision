@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Internet Applications</title>
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!-- CSS -->
+<link rel="stylesheet" href="/static/admin-internet-applications.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h2>Cablevision</h2>
+    <p>Administrator</p>
+  </div>
+ <nav class="sidebar-menu">
+  <ul>
+    <li><a href="/admin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
+    
+    <li class="divider">
+      <span class="divider-label">MANAGEMENT</span>
+    </li>
+    
+    <li><a href="/admin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
+    <li class="active"><a href="/admin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>
+  </ul>
+</nav>
+</aside>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <button class="hamburger" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <div class="top-bar-right">
+    <div class="notification-dropdown">
+      <button id="notificationBtn" class="notification-btn">
+        <i class="fas fa-bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <div class="notification-menu" id="notificationMenu">
+        <div class="notification-header">
+          <h4>Notifications</h4>
+          <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-empty">
+            <i class="fas fa-bell-slash"></i>
+            <p>No new notifications</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PROFILE DROPDOWN -->
+    <div class="profile-dropdown">
+      <button id="profileBtn">
+        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+        <span id="profileName"></span>
+      </button>
+      <ul class="dropdown-menu" id="profileMenu">
+        <li><a href="/admin/profile">Profile</a></li>
+        <li><a href="#" id="logoutBtn">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h2>Confirm Logout</h2>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-actions">
+      <button id="cancelLogout" class="btn cancel">Cancel</button>
+      <button id="confirmLogout" class="btn confirm">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+  <div class="dashboard-header-card">
+    <div class="dashboard-header-left">
+      <h1>Internet Plans Application</h1>
+      <p>Cablevision Systems Corporation</p>
+    </div>
+    <div class="dashboard-header-right">
+    </div>
+  </div>
+
+  <!-- ================= ACTIVE APPLICATIONS CARD ================= -->
+  <div class="applications-card">
+    <div class="card-header">
+      <div class="header-title-section">
+        <h2>Active Applications</h2>
+        <p class="header-subtitle">Pending, Request Sent, and Approved applications</p>
+      </div>
+      <div class="stats-badge">
+        <span id="applicationCount">0</span> active applications
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Search & Filter Row for Active Card -->
+      <div class="search-filter-row">
+        <div class="search-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="activeSearchInput" placeholder="Search by name, email, or application #">
+          <button class="clear-search" id="activeClearSearch" style="display: none;">
+            <i class="fas fa-times-circle"></i>
+          </button>
+        </div>
+        
+        <div class="filter-wrapper">
+          <i class="fas fa-filter filter-icon"></i>
+          <select id="activeStatusFilter">
+            <option value="all">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Request Sent">Requested</option>
+          </select>
+        </div>
+        
+        <div class="sort-wrapper">
+          <i class="fas fa-calendar-alt sort-icon"></i>
+          <select id="activeDateSortFilter">
+            <option value="oldest">Oldest to Newest</option>
+            <option value="newest">Newest to Oldest</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Active Applications Table -->
+      <div class="table-wrapper">
+        <table id="applicationsTable">
+          <thead>
+            <tr>
+              <th>Application No.</th>
+              <th> Name</th>
+              <th>Email</th>
+              <th>Date</th>
+              <th>Barangay</th>
+              <th>City</th>
+              <th>Birthdate</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="applicationsBody">
+            <tr class="loading-row">
+              <td colspan="9">
+                <div class="loading-container">
+                  <div class="spinner"></div>
+                  <p>Loading applications...</p>
+                </div>
+               </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination for Active Table -->
+      <div class="pagination-wrapper">
+        <div id="paginationControls" class="pagination-container"></div>
+      </div>
+
+      <!-- No Data Message for Active Applications -->
+      <div id="noData" class="no-data-message">
+        <i class="fas fa-folder-open"></i>
+        <p>No active applications available</p>
+        <span>No pending, request sent, or approved applications found</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= REJECTED APPLICATIONS CARD ================= -->
+  <div class="applications-card" id="rejectedCard" style="display: none;">
+    <div class="card-header">
+      <div class="header-title-section">
+        <h2> Rejected Applications</h2>
+        <p class="header-subtitle">Applications that have been rejected</p>
+      </div>
+      <div class="stats-badge">
+        <span id="rejectedCount">0</span> rejected applications
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Search & Sort Row for Rejected Card (No Status Filter) -->
+      <div class="search-filter-row">
+        <div class="search-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="rejectedSearchInput" placeholder="Search by name, email, or application #">
+          <button class="clear-search" id="rejectedClearSearch" style="display: none;">
+            <i class="fas fa-times-circle"></i>
+          </button>
+        </div>
+        
+        <div class="sort-wrapper">
+          <i class="fas fa-calendar-alt sort-icon"></i>
+          <select id="rejectedDateSortFilter">
+            <option value="oldest">Oldest to Newest</option>
+            <option value="newest">Newest to Oldest</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Rejected Applications Table -->
+      <div class="table-wrapper">
+        <table id="rejectedApplicationsTable">
+          <thead>
+            <tr>
+              <th>Application No.</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Date</th>
+              <th>Barangay</th>
+              <th>City</th>
+              <th>Birthdate</th>
+              <th>Reason</th>
+              <th> Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="rejectedApplicationsBody">
+            <!-- Rejected applications will be populated here -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination for Rejected Table -->
+      <div class="pagination-wrapper">
+        <div id="rejectedPaginationControls" class="pagination-container"></div>
+      </div>
+
+      <!-- No Data Message for Rejected Applications -->
+      <div id="noRejectedData" class="no-data-message" style="display: none;">
+        <i class="fas fa-folder-open"></i>
+        <p>No rejected applications</p>
+        <span>No rejected applications found</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>  
+
+<!-- Load notification system FIRST (non-module) -->
+<script src="/static/admin-notifications.js"></script>
+
+<!-- Then load main application JS (module) -->
+<script type="module" src="/static/admin-internet-applications.js"></script>
+<script src="/static/session-manager.js"></script>
+
+</body>
+</html>

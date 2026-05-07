@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Prevent page caching -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+  <title>Super Admin | Dashboard</title>
+  <link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/superadmin-dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <h2>Cablevision</h2>
+    <p>Super Administrator</p>
+  </div>
+
+<nav class="sidebar-menu">
+  <ul>
+    <li class="active"><a href="/superadmin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
+    
+    <li class="divider">
+      <span class="divider-label">MANAGEMENT</span>
+    </li>
+    
+    <li><a href="/superadmin/admins"><i class="fas fa-user-plus"></i><span class="menu-text">Create Administrator</span></a></li>
+    <li><a href="/superadmin/area"><i class="fas fa-map-marker-alt"></i><span class="menu-text">Manage Area</span></a></li>
+    <li><a href="/superadmin/users"><i class="fas fa-users"></i><span class="menu-text">User Accounts</span></a></li>
+    <li><a href="/superadmin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
+    <li><a href="/superadmin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>    
+    <li class="divider">
+      <span class="divider-label">SERVICES</span>
+    </li>
+    
+    <li><a href="/superadmin/plans"><i class="fas fa-tags"></i><span class="menu-text">Plans</span></a></li>
+    
+    <li class="divider">
+ <span class="divider-label">CONTENT</span>
+    </li>
+    
+    <li><a href="/superadmin/announcements"><i class="fas fa-bullhorn"></i><span class="menu-text">Announcements</span></a></li>
+    <li><a href="/superadmin/advertisement"><i class="fas fa-ad"></i><span class="menu-text">Advertisement</span></a></li>
+  </ul>
+</nav>
+</aside>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <button class="hamburger" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <div class="top-bar-right">
+    <!-- NOTIFICATION BELL -->
+      <div class="notification-dropdown">
+        <button id="notificationBtn" class="notification-btn">
+          <i class="fas fa-bell"></i>
+          <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </button>
+        <div class="notification-menu" id="notificationMenu">
+          <div class="notification-header">
+            <h4>Notifications</h4>
+            <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+          </div>
+          <div class="notification-list" id="notificationList">
+            <div class="notification-empty">
+              <i class="fas fa-bell-slash"></i>
+              <p>No new notifications</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!-- PROFILE DROPDOWN -->
+    <div class="profile-dropdown">
+      <button id="profileBtn">
+        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+        <span id="profileName"></span>
+      </button>
+      <ul class="dropdown-menu" id="profileMenu">
+        <li><a href="/superadmin/profile" id="profileLink">Profile</a></li>
+        <li><a href="#" id="logoutBtn">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeLogoutModal">&times;</span>
+    <h2>Confirm Logout</h2>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-actions">
+      <button id="cancelLogout" class="btn cancel">Cancel</button>
+      <button id="confirmLogout" class="btn confirm">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <!-- DASHBOARD HEADER -->
+  <div class="dashboard-header-card">
+    <div class="dashboard-header-left">
+      <h1>Super Administrator Dashboard</h1>
+      <p>Cablevision Systems Corporation</p>
+    </div>
+
+    <div class="dashboard-header-right">
+      <div class="date-box">
+        <i class="fas fa-calendar-alt"></i>
+        <span id="currentDay"></span>, <span id="currentDate"></span>
+      </div>
+      <div class="time-box">
+        <i class="fas fa-clock"></i>
+        <span id="liveTime"></span>
+      </div>
+    </div>
+  </div>
+
+<div class="stats-grid" id="statisticsContent" style="display:none;">
+    <!-- Card 1 - Total Applications -->
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+        </div>
+        <div class="stat-info">
+            <h3>Active Applications</h3>
+            <p id="totalApplicants">0</p>
+        </div>
+    </div>
+
+    <!-- Card 2 - Total Customers -->
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+        </div>
+        <div class="stat-info">
+            <h3>Total Customers</h3>
+            <p id="totalCustomers">0</p>
+        </div>
+    </div>
+
+    <!-- Card 3 - Total Administrator -->
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+        </div>
+        <div class="stat-info">
+            <h3>Total Administrators</h3>
+            <p id="totalAdmins">0</p>
+        </div>
+    </div>
+
+    <!-- Card 4 - Popular Plans -->
+    <div class="stat-card popular-card">
+        <div class="stat-icon-wrapper">
+        </div>
+        <div class="stat-info full-width">
+            <h3>Popular Plans</h3>
+            <ul id="popularPlans" class="stat-list"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- APPLICATION AREA - DYNAMIC CARDS -->
+<div class="area-grid" id="areaGrid">
+    <!-- Dynamic area cards will be loaded here -->
+    <div class="loading-areas" id="loadingAreas">
+        <div class="spinner"></div>
+        <p>Loading areas...</p>
+    </div>
+</div>
+
+
+ <!-- ADMIN ANALYTICS - THREE CARDS SIDE BY SIDE -->
+<div class="analytics-grid">
+    <!-- CARD 1 - ADMINISTRATOR STATUS OVERVIEW -->
+    <div class="analytics-card">
+        <div class="analytics-card-header">
+            <div class="header-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="header-text">
+                <h3>Administrator Status</h3>
+                <p>Active vs Inactive Administrators</p>
+            </div>
+        </div>
+        <div class="analytics-card-body">
+            <canvas id="adminStatusChart"></canvas>
+        </div>
+    </div>
+
+    <!-- CARD 2 - ADMINISTRATOR PER AREA -->
+    <div class="analytics-card">
+        <div class="analytics-card-header">
+            <div class="header-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="header-text">
+                <h3>Administrator per Area</h3>
+                <p>Distribution by location</p>
+            </div>
+        </div>
+        <div class="analytics-card-body">
+            <canvas id="adminAreaChart"></canvas>
+        </div>
+    </div>
+
+    <!-- CARD 3 - INSTALLATION OVERVIEW -->
+    <div class="analytics-card">
+        <div class="analytics-card-header">
+            <div class="header-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="header-text">
+                <h3>Installation Overview</h3>
+                <p>Status and progress</p>
+            </div>
+        </div>
+        <div class="analytics-card-body">
+            <div id="installationLoading" class="analytics-loading">
+                <div class="spinner"></div>
+                <p>Loading installation data...</p>
+            </div>
+            <p id="installationNoData" class="analytics-no-data" style="display:none;">No installation data available.</p>
+            <canvas id="installationStatusChart" style="display:none;"></canvas>
+        </div>
+        <div class="analytics-card-footer">
+            <div class="date-filter">
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> Start Date</label>
+                    <input type="date" id="startDate" placeholder="Start Date">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar-alt"></i> End Date</label>
+                    <input type="date" id="endDate" placeholder="End Date">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Filter by Area</label>
+                    <select id="areaFilter" class="area-select">
+                        <option value="">All Areas</option>
+                    </select>
+                </div>
+                <button id="filterBtn" class="filter-btn">
+                    <i class="fas fa-filter"></i> Apply Filter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</main>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Load session-manager FIRST, then dashboard -->
+<script src="/static/session-manager.js"></script>
+<script src="/static/superadmin-dashboard.js"></script>
+<script src="/static/notification-system.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cablevision | Admin Profile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="/static/admin-profile.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h2>Cablevision</h2>
+    <p>Administrator</p>
+  </div>
+
+ <nav class="sidebar-menu">
+  <ul>
+    <li><a href="/admin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
+    
+    <li class="divider">
+      <span class="divider-label">MANAGEMENT</span>
+    </li>
+    
+    <li><a href="/admin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
+    <li><a href="/admin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>
+  </ul>
+</nav>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <!-- BACK TO DASHBOARD BUTTON (mobile only) -->
+  <a href="/admin" class="back-to-dashboard">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+  </a>
+
+  <div class="profile-header-card">
+  <div class="dashboard-header-left">
+    <h1>Super Administrator Profile</h1>
+    <p>Cablevision Systems Corporation</p>
+  </div>
+  
+  <div class="profile-info-section">
+    <div class="profile-image-wrapper">
+      <img id="profileImage" src="/static/cablevision.jpg" class="profile-picture-large" alt="Profile Photo">
+    </div>
+    
+    <div class="profile-details">
+      <h2 class="profile-name" id="usernameDisplay"></h2>
+      
+      <!-- ADD THIS - Admin ID Row -->
+      <div class="info-row">
+        <span class="info-label">Admin ID</span>
+        <span class="info-value" id="adminIdText"></span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Role</span>
+        <span class="info-value">Administrator</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Area</span>
+        <span class="info-value" id="areaText">Sta. Cruz</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-card">
+  <form id="profileForm">
+    
+    <div class="personal-info-header">
+      <h3>
+        <i class="fas fa-id-card"></i> 
+        Personal Information
+      </h3>
+      <p>Your personal details and account information</p>
+    </div>
+    
+    <div class="form-grid">
+      <div class="form-field">
+        <label><i class="fas fa-user"></i> Name</label>
+        <input type="text" id="name" placeholder="Enter full name">
+        <span class="field-error" id="nameError"></span>
+      </div>
+
+      <div class="form-field">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="email" placeholder="Enter email">
+        <span class="field-error" id="emailError"></span>
+      </div>
+    </div>
+
+    <!-- ADD THIS - Contact Number Field -->
+    <div class="form-field">
+      <label><i class="fas fa-phone"></i> Contact Number</label>
+      <input type="text" id="contact" placeholder="Enter 11-digit mobile number">
+      <span class="field-error" id="contactError"></span>
+    </div>
+
+    <div class="personal-info-header" style="margin-top: 20px;">
+      <h3>
+        <i class="fas fa-shield-alt"></i> 
+        Account Security
+      </h3>
+      <p>Change your password to keep your account secure</p>
+    </div>
+    
+    <div class="form-grid">
+      <div class="password-row">
+        <div class="form-field">
+          <label><i class="fas fa-lock"></i> Set Password</label>
+          <input type="password" id="password" class="editable" placeholder="Enter new password">
+          <span id="passwordStrength" class="password-strength"></span>
+        </div>
+
+        <div class="form-field">
+          <label><i class="fas fa-check-circle"></i> Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm new password">
+          <span id="confirmPasswordError" class="field-error"></span>
+        </div>
+      </div>
+
+      <p id="formMessage" class="form-message"></p>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" id="editBtn"><i class="fas fa-edit"></i>Edit Profile</button>
+      <button type="button" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Save Changes</button>
+      <button type="button" id="cancelBtn" style="display:none;"><i class="fas fa-times"></i>Cancel</button>
+    </div>
+    
+  </form>
+</div>
+</main>
+
+<!-- CONFIRM UPDATE MODAL -->
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <button class="close-btn" id="closeModalBtn">&times;</button>
+    <h3>Confirm Update</h3>
+    <p>Are you sure you want to update your profile?</p>
+    <div class="modal-actions">
+      <button id="confirmYes">Save</button>
+      <button id="confirmNo">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast">Profile updated successfully!</div>
+
+<script type="module" src="/static/admin-profile.js"></script>
+<script src="/static/session-manager.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin View Customers</title>
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- CSS -->
+<link rel="stylesheet" href="/static/admin-view-customers.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Cablevision</h2>
+      <p>Administrator</p>
+    </div>
+   <nav class="sidebar-menu">
+  <ul>
+    <li><a href="/admin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
+    
+    <li class="divider">
+      <span class="divider-label">MANAGEMENT</span>
+    </li>
+    
+    <li class="active"><a href="/admin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
+    <li><a href="/admin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>
+  </ul>
+</nav>
+</aside>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+
+  <div class="top-bar-left">
+    <button class="hamburger" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  <div class="top-bar-right">
+    <!-- You should have only ONE of these -->
+    <div class="notification-dropdown">
+      <button id="notificationBtn" class="notification-btn">
+        <i class="fas fa-bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <div class="notification-menu" id="notificationMenu">
+        <div class="notification-header">
+          <h4>Notifications</h4>
+          <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-empty">
+            <i class="fas fa-bell-slash"></i>
+            <p>No new notifications</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- PROFILE DROPDOWN -->
+    <div class="profile-dropdown">
+      <button id="profileBtn">
+        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+        <span id="profileName"></span>
+      </button>
+      <ul class="dropdown-menu" id="profileMenu">
+        <li><a href="/admin/profile">Profile</a></li>
+        <li><a href="#" id="logoutBtn">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h2>Confirm Logout</h2>
+    <p>Are you sure you want to logout?</p>
+    <div class="modal-actions">
+      <button id="cancelLogout" class="btn cancel">Cancel</button>
+      <button id="confirmLogout" class="btn confirm">Logout</button>
+    </div>
+  </div>
+</div>  
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+     <div class="dashboard-header-card">
+
+<div class="dashboard-header-left">
+<h1>Approved Customer</h1>
+    <p>Cablevision Systems Corporation</p>
+</div>
+
+<div class="dashboard-header-right">
+</div>
+
+</div>
+   <!-- ================= CUSTOMERS LIST CARD ================= -->
+<div class="card">
+  <div class="card-header">
+    <div class="header-title-section">
+      <h2>Customers</h2>
+      <p class="header-subtitle">Manage and monitor all approved customer accounts</p>
+    </div>
+  </div>
+  
+  <div class="card-body">
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-icon-wrapper">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <input type="text" id="searchInput" placeholder="Search by name, email, or application #">
+      <button class="search-clear-btn" id="clearSearch" style="display: none;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <div class="filter-group">
+        <label>Filter by Installation Status:</label>
+        <select id="statusFilter" class="filter-select">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="installed">Installed</option>
+        </select>
+      </div>
+      <div class="stats-badge">
+        <span id="customerCount">0</span> total customers
+      </div>
+    </div>
+
+   <!-- Table Wrapper -->
+    <div class="table-wrapper">
+      <table id="approvedCustomersTable">
+        <thead>
+          <tr>
+            <th>Application No.</th>
+            <th>Contract No.</th>  <!-- ✅ BAGONG COLUMN -->
+            <th>Name</th>
+            <th>Email</th>
+            <th>Plan</th>
+            <th>Speed</th>
+            <th>Application Status</th>
+            <th>Installation Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="approvedCustomersBody">
+          <tr class="loading-row">
+              <td colspan="9">  <!-- ✅ 8 naging 9 -->
+                  <div class="loading-container">
+                      <div class="spinner"></div>
+                      <p>Loading customers...</p>
+                  </div>
+              </td>
+          </tr>
+        </tbody>
+      </table>  <!-- ✅ IDAGDAG ITO -->
+    </div>
+    
+    <div id="paginationControls" class="pagination-container"></div>
+
+    <!-- No Data Message -->
+    <div id="noData" class="no-data-message">
+      <i class="fas fa-user-slash"></i>
+      <p>No customers available</p>
+      <span>No approved customers found in the system</span>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>  
+
+<!-- MODAL -->
+<div id="actionModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeModalBtn">&times;</span>
+    <div class="modal-header-icon">
+      <div class="modal-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+    </div>
+    <h2 id="modalTitle">Confirm Action</h2>
+    <p id="modalMessage">Are you sure you want to proceed?</p>
+    <div class="modal-buttons">
+      <button id="confirmBtn" class="btn-confirm">
+        <i class="fas fa-check-circle"></i> Yes
+      </button>
+      <button id="cancelBtn" class="btn-cancel">
+        <i class="fas fa-times"></i> No
+      </button>
+    </div>
+    <div id="modalLoading" style="display:none;">
+      <div class="spinner"></div>
+      <p>Processing...</p>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/static/admin-view-customers.js"></script>
+<script src="/static/admin-notifications.js"></script>
+<script src="/static/session-manager.js"></script>
+</body>
+</html>

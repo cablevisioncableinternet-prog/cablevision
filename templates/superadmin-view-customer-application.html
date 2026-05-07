@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Customer Application</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+
+<!-- Bootstrap + Leaflet -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='superadmin-view-customer-application.css') }}">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+    #map { height: 300px; width: 100%; }
+    .signature-img, .doc-img { max-width: 100%; cursor: pointer; }
+    .billing { max-height: 400px; }
+</style>
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="app-header">
+    <div class="header-overlay">
+        <h1>Customer Application</h1>
+        <p>Viewing approved customer details</p>
+
+        <div class="app-number">
+            Application Number: <strong id="application_number"></strong>
+        </div>
+
+        <div class="header-actions">
+            <button id="downloadPdfBtn" class="btn btn-success">
+                <i class="fas fa-download"></i> Download PDF
+            </button>
+            <button id="viewContractBtn" class="btn btn-info" style="background: linear-gradient(135deg, #0d6832 0%, #22c55e 100%); color: white;">
+                <i class="fas fa-file-contract"></i> View Contract
+            </button>
+            <a href="/superadmin/view-customers" class="btn btn-light">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="container app-container">
+
+    <!-- PLAN -->
+    <div class="card app-card">
+        <h4 class="section-title">Plan</h4>
+        <p id="plan"></p>
+    </div>
+
+    <!-- PROFILE PHOTO -->
+    <div class="card app-card">
+        <h4 class="section-title">Profile Photo</h4>
+        <img id="profile_photo" class="profile-img">
+    </div>
+
+    <!-- PERSONAL INFO -->
+    <div class="card app-card">
+        <h4 class="section-title">Personal Information</h4>
+        <p><strong>Name:</strong> <span id="full_name"></span></p>
+        <p><strong>Email:</strong> <span id="email"></span></p>
+        <p><strong>Mobile:</strong> <span id="mobile"></span></p>
+        <p><strong>Secondary Mobile:</strong> <span id="secondary_mobile"></span></p>
+        <p><strong>Phone (Landline):</strong> <span id="phone"></span></p>
+        <p><strong>Birthdate:</strong> <span id="birthdate"></span></p>
+        <p><strong>Place of Birth:</strong> <span id="place_of_birth"></span></p>
+        <p><strong>Sex:</strong> <span id="sex"></span></p>
+        <p><strong>Civil Status:</strong> <span id="civil_status"></span></p>
+        <p><strong>Citizenship:</strong> <span id="citizenship"></span></p>
+        <p><strong>Occupation:</strong> <span id="occupation"></span></p>
+        <p><strong>Home Ownership:</strong> <span id="home_ownership"></span></p>
+    </div>
+
+    <!-- ADDRESS -->
+    <div class="card app-card">
+        <h4 class="section-title">Address</h4>
+        <p><strong>Street/Village:</strong> <span id="address"></span></p>
+        <p><strong>Billing Address:</strong> <span id="billing_address"></span></p>
+        <p><strong>House Number:</strong> <span id="house_number"></span></p>
+        <p><strong>Nearest Landmark:</strong> <span id="landmark"></span></p>
+        <p><strong>Barangay:</strong> <span id="barangay"></span></p>
+        <p><strong>City:</strong> <span id="city"></span></p>
+        <p><strong>Province:</strong> <span id="province"></span></p>
+        <p><strong>Zip Code:</strong> <span id="zip"></span></p>
+    </div>
+
+    <!-- EMPLOYMENT -->
+    <div class="card app-card">
+        <h4 class="section-title">Employment Details</h4>
+        <p><strong>Employer:</strong> <span id="employer"></span></p>
+        <p><strong>Business Address:</strong> <span id="business_address"></span></p>
+        <p><strong>Business Phone:</strong> <span id="business_phone"></span></p>
+    </div>
+
+    <!-- SPOUSE -->
+    <div class="card app-card">
+        <h4 class="section-title">Spouse Information</h4>
+        <p><strong>Name:</strong> <span id="spouse_name"></span></p>
+        <p><strong>Occupation:</strong> <span id="spouse_occupation"></span></p>
+        <p><strong>Employer:</strong> <span id="spouse_employer"></span></p>
+        <p><strong>Phone:</strong> <span id="spouse_phone"></span></p>
+    </div>
+
+    <!-- FAMILY -->
+    <div class="card app-card">
+        <h4 class="section-title">Family Details</h4>
+        <p><strong>Mother's Maiden Name:</strong> <span id="mother_maiden_name"></span></p>
+        <p><strong>Father's Name:</strong> <span id="father_name"></span></p>
+        <p><strong>Others:</strong> <span id="others"></span></p>
+    </div>
+
+    <!-- SERVICE -->
+    <div class="card app-card">
+        <h4 class="section-title">Service Classification</h4>
+        <p id="service_type"></p>
+    </div>
+
+    <!-- TV SET -->
+    <div class="card app-card">
+        <h4 class="section-title">TV Set Details</h4>
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th>Quantity</th>
+                    <th>Brand / Model</th>
+                    <th>B&W / Colored</th>
+                </tr>
+            </thead>
+            <tbody id="tvTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- INSTALLATION -->
+    <div class="card app-card">
+        <h4 class="section-title">Installation Details</h4>
+        <p><strong>Installation Address:</strong> <span id="installation_address"></span></p>
+        <p><strong>Phone:</strong> <span id="installation_phone"></span></p>
+        <p><strong>Installation Fee:</strong> <span id="installation_fee"></span></p>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="card app-card">
+        <h4 class="section-title">Signature</h4>
+        <img id="signature" class="signature-img">
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="card app-card">
+        <h4 class="section-title">Uploaded Documents</h4>
+        <div class="row text-center">
+            <div class="col-md-4 mb-3">
+                <p><strong>ID Front</strong></p>
+                <img id="id_front" class="doc-img">
+            </div>
+            <div class="col-md-4 mb-3">
+                <p><strong>ID Back</strong></p>
+                <img id="id_back" class="doc-img">
+            </div>
+            <div class="col-md-4 mb-3">
+                <p><strong>Proof of Billing</strong></p>
+                <img id="proof_billing" class="doc-img billing">
+            </div>
+        </div>
+    </div>
+
+    <!-- SUBMISSION DETAILS -->
+    <div class="card app-card">
+        <h4 class="section-title">Submission Details</h4>
+        <p><strong>Date:</strong> <span id="date_submitted"></span></p>
+        <p><strong>Time:</strong> <span id="time_submitted"></span></p>
+    </div>
+
+    <!-- MAP -->
+    <div class="card app-card">
+        <h4 class="section-title">Pinned Location Preview</h4>
+        <div id="map"></div>
+    </div>
+
+</div>
+
+<!-- IMAGE MODAL -->
+<div class="modal fade" id="imageModal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-body text-center">
+                <img id="modalImage" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTRACT PREVIEW MODAL -->
+<div class="modal fade contract-preview-modal" id="contractPreviewModal" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-contract"></i> Service Contract Preview
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="contract-preview-container" id="contractPreviewContent">
+                    <!-- Contract content will be dynamically inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="downloadContractBtn">
+                    <i class="fas fa-download"></i> Download Contract
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script type="module" src="/static/superadmin-view-customer-application.js"></script>
+<script src="/static/session-manager.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/static/admin-dashboard.css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Cablevision</h2>
+      <p>Administrator</p>
+    </div>
+
+  <nav class="sidebar-menu">
+  <ul>
+    <li class="active"><a href="/admin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
+    
+    <li class="divider">
+      <span class="divider-label">MANAGEMENT</span>
+    </li>
+    
+    <li><a href="/admin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
+    <li><a href="/admin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>
+  </ul>
+</nav>
+  </aside>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <button class="hamburger" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <div class="top-bar-right">
+    <!-- You should have only ONE of these -->
+    <div class="notification-dropdown">
+      <button id="notificationBtn" class="notification-btn">
+        <i class="fas fa-bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <div class="notification-menu" id="notificationMenu">
+        <div class="notification-header">
+          <h4>Notifications</h4>
+          <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-empty">
+            <i class="fas fa-bell-slash"></i>
+            <p>No new notifications</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- PROFILE DROPDOWN -->
+    <div class="profile-dropdown">
+      <button id="profileBtn">
+        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+        <span id="profileName"></span>
+      </button>
+      <ul class="dropdown-menu" id="profileMenu">
+        <li><a href="/admin/profile" id="profileLink">Profile</a></li>
+        <li><a href="#" id="logoutBtn">Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+  <!-- LOGOUT MODAL -->
+  <div id="logoutModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeLogoutModal">&times;</span>
+      <h2>Confirm Logout</h2>
+      <p>Are you sure you want to logout?</p>
+      <div class="modal-actions">
+        <button id="cancelLogout" class="btn cancel">Cancel</button>
+        <button id="confirmLogout" class="btn confirm">Logout</button>
+      </div>
+    </div>
+  </div>  
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- DASHBOARD HEADER -->
+    <div class="dashboard-header-card">
+
+      <div class="dashboard-header-left">
+        <h1 id="adminDashboardTitle">Administrator Dashboard</h1>
+        <p>Cablevision Systems Corporation</p>
+      </div>
+
+      <div class="dashboard-header-right">
+        <div class="date-box">
+          <i class="fas fa-calendar-alt"></i>
+          <span id="currentDay"></span>, <span id="currentDate"></span>
+        </div>
+
+        <div class="time-box">
+          <i class="fas fa-clock"></i>
+          <span id="liveTime"></span>
+        </div>
+      </div>
+
+    </div>
+
+<!-- STATISTICS SECTION - CARDS ONLY -->
+<div class="stats-grid">
+    <!-- Total Applications -->
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+
+        </div>
+        <div class="stat-info">
+            <h3>Total Applications</h3>
+            <p id="totalApplicants">0</p>
+        </div>
+    </div>
+
+    <!-- Total Customers -->
+    <div class="stat-card">
+        <div class="stat-icon-wrapper">
+        </div>
+        <div class="stat-info">
+            <h3>Total Customers</h3>
+            <p id="totalCustomers">0</p>
+        </div>
+    </div>
+
+    <!-- Popular Plans -->
+    <div class="stat-card popular-card">
+        <div class="stat-icon-wrapper">
+        </div>
+        <div class="stat-info full-width">
+            <h3>Popular Plans</h3>
+            <ul id="popularPlans" class="stat-list"></ul>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- CHARTS ROW - PIE CHART & BAR CHART MAGKATABI -->
+<div class="charts-row">
+    <!-- INSTALLATION CHART (DOUGHNUT CHART) -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="header-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="header-text">
+                <h3>Installation Overview</h3>
+                <p class="chart-subtitle">Current installation status of all installed applications</p>
+            </div>
+        </div>
+        <div class="chart-body">
+            <div id="chartLoading" class="chart-loading">
+                <div class="spinner"></div>
+                <p>Loading chart...</p>
+            </div>
+            <canvas id="installationStatusChart" style="display:none;"></canvas>
+        </div>
+        <div class="date-filter">
+            <div class="filter-group">
+                <label><i class="fas fa-calendar-alt"></i> Start Date</label>
+                <input type="date" id="startDate" placeholder="Start Date">
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-calendar-alt"></i> End Date</label>
+                <input type="date" id="endDate" placeholder="End Date">
+            </div>
+            <button id="filterBtn" class="filter-btn">
+                <i class="fas fa-filter"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+
+    <!-- TRENDING CHART (BAR GRAPH) -->
+    <div class="chart-card trending-card">
+        <div class="chart-header">
+            <div class="header-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="header-text">
+                <h3>Growth Overview</h3>
+                <p class="chart-subtitle">Comparison of total applications vs total customers</p>
+            </div>
+        </div>
+        <div class="chart-body">
+            <div id="trendLoading" class="chart-loading">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+            <canvas id="trendChart" style="display:none;"></canvas>
+        </div>
+    </div>
+</div>
+
+    
+
+
+  </main>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>  
+
+  <!-- JS SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="/static/admin-dashboard.js"></script>
+<script src="/static/admin-notifications.js"></script>
+<script src="/static/session-manager.js"></script>
+</body>
+</html>

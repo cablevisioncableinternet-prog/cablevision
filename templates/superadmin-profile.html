@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cablevision | Super Admin Profile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="/static/superadmin-profile.css">
+
+<style>
+/* Additional styles for error messages */
+.field-error {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+}
+.field-error.show {
+    display: block;
+}
+.error-input {
+    border-color: #dc2626 !important;
+}
+.password-strength {
+    font-size: 11px;
+    margin-top: 4px;
+    display: block;
+}
+</style>
+
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h2>Cablevision</h2>
+    <p>Super Administrator</p>
+  </div>
+
+ <nav class="sidebar-menu">
+  <ul>
+    <li><a href="/superadmin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
+    
+    <li class="divider">
+      <span class="divider-label">MANAGEMENT</span>
+    </li>
+    
+    <li><a href="/superadmin/admins"><i class="fas fa-user-plus"></i><span class="menu-text">Create Administrator</span></a></li>
+    <li><a href="/superadmin/area"><i class="fas fa-map-marker-alt"></i><span class="menu-text">Manage Area</span></a></li>
+    <li><a href="/superadmin/users"><i class="fas fa-users"></i><span class="menu-text">User Accounts</span></a></li>
+    <li><a href="/superadmin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
+    <li><a href="/superadmin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>    
+    <li class="divider">
+      <span class="divider-label">SERVICES</span>
+    </li>
+    
+    <li><a href="/superadmin/plans"><i class="fas fa-tags"></i><span class="menu-text">Plans</span></a></li>
+    
+    <li class="divider">
+ <span class="divider-label">CONTENT</span>
+    </li>
+    
+    <li><a href="/superadmin/announcements"><i class="fas fa-bullhorn"></i><span class="menu-text">Announcements</span></a></li>
+    <li><a href="/superadmin/advertisement"><i class="fas fa-ad"></i><span class="menu-text">Advertisement</span></a></li>
+  </ul>
+</nav>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <a href="/superadmin" class="back-to-dashboard">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+  </a>
+
+ <div class="profile-header-card">
+  <div class="dashboard-header-left">
+    <h1>Super Administrator Profile</h1>
+    <p>Cablevision Systems Corporation</p>
+  </div>
+  
+  <div class="profile-info-section">
+    <div class="profile-image-wrapper">
+      <img id="profileImage" src="/static/cablevision.jpg" class="profile-picture-large" alt="Profile Photo">
+    </div>
+    
+    <div class="profile-details">
+      <h2 class="profile-name" id="usernameDisplay"></h2>
+      <div class="info-row">
+        <span class="info-label">Role</span>
+        <span class="info-value">Super Administrator</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Area</span>
+        <span class="info-value" id="areaText">Sta. Cruz</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="form-card">
+  <form id="profileForm">
+    
+    <div class="personal-info-header">
+      <h3>
+        <i class="fas fa-id-card"></i> 
+        Personal Information
+      </h3>
+      <p>Your personal details and account information</p>
+    </div>
+    
+    <div class="form-grid">
+      <div class="form-field">
+        <label><i class="fas fa-user"></i> Name</label>
+        <input type="text" id="name" placeholder="Enter full name">
+        <span class="field-error" id="nameError"></span>
+      </div>
+
+      <div class="form-field">
+        <label><i class="fas fa-envelope"></i> Email</label>
+        <input type="email" id="email" placeholder="Ex: yourname@gmail.com">
+        <span class="field-error" id="emailError"></span>
+      </div>
+    </div>
+
+    <div class="personal-info-header" style="margin-top: 20px;">
+      <h3>
+        <i class="fas fa-shield-alt"></i> 
+        Account Security
+      </h3>
+      <p>Change your password to keep your account secure</p>
+    </div>
+    
+    <div class="form-grid">
+      <div class="password-row">
+        <div class="form-field">
+          <label><i class="fas fa-lock"></i> Set Password</label>
+          <input type="password" id="password" class="editable" placeholder="Enter new password">
+          <span id="passwordStrength" class="password-strength"></span>
+        </div>
+
+        <div class="form-field">
+          <label><i class="fas fa-check-circle"></i> Confirm Password</label>
+          <input type="password" id="confirmPassword" placeholder="Confirm new password">
+          <span id="confirmPasswordError" class="field-error"></span>
+        </div>
+      </div>
+
+      <p id="formMessage" class="form-message"></p>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" id="editBtn"><i class="fas fa-edit"></i>Edit Profile</button>
+      <button type="button" id="updateBtn" style="display:none;"><i class="fas fa-save"></i> Save Changes</button>
+      <button type="button" id="cancelBtn" style="display:none;"><i class="fas fa-times"></i>Cancel</button>
+    </div>
+    
+  </form>
+</div>
+</main>
+
+<!-- CONFIRM UPDATE MODAL -->
+<div id="confirmModal" class="modal">
+  <div class="modal-content">
+    <button class="close-btn" id="closeModalBtn">&times;</button>
+    <h3>Confirm Update</h3>
+    <p>Are you sure you want to update your profile?</p>
+    <div class="modal-actions">
+      <button id="confirmYes">Save</button>
+      <button id="confirmNo">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast">Profile updated successfully!</div>
+
+<script type="module" src="/static/superadmin-profile.js"></script>
+<script src="/static/session-manager.js"></script>
+
+</body>
+</html>

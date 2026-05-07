@@ -1,0 +1,773 @@
+/* ================= RESET & GLOBAL ENHANCEMENTS ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ================= BODY / BACKGROUND ================= */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', 'Inter', sans-serif;
+    background: linear-gradient(135deg, rgba(1, 13, 68, 0.88), rgba(36, 85, 158, 0.88)), url("/static/background1.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.02);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ================= LOGIN CONTAINER ================= */
+.login-container {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(0px);
+    padding: 35px 32px;
+    border-radius: 28px;
+    width: 90%;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+    animation: containerFloatIn 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.login-container:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 30px 55px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* ================= BRAND ================= */
+.brand-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.brand-image {
+    height: 70px;
+    margin-bottom: 12px;
+}
+
+.brand-title {
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #001f3f 0%, #003c77 80%);
+
+    /* Vendor prefixes for better compatibility */
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -o-background-clip: text;
+    background-clip: text;
+
+    color: transparent;
+}
+
+.brand-subtitle {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #5a6e8a;
+}
+
+/* ================= INPUT GROUP WITH ICON ================= */
+.input-group {
+    position: relative;
+    width: 100%;
+    margin-bottom: 18px;
+
+    /* ✅ Animate whole group */
+    opacity: 0;
+    transform: translateY(18px);
+    animation: slideUpFade 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+}
+
+/* ICON */
+.input-group i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #334155;          /* always visible */
+    pointer-events: none;
+    z-index: 3;               /* ensures icon is above input */
+    transition: all 0.2s ease;
+}
+
+/* INPUT FIELD */
+.input-group input {
+    width: 100%;
+    padding: 12px 16px 12px 42px; /* leave space for icon */
+    border: 1.5px solid #e2e8f0;
+    border-radius: 60px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #0f172a;
+    background: #ffffff;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.4, 1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    position: relative;       /* ensure stacking context for z-index */
+    z-index: 1;               /* below icon */
+}
+
+/* INPUT FOCUS EFFECT */
+.input-group input:focus {
+    border-color: #003c77;
+    box-shadow: 0 8px 20px -12px rgba(0, 60, 119, 0.35), 0 0 0 3px rgba(0, 60, 119, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+/* ICON FOCUS EFFECT */
+.input-group:focus-within i {
+    color: #003c77;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.error-message {
+    color: red;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* ================= LOGIN BUTTON ================= */
+.login-btn {
+    width: 100%;
+    padding: 12px 13px;
+    border: none;
+    border-radius: 60px;
+    background: linear-gradient(95deg, #003c77 0%, #0f5b9e 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(0, 60, 119, 0.3);
+
+    opacity: 0;
+    transform: translateY(18px);
+    animation: slideUpFade 0.5s forwards;
+    animation-delay: 0.7s;
+}
+
+/* ================= FOOTER ================= */
+.footer-text {
+    margin-top: 22px;
+    font-size: 11px;
+    color: #6c7a91;
+
+    opacity: 0;
+    transform: translateY(18px);
+    animation: slideUpFade 0.5s forwards;
+    animation-delay: 1s;
+}
+
+/* ================= MODALS (ENHANCED) ================= */
+
+/* Modal Backdrop - Enhanced */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(5px);
+  }
+}
+
+/* Modal Container - Modern Card */
+.modal-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  margin: 8% auto;
+  padding: 32px 28px;
+  border-radius: 24px;
+  width: 380px;
+  max-width: 90%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: modalSlideUp 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Close Button - Enhanced */
+.close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  cursor: pointer;
+  font-size: 28px;
+  font-weight: 300;
+  color: #94a3b8;
+  transition: all 0.25s ease;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.close:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+/* Modal Headings */
+.modal-content h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 24px;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #0f172a, #1e3a5f);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Modal Labels */
+.modal-content label {
+  display: block;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+/* Modal Inputs - Enhanced */
+.modal input {
+  width: 100%;
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  background: #ffffff;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+}
+
+.modal input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.modal input:hover {
+  border-color: #94a3b8;
+}
+
+/* Modal Buttons - Premium */
+.modal button {
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 8px;
+  cursor: pointer;
+  border: none;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.25s ease;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+}
+
+#sendCodeBtn,
+#resetPasswordBtn {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+#sendCodeBtn:hover,
+#resetPasswordBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  background: linear-gradient(135deg, #3b82f6, #1e3a8a);
+}
+
+#sendCodeBtn:active,
+#resetPasswordBtn:active {
+  transform: translateY(0px);
+}
+
+#resendOtpBtn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  margin-top: 12px;
+}
+
+#resendOtpBtn:hover:not(:disabled) {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+#resendOtpBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* OTP Timer Display */
+.modal-content p {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+#otpTimer {
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 15px;
+  background: #eff6ff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+/* Message Area */
+#fpMessage {
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+#fpMessage:empty {
+  display: none;
+}
+
+/* Forgot Password Container */
+.forgot-password-container {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.forgot-password-link {
+  font-size: 14px;
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.forgot-password-link::before {
+  content: "";
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.forgot-password-link:hover {
+  color: #2563eb;
+  gap: 10px;
+}
+
+/* Step Transitions */
+#fpStep1,
+#fpStep2 {
+  transition: opacity 0.3s ease;
+}
+
+/* Responsive Modal */
+@media (max-width: 640px) {
+  .modal-content {
+    margin: 20% auto;
+    padding: 24px 20px;
+    width: 92%;
+  }
+  
+  .modal-content h2 {
+    font-size: 22px;
+  }
+  
+  .modal input {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .modal button {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .close {
+    top: 14px;
+    right: 18px;
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    margin: 30% auto;
+    padding: 20px 16px;
+  }
+  
+  .modal-content h2 {
+    font-size: 20px;
+    margin-bottom: 18px;
+  }
+  
+  .forgot-password-link {
+    font-size: 13px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .modal-content,
+  .close,
+  .modal button {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .modal {
+    backdrop-filter: none;
+  }
+}
+
+/* ================= NEW FORGOT PASSWORD MODAL (KATULAD NG USER) ================= */
+.forgot-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+}
+
+.forgot-modal-content {
+    background: #ffffff;
+    width: 90%;
+    max-width: 420px;
+    border-radius: 28px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    animation: modalSlideUp 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    overflow: hidden;
+}
+
+.forgot-modal-header {
+    background: linear-gradient(135deg, #001f3f 0%, #003c77 100%);
+    padding: 20px 24px;
+    text-align: center;
+    position: relative;
+    color: white;
+}
+
+.forgot-modal-logo {
+    height: 55px;
+    margin-bottom: 8px;
+    filter: brightness(0) invert(1);
+}
+
+.forgot-modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin: 0;
+    color: rgba(255,255,255,0.95);
+}
+
+.forgot-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.forgot-modal-close:hover {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.forgot-modal-body {
+    padding: 28px 24px 32px;
+}
+
+.forgot-step-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.forgot-step-desc {
+    font-size: 13px;
+    color: #5b6e8c;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.forgot-input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.forgot-input-group i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #7e8b9e;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.forgot-input-group input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 40px;
+    font-size: 14px;
+    background: #ffffff;
+    transition: all 0.2s;
+}
+
+.forgot-input-group input:focus {
+    outline: none;
+    border-color: #003c77;
+    box-shadow: 0 0 0 3px rgba(0,60,119,0.1);
+}
+
+/* ===== 6-DIGIT CODE BOXES (kagaya ng user) ===== */
+.verification-code-inputs {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 16px 0 24px 0;
+}
+
+.verification-code-inputs .code-digit {
+    width: 50px;
+    height: 60px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: white;
+    transition: all 0.2s;
+    font-family: monospace;
+}
+
+.verification-code-inputs .code-digit:focus {
+    outline: none;
+    border-color: #0047ab;
+    box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+}
+
+.forgot-timer-wrapper {
+    text-align: center;
+    margin: 16px 0 8px;
+}
+
+.forgot-timer-label {
+    font-size: 12px;
+    color: #5b6e8c;
+}
+
+.forgot-timer {
+    font-weight: 700;
+    color: #003c77;
+    background: #eef2ff;
+    padding: 4px 12px;
+    border-radius: 24px;
+    margin-left: 8px;
+    font-size: 14px;
+}
+
+.forgot-btn-primary,
+.forgot-btn-secondary {
+    width: 100%;
+    padding: 12px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.forgot-btn-primary {
+    background: linear-gradient(95deg, #003c77, #0f5b9e);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,60,119,0.3);
+}
+
+.forgot-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0,60,119,0.4);
+}
+
+.forgot-btn-secondary {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+
+.forgot-btn-secondary:hover:not(:disabled) {
+    background: #e4e9f0;
+}
+
+.forgot-btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.forgot-message {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+/* Responsive styles para sa bagong modal */
+@media (max-width: 640px) {
+    .forgot-modal-content {
+        width: 92%;
+        border-radius: 24px;
+    }
+    .verification-code-inputs {
+        gap: 8px;
+    }
+    .verification-code-inputs .code-digit {
+        width: 45px;
+        height: 55px;
+        font-size: 24px;
+    }
+    .forgot-timer {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .verification-code-inputs {
+        gap: 6px;
+    }
+    .verification-code-inputs .code-digit {
+        width: 40px;
+        height: 50px;
+        font-size: 22px;
+    }
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes containerFloatIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.97);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ================= STAGGER FIX ================= */
+.input-group:nth-of-type(1) {
+    animation-delay: 0.4s;
+}
+
+.input-group:nth-of-type(2) {
+    animation-delay: 0.55s;
+}
+
+/* ================= BRAND ANIMATION ================= */
+.brand-image,
+.brand-title,
+.brand-subtitle {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: slideUpFade 0.5s forwards;
+}
+
+.brand-image { animation-delay: 0.1s; }
+.brand-title { animation-delay: 0.2s; }
+.brand-subtitle { animation-delay: 0.3s; }
