@@ -3,3 +3,4 @@ gunicorn
 mysql-connector-python
 flask-cors
 requests
+reportlab
