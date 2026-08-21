@@ -1,0 +1,434 @@
+/* =========================================================================
+   ADMIN NOTIFICATIONS - SHARED STYLESHEET
+   I-link ito sa <head> ng LAHAT ng admin pages (view-customers,
+   internet-applications, at anumang bagong admin page sa hinaharap).
+   Ito ang iisang pinagmulan ng truth para sa notification bell,
+   dropdown, at "View All Notifications" modal sa buong admin side.
+   ========================================================================= */
+
+/* ================= NOTIFICATION BELL & DROPDOWN ================= */
+.notification-dropdown {
+    position: relative;
+}
+
+.notification-btn {
+    position: relative;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+    font-size: 16px;
+}
+
+.notification-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 0 0 2px #001a33;
+}
+
+.notification-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 340px;
+    max-width: 90vw;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+}
+
+.notification-menu.show {
+    display: block;
+    animation: notifSlideDown 0.2s ease;
+}
+
+@keyframes notifSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eef2f6;
+    background: #f8fafc;
+}
+
+.notification-header h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.mark-read-btn {
+    background: none;
+    border: none;
+    color: #0047ab;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.mark-read-btn:hover {
+    text-decoration: underline;
+}
+
+.notification-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Notification item — dropdown version (left-aligned by default, flex row) */
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f4fa;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-align: left;
+}
+
+.notification-item:hover {
+    background: #f8fafc;
+}
+
+.notification-item.unread {
+    background: #eff6ff;
+}
+
+.notification-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2f6;
+    color: #475569;
+    font-size: 13px;
+}
+
+.notification-icon.approved { background: #dcfce7; color: #15803d; }
+.notification-icon.rejected { background: #fee2e2; color: #dc2626; }
+.notification-icon.new_application { background: #dbeafe; color: #1d4ed8; }
+
+.notification-content {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+}
+
+.notification-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+    text-align: left;
+}
+
+.notification-message {
+    font-size: 12px;
+    color: #666666;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.notification-time {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+    text-align: left;
+}
+
+.notification-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666666;
+}
+
+.notification-empty i {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+    color: #cbd5e1;
+}
+
+.notification-empty p {
+    font-size: 13px;
+    margin: 0;
+}
+
+.notification-empty small {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* "View All Notifications" button sa loob ng dropdown footer */
+.notification-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #eef2f6;
+    background: #fafcff;
+}
+
+.view-all-btn {
+    width: 100%;
+    padding: 8px;
+    background: none;
+    border: none;
+    color: #0047ab;
+    font-weight: 600;
+    font-size: 12.5px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s ease;
+}
+
+.view-all-btn:hover {
+    background: #eff6ff;
+}
+
+/* ================= ALL NOTIFICATIONS MODAL ================= */
+.all-notifications-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    width: 90%;
+    max-width: 480px;
+    padding: 0;
+    overflow: hidden;
+    text-align: left; /* ✅ i-override ang center-align na minana mula sa
+                          generic .modal-content */
+}
+
+.all-notifications-modal-content .modal-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid #eef2f6;
+    background: #fff;
+}
+
+.all-notifications-modal-content .modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.all-notifications-modal-content .modal-header .close-modal {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.all-notifications-modal-content .modal-header .close-modal:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    transform: rotate(90deg);
+}
+
+.all-notifications-modal-content .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* ✅ ITO ANG PANGUNAHING FIX: display:flex + text-align:left
+   Dati, wala nito sa admin-view-customers.css / admin-internet-applications.css
+   kaya na-center-align ang laman (minana mula sa .modal-content). */
+.all-notifications-list .notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f4fa;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.all-notifications-list .notification-item:hover {
+    background: #f8fafc;
+}
+
+.all-notifications-list .notification-item.unread {
+    background: #eff6ff;
+}
+
+.all-notifications-list .notification-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2f6;
+    color: #475569;
+    font-size: 14px;
+}
+
+.all-notifications-list .notification-content {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+}
+
+.all-notifications-list .notification-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+    text-align: left;
+}
+
+.all-notifications-list .notification-message {
+    font-size: 12px;
+    color: #64748b;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.all-notifications-list .notification-time {
+    font-size: 10.5px;
+    color: #94a3b8;
+    margin-top: 4px;
+    text-align: left;
+}
+
+.all-notifications-modal-content .modal-footer {
+    flex-shrink: 0;
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #eef2f6;
+    background: #fafcff;
+}
+
+.all-notifications-modal-content .modal-footer .btn-cancel,
+.all-notifications-modal-content .modal-footer .btn-confirm {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.all-notifications-modal-content .modal-footer .btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.all-notifications-modal-content .modal-footer .btn-cancel:hover {
+    background: #e2e8f0;
+}
+
+.all-notifications-modal-content .modal-footer .btn-confirm {
+    background: linear-gradient(135deg, #0047ab 0%, #007bff 100%);
+    color: white;
+}
+
+.all-notifications-modal-content .modal-footer .btn-confirm:hover {
+    box-shadow: 0 4px 16px rgba(0, 71, 171, 0.25);
+}
+
+/* Force full-screen overlay above sidebar (same fix as user/superadmin side) */
+#allNotificationsModal.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    background: rgba(15, 23, 42, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+
+#allNotificationsModal.modal.show {
+    display: flex;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 767px) {
+    .notification-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+    }
+    .notification-menu {
+        width: 280px;
+        right: -40px;
+    }
+}
+
+@media (max-width: 575px) {
+    .notification-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    .notification-menu {
+        width: 260px;
+        right: -50px;
+    }
+}

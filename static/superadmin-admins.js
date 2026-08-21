@@ -1,27 +1,128 @@
-// Add this at the VERY TOP of superadmin-admins.js
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
 (function() {
-    // Immediate session check
-    const userType = localStorage.getItem('userType');
-    const sessionToken = sessionStorage.getItem('sessionToken');
-    
-    if (!userType || !sessionToken) {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
         window.location.replace('/');
         throw new Error('No session');
     }
-    
-    // Update activity timestamp
-    localStorage.setItem('lastActivity', Date.now().toString());
 })();
 
-// ==================== SESSION MANAGEMENT ====================
-// Initialize session manager FIRST
-if (window.SessionManager) {
-    window.SessionManager.init();
-} else {
-    console.error("SessionManager not loaded!");
-    // Fallback: redirect to login if no session
-    if (!localStorage.getItem('userType') || !sessionStorage.getItem('sessionToken')) {
-        window.location.replace('/');
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
+    }
+}
+
+// ==================== HAMBURGER MENU TOGGLE ====================
+const hamburger = document.getElementById('hamburgerBtn');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+if (hamburger && sidebar) {
+    function toggleSidebar() {
+        sidebar.classList.toggle('active');
+        hamburger.classList.toggle('active');
+        if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+        
+        if (sidebar.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+    
+    hamburger.addEventListener('click', toggleSidebar);
+    
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+    }
+    
+    // Auto-close sidebar when resizing to desktop size
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768 && sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+            if (hamburger) hamburger.classList.remove('active');
+            if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+// ==================== TOAST NOTIFICATION ====================
+function showToast(message, type = 'info') {
+    const LABELS = {
+        success: 'Success',
+        error:   'Error',
+        info:    'Notice',
+        loading: 'Please wait'
+    };
+
+    const ICONS = {
+        success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        info:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        loading: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: toastSpin 1s linear infinite; display:block;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    };
+
+    let toast = document.querySelector('.custom-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        document.body.appendChild(toast);
+
+        if (!document.getElementById('toast-keyframes')) {
+            const s = document.createElement('style');
+            s.id = 'toast-keyframes';
+            s.textContent = `
+                @keyframes toastSpin     { to { transform: rotate(360deg); } }
+                @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+                @keyframes toastLoading  { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+            `;
+            document.head.appendChild(s);
+        }
+    }
+
+    toast.innerHTML = `
+        <div class="custom-toast-body">
+            <span class="custom-toast-icon">${ICONS[type] || ICONS.info}</span>
+            <div class="custom-toast-text">
+                <span class="custom-toast-title">${LABELS[type] || 'Notice'}</span>
+                <span class="custom-toast-message">${message}</span>
+            </div>
+        </div>
+        <div class="custom-toast-progress">
+            <div class="custom-toast-progress-bar"></div>
+        </div>
+    `;
+
+    toast.className = `custom-toast ${type}`;
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    clearTimeout(toast._hideTimer);
+
+    if (type === 'loading') {
+        // Loading stays visible
+    } else {
+        toast._hideTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
     }
 }
 
@@ -29,255 +130,163 @@ if (window.SessionManager) {
 let adminsCache = null;
 let allAdmins = []; // Store all admins for filtering
 
-// ================= TOAST =================
-function showToast(message, success = true) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.style.background = success ? "#28a745" : "#c0392b";
-  toast.textContent = message;
-  toast.style.display = "block";
-
-  setTimeout(() => {
-    toast.style.display = "none";
-  }, 3000);
-}
-
 // ================= DISPLAY TABLE MESSAGE =================
 function displayTableMessage(message, isError = false) {
-  // Remove existing message
-  const existingMessage = document.querySelector(".table-message");
-  if (existingMessage) {
-    existingMessage.remove();
-  }
-  
-  // Create message element
-  const messageDiv = document.createElement("div");
-  messageDiv.className = "table-message";
-  messageDiv.style.cssText = `
-    background: ${isError ? "#fef2f2" : "#ecfdf5"};
-    color: ${isError ? "#dc2626" : "#059669"};
-    padding: 12px 16px;
-    border-radius: 12px;
-    margin-top: 16px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid ${isError ? "#fecaca" : "#a7f3d0"};
-    animation: slideInDown 0.3s ease;
-  `;
-  messageDiv.innerHTML = `
-    <i class="fas ${isError ? "fa-exclamation-circle" : "fa-check-circle"}" style="font-size: 16px;"></i>
-    <span>${message}</span>
-    <button type="button" class="close-message" style="margin-left: auto; background: none; border: none; cursor: pointer; color: ${isError ? "#dc2626" : "#059669"};">
-      <i class="fas fa-times"></i>
-    </button>
-  `;
-  
-  // Insert after the table wrapper
-  const tableWrapper = document.querySelector(".table-wrapper");
-  if (tableWrapper) {
-    tableWrapper.insertAdjacentElement("afterend", messageDiv);
-  }
-  
-  // Add close button functionality
-  const closeBtn = messageDiv.querySelector(".close-message");
-  if (closeBtn) {
-    closeBtn.onclick = () => messageDiv.remove();
-  }
-  
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    if (messageDiv && messageDiv.parentNode) {
-      messageDiv.remove();
+    const existingMessage = document.querySelector(".table-message");
+    if (existingMessage) {
+        existingMessage.remove();
     }
-  }, 5000);
+    
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "table-message";
+    messageDiv.style.cssText = `
+        background: ${isError ? "#fef2f2" : "#ecfdf5"};
+        color: ${isError ? "#dc2626" : "#059669"};
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-top: 16px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid ${isError ? "#fecaca" : "#a7f3d0"};
+        animation: slideInDown 0.3s ease;
+    `;
+    messageDiv.innerHTML = `
+        <i class="fas ${isError ? "fa-exclamation-circle" : "fa-check-circle"}" style="font-size: 16px;"></i>
+        <span>${message}</span>
+        <button type="button" class="close-message" style="margin-left: auto; background: none; border: none; cursor: pointer; color: ${isError ? "#dc2626" : "#059669"};">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    const tableWrapper = document.querySelector(".table-wrapper");
+    if (tableWrapper) {
+        tableWrapper.insertAdjacentElement("afterend", messageDiv);
+    }
+    
+    const closeBtn = messageDiv.querySelector(".close-message");
+    if (closeBtn) {
+        closeBtn.onclick = () => messageDiv.remove();
+    }
+    
+    setTimeout(() => {
+        if (messageDiv && messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 5000);
 }
 
-// ================= DISPLAY SUCCESS MESSAGE =================
+// ================= DISPLAY FORM MESSAGES =================
 function displayFormSuccess(message) {
-  // Remove existing success message if any
-  const existingSuccess = document.querySelector(".form-success-message");
-  if (existingSuccess) {
-    existingSuccess.remove();
-  }
-  
-  // Remove any existing error message
-  clearFormError();
-  
-  // Create success message element
-  const successDiv = document.createElement("div");
-  successDiv.className = "form-success-message";
-  successDiv.style.cssText = `
-    background: #ecfdf5;
-    color: #059669;
-    padding: 12px 16px;
-    border-radius: 12px;
-    margin-top: 20px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid #a7f3d0;
-    animation: slideInDown 0.3s ease;
-  `;
-  successDiv.innerHTML = `
-    <i class="fas fa-check-circle" style="font-size: 16px;"></i>
-    <span>${message}</span>
-    <button type="button" class="close-success" style="margin-left: auto; background: none; border: none; cursor: pointer; color: #059669;">
-      <i class="fas fa-times"></i>
-    </button>
-  `;
-  
-  // Insert after the form actions
-  const formActions = document.querySelector(".form-actions");
-  if (formActions) {
-    formActions.insertAdjacentElement("afterend", successDiv);
-  } else {
-    const form = document.getElementById("createAdminForm");
-    if (form) form.appendChild(successDiv);
-  }
-  
-  // Add close button functionality
-  const closeBtn = successDiv.querySelector(".close-success");
-  if (closeBtn) {
-    closeBtn.onclick = () => successDiv.remove();
-  }
-  
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    if (successDiv && successDiv.parentNode) {
-      successDiv.remove();
+    const existingSuccess = document.querySelector(".form-success-message");
+    if (existingSuccess) existingSuccess.remove();
+    
+    const existingError = document.querySelector(".form-error-message");
+    if (existingError) existingError.remove();
+    
+    const successDiv = document.createElement("div");
+    successDiv.className = "form-success-message";
+    successDiv.style.cssText = `
+        background: #ecfdf5;
+        color: #059669;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-top: 20px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #a7f3d0;
+        animation: slideInDown 0.3s ease;
+    `;
+    successDiv.innerHTML = `
+        <i class="fas fa-check-circle" style="font-size: 16px;"></i>
+        <span>${message}</span>
+        <button type="button" class="close-success" style="margin-left: auto; background: none; border: none; cursor: pointer; color: #059669;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    const formActions = document.querySelector(".form-actions");
+    if (formActions) {
+        formActions.insertAdjacentElement("afterend", successDiv);
+    } else {
+        const form = document.getElementById("createAdminForm");
+        if (form) form.appendChild(successDiv);
     }
-  }, 5000);
+    
+    const closeBtn = successDiv.querySelector(".close-success");
+    if (closeBtn) {
+        closeBtn.onclick = () => successDiv.remove();
+    }
+    
+    setTimeout(() => {
+        if (successDiv && successDiv.parentNode) {
+            successDiv.remove();
+        }
+    }, 5000);
 }
 
-// ================= DISPLAY ERROR MESSAGE =================
 function displayFormError(message) {
-  // Remove existing error message if any
-  const existingError = document.querySelector(".form-error-message");
-  if (existingError) {
-    existingError.remove();
-  }
-  
-  // Remove any existing success message
-  const existingSuccess = document.querySelector(".form-success-message");
-  if (existingSuccess) {
-    existingSuccess.remove();
-  }
-  
-  // Create error message element
-  const errorDiv = document.createElement("div");
-  errorDiv.className = "form-error-message";
-  errorDiv.style.cssText = `
-    background: #fef2f2;
-    color: #dc2626;
-    padding: 12px 16px;
-    border-radius: 12px;
-    margin-top: 20px;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid #fecaca;
-    animation: slideInDown 0.3s ease;
-  `;
-  errorDiv.innerHTML = `
-    <i class="fas fa-exclamation-circle" style="font-size: 16px;"></i>
-    <span>${message}</span>
-    <button type="button" class="close-error" style="margin-left: auto; background: none; border: none; cursor: pointer; color: #dc2626;">
-      <i class="fas fa-times"></i>
-    </button>
-  `;
-  
-  // Insert after the form actions
-  const formActions = document.querySelector(".form-actions");
-  if (formActions) {
-    formActions.insertAdjacentElement("afterend", errorDiv);
-  } else {
-    const form = document.getElementById("createAdminForm");
-    if (form) form.appendChild(errorDiv);
-  }
-  
-  // Add close button functionality
-  const closeBtn = errorDiv.querySelector(".close-error");
-  if (closeBtn) {
-    closeBtn.onclick = () => errorDiv.remove();
-  }
-  
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    if (errorDiv && errorDiv.parentNode) {
-      errorDiv.remove();
+    const existingError = document.querySelector(".form-error-message");
+    if (existingError) existingError.remove();
+    
+    const existingSuccess = document.querySelector(".form-success-message");
+    if (existingSuccess) existingSuccess.remove();
+    
+    const errorDiv = document.createElement("div");
+    errorDiv.className = "form-error-message";
+    errorDiv.style.cssText = `
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-top: 20px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #fecaca;
+        animation: slideInDown 0.3s ease;
+    `;
+    errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle" style="font-size: 16px;"></i>
+        <span>${message}</span>
+        <button type="button" class="close-error" style="margin-left: auto; background: none; border: none; cursor: pointer; color: #dc2626;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    const formActions = document.querySelector(".form-actions");
+    if (formActions) {
+        formActions.insertAdjacentElement("afterend", errorDiv);
+    } else {
+        const form = document.getElementById("createAdminForm");
+        if (form) form.appendChild(errorDiv);
     }
-  }, 5000);
-}
-
-// ================= CLEAR FORM MESSAGES =================
-function clearFormError() {
-  const existingError = document.querySelector(".form-error-message");
-  if (existingError) {
-    existingError.remove();
-  }
-}
-
-function clearFormSuccess() {
-  const existingSuccess = document.querySelector(".form-success-message");
-  if (existingSuccess) {
-    existingSuccess.remove();
-  }
+    
+    const closeBtn = errorDiv.querySelector(".close-error");
+    if (closeBtn) {
+        closeBtn.onclick = () => errorDiv.remove();
+    }
+    
+    setTimeout(() => {
+        if (errorDiv && errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 5000);
 }
 
 function clearFormMessages() {
-  clearFormError();
-  clearFormSuccess();
+    const existingError = document.querySelector(".form-error-message");
+    if (existingError) existingError.remove();
+    
+    const existingSuccess = document.querySelector(".form-success-message");
+    if (existingSuccess) existingSuccess.remove();
 }
 
-// ==================== LOGOUT MODAL ====================
-const logoutBtn = document.getElementById("logoutBtn");
-const logoutModal = document.getElementById("logoutModal");
-const logoutCloseBtn = logoutModal ? logoutModal.querySelector(".close-btn") : null;
-const cancelLogout = document.getElementById("cancelLogout");
-const confirmLogout = document.getElementById("confirmLogout");
 
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    logoutModal.style.display = "block";
-  });
-}
-
-if (logoutCloseBtn) {
-  logoutCloseBtn.addEventListener("click", () => {
-    logoutModal.style.display = "none";
-  });
-}
-
-if (cancelLogout) {
-  cancelLogout.addEventListener("click", () => {
-    logoutModal.style.display = "none";
-  });
-}
-
-// UPDATED LOGOUT HANDLER - Use SessionManager
-if (confirmLogout) {
-  confirmLogout.addEventListener("click", () => {
-    if (window.SessionManager) {
-      window.SessionManager.logout('You have been logged out successfully.');
-    } else {
-      // Fallback logout
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.replace("/");
-    }
-  });
-}
-
-window.addEventListener("click", (e) => {
-  if (e.target === logoutModal) {
-    logoutModal.style.display = "none";
-  }
-});
 
 // ================= DELETE MODAL =================
 let adminToDelete = null;
@@ -290,75 +299,141 @@ const confirmDelete = document.getElementById("confirmDeleteAdmin");
 const closeBtn = deleteModal ? deleteModal.querySelector(".close-btn") : null;
 
 function openDeleteModal(adminId, username) {
-  adminToDelete = adminId;
-  adminToDeleteUsername = username;
-  adminToDeleteId = adminId;
-  deleteText.innerText = `Delete admin "${username}" (${adminId}) ?`;
-  deleteModal.style.display = "block";
+    adminToDelete = adminId;
+    adminToDeleteUsername = username;
+    adminToDeleteId = adminId;
+    if (deleteText) deleteText.innerText = `Delete admin "${username}" (${adminId}) ?`;
+    if (deleteModal) {
+        // ✅ I-CENTER ANG MODAL - ITO ANG BAGO
+        deleteModal.style.display = "flex";
+        deleteModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 function closeDeleteModal() {
-  deleteModal.style.display = "none";
-  adminToDelete = null;
-  adminToDeleteUsername = null;
-  adminToDeleteId = null;
+    if (deleteModal) {
+        deleteModal.style.display = "none";
+        deleteModal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    adminToDelete = null;
+    adminToDeleteUsername = null;
+    adminToDeleteId = null;
 }
 
 if (cancelDelete) cancelDelete.onclick = closeDeleteModal;
 if (closeBtn) closeBtn.onclick = closeDeleteModal;
 
+// ================= DELETE MODAL =================
 if (confirmDelete) {
-  confirmDelete.onclick = async () => {
-    if (!adminToDelete) return;
-    try {
-      const res = await fetch(`/api/superadmin/admins/${adminToDelete}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        displayTableMessage(`Admin "${adminToDeleteUsername}" (${adminToDeleteId}) deleted successfully!`);
-      } else {
-        const data = await res.json();
-        displayTableMessage(data.error || "Failed to delete admin", true);
-      }
-    } catch (error) {
-      displayTableMessage("Network error. Please try again.", true);
-    }
+    confirmDelete.onclick = async () => {
+        if (!adminToDelete) return;
+        try {
+            const res = await fetch(`/api/superadmin/admins/${adminToDelete}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                showToast(`Admin "${adminToDeleteUsername}" (${adminToDeleteId}) deleted successfully!`, 'success');
+            } else {
+                const data = await res.json();
+                showToast(data.error || "Failed to delete admin", 'error');
+            }
+        } catch (error) {
+            showToast("Network error. Please try again.", 'error');
+        }
 
-    // Clear cache and refresh
-    sessionStorage.removeItem("adminsCache");
-    await loadAdmins(true);
-    closeDeleteModal();
-  };
+        sessionStorage.removeItem("adminsCache");
+        await loadAdmins(true);
+        closeDeleteModal();
+    };
 }
 
-// ================= PROFILE =================
+// ==================== PROFILE DROPDOWN ====================
 const profileBtn = document.getElementById("profileBtn");
 const profileMenu = document.getElementById("profileMenu");
 
 if (profileBtn && profileMenu) {
-  profileBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    profileMenu.classList.toggle("show");
-  });
-
-  window.addEventListener("click", (e) => {
-    if (!profileBtn.contains(e.target)) {
-      profileMenu.classList.remove("show");
-    }
-  });
+    profileBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        profileMenu.classList.toggle("show");
+        profileBtn.classList.toggle("active");
+    });
+    window.addEventListener("click", function(e) {
+        if (!profileBtn.contains(e.target)) {
+            profileMenu.classList.remove("show");
+            profileBtn.classList.remove("active");
+        }
+    });
 }
 
 async function loadProfile() {
-  try {
-    const res = await fetch("/api/superadmin/profile");
-    const profile = await res.json();
-    const profileNameSpan = document.getElementById("profileName");
-    if (profileNameSpan) profileNameSpan.textContent = profile.username || "Profile";
-  } catch (err) {
-    console.error(err);
-  }
+    try {
+        const tabId = getTabId();
+        const res = await fetch(`/api/superadmin/profile?tab_id=${tabId}`);
+        const profile = await res.json();
+        const profileNameSpan = document.getElementById("profileName");
+        if (profileNameSpan) profileNameSpan.textContent = profile.name || profile.username || "";
+    } catch (err) { 
+        console.error(err); 
+    }
 }
 loadProfile();
+
+// ==================== LOGOUT MODAL ====================
+const logoutBtn = document.getElementById("logoutBtn");
+const logoutModal = document.getElementById("logoutModal");
+
+if (logoutBtn && logoutModal) {
+    // Open
+    logoutBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        logoutModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    });
+    
+    // Close - X button
+    const closeBtnLogout = document.getElementById("closeLogoutModal");
+    if (closeBtnLogout) {
+        closeBtnLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    // Close - Cancel button
+    const cancelLogout = document.getElementById("cancelLogout");
+    if (cancelLogout) {
+        cancelLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    // Confirm logout
+    const confirmLogout = document.getElementById("confirmLogout");
+    if (confirmLogout) {
+        confirmLogout.addEventListener("click", function() {
+            const tabId = getTabId();
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+
+            sessionStorage.clear();
+            window.location.replace("/");
+        });
+    }
+    
+    // Close on outside click
+    window.addEventListener("click", function(e) {
+        if (e.target === logoutModal) {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
+}
 
 // ================= STATUS MODAL =================
 let selectedAdminId = null;
@@ -366,54 +441,67 @@ let selectedAdminUsername = null;
 let newStatus = null;
 
 function openStatusModal(adminId, username, currentStatus) {
-  selectedAdminId = adminId;
-  selectedAdminUsername = username;
-  newStatus = currentStatus === "Active" ? "Deactivated" : "Active";
+    selectedAdminId = adminId;
+    selectedAdminUsername = username;
+    newStatus = currentStatus === "Active" ? "Deactivated" : "Active";
 
-  const modalTitle = document.getElementById("statusModalTitle");
-  const modalText = document.getElementById("statusModalText");
-  
-  if (modalTitle) modalTitle.innerText = `Confirm ${newStatus}`;
-  if (modalText) modalText.innerText = `Are you sure you want to ${newStatus.toLowerCase()} "${username}" (${adminId})?`;
+    const modalTitle = document.getElementById("statusModalTitle");
+    const modalText = document.getElementById("statusModalText");
+    
+    if (modalTitle) modalTitle.innerText = `Confirm ${newStatus}`;
+    if (modalText) modalText.innerText = `Are you sure you want to ${newStatus.toLowerCase()} "${username}" (${adminId})?`;
 
-  const statusModal = document.getElementById("statusModal");
-  if (statusModal) statusModal.style.display = "block";
+    const statusModal = document.getElementById("statusModal");
+    if (statusModal) {
+        // ✅ I-CENTER ANG MODAL
+        statusModal.style.display = "flex";
+        statusModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
 }
 
+function closeStatusModal() {
+    const statusModal = document.getElementById("statusModal");
+    if (statusModal) {
+        statusModal.style.display = "none";
+        statusModal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    selectedAdminId = null;
+    selectedAdminUsername = null;
+    newStatus = null;
+}
+
+// ================= STATUS MODAL =================
 const confirmStatusBtn = document.getElementById("confirmStatus");
 if (confirmStatusBtn) {
-  confirmStatusBtn.onclick = async () => {
-    if (!selectedAdminId) return;
-    try {
-      const res = await fetch(`/api/superadmin/admins/${selectedAdminId}/status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        displayTableMessage(`Admin "${selectedAdminUsername}" (${selectedAdminId}) ${newStatus.toLowerCase()} successfully!`);
-      } else {
-        const data = await res.json();
-        displayTableMessage(data.error || "Failed to update status", true);
-      }
-    } catch (error) {
-      displayTableMessage("Network error. Please try again.", true);
-    }
+    confirmStatusBtn.onclick = async () => {
+        if (!selectedAdminId) return;
+        try {
+            const res = await fetch(`/api/superadmin/admins/${selectedAdminId}/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (res.ok) {
+                showToast(`Admin "${selectedAdminUsername}" (${selectedAdminId}) ${newStatus.toLowerCase()} successfully!`, 'success');
+            } else {
+                const data = await res.json();
+                showToast(data.error || "Failed to update status", 'error');
+            }
+        } catch (error) {
+            showToast("Network error. Please try again.", 'error');
+        }
 
-    // Clear cache and refresh
-    sessionStorage.removeItem("adminsCache");
-    loadAdmins(true);
-    const statusModal = document.getElementById("statusModal");
-    if (statusModal) statusModal.style.display = "none";
-  };
+        sessionStorage.removeItem("adminsCache");
+        loadAdmins(true);
+        closeStatusModal();
+    };
 }
 
 const cancelStatusBtn = document.getElementById("cancelStatus");
 if (cancelStatusBtn) {
-  cancelStatusBtn.onclick = () => {
-    const statusModal = document.getElementById("statusModal");
-    if (statusModal) statusModal.style.display = "none";
-  };
+    cancelStatusBtn.onclick = closeStatusModal; // ✅ GAMITIN ANG CLOSE FUNCTION
 }
 
 // ================= VIEW INFO MODAL =================
@@ -448,7 +536,7 @@ function openViewInfoModal(adminId) {
                 viewInfoModal.style.display = "flex";
             }
         })
-        .catch(() => displayTableMessage("Failed to load admin info", true));
+        .catch(() => showToast("Failed to load admin info", 'error'));
 }
 
 function closeInfoModal() {
@@ -458,19 +546,16 @@ function closeInfoModal() {
     }
 }
 
-// Close button events
 if (closeInfoModalBtn) {
     closeInfoModalBtn.onclick = closeInfoModal;
 }
 
-// Close when clicking outside
 window.addEventListener("click", (e) => {
     if (e.target === viewInfoModal) {
         closeInfoModal();
     }
 });
 
-// Close with Escape key
 document.addEventListener("keydown", function(event) {
     if (event.key === "Escape" && viewInfoModal && viewInfoModal.classList.contains("show")) {
         closeInfoModal();
@@ -492,15 +577,18 @@ async function loadAreasForSelect() {
         }
         
         const areas = await response.json();
+        const adminsResponse = await fetch("/api/superadmin/admins");
+        const admins = adminsResponse.ok ? await adminsResponse.json() : [];
+        const assignedAreas = new Set((admins || []).map(admin => admin.area).filter(Boolean));
         
-        // Extract unique cities from areas
-        const uniqueCities = [...new Set(areas.map(area => area.city))];
-        uniqueCities.sort();
+        const uniqueCities = [...new Set(areas.map(area => area.city))]
+            .filter(city => !assignedAreas.has(city))
+            .sort();
         
-        areaSelect.innerHTML = '<option value="">Select Area</option>';
+        areaSelect.innerHTML = '<option value="" disabled selected>Select Area</option>';
         
         if (uniqueCities.length === 0) {
-            areaSelect.innerHTML = '<option value="">No areas available. Please add areas first.</option>';
+            areaSelect.innerHTML = '<option value="">All available areas already have an administrator.</option>';
             areaSelect.disabled = true;
             return;
         }
@@ -513,248 +601,306 @@ async function loadAreasForSelect() {
         });
         
         areaSelect.disabled = false;
-        console.log(`Loaded ${uniqueCities.length} cities from MySQL areas`);
+        console.log(`Loaded ${uniqueCities.length} available cities from MySQL areas`);
         
     } catch (error) {
         console.error("Error loading areas:", error);
         areaSelect.innerHTML = '<option value="">Error loading areas. Please refresh.</option>';
         areaSelect.disabled = true;
-        displayFormError("Failed to load areas. Please refresh the page.");
+        showToast("Failed to load areas. Please refresh the page.", 'error');
     }
 }
 
 // ================= SEARCH FUNCTION =================
 function setupSearchFilter() {
-  const searchInput = document.getElementById("searchInput");
-  if (!searchInput) return;
-  
-  function filterAdmins() {
-    const searchTerm = searchInput.value.toLowerCase().trim();
+    const searchInput = document.getElementById("searchInput");
+    if (!searchInput) return;
     
-    if (!searchTerm) {
-      renderAdmins(allAdmins);
-      return;
+    function filterAdmins() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        if (!searchTerm) {
+            renderAdmins(allAdmins);
+            return;
+        }
+        
+        const filtered = allAdmins.filter(admin => 
+            (admin.admin_id && admin.admin_id.toLowerCase().includes(searchTerm)) ||
+            (admin.username && admin.username.toLowerCase().includes(searchTerm)) ||
+            (admin.area && admin.area.toLowerCase().includes(searchTerm))
+        );
+        
+        renderAdmins(filtered);
     }
     
-    const filtered = allAdmins.filter(admin => 
-      (admin.admin_id && admin.admin_id.toLowerCase().includes(searchTerm)) ||
-      (admin.username && admin.username.toLowerCase().includes(searchTerm)) ||
-      (admin.area && admin.area.toLowerCase().includes(searchTerm))
-    );
-    
-    renderAdmins(filtered);
-  }
-  
-  searchInput.addEventListener("input", filterAdmins);
+    searchInput.addEventListener("input", filterAdmins);
 }
 
 // ================= RENDER ADMINS =================
 function renderAdmins(admins) {
-  const tbody = document.querySelector("#adminsTable tbody");
-  if (!tbody) return;
-  
-  tbody.innerHTML = "";
+    const tbody = document.querySelector("#adminsTable tbody");
+    if (!tbody) return;
+    
+    tbody.innerHTML = "";
 
-  if (!admins || admins.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" style="text-align:center; padding:40px;">
-          <i class="fas fa-user-slash" style="font-size:48px; color:#cbd5e1;"></i>
-          <p style="margin-top:12px; color:#64748b;">No administrators found</p>
-         </td>
-       </tr>
-    `;
-    return;
-  }
+    if (!admins || admins.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align:center; padding:40px;">
+                    <i class="fas fa-user-slash" style="font-size:48px; color:#cbd5e1;"></i>
+                    <p style="margin-top:12px; color:#64748b;">No administrators found</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
 
-  admins.forEach((admin) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-       <td><strong>${admin.admin_id}</strong><br><span style="font-size: 0.7rem; color: #666;">${admin.username}</span></td>
-       <td>${admin.area}</td>
-      <td style="text-align: center;">
-        <span style="
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.7rem;
-            background: ${admin.status === "Active" ? "#e8f5e9" : "#ffebee"};
-            color: ${admin.status === "Active" ? "#27ae60" : "#c0392b"};
-            border: 1px solid ${admin.status === "Active" ? "#c8e6c9" : "#ffcdd2"};
-        ">
-          ${admin.status}
-        </span>
-        </td>
-      <td style="text-align: center;">
-        <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
-          <button class="statusBtn"
-              style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
-              data-id="${admin.admin_id}"
-              data-username="${admin.username}"
-              data-status="${admin.status}">
-              ${admin.status === "Active" ? "Deactivate" : "Activate"}
-          </button>
+    admins.forEach((admin) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${admin.admin_id}</strong><br><span style="font-size: 0.7rem; color: #666;">${admin.username}</span></td>
+            <td>${admin.area}</td>
+            <td style="text-align: center;">
+                <span style="
+                    display: inline-block;
+                    padding: 4px 14px;
+                    border-radius: 40px;
+                    font-weight: 600;
+                    font-size: 0.7rem;
+                    background: ${admin.status === "Active" ? "#e8f5e9" : "#ffebee"};
+                    color: ${admin.status === "Active" ? "#27ae60" : "#c0392b"};
+                    border: 1px solid ${admin.status === "Active" ? "#c8e6c9" : "#ffcdd2"};
+                ">
+                    ${admin.status}
+                </span>
+            </td>
+            <td style="text-align: center;">
+                <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <button class="statusBtn" 
+                        style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
+                        data-id="${admin.admin_id}" 
+                        data-username="${admin.username}" 
+                        data-status="${admin.status}"> 
+                        <i class="fas fa-toggle-off"></i> ${admin.status === "Active" ? "Deactivate" : "Activate"}
+                    </button>
 
-          <button class="viewBtn"
-              style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
-              data-id="${admin.admin_id}">
-              View
-          </button>
+                    <button class="viewBtn"
+                        style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
+                        data-id="${admin.admin_id}">
+                         <i class="fas fa-eye"></i> View
+                    </button>
 
-          <button class="deleteBtn"
-              style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
-              data-id="${admin.admin_id}"
-              data-username="${admin.username}">
-              Delete
-          </button>
-        </div>
-        </td>
-    `;
-    tbody.appendChild(tr);
-  });
+                    <button class="deleteBtn"
+                        style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
+                        data-id="${admin.admin_id}"
+                        data-username="${admin.username}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 
-  // Attach events
-  document.querySelectorAll(".deleteBtn").forEach((btn) => {
-    btn.onclick = () => openDeleteModal(btn.dataset.id, btn.dataset.username);
-  });
-  document.querySelectorAll(".statusBtn").forEach((btn) => {
-    btn.onclick = () => openStatusModal(btn.dataset.id, btn.dataset.username, btn.dataset.status);
-  });
-  document.querySelectorAll(".viewBtn").forEach((btn) => {
-    btn.onclick = () => openViewInfoModal(btn.dataset.id);
-  });
+    // Attach events
+    document.querySelectorAll(".deleteBtn").forEach((btn) => {
+        btn.onclick = () => openDeleteModal(btn.dataset.id, btn.dataset.username);
+    });
+    document.querySelectorAll(".statusBtn").forEach((btn) => {
+        btn.onclick = () => openStatusModal(btn.dataset.id, btn.dataset.username, btn.dataset.status);
+    });
+    document.querySelectorAll(".viewBtn").forEach((btn) => {
+        btn.onclick = () => openViewInfoModal(btn.dataset.id);
+    });
 }
 
 // ================= LOAD ADMINS =================
 async function loadAdmins(forceRefresh = false) {
-  const tbody = document.querySelector("#adminsTable tbody");
-  if (!tbody) return;
+    const tbody = document.querySelector("#adminsTable tbody");
+    if (!tbody) return;
 
-  const cached = JSON.parse(sessionStorage.getItem("adminsCache") || "null");
-  if (cached && !forceRefresh) {
-    allAdmins = cached;
-    renderAdmins(cached);
-    return;
-  }
+    const cached = JSON.parse(sessionStorage.getItem("adminsCache") || "null");
+    if (cached && !forceRefresh) {
+        allAdmins = cached;
+        renderAdmins(cached);
+        return;
+    }
 
-  tbody.innerHTML = `
-     <tr>
-      <td colspan="4" style="text-align:center;padding:40px;">
-        <div class="spinner"></div>
-        <p style="margin-top:12px;">Loading admins...</p>
-        </td>
-      </tr>
-  `;
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="4" style="text-align:center;padding:40px;">
+                <div class="spinner"></div>
+                <p style="margin-top:12px;">Loading admins...</p>
+            </td>
+        </tr>
+    `;
 
-  try {
-    const res = await fetch("/api/superadmin/admins");
-    const admins = await res.json();
+    try {
+        const res = await fetch("/api/superadmin/admins");
+        const admins = await res.json();
 
-    allAdmins = admins;
-    sessionStorage.setItem("adminsCache", JSON.stringify(admins));
-    renderAdmins(admins);
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:#dc3545;">Failed to load admins</td></tr>`;
-    console.error(err);
-  }
+        allAdmins = admins;
+        sessionStorage.setItem("adminsCache", JSON.stringify(admins));
+        renderAdmins(admins);
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:#dc3545;">Failed to load admins</td></tr>`;
+        console.error(err);
+    }
 }
 
 // ================= CREATE ADMIN =================
+// ================= CREATE ADMIN =================
 const createAdminForm = document.getElementById("createAdminForm");
 if (createAdminForm) {
-  createAdminForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    
-    clearFormMessages();
-    
-    const username = document.getElementById("adminUsername").value;
-    const email = document.getElementById("adminEmail").value;
-    const area = document.getElementById("adminArea").value;
+    createAdminForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById("adminUsername").value.trim();
+        const email = document.getElementById("adminEmail").value.trim();
+        const area = document.getElementById("adminArea").value;
 
-    if (!username || !email || !area) {
-      displayFormError("All fields are required. Please fill in all fields.");
-      return;
-    }
+        if (!username || !email || !area) {
+            showToast("All fields are required. Please fill in all fields.", 'error');
+            return;
+        }
 
-    const usernameRegex = /^[a-zA-Z0-9_-]{4,20}$/;
-    if (!usernameRegex.test(username)) {
-      displayFormError("Username must be 4-20 characters and can only contain letters, numbers, underscores, and hyphens.");
-      return;
-    }
+        const usernameRegex = /^[a-zA-Z0-9_-]{4,20}$/;
+        if (!usernameRegex.test(username)) {
+            showToast("Username must be 4-20 characters and can only contain letters, numbers, underscores, and hyphens.", 'error');
+            return;
+        }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      displayFormError("Please enter a valid email address.");
-      return;
-    }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showToast("Please enter a valid email address.", 'error');
+            return;
+        }
 
-    const submitBtn = createAdminForm.querySelector(".btn-primary");
-    const resetBtn = createAdminForm.querySelector(".btn-reset");
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    resetBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+        const submitBtn = createAdminForm.querySelector(".btn-primary");
+        const resetBtn = createAdminForm.querySelector(".btn-reset");
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        resetBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
 
-    try {
-      const res = await fetch("/api/superadmin/admins", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, area }),
-      });
+        try {
+            const res = await fetch("/api/superadmin/admins", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, area }),
+            });
 
-      const data = await res.json();
+            const data = await res.json();
 
-      if (res.ok) {
-        displayFormSuccess(data.message || "Admin created successfully!");
-        createAdminForm.reset();
-
-        sessionStorage.removeItem("adminsCache");
-        await loadAdmins(true);
-      } else {
-        displayFormError(data.error || "Failed to create admin. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error creating admin:", error);
-      displayFormError("Network error. Please check your connection and try again.");
-    } finally {
-      submitBtn.disabled = false;
-      resetBtn.disabled = false;
-      submitBtn.innerHTML = originalText;
-    }
-  });
+            if (res.ok) {
+                showToast(data.message || "Admin created successfully!", 'success');
+                createAdminForm.reset();
+                sessionStorage.removeItem("adminsCache");
+                await loadAdmins(true);
+            } else {
+                showToast(data.error || "Failed to create admin. Please try again.", 'error');
+            }
+        } catch (error) {
+            console.error("Error creating admin:", error);
+            showToast("Network error. Please check your connection and try again.", 'error');
+        } finally {
+            submitBtn.disabled = false;
+            resetBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
 }
 
-// ================= INITIAL LOAD =================
-loadAdmins();
-setupSearchFilter();
-loadAreasForSelect();
-
-// Add CSS animation for messages
+// ================= CSS ANIMATIONS =================
 const style = document.createElement('style');
 style.textContent = `
-  @keyframes slideInDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    
+    .form-error-message,
+    .form-success-message,
+    .table-message {
+        animation: slideInDown 0.3s ease;
     }
-  }
-  
-  .form-error-message,
-  .form-success-message,
-  .table-message {
-    animation: slideInDown 0.3s ease;
-  }
 `;
 document.head.appendChild(style);
 
-// Initialize notification system if available
-document.addEventListener("DOMContentLoaded", () => {
+// ================= KEYBOARD SHORTCUT: ESC =================
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+        // Close logout modal
+        if (logoutModal && logoutModal.style.display === "block") {
+            logoutModal.style.display = "none";
+        }
+        
+        // Close profile dropdown
+        if (profileMenu && profileMenu.classList.contains("show")) {
+            profileMenu.classList.remove("show");
+            if (profileBtn) profileBtn.classList.remove("active");
+        }
+        
+        // Close notification menu
+        const notificationMenu = document.getElementById('notificationMenu');
+        if (notificationMenu && notificationMenu.classList.contains("show")) {
+            notificationMenu.classList.remove("show");
+        }
+        
+        // Close sidebar on mobile
+        if (window.innerWidth < 768 && sidebar && sidebar.classList.contains("active")) {
+            sidebar.classList.remove("active");
+            if (hamburger) hamburger.classList.remove("active");
+            if (sidebarOverlay) sidebarOverlay.classList.remove("active");
+            document.body.style.overflow = '';
+        }
+        
+        // Close info modal
+        if (viewInfoModal && viewInfoModal.classList.contains("show")) {
+            closeInfoModal();
+        }
+        
+        // Close delete modal
+        if (deleteModal && deleteModal.style.display === "block") {
+            closeDeleteModal();
+        }
+        
+        // Close status modal
+        const statusModal = document.getElementById("statusModal");
+        if (statusModal && statusModal.style.display === "block") {
+            statusModal.style.display = "none";
+        }
+    }
+});
+
+// ================= INITIALIZATION =================
+document.addEventListener("DOMContentLoaded", async () => {
+    const isValid = await checkSession();
+    if (!isValid) return;
+
+    await loadAdmins();
+    setupSearchFilter();
+    await loadAreasForSelect();
+    
+    // Initialize notification system if available
     if (window.NotificationSystem) {
         window.NotificationSystem.init();
+    }
+    
+    console.log('Super Admin - Admins page loaded successfully!');
+});
+
+// Also load when window is fully loaded (fallback)
+window.addEventListener("load", function() {
+    // If admins table is empty, try loading again
+    const tbody = document.querySelector("#adminsTable tbody");
+    if (tbody && tbody.children.length === 0) {
+        loadAdmins();
     }
 });

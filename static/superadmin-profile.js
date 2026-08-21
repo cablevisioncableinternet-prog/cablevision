@@ -1,10 +1,31 @@
-// ==================== SESSION MANAGEMENT ====================
-if (window.SessionManager) {
-    window.SessionManager.init();
-} else {
-    console.error("SessionManager not loaded!");
-    if (!localStorage.getItem('userType') || !sessionStorage.getItem('sessionToken')) {
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
+(function() {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
         window.location.replace('/');
+        throw new Error('No session');
+    }
+})();
+
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
     }
 }
 
@@ -12,6 +33,7 @@ if (window.SessionManager) {
 const nameInput = document.getElementById("name");
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const currentPasswordInput = document.getElementById("currentPassword");
 const confirmPasswordInput = document.getElementById("confirmPassword");
 const editBtn = document.getElementById("editBtn");
 const updateBtn = document.getElementById("updateBtn");
@@ -27,6 +49,7 @@ const statusEl = document.getElementById("status");
 const areaText = document.getElementById("areaText");
 const usernameDisplayEl = document.getElementById("usernameDisplay");
 const passwordStrength = document.getElementById("passwordStrength");
+const currentPasswordError = document.getElementById("currentPasswordError");
 const confirmPasswordError = document.getElementById("confirmPasswordError");
 
 let originalName = "";
@@ -35,6 +58,7 @@ let originalEmail = "";
 // Initially disable fields
 if (nameInput) nameInput.disabled = true;
 if (emailInput) emailInput.disabled = true;
+if (currentPasswordInput) currentPasswordInput.disabled = true;
 if (passwordInput) passwordInput.disabled = true;
 if (confirmPasswordInput) confirmPasswordInput.disabled = true;
 
@@ -143,19 +167,59 @@ function validatePasswordOnly(password) {
     if (letters && letters === letters.toUpperCase()) {
         return { isValid: false, message: "Password must contain at least one lowercase letter" };
     }
-    if (letters && letters === letters.toLowerCase()) {
-        return { isValid: false, message: "Password must contain at least one uppercase letter" };
-    }
+
     if (/^\d+$/.test(password)) {
         return { isValid: false, message: "Password cannot be all numbers" };
-    }
-    if (!/[0-9]/.test(password)) {
-        return { isValid: false, message: "Password must contain at least one number" };
     }
     return { isValid: true, message: "" };
 }
 
 // ==================== VALIDATE CONFIRM PASSWORD FIELD (NEW) ====================
+function validateCurrentPassword() {
+    if (!currentPasswordInput || currentPasswordInput.disabled) return true;
+
+    const newPassword = passwordInput ? passwordInput.value.trim() : "";
+    const currentPassword = currentPasswordInput.value.trim();
+
+    // If neither entered → OK, user not changing password
+    if (!newPassword && !currentPassword) {
+        if (currentPasswordError) {
+            currentPasswordError.classList.remove("show");
+            currentPasswordError.textContent = "";
+        }
+        currentPasswordInput.classList.remove("error-input");
+        return true;
+    }
+
+    // If only current password entered (no new password) → ERROR
+    if (currentPassword && !newPassword) {
+        if (currentPasswordError) {
+            currentPasswordError.textContent = "Please enter a new password when providing your current password";
+            currentPasswordError.classList.add("show");
+        }
+        currentPasswordInput.classList.add("error-input");
+        return false;
+    }
+
+    // If only new password entered (no current password) → ERROR
+    if (newPassword && !currentPassword) {
+        if (currentPasswordError) {
+            currentPasswordError.textContent = "Current password is required to change your password";
+            currentPasswordError.classList.add("show");
+        }
+        currentPasswordInput.classList.add("error-input");
+        return false;
+    }
+
+    // Both entered → OK
+    if (currentPasswordError) {
+        currentPasswordError.classList.remove("show");
+        currentPasswordError.textContent = "";
+    }
+    currentPasswordInput.classList.remove("error-input");
+    return true;
+}
+
 function validateConfirmPassword() {
     if (!confirmPasswordInput || confirmPasswordInput.disabled) return true;
     
@@ -386,62 +450,74 @@ function clearFieldErrors() {
         emailError.classList.remove("show");
         emailError.textContent = "";
     }
+    if (currentPasswordError) {
+        currentPasswordError.classList.remove("show");
+        currentPasswordError.textContent = "";
+    }
     if (confirmPasswordError) {
         confirmPasswordError.classList.remove("show");
         confirmPasswordError.textContent = "";
     }
     if (nameInput) nameInput.classList.remove("error-input");
     if (emailInput) emailInput.classList.remove("error-input");
+    if (currentPasswordInput) currentPasswordInput.classList.remove("error-input");
     if (confirmPasswordInput) confirmPasswordInput.classList.remove("error-input");
 }
 
-// ==================== EDIT MODE ====================
-if (editBtn) {
-    editBtn.addEventListener("click", () => {
-        if (nameInput) nameInput.disabled = false;
-        if (emailInput) emailInput.disabled = false;
-        if (passwordInput) passwordInput.disabled = false;
-        if (confirmPasswordInput) confirmPasswordInput.disabled = false;
-        
-        originalName = nameInput ? nameInput.value : "";
-        originalEmail = emailInput ? emailInput.value : "";
-        
-        editBtn.style.display = "none";
-        if (updateBtn) updateBtn.style.display = "inline-flex";
-        if (cancelBtn) cancelBtn.style.display = "inline-flex";
-        
-        clearFieldErrors();
-        
-        if (passwordInput) passwordInput.value = "";
-        if (confirmPasswordInput) confirmPasswordInput.value = "";
-        if (passwordStrength) passwordStrength.style.display = "none";
-        
-        if (nameInput) nameInput.focus();
-    });
+function bindProfileControls() {
+    if (editBtn) {
+        editBtn.addEventListener("click", () => {
+            if (nameInput) nameInput.disabled = false;
+            if (emailInput) emailInput.disabled = false;
+            if (currentPasswordInput) currentPasswordInput.disabled = false;
+            if (passwordInput) passwordInput.disabled = false;
+            if (confirmPasswordInput) confirmPasswordInput.disabled = false;
+            
+            originalName = nameInput ? nameInput.value : "";
+            originalEmail = emailInput ? emailInput.value : "";
+            
+            editBtn.style.display = "none";
+            if (updateBtn) updateBtn.style.display = "inline-flex";
+            if (cancelBtn) cancelBtn.style.display = "inline-flex";
+            
+            clearFieldErrors();
+            
+            if (currentPasswordInput) currentPasswordInput.value = "";
+            if (passwordInput) passwordInput.value = "";
+            if (confirmPasswordInput) confirmPasswordInput.value = "";
+            if (passwordStrength) passwordStrength.style.display = "none";
+            
+            if (nameInput) nameInput.focus();
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            if (nameInput) nameInput.value = originalName;
+            if (emailInput) emailInput.value = originalEmail;
+            
+            if (nameInput) nameInput.disabled = true;
+            if (emailInput) emailInput.disabled = true;
+            if (currentPasswordInput) currentPasswordInput.disabled = true;
+            if (passwordInput) passwordInput.disabled = true;
+            if (confirmPasswordInput) confirmPasswordInput.disabled = true;
+            
+            if (currentPasswordInput) currentPasswordInput.value = "";
+            if (passwordInput) passwordInput.value = "";
+            if (confirmPasswordInput) confirmPasswordInput.value = "";
+            if (passwordStrength) passwordStrength.style.display = "none";
+            
+            if (editBtn) editBtn.style.display = "inline-flex";
+            if (updateBtn) updateBtn.style.display = "none";
+            if (cancelBtn) cancelBtn.style.display = "none";
+            
+            clearFieldErrors();
+        });
+    }
 }
 
-// ==================== CANCEL EDIT ====================
-if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-        if (nameInput) nameInput.value = originalName;
-        if (emailInput) emailInput.value = originalEmail;
-        
-        if (nameInput) nameInput.disabled = true;
-        if (emailInput) emailInput.disabled = true;
-        if (passwordInput) passwordInput.disabled = true;
-        if (confirmPasswordInput) confirmPasswordInput.disabled = true;
-        
-        if (passwordInput) passwordInput.value = "";
-        if (confirmPasswordInput) confirmPasswordInput.value = "";
-        if (passwordStrength) passwordStrength.style.display = "none";
-        
-        if (editBtn) editBtn.style.display = "inline-flex";
-        if (updateBtn) updateBtn.style.display = "none";
-        if (cancelBtn) cancelBtn.style.display = "none";
-        
-        clearFieldErrors();
-    });
-}
+// ==================== EDIT MODE ====================
+bindProfileControls();
 
 // ==================== SHOW CONFIRM MODAL ====================
 function showConfirmModal(onConfirm) {
@@ -510,9 +586,16 @@ function validateForm() {
     // Validate password if entered
     const password = passwordInput ? passwordInput.value : "";
     const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value : "";
+    const currentPassword = currentPasswordInput ? currentPasswordInput.value : "";
     
-    if (password || confirmPassword) {
-        // Only validate password if it has value
+    // Check if ANY password-related field has input
+    if (password || confirmPassword || currentPassword) {
+        // Must validate current password in all cases
+        if (!validateCurrentPassword()) {
+            isValid = false;
+        }
+        
+        // If new password entered, validate it
         if (password) {
             const passwordValidation = validatePasswordOnly(password);
             if (!passwordValidation.isValid) {
@@ -521,7 +604,7 @@ function validateForm() {
             }
         }
         
-        // Validate confirm password (error appears below field, not toast)
+        // Validate confirm password
         const isConfirmValid = validateConfirmPassword();
         if (!isConfirmValid) {
             isValid = false;
@@ -531,7 +614,7 @@ function validateForm() {
     return isValid;
 }
 
-// ==================== UPDATE PROFILE (modified) ====================
+// ==================== UPDATE PROFILE ====================
 async function updateProfile() {
     if (!validateForm()) return;
     
@@ -543,15 +626,21 @@ async function updateProfile() {
     const formattedName = formatName(nameInput.value);
     nameInput.value = formattedName;
     
+    // ✅ KUNIN ANG TAB_ID
+    const tabId = getTabId();
+    
     const updatedData = {
         name: nameInput ? nameInput.value.trim() : "",
         email: emailInput ? emailInput.value.trim().toLowerCase() : "",
-        area: areaText ? areaText.textContent : "Sta. Cruz"
+        area: areaText ? areaText.textContent : "Sta. Cruz",
+        tab_id: tabId  // ✅ IDAGDAG ANG TAB_ID
     };
     
     const password = passwordInput ? passwordInput.value : "";
+    const currentPassword = currentPasswordInput ? currentPasswordInput.value : "";
     if (password) {
         updatedData.password = password;
+        updatedData.current_password = currentPassword;
     }
     
     const originalText = updateBtn ? updateBtn.innerHTML : "";
@@ -561,7 +650,8 @@ async function updateProfile() {
     }
     
     try {
-        const res = await fetch("/api/update-superadmin-profile", {
+        // ✅ ISAMA ANG TAB_ID SA URL
+        const res = await fetch(`/api/update-superadmin-profile?tab_id=${tabId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updatedData)
@@ -573,21 +663,23 @@ async function updateProfile() {
             
             if (nameInput) nameInput.disabled = true;
             if (emailInput) emailInput.disabled = true;
+            if (currentPasswordInput) currentPasswordInput.disabled = true;
             if (passwordInput) passwordInput.disabled = true;
             if (confirmPasswordInput) confirmPasswordInput.disabled = true;
             
+            if (currentPasswordInput) currentPasswordInput.value = "";
             if (passwordInput) passwordInput.value = "";
             if (confirmPasswordInput) confirmPasswordInput.value = "";
             if (passwordStrength) passwordStrength.style.display = "none";
+            if (currentPasswordError) currentPasswordError.classList.remove("show");
             if (confirmPasswordError) confirmPasswordError.classList.remove("show");
             
             if (editBtn) editBtn.style.display = "inline-flex";
             if (updateBtn) updateBtn.style.display = "none";
             if (cancelBtn) cancelBtn.style.display = "none";
             
-            originalName = nameInput ? nameInput.value : "";
-            originalEmail = emailInput ? emailInput.value : "";
             clearFieldErrors();
+            await loadProfile();
             
             if (usernameDisplayEl && nameInput) {
                 usernameDisplayEl.textContent = nameInput.value;
@@ -627,11 +719,20 @@ document.addEventListener("keydown", function(event) {
 // ==================== LOAD PROFILE ON PAGE LOAD ====================
 async function loadProfile() {
     try {
-        const res = await fetch("/api/superadmin/profile");
+        const tabId = getTabId();
+        const res = await fetch(`/api/superadmin/profile?tab_id=${tabId}`);
         const data = await res.json();
         
-        if (nameInput) nameInput.value = data.name || "Super Admin";
-        if (emailInput) emailInput.value = data.email || "";
+        if (nameInput) {
+            nameInput.value = data.name || "Super Admin";
+            nameInput.disabled = true;
+        }
+        if (emailInput) {
+            emailInput.value = data.email || "";
+            emailInput.disabled = true;
+        }
+        if (passwordInput) passwordInput.disabled = true;
+        if (confirmPasswordInput) confirmPasswordInput.disabled = true;
         if (statusEl) statusEl.textContent = data.status || "Active";
         if (areaText) areaText.textContent = data.area || "Sta. Cruz";
         if (usernameDisplayEl) usernameDisplayEl.textContent = data.name || "Super Admin";
@@ -669,15 +770,18 @@ if (logoutBtn && logoutModal) {
         });
     }
 
+    // Confirm logout
     if (confirmLogout) {
-        confirmLogout.addEventListener("click", () => {
-            if (window.SessionManager) {
-                window.SessionManager.logout('You have been logged out successfully.');
-            } else {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.replace("/");
-            }
+        confirmLogout.addEventListener("click", function() {
+            const tabId = getTabId();
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+
+            sessionStorage.clear();
+            window.location.replace("/");
         });
     }
 
@@ -689,10 +793,241 @@ if (logoutBtn && logoutModal) {
 }
 
 // ==================== INITIALIZATION ====================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ SESSION CHECK MUNA
+    const isValid = await checkSession();
+    if (!isValid) return;
+    
     loadProfile();
+    showToastFromUrl();
     
     if (window.NotificationSystem) {
         window.NotificationSystem.init();
     }
+});
+
+// ==================== COPY SECRET KEY ====================
+function copySecret() {
+    const secretElement = document.getElementById('gaSecretText');
+    if (!secretElement) {
+        showToast('No backup key available to copy.', 'error');
+        return;
+    }
+    
+    const secret = secretElement.textContent.trim();
+    if (!secret || secret === 'No secret available') {
+        showToast('No backup key available to copy.', 'error');
+        return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(secret)
+            .then(() => {
+                showToast('Backup key copied to clipboard.', 'success');
+            })
+            .catch(() => {
+                fallbackCopy(secret);
+            });
+        return;
+    }
+    
+    fallbackCopy(secret);
+}
+
+function fallbackCopy(text) {
+    const tempInput = document.createElement('textarea');
+    tempInput.value = text;
+    tempInput.setAttribute('readonly', '');
+    tempInput.style.position = 'fixed';
+    tempInput.style.left = '-9999px';
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    
+    try {
+        document.execCommand('copy');
+        showToast('Backup key copied to clipboard.', 'success');
+    } catch (error) {
+        showToast('Unable to copy backup key automatically.', 'error');
+    } finally {
+        document.body.removeChild(tempInput);
+    }
+}
+
+// ==================== OTP INPUT HANDLERS ====================
+function syncOtpHiddenInput(form) {
+    if (!form) return;
+    const hiddenInput = form.querySelector('#ga_code_hidden');
+    if (!hiddenInput) return;
+    
+    const otpInputs = Array.from(form.querySelectorAll('.ga-otp-input'));
+    hiddenInput.value = otpInputs.map((input) => input.value).join('');
+}
+
+function handleOtpInput(input) {
+    const value = input.value.replace(/\D/g, '').slice(0, 1);
+    input.value = value;
+
+    const form = input.closest('.ga-form');
+    if (!form) return;
+
+    const otpInputs = Array.from(form.querySelectorAll('.ga-otp-input'));
+    const index = Number(input.dataset.index || 0);
+
+    syncOtpHiddenInput(form);
+
+    if (value && index < otpInputs.length - 1) {
+        otpInputs[index + 1].focus();
+    }
+}
+
+function handleOtpKeydown(input, event) {
+    const form = input.closest('.ga-form');
+    if (!form) return;
+
+    const otpInputs = Array.from(form.querySelectorAll('.ga-otp-input'));
+    const index = Number(input.dataset.index || 0);
+
+    if (event.key === 'Backspace' && !input.value && index > 0) {
+        const previousInput = otpInputs[index - 1];
+        previousInput.focus();
+        previousInput.value = '';
+        syncOtpHiddenInput(form);
+    } else if (event.key === 'ArrowLeft' && index > 0) {
+        event.preventDefault();
+        otpInputs[index - 1].focus();
+    } else if (event.key === 'ArrowRight' && index < otpInputs.length - 1) {
+        event.preventDefault();
+        otpInputs[index + 1].focus();
+    }
+}
+
+window.handleOtpInput = handleOtpInput;
+window.handleOtpKeydown = handleOtpKeydown;
+// ==================== TOAST FUNCTION ====================
+function showToast(message, type = 'info') {
+    const LABELS = {
+        success: 'Success',
+        error: 'Error',
+        info: 'Notice',
+        loading: 'Please wait'
+    };
+
+    const ICONS = {
+        success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        info: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        loading: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: toastSpin 1s linear infinite; display:block;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    };
+
+    let toast = document.querySelector('.custom-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        document.body.appendChild(toast);
+
+        if (!document.getElementById('toast-keyframes')) {
+            const s = document.createElement('style');
+            s.id = 'toast-keyframes';
+            s.textContent = `
+                @keyframes toastSpin     { to { transform: rotate(360deg); } }
+                @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+                @keyframes toastLoading  { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+            `;
+            document.head.appendChild(s);
+        }
+    }
+
+    toast.innerHTML = `
+        <div class="custom-toast-body">
+            <span class="custom-toast-icon">${ICONS[type] || ICONS.info}</span>
+            <div class="custom-toast-text">
+                <span class="custom-toast-title">${LABELS[type] || 'Notice'}</span>
+                <span class="custom-toast-message">${message}</span>
+            </div>
+        </div>
+        <div class="custom-toast-progress">
+            <div class="custom-toast-progress-bar"></div>
+        </div>
+    `;
+
+    toast.className = `custom-toast ${type}`;
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    clearTimeout(toast._hideTimer);
+
+    if (type === 'loading') {
+        // Loading stays visible
+    } else {
+        toast._hideTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+}
+
+function showToastFromUrl() {
+    if (typeof URLSearchParams === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const toastType = params.get('toast');
+
+    if (!toastType) return;
+
+    const toastMap = {
+        'ga-enabled': { type: 'success', message: 'Google Authenticator enabled successfully!' },
+        'ga-disabled': { type: 'info', message: 'Google Authenticator disabled.' },
+        'ga-invalid': { type: 'error', message: 'Invalid Google Authenticator code. Please try again.' },
+        'ga-missing': { type: 'error', message: 'Please enter the 6-digit code from Google Authenticator.' }
+    };
+
+    const result = toastMap[toastType];
+    if (!result) return;
+
+    showToast(result.message, result.type);
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+// ==================== INITIALIZE GA FORM ====================
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.ga-form');
+    if (!form) return;
+
+    const otpInputs = Array.from(form.querySelectorAll('.ga-otp-input'));
+
+    otpInputs.forEach((input) => {
+        input.addEventListener('paste', function (event) {
+            event.preventDefault();
+            const pasted = (event.clipboardData || window.clipboardData)
+                .getData('text')
+                .replace(/\D/g, '')
+                .slice(0, 6);
+
+            pasted.split('').forEach((digit, digitIndex) => {
+                if (otpInputs[digitIndex]) {
+                    otpInputs[digitIndex].value = digit;
+                }
+            });
+
+            const nextIndex = Math.min(pasted.length, otpInputs.length - 1);
+            otpInputs[nextIndex].focus();
+            syncOtpHiddenInput(form);
+        });
+    });
+
+    form.addEventListener('submit', function (event) {
+        syncOtpHiddenInput(form);
+        const hiddenInput = form.querySelector('#ga_code_hidden');
+        const code = hiddenInput ? hiddenInput.value : '';
+
+        if (code.length !== 6) {
+            event.preventDefault();
+            otpInputs.forEach((input) => {
+                input.classList.add('is-invalid');
+            });
+            otpInputs[0].focus();
+            showToast('Please enter all 6 digits of the code.', 'error');
+            return;
+        }
+
+    });
 });

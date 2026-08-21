@@ -1,69 +1,165 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
-<meta charset="UTF-8">
-<title>Super Admin | Announcements</title>
-
-<link rel="stylesheet" href="/static/superadmin-announcements.css">
-<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">  
+  <meta charset="UTF-8">
+  <title>Super Admin | Announcements</title>
+  <link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/superadmin-announcements.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/static/superadmin-notifications.css">
 </head>
-
 <body>
 
-<aside class="sidebar">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h2>Cablevision</h2>
+      <p>Super Administrator Portal</p>
+    </div>
 
-<div class="sidebar-brand">
-<h2>Cablevision</h2>
-<p>Super Administrator</p>
-</div>
+    <nav class="sidebar-menu">
+      <ul>
+<li><a href="/superadmin"> 
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg><span class="menu-text">Dashboard</span>
+</a></li>
+      
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
 
-<nav class="sidebar-menu">
-  <ul>
-    <li><a href="/superadmin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
-    
-    <li class="divider">
-      <span class="divider-label">MANAGEMENT</span>
-    </li>
-    
-    <li><a href="/superadmin/admins"><i class="fas fa-user-plus"></i><span class="menu-text">Create Administrator</span></a></li>
-    <li><a href="/superadmin/area"><i class="fas fa-map-marker-alt"></i><span class="menu-text">Manage Area</span></a></li>
-    <li><a href="/superadmin/users"><i class="fas fa-users"></i><span class="menu-text">User Accounts</span></a></li>
-    <li><a href="/superadmin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
-        <li><a href="/superadmin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>
-    <li class="divider">
-      <span class="divider-label">SERVICES</span>
-    </li>
-    
-    <li><a href="/superadmin/plans"><i class="fas fa-tags"></i><span class="menu-text">Plans</span></a></li>
-   
-    
-    <li class="divider">
- <span class="divider-label">CONTENT</span>
-    </li>
-    
-    <li class="active"><a href="/superadmin/announcements"><i class="fas fa-bullhorn"></i><span class="menu-text">Announcements</span></a></li>
-    <li><a href="/superadmin/advertisement"><i class="fas fa-ad"></i><span class="menu-text">Advertisement</span></a></li> 
-  </ul>
-</nav>
+<li><a href="/superadmin/admins">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M19 8v6M16 11h6"/>
+  </svg>
+  <span class="menu-text">Administrators</span>
+</a></li>
 
-</aside>
+<li><a href="/superadmin/technicians">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-3 3-3-3 3-3z"/>
+  </svg>
+  <span class="menu-text">Technicians</span>
+</a></li>
 
-<!-- TOP BAR -->
-<div class="top-bar">
-  <div class="top-bar-left">
-    <button class="hamburger" id="hamburgerBtn">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-  </div>
-  <div class="top-bar-right">
-    <!-- NOTIFICATION BELL -->
+<li><a href="/superadmin/area">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z"/>
+    <circle cx="12" cy="11" r="2"/>
+  </svg>
+  <span class="menu-text">Manage Area</span>
+</a></li>
+
+<li><a href="/superadmin/users">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="8.5" cy="7" r="4"/>
+    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+  <span class="menu-text">User Accounts</span>
+</a></li>
+
+<li><a href="/superadmin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/superadmin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li><a href="/superadmin/archived-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="4" rx="1"/>
+    <path d="M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
+    <path d="M9 12h6"/>
+  </svg>
+  <span class="menu-text">Archived Applications</span>
+</a></li>
+
+<li><a href="/superadmin/plan-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4"/>
+    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+  </svg>
+  <span class="menu-text">Plan Requests</span>
+</a></li>
+
+<li><a href="/superadmin/termination-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 15h8"/>
+  </svg>
+  <span class="menu-text">Termination Requests</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">SERVICES</span>
+</li>
+
+<li><a href="/superadmin/plans">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/>
+    <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" stroke="none"/>
+  </svg>
+  <span class="menu-text">Plans</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">CONTENT</span>
+</li>
+
+<li class="active"><a href="/superadmin/announcements">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11v2"/>
+    <path d="M6 10v4l10 4V6L6 10z"/>
+    <path d="M16 8l5-2v12l-5-2"/>
+    <path d="M6 14l1.5 5h2L8 14"/>
+  </svg>
+  <span class="menu-text">Announcements</span>
+</a></li>
+
+<li><a href="/superadmin/advertisement">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12V6a2 2 0 0 1 2-2h10l4 4v4"/>
+    <path d="M4 18a2 2 0 0 0 2 2h8"/>
+    <path d="M14 4v4h4"/>
+    <path d="M12 16h8"/>
+    <path d="M16 12v8"/>
+  </svg>
+  <span class="menu-text">Advertisement</span>
+</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button class="hamburger" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div class="top-bar-right">
+      <!-- NOTIFICATION BELL -->
       <div class="notification-dropdown">
         <button id="notificationBtn" class="notification-btn">
           <i class="fas fa-bell"></i>
@@ -80,276 +176,340 @@
               <p>No new notifications</p>
             </div>
           </div>
+          <div class="notification-footer">
+            <button id="viewAllNotificationsBtn" class="view-all-btn">
+              <i class="fas fa-list"></i> View All Notifications
+            </button>
+          </div>
         </div>
       </div>
-    <div class="profile-dropdown">
-      <button id="profileBtn">
-        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
-        <span id="profileName"></span>
-      </button>
-      <ul class="dropdown-menu" id="profileMenu">
-        <li><a href="/superadmin/profile"> Profile</a></li>
-        <li><a href="#" id="logoutBtn"> Logout</a></li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<!-- LOGOUT MODAL -->
-<div id="logoutModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" id="closeLogoutModal">&times;</span>
-    <h2>Confirm Logout</h2>
-    <p>Are you sure you want to logout?</p>
-    <div class="modal-actions">
-      <button id="cancelLogout" class="btn cancel">Cancel</button>
-      <button id="confirmLogout" class="btn confirm">Logout</button>
-    </div>
-  </div>
-</div>
-
-<main class="main-content">
-
-  <div class="dashboard-header-card">
-    <div class="dashboard-header-left">
-      <h1>Announcement Management</h1>
-      <p>Cablevision Systems Corporation</p>
-    </div>
-    <div class="dashboard-header-right">
+      
+      <!-- PROFILE DROPDOWN -->
+      <div class="profile-dropdown">
+        <button id="profileBtn">
+          <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <ul class="dropdown-menu" id="profileMenu">
+          <li><a href="/superadmin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/superadmin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+          <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 
-<div class="card create-card">
-  <div class="create-card-header">
-    <div class="create-card-title">
-      <h2>Create Announcement</h2>
-      <p>Post important updates and announcements</p>
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- LOGOUT MODAL -->
+  <div id="logoutModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeLogoutModal">&times;</span>
+      <h2>Confirm Logout</h2>
+      <p>Are you sure you want to logout?</p>
+      <div class="modal-actions">
+        <button id="cancelLogout" class="btn cancel"> <i class="fas fa-times"></i> Cancel</button>
+        <button id="confirmLogout" class="btn confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
     </div>
   </div>
-  
-  <div class="create-card-body">
-    <div class="input-group">
-      <label>
-        Announcement Title
-      </label>
-      <div class="input-wrapper">
-        <input type="text" id="title" placeholder="Enter announcement title...">
-        <span class="input-focus-border"></span>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="dashboard-header-card">
+      <div class="dashboard-header-left">
+        <h1>Announcement Management</h1>
+        <p>Cablevision Systems Corporation</p>
       </div>
+      <div class="dashboard-header-right"></div>
     </div>
 
-    <div class="input-group">
-      <label>
-        Announcement Message
-      </label>
-      <div class="input-wrapper">
-        <textarea id="message" placeholder="Write your announcement message here..."></textarea>
-        <span class="input-focus-border"></span>
-      </div>
-      <div class="char-counter">
-        <span id="charCount">0</span> characters
-      </div>
-    </div>
-
-    <!-- Image Upload (Optional) -->
-    <div class="input-group">
-      <label><i class="fas fa-image"></i> Announcement Image</label>
-      <div class="input-wrapper">
-        <input type="file" id="announcementImage" accept="image/*" onchange="previewImage(this, 'imagePreview')">
-        <span class="input-focus-border"></span>
-      </div>
-      <div id="imagePreviewContainer" style="display: none; margin-top: 12px;">
-        <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: cover;">
-        <button type="button" onclick="removeImage()" style="background: none; border: none; color: #dc2626; cursor: pointer; margin-top: 8px;">Remove image</button>
-      </div>
-    </div>
-
-        <!-- Expiration Duration -->
-    <div class="input-group">
-        <label>
-            <i class="fas fa-clock"></i>
-            Expiration Duration
-        </label>
-        <div class="expiry-row" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-            <div style="flex: 1;">
-                <input type="number" id="expiryValue" min="1" value="1" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
-            </div>
-            <div style="flex: 1;">
-                <select id="expiryUnit" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: white;">
-                    <option value="days">Days</option>
-                    <option value="weeks" selected>Weeks</option>
-                    <option value="months">Months</option>
-                </select>
-            </div>
+    <!-- CREATE ANNOUNCEMENT CARD -->
+    <div class="card create-card">
+      <div class="create-card-header">
+        <div class="create-card-title">
+          <h2>Create Announcement</h2>
+          <p>Post important updates and announcements</p>
         </div>
-        <div class="expiry-hint" style="font-size: 0.75rem; color: #6c757d; margin-top: 6px;">
+      </div>
+      
+      <div class="create-card-body">
+        <div class="input-group">
+          <label>Announcement Title</label>
+          <div class="input-wrapper">
+            <input type="text" id="title" placeholder="Enter announcement title...">
+            <span class="input-focus-border"></span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Announcement Message</label>
+          <div class="input-wrapper">
+            <textarea id="message" placeholder="Write your announcement message here..."></textarea>
+            <span class="input-focus-border"></span>
+          </div>
+          <div class="char-counter">
+            <span id="charCount">0</span> characters
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label><i class="fas fa-image"></i> Announcement Image</label>
+          <div class="input-wrapper">
+            <input type="file" id="announcementImage" accept="image/png,image/jpeg" onchange="previewImage(this, 'imagePreview')">
+            <span class="input-focus-border"></span>
+          </div>
+          <small style="font-size: 0.75rem; color: #6c757d; margin-top: 4px; display: block;">
+            <i class="fas fa-info-circle"></i> Only PNG and JPEG images are allowed
+          </small>
+          <div id="imagePreviewContainer" style="display: none; margin-top: 12px;">
+            <img id="imagePreview" style="max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: cover;">
+            <button type="button" onclick="removeImage()" style="background: none; border: none; color: #dc2626; cursor: pointer; margin-top: 8px;">Remove image</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label><i class="fas fa-clock"></i> Expiration Duration</label>
+          <div class="expiry-row" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1;">
+              <input type="number" id="expiryValue" min="1" value="1" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            </div>
+            <div style="flex: 1;">
+              <select id="expiryUnit" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: white;">
+                <option value="days">Days</option>
+                <option value="weeks" selected>Weeks</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+          </div>
+          <div class="expiry-hint" style="font-size: 0.75rem; color: #6c757d; margin-top: 6px;">
             <i class="fas fa-info-circle"></i> Example: 1 week = expires after 7 days
+          </div>
         </div>
+
+        <div class="button-group">
+          <button class="btn-primary" onclick="createAnnouncement()">
+            <i class="fas fa-paper-plane"></i> Post Announcement
+          </button>
+          <button class="btn-secondary" onclick="clearForm()">
+            <i class="fas fa-eraser"></i> Clear
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="button-group">
-      <button class="btn-primary" onclick="createAnnouncement()">
-        <i class="fas fa-paper-plane"></i>
-        Post Announcement
-      </button>
-      <button class="btn-secondary" onclick="clearForm()">
-        <i class="fas fa-eraser"></i>
-        Clear
-      </button>
+    <!-- ANNOUNCEMENTS LIST CARD -->
+    <div class="card announcements-card">
+      <div class="card-header">
+        <div class="header-title-section">
+          <h2>Announcements</h2>
+          <p class="header-subtitle">Latest updates and announcements</p>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="two-columns-container">
+          <!-- LEFT COLUMN: Without Image -->
+          <div class="announcement-column">
+            <div class="column-header">
+              <i class="fas fa-file-alt"></i>
+              <span>Text Only</span>
+              <span class="column-badge" id="textOnlyCount">0</span>
+            </div>
+            <div class="announcement-container" id="textOnlyContainer">
+              <div class="spinner-wrapper">
+                <div class="spinner"></div>
+                <p>Loading announcements...</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- RIGHT COLUMN: With Image -->
+          <div class="announcement-column">
+            <div class="column-header">
+              <i class="fas fa-image"></i>
+              <span>With Image</span>
+              <span class="column-badge" id="withImageCount">0</span>
+            </div>
+            <div class="announcement-container" id="withImageContainer">
+              <div class="spinner-wrapper">
+                <div class="spinner"></div>
+                <p>Loading announcements...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= EDIT MODAL ================= -->
+  <div class="edit-modal" id="editModal">
+    <div class="edit-modal-container">
+      <div class="edit-modal-wrapper">
+        <div class="edit-modal-header">
+          <div class="edit-modal-header-left">
+            <div class="edit-modal-title">
+              <h3>Edit Announcement</h3>
+              <p>Update your announcement details</p>
+            </div>
+          </div>
+          <button class="edit-modal-close" onclick="closeEditModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <div class="edit-modal-body">
+          <div class="input-group">
+            <label>Announcement Title</label>
+            <div class="input-wrapper">
+              <input type="text" id="editTitle" placeholder="Enter announcement title...">
+              <span class="input-focus-border"></span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Announcement Message</label>
+            <div class="input-wrapper">
+              <textarea id="editMessage" placeholder="Write your announcement message here..."></textarea>
+              <span class="input-focus-border"></span>
+            </div>
+            <div class="char-counter">
+              <span id="editCharCount">0</span> characters
+            </div>
+          </div>
+
+        <div class="input-group">
+          <label><i class="fas fa-image"></i> Announcement Image</label>
+          <div class="input-wrapper">
+            <input type="file" id="editAnnouncementImage" accept="image/png,image/jpeg" onchange="previewImage(this, 'editImagePreview')">
+            <span class="input-focus-border"></span>
+          </div>
+          <small style="font-size: 0.75rem; color: #6c757d; margin-top: 4px; display: block;">
+            <i class="fas fa-info-circle"></i> Only PNG and JPEG images are allowed
+          </small>
+          <div id="editImagePreviewContainer" style="display: none; margin-top: 12px;">
+            <img id="editImagePreview" style="max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: cover;">
+            <button type="button" onclick="removeEditImage()" style="background: none; border: none; color: #dc2626; cursor: pointer; margin-top: 8px;">Remove image</button>
+          </div>
+        </div>
+
+          <div class="input-group">
+            <label><i class="fas fa-clock"></i> Expiration Duration</label>
+            <div class="expiry-row" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div style="flex: 1;">
+                <input type="number" id="editExpiryValue" min="1" value="1" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
+              </div>
+              <div style="flex: 1;">
+                <select id="editExpiryUnit" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: white;">
+                  <option value="days">Days</option>
+                  <option value="weeks" selected>Weeks</option>
+                  <option value="months">Months</option>
+                </select>
+              </div>
+            </div>
+            <div class="expiry-hint" style="font-size: 0.75rem; color: #6c757d; margin-top: 6px;">
+              <i class="fas fa-info-circle"></i> Current expiry will be replaced with new duration
+            </div>
+          </div>
+        </div>
+        
+        <div class="edit-modal-footer">
+          <button class="edit-modal-btn edit-modal-btn-secondary" onclick="closeEditModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button class="edit-modal-btn edit-modal-btn-primary" onclick="saveEdit()">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ANNOUNCEMENTS LIST CARD - DUAL COLUMN SCROLL VIEW -->
-<div class="card announcements-card">
-    <div class="card-header">
-        <div class="header-title-section">
-            <h2>Announcements</h2>
-            <p class="header-subtitle">Latest updates and announcements</p>
-        </div>
+  <!-- ================= DELETE MODAL ================= -->
+  <div class="modal" id="deleteModal">
+    <div class="modal-content">
+      <h3>Delete Announcement?</h3>
+      <p>This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn cancel" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn confirm" onclick="confirmDelete()">Delete</button>
+      </div>
     </div>
-    
-    <div class="card-body">
-        <!-- Two Column Layout -->
-        <div class="two-columns-container">
-            <!-- LEFT COLUMN: Without Image -->
-            <div class="announcement-column">
-                <div class="column-header">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div class="announcement-container" id="textOnlyContainer">
-                    <div class="spinner-wrapper">
-                        <div class="spinner"></div>
-                        <p>Loading announcements...</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- RIGHT COLUMN: With Image -->
-            <div class="announcement-column">
-                <div class="column-header">
-                    <i class="fas fa-image"></i>
-                </div>
-                <div class="announcement-container" id="withImageContainer">
-                    <div class="spinner-wrapper">
-                        <div class="spinner"></div>
-                        <p>Loading announcements...</p>
-                    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+<div id="allNotificationsModal" class="modal">
+    <div class="modal-content all-notifications-modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-bell"></i> All Notifications</h3>
+            <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="allNotificationsList" class="all-notifications-list">
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-</main>
-
-<!-- ================= EDIT MODAL ================= -->
-<div class="edit-modal" id="editModal">
-    <div class="edit-modal-container">
-        <div class="edit-modal-wrapper">
-            <!-- Header -->
-            <div class="edit-modal-header">
-                <div class="edit-modal-header-left">
-                    <div class="edit-modal-title">
-                        <h3>Edit Announcement</h3>
-                        <p>Update your announcement details</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Body (lahat ng fields ay nasa loob nito) -->
-            <div class="edit-modal-body">
-                <!-- Title Field -->
-                <div class="input-group">
-                    <label> Announcement Title</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="editTitle" placeholder="Enter announcement title...">
-                        <span class="input-focus-border"></span>
-                    </div>
-                </div>
-
-                <!-- Message Field -->
-                <div class="input-group">
-                    <label> Announcement Message</label>
-                    <div class="input-wrapper">
-                        <textarea id="editMessage" placeholder="Write your announcement message here..."></textarea>
-                        <span class="input-focus-border"></span>
-                    </div>
-                    <div class="char-counter">
-                        <span id="editCharCount">0</span> characters
-                    </div>
-                </div>
-
-                <!-- ✅ Image Upload (ngayon nasa loob na ng edit-modal-body) -->
-                <div class="input-group">
-                    <label><i class="fas fa-image"></i> Announcement Image</label>
-                    <div class="input-wrapper">
-                        <input type="file" id="editAnnouncementImage" accept="image/*" onchange="previewImage(this, 'editImagePreview')">
-                        <span class="input-focus-border"></span>
-                    </div>
-                    <div id="editImagePreviewContainer" style="display: none; margin-top: 12px;">
-                        <img id="editImagePreview" style="max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: cover;">
-                        <button type="button" onclick="removeEditImage()" style="background: none; border: none; color: #dc2626; cursor: pointer; margin-top: 8px;">Remove image</button>
-                    </div>
-                </div>
-
-                <!-- Edit Expiration Duration -->
-                <div class="input-group">
-                    <label><i class="fas fa-clock"></i> Expiration Duration</label>
-                    <div class="expiry-row" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <div style="flex: 1;">
-                            <input type="number" id="editExpiryValue" min="1" value="1" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                        </div>
-                        <div style="flex: 1;">
-                            <select id="editExpiryUnit" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: white;">
-                                <option value="days">Days</option>
-                                <option value="weeks" selected>Weeks</option>
-                                <option value="months">Months</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="expiry-hint" style="font-size: 0.75rem; color: #6c757d; margin-top: 6px;">
-                        <i class="fas fa-info-circle"></i> Current expiry will be replaced with new duration
-                    </div>
-                </div>
-            </div> <!-- end edit-modal-body -->
-            
-            <!-- Footer -->
-            <div class="edit-modal-footer">
-                <button class="edit-modal-btn edit-modal-btn-secondary" onclick="closeEditModal()">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="edit-modal-btn edit-modal-btn-primary" onclick="saveEdit()">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
-            </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button id="markAllReadFromModalBtn" class="btn-cancel">
+                <i class="fas fa-check"></i> Mark all as read
+            </button>
+            <button id="closeAllNotificationsBtn" class="btn-confirm">
+                <i class="fas fa-times"></i> Close
+            </button>
         </div>
     </div>
-</div>
-
-<!-- ================= DELETE MODAL ================= -->
-
-<div class="modal" id="deleteModal">
-
-<div class="modal-content">
-
-<h3>Delete Announcement?</h3>
-
-<p>This action cannot be undone.</p>
-
-<div class="modal-actions">
-
-<button class="btn cancel" onclick="closeDeleteModal()">Cancel</button>
-<button class="btn confirm" onclick="confirmDelete()">Delete</button>
-
-</div>
-
-</div>
-
 </div>
 
 <script src="/static/superadmin-announcements.js"></script>
 <script src="/static/notification-system.js"></script>
-<script src="/static/session-manager.js"></script>
+<!-- <script src="/static/session-manager.js"></script> -->  <!-- I-comment out or remove -->
+
+<!-- ================= LIGHTWEIGHT SESSION GUARD (bfcache-safe) ================= -->
+<script>
+(function() {
+    function getTabId() {
+        return sessionStorage.getItem('tab_id') || '';
+    }
+
+    async function verifySessionOrRedirect() {
+        const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+        if (!isLoggedIn) {
+            window.location.replace('/');
+            return;
+        }
+        try {
+            const tabId = getTabId();
+            const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+            const data = await response.json();
+            if (!data.valid) {
+                sessionStorage.clear();
+                window.location.replace('/');
+            }
+        } catch (error) {
+            console.error('Session verification failed:', error);
+        }
+    }
+
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            verifySessionOrRedirect();
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            verifySessionOrRedirect();
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

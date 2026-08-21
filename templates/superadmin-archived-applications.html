@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Super Admin | Archived Applications</title>
+  <link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- CSS (same stylesheet used by Internet Applications) -->
+  <link rel="stylesheet" href="/static/superadmin-archived-applications.css">
+    <link rel="stylesheet" href="/static/superadmin-notifications.css">
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Cablevision</h2>
+      <p>Super Administrator Portal</p>
+    </div>
+
+    <nav class="sidebar-menu">
+  <ul>
+<li><a href="/superadmin"> 
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg><span class="menu-text">Dashboard</span>
+</a></li>
+      
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li><a href="/superadmin/admins">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M19 8v6M16 11h6"/>
+  </svg>
+  <span class="menu-text">Administrators</span>
+</a></li>
+
+<li><a href="/superadmin/technicians">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-3 3-3-3 3-3z"/>
+  </svg>
+  <span class="menu-text">Technicians</span>
+</a></li>
+
+<li><a href="/superadmin/area">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z"/>
+    <circle cx="12" cy="11" r="2"/>
+  </svg>
+  <span class="menu-text">Manage Area</span>
+</a></li>
+
+<li><a href="/superadmin/users">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="8.5" cy="7" r="4"/>
+    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+  <span class="menu-text">User Accounts</span>
+</a></li>
+
+<li><a href="/superadmin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/superadmin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li class="active"><a href="/superadmin/archived-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="4" rx="1"/>
+    <path d="M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
+    <path d="M9 12h6"/>
+  </svg>
+  <span class="menu-text">Archived Applications</span>
+</a></li>
+
+<li><a href="/superadmin/plan-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4"/>
+    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+  </svg>
+  <span class="menu-text">Plan Requests</span>
+</a></li>
+
+<li><a href="/superadmin/termination-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 15h8"/>
+  </svg>
+  <span class="menu-text">Termination Requests</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">SERVICES</span>
+</li>
+
+<li><a href="/superadmin/plans">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/>
+    <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" stroke="none"/>
+  </svg>
+  <span class="menu-text">Plans</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">CONTENT</span>
+</li>
+
+<li><a href="/superadmin/announcements">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11v2"/>
+    <path d="M6 10v4l10 4V6L6 10z"/>
+    <path d="M16 8l5-2v12l-5-2"/>
+    <path d="M6 14l1.5 5h2L8 14"/>
+  </svg>
+  <span class="menu-text">Announcements</span>
+</a></li>
+
+<li><a href="/superadmin/advertisement">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12V6a2 2 0 0 1 2-2h10l4 4v4"/>
+    <path d="M4 18a2 2 0 0 0 2 2h8"/>
+    <path d="M14 4v4h4"/>
+    <path d="M12 16h8"/>
+    <path d="M16 12v8"/>
+  </svg>
+  <span class="menu-text">Advertisement</span>
+</a></li>
+  </ul>
+</nav>
+  </aside>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button class="hamburger" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div class="top-bar-right">
+      <!-- NOTIFICATION BELL -->
+      <div class="notification-dropdown">
+        <button id="notificationBtn" class="notification-btn">
+          <i class="fas fa-bell"></i>
+          <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </button>
+        <div class="notification-menu" id="notificationMenu">
+          <div class="notification-header">
+            <h4>Notifications</h4>
+            <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+          </div>
+          <div class="notification-list" id="notificationList">
+            <div class="notification-empty">
+              <i class="fas fa-bell-slash"></i>
+              <p>No new notifications</p>
+            </div>
+          </div>
+          <div class="notification-footer">
+          <button id="viewAllNotificationsBtn" class="view-all-btn">
+            <i class="fas fa-list"></i> View All Notifications
+          </button>
+        </div>
+        </div>
+      </div>
+
+      <!-- PROFILE DROPDOWN -->
+      <div class="profile-dropdown">
+        <button id="profileBtn">
+          <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <ul class="dropdown-menu" id="profileMenu">
+          <li><a href="/superadmin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/superadmin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+          <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGOUT MODAL -->
+  <div id="logoutModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeLogoutModal">&times;</span>
+      <h2>Confirm Logout</h2>
+      <p>Are you sure you want to logout?</p>
+      <div class="modal-actions">
+        <button id="cancelLogout" class="btn cancel"> <i class="fas fa-times"></i> Cancel</button>
+        <button id="confirmLogout" class="btn confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="dashboard-header-card">
+      <div class="dashboard-header-left">
+        <h1>Archived Applications</h1>
+        <p>Cablevision Systems Corporation</p>
+      </div>
+      <div class="dashboard-header-right"></div>
+    </div>
+
+    <!-- ================= ARCHIVED APPLICATIONS CARD ================= -->
+    <div class="card">
+      <div class="card-header">
+        <div class="header-title-section">
+          <h2>Archived Applications</h2>
+          <p class="header-subtitle">Applications that have been archived</p>
+        </div>
+        <div class="countstats-badge">
+          <span id="archivedCount">0</span> archived applications
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Search & Filter Row -->
+        <div class="search-filter-row">
+          <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="archivedSearchInput" placeholder="Search by name, email, or application #">
+            <button class="clear-search" id="archivedClearSearch" style="display: none;">
+              <i class="fas fa-times-circle"></i>
+            </button>
+          </div>
+
+          <div class="filter-wrapper">
+            <i class="fas fa-filter filter-icon"></i>
+            <select id="archivedStatusFilter">
+              <option value="all">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Request Sent">Requested</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="sort-wrapper">
+            <i class="fas fa-calendar-alt sort-icon"></i>
+            <select id="archivedDateSortFilter">
+              <option value="newest">Newest to Oldest</option>
+              <option value="oldest">Oldest to Newest</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Archived Applications Table -->
+        <div class="table-wrapper">
+          <table id="archivedApplicationsTable">
+            <thead>
+              <tr>
+                <th>Application No.</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Date</th>
+                <th>Barangay</th>
+                <th>Municipality</th>
+                <th>Birthdate</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="archivedApplicationsBody">
+              <tr class="loading-row">
+                <td colspan="10">
+                  <div class="skeleton-row-loader">
+                    <div class="skeleton-card">
+                      <div class="skeleton-title"></div>
+                      <div class="skeleton-line"></div>
+                      <div class="skeleton-row">
+                        <div class="skeleton-line skeleton-short"></div>
+                        <div class="skeleton-line skeleton-short"></div>
+                        <div class="skeleton-line skeleton-short"></div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper">
+          <div id="archivedPaginationControls" class="pagination-container"></div>
+        </div>
+
+        <!-- No Data Message -->
+        <div id="noArchivedData" class="no-data-message">
+          <i class="fas fa-folder-open"></i>
+          <p>No archived applications</p>
+          <span>No archived applications found</span>
+        </div>
+      </div>
+    </div>
+  </main>
+  <br>
+
+  <!-- SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <!-- RESTORE MODAL -->
+  <div id="restoreModal" class="modal">
+      <div class="modal-content">
+          <span class="close" id="closeRestoreModal">&times;</span>
+          <h2><i class="fas fa-undo" style="color: #f59e0b;"></i> Restore Application</h2>
+          <div id="restoreModalMessage">
+              <p>Are you sure you want to restore this application?</p>
+          </div>
+          <div class="modal-buttons">
+              <button id="confirmRestoreBtn" class="btn-confirm" style="background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);">
+                  <i class="fas fa-undo"></i> Restore to Pending
+              </button>
+              <button id="cancelRestoreBtn" class="btn-cancel">Cancel</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL - RED THEME -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>
+          <i class="fas fa-trash-alt"></i> Delete Application
+        </h5>
+        <button type="button" class="btn-close" id="closeDeleteModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle"></i>
+          <strong>Warning!</strong> This action cannot be undone.
+          <ul>
+            <li>This will permanently delete the application</li>
+            <li>All associated data will be removed</li>
+            <li>This action is irreversible</li>
+          </ul>
+        </div>
+        <p id="deleteModalMessage" style="margin-top: 12px; text-align: center; color: #6b7280;">
+          Are you sure you want to delete this application?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelDeleteBtn" class="btn-secondary">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button id="confirmDeleteBtn" class="btn-danger">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+<div id="allNotificationsModal" class="modal">
+    <div class="modal-content all-notifications-modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-bell"></i> All Notifications</h3>
+            <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="allNotificationsList" class="all-notifications-list">
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button id="markAllReadFromModalBtn" class="btn-cancel">
+                <i class="fas fa-check"></i> Mark all as read
+            </button>
+            <button id="closeAllNotificationsBtn" class="btn-confirm">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
+  <!-- JS -->
+  <script type="module" src="/static/superadmin-archived-applications.js"></script>
+  <script src="/static/notification-system.js"></script>
+
+  <!-- ================= LIGHTWEIGHT SESSION GUARD (bfcache-safe) ================= -->
+  <script>
+  (function() {
+      function getTabId() {
+          return sessionStorage.getItem('tab_id') || '';
+      }
+
+      async function verifySessionOrRedirect() {
+          const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+          if (!isLoggedIn) {
+              window.location.replace('/');
+              return;
+          }
+          try {
+              const tabId = getTabId();
+              const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+              const data = await response.json();
+              if (!data.valid) {
+                  sessionStorage.clear();
+                  window.location.replace('/');
+              }
+          } catch (error) {
+              console.error('Session verification failed:', error);
+          }
+      }
+
+      window.addEventListener('pageshow', function(event) {
+          if (event.persisted) {
+              verifySessionOrRedirect();
+          }
+      });
+
+      document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) {
+              verifySessionOrRedirect();
+          }
+      });
+  })();
+  </script>
+
+</body>
+</html>

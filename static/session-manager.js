@@ -9,7 +9,8 @@ class SessionManager {
             adminUsername: 'adminUsername',
             adminArea: 'adminArea',
             sessionToken: 'sessionToken',
-            lastActivity: 'lastActivity'
+            lastActivity: 'lastActivity',
+            tabId: 'tab_id'
         };
     }
 
@@ -246,7 +247,7 @@ class SessionManager {
      * Create session token on login
      * Call this after successful login
      */
-    createSession(userType, username, area = null) {
+    createSession(userType, username, area = null, tabId = null) {
         const sessionToken = this.generateSessionToken();
         
         localStorage.setItem(this.storageKeys.userType, userType);
@@ -259,6 +260,11 @@ class SessionManager {
         
         if (area) {
             localStorage.setItem(this.storageKeys.adminArea, area);
+        }
+        
+        // 👇 I-STORE ANG TAB ID
+        if (tabId) {
+            sessionStorage.setItem('tab_id', tabId);
         }
         
         sessionStorage.setItem(this.storageKeys.sessionToken, sessionToken);
@@ -313,3 +319,5 @@ window.addEventListener('pageshow', (event) => {
         }
     }
 });
+
+// ito ulit ang aking session-manager.js

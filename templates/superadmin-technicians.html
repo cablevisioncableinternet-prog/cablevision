@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Super Admin | Technician Accounts</title>
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<link rel="stylesheet" href="{{ url_for('static', filename='superadmin-technicians.css') }}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ <link rel="stylesheet" href="/static/superadmin-notifications.css">
+
+<!-- Leaflet.js for Maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<!-- ================= TOAST ================= -->
+<div id="toast"></div>
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <h2>Cablevision</h2>
+    <p>Super Administrator Portal</p>
+  </div>
+
+  <nav class="sidebar-menu">
+    <ul>
+           <li><a href="/superadmin"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg><span class="menu-text">Dashboard</span></a></li>
+      
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li><a href="/superadmin/admins">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M19 8v6M16 11h6"/>
+  </svg>
+  <span class="menu-text">Administrators</span>
+</a></li>
+
+<li class="active"><a href="/superadmin/technicians">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-3 3-3-3 3-3z"/>
+  </svg>
+  <span class="menu-text">Technicians</span>
+</a></li>
+
+<li><a href="/superadmin/area">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z"/>
+    <circle cx="12" cy="11" r="2"/>
+  </svg>
+  <span class="menu-text">Manage Area</span>
+</a></li>
+
+<li><a href="/superadmin/users">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="8.5" cy="7" r="4"/>
+    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+  <span class="menu-text">User Accounts</span>
+</a></li>
+
+<li><a href="/superadmin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/superadmin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li><a href="/superadmin/archived-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="4" rx="1"/>
+    <path d="M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
+    <path d="M9 12h6"/>
+  </svg>
+  <span class="menu-text">Archived Applications</span>
+</a></li>
+
+<li><a href="/superadmin/plan-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4"/>
+    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+  </svg>
+  <span class="menu-text">Plan Requests</span>
+</a></li>
+
+<li><a href="/superadmin/termination-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 15h8"/>
+  </svg>
+  <span class="menu-text">Termination Requests</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">SERVICES</span>
+</li>
+
+<li><a href="/superadmin/plans">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/>
+    <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" stroke="none"/>
+  </svg>
+  <span class="menu-text">Plans</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">CONTENT</span>
+</li>
+
+<li><a href="/superadmin/announcements">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11v2"/>
+    <path d="M6 10v4l10 4V6L6 10z"/>
+    <path d="M16 8l5-2v12l-5-2"/>
+    <path d="M6 14l1.5 5h2L8 14"/>
+  </svg>
+  <span class="menu-text">Announcements</span>
+</a></li>
+
+<li><a href="/superadmin/advertisement">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12V6a2 2 0 0 1 2-2h10l4 4v4"/>
+    <path d="M4 18a2 2 0 0 0 2 2h8"/>
+    <path d="M14 4v4h4"/>
+    <path d="M12 16h8"/>
+    <path d="M16 12v8"/>
+  </svg>
+  <span class="menu-text">Advertisement</span>
+</a></li>
+
+</ul>
+  </nav>
+</div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <!-- 🔥 HAMBURGER BUTTON - IDINAGDAG -->
+    <button class="hamburger" id="hamburgerBtn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  <div class="top-bar-right">
+    <!-- NOTIFICATION BELL -->
+    <div class="notification-dropdown">
+      <button id="notificationBtn" class="notification-btn">
+        <i class="fas fa-bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <div class="notification-menu" id="notificationMenu">
+        <div class="notification-header">
+          <h4>Notifications</h4>
+          <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-empty">
+            <i class="fas fa-bell-slash"></i>
+            <p>No new notifications</p>
+          </div>
+        </div>
+        <div class="notification-footer">
+          <button id="viewAllNotificationsBtn" class="view-all-btn">
+            <i class="fas fa-list"></i> View All Notifications
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PROFILE DROPDOWN -->
+    <div class="profile-dropdown">
+      <button id="profileBtn">
+        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      <ul class="dropdown-menu" id="profileMenu">
+        <li><a href="/superadmin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/superadmin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+        <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 🔥 SIDEBAR OVERLAY - IDINAGDAG -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+ <!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal logout-modal">
+  <div class="modal-content logout-modal-content">
+    <span class="close-btn logout-close-btn" id="closeLogoutModal">&times;</span>
+    <div class="logout-icon-wrapper">
+    </div>
+    <h2 class="logout-title">Confirm Logout</h2>
+    <p class="logout-message">Are you sure you want to logout?</p>
+    <div class="logout-actions">
+      <button id="cancelLogout" class="btn logout-cancel"> <i class="fas fa-times"></i> Cancel</button>
+      <button id="confirmLogout" class="btn logout-confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+  <!-- DASHBOARD HEADER CARD -->
+  <div class="dashboard-header-card">
+    <div class="dashboard-header-left">
+      <h1>Technician And Teams Management</h1>
+      <p>Cablevision Systems Corporation</p>
+    </div>
+    <div class="dashboard-header-right">
+    </div>
+  </div>
+
+  <!-- ================= CREATE TEAM CARD ================= -->
+  <div class="card">
+    <div class="card-header">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-users-cog"></i>
+      </div>
+      <div class="header-title-section">
+        <h2>Create New Team</h2>
+        <p class="header-subtitle">Add a new team for technicians to be assigned to</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <form id="createTeamForm" class="team-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-tag"></i> Team Name</label>
+            <div class="input-wrapper">
+              <input type="text" id="teamName" placeholder="Enter team name (e.g. Team Alpha)" required>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Unique name for the team</small>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-map-marker-alt"></i> Area</label>
+            <div class="input-wrapper">
+              <select id="teamArea" required>
+                <option value="">Loading areas...</option>
+              </select>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Select the area this team will cover</small>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-user-tie"></i> Team Leader</label>
+            <div class="input-wrapper">
+              <select id="teamLeader">
+                <option value="">No leader assigned</option>
+              </select>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Optional: Assign a team leader (technician)</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" type="submit">
+                                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                                    </svg> Create Team
+          </button>
+          <button class="btn-reset" type="reset">
+            <i class="fas fa-undo-alt"></i> Reset
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= TEAMS TABLE CARD ================= -->
+  <div class="card">
+    <div class="card-header">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="header-title-section">
+        <h2>Teams Management</h2>
+        <p class="header-subtitle">Manage all teams, view members, and update team details</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="search-section">
+        <div class="search-icon-wrapper">
+          <i class="fas fa-search search-icon"></i>
+        </div>
+        <input type="text" id="teamSearchInput" placeholder="Search by team name, ID, or area">
+      </div>
+      <div class="table-wrapper">
+        <table id="teamsTable">
+          <thead>
+            <tr>
+              <th>Team ID / Name</th>
+              <th>Area</th>
+              <th>Team Leader</th>
+              <th>Members</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="teamsTableBody">
+            <tr id="teamsLoadingRow">
+              <td colspan="6" style="padding:24px 0;">
+                <div class="skeleton-row-loader">
+                  <div class="skeleton-card">
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-row">
+                      <div class="skeleton-line skeleton-short"></div>
+                      <div class="skeleton-line skeleton-short"></div>
+                      <div class="skeleton-line skeleton-short"></div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CREATE TECHNICIAN CARD ================= -->
+  <div class="card">
+    <div class="card-header">
+      <div class="header-icon-wrapper">
+           <i class="fas fa-users"></i>
+      </div>
+      <div class="header-title-section">
+        <h2>Create New Technician</h2>
+        <p class="header-subtitle">Add a new technician account for installation and maintenance</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <form id="createTechnicianForm" class="technician-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-user"></i> Full Name</label>
+            <div class="input-wrapper">
+              <input type="text" id="technicianName" placeholder="Enter full name" required>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Enter the technician's full name</small>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email</label>
+            <div class="input-wrapper">
+              <input type="email" id="technicianEmail" placeholder="Enter email" required>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Technician email for login credentials</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label><i class="fas fa-users"></i> Team</label>
+            <div class="input-wrapper">
+              <select id="technicianTeam" required>
+                <option value="">Select a team first</option>
+              </select>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Select a team to auto-fill the area</small>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-map-marker-alt"></i> Area</label>
+            <div class="input-wrapper">
+              <input type="text" id="technicianArea" placeholder="Area will auto-fill from team" readonly required>
+              <span class="input-focus-border"></span>
+            </div>
+            <small class="form-hint">Automatically filled when you select a team</small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" type="submit">
+                                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                                    </svg> Create Technician
+          </button>
+          <button class="btn-reset" type="reset">
+            <i class="fas fa-undo-alt"></i> Reset
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= TECHNICIAN LIST CARD ================= -->
+  <div class="card">
+    <div class="card-header">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-wrench"></i>
+      </div>
+      <div class="header-title-section">
+        <h2>Registered Technicians</h2>
+        <p class="header-subtitle">Manage and monitor all technician accounts</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="search-section">
+        <div class="search-icon-wrapper">
+          <i class="fas fa-search search-icon"></i>
+        </div>
+        <input type="text" id="searchInput" placeholder="Search by name, ID, email, or area">
+      </div>
+      <div class="table-wrapper">
+        <table id="techniciansTable">
+          <thead>
+            <tr>
+              <th>Technician ID / Name</th>
+              <th>Email</th>
+              <th>Area</th>
+              <th>Team</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="techniciansTableBody">
+            <tr id="loadingRow">
+              <td colspan="6" style="padding:24px 0;">
+                <div class="skeleton-row-loader">
+                  <div class="skeleton-card">
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-row">
+                      <div class="skeleton-line skeleton-short"></div>
+                      <div class="skeleton-line skeleton-short"></div>
+                      <div class="skeleton-line skeleton-short"></div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= NAP BOX SLOTS MONITORING ================= -->
+  <div class="card">
+    <div class="card-header">
+      <div class="header-icon-wrapper">
+        <i class="fas fa-network-wired"></i>
+      </div>
+      <div class="header-title-section">
+        <h2>NAP Box Slots Monitoring</h2>
+        <p class="header-subtitle">View all NAP boxes and slot occupancy across all areas (read-only)</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Stats Summary -->
+      <div class="stats-summary" style="margin-bottom: 24px; display: flex; gap: 16px; flex-wrap: wrap;">
+        <div class="stat-badge total" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border-radius: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab"stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+          <span id="superTotalSlots" style="font-size: 20px; font-weight: 800;">0</span>
+          <small style="font-size: 11px; color: #666;">Total Slots</small>
+        </div>
+        <div class="stat-badge available" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border-radius: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="m9 12 2 2 4-4"></path>
+                        </svg>
+          <span id="superAvailableSlots" style="font-size: 20px; font-weight: 800;">0</span>
+          <small style="font-size: 11px; color: #666;">Available</small>
+        </div>
+        <div class="stat-badge occupied" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border-radius: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="16 11 18 13 22 9"></polyline>
+                        </svg>
+          <span id="superOccupiedSlots" style="font-size: 20px; font-weight: 800;">0</span>
+          <small style="font-size: 11px; color: #666;">Occupied</small>
+        </div>
+        <div class="stat-badge napbox" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fff; border-radius: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0;">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+          <span id="superNapboxCount" style="font-size: 20px; font-weight: 800;">0</span>
+          <small style="font-size: 11px; color: #666;">NAP Boxes</small>
+        </div>
+      </div>
+
+      <!-- Area and Barangay Filters -->
+      <div class="filter-section" style="margin-bottom: 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="flex: 1; min-width: 200px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px;">
+            Filter by Area:
+          </label>
+          <select id="superAreaFilter" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff; font-size: 14px; cursor: pointer;">
+            <option value="">All Areas</option>
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px;">
+            Filter by Barangay:
+          </label>
+          <select id="superBarangayFilter" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #fff; font-size: 14px; cursor: pointer;">
+            <option value="">All Barangays</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Map and Slots Grid -->
+      <div class="napbox-monitoring-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        
+        <!-- LEFT: Map Container -->
+        <div class="map-container" style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div class="map-header" style="padding: 14px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+              <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #1e293b;">NAP Box Locations Map</h4>
+            </div>
+            <button id="superRefreshDataBtn" style="padding: 5px 10px; background: rgb(1, 55, 137); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px; font-size: 11px;">
+               Refresh Data
+            </button>
+          </div>
+          <div id="superNapboxMap" style="height: 420px; width: 100%; background: #f1f5f9;"></div>
+          <div class="map-legend" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+              <span style="width: 14px; height: 14px; background: #22c55e; border-radius: 3px; display: inline-block;"></span>
+              <span>Available Slot</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+              <span style="width: 14px; height: 14px; background: #ef4444; border-radius: 3px; display: inline-block;"></span>
+              <span>Occupied Slot</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+              <span style="width: 14px; height: 14px; background: #dc2626; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px white;"></span>
+              <span>NAP Box Location</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+              <span style="width: 20px; height: 3px; background: #dc2626; border-radius: 2px; display: inline-block;"></span>
+              <span>500m Coverage</span>
+            </div>
+              <div class="legend-item"><span class="legend-color boundary"></span><span>Municipal Boundary</span></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Slots Grid Container -->
+        <div class="slots-container" style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div class="slots-header" style="padding: 14px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                </svg>
+            <h4 style="margin: 0; font-size: 15px; font-weight: 600; color: #1e293b;">NAP Box Slots</h4>
+            <div class="slot-filters" style="display: flex; gap: 8px; margin-left: auto;">
+              <button class="super-filter-btn" data-filter="all" style="padding: 5px 14px; border-radius: 30px; border: 1px solid #cbd5e1; background: #0047ab; color: white; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">All</button>
+              <button class="super-filter-btn" data-filter="available" style="padding: 5px 14px; border-radius: 30px; border: 1px solid #cbd5e1; background: white; color: #334155; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Available</button>
+              <button class="super-filter-btn" data-filter="occupied" style="padding: 5px 14px; border-radius: 30px; border: 1px solid #cbd5e1; background: white; color: #334155; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s;">Occupied</button>
+            </div>
+          </div>
+          <div id="superSlotsGrid" class="slots-grid slots-grid-skeleton" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; padding: 20px; max-height: 420px; overflow-y: auto; background: #ffffff;">
+            <div class="skeleton-card">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-row">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-row">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-row">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-row">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-row">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-row">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+            </div>
+          </div>
+          <div class="slots-footer" style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; text-align: center;">
+            <i class="fas fa-info-circle"></i> Click on any slot to view details
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ================= TEAM EDIT MODAL ================= -->
+<div id="teamEditModal" class="edit-modal">
+  <div class="modal-content" style="max-width: 700px; text-align: left;">
+    <span class="close-btn" id="closeTeamEditModalBtn">&times;</span>
+    <h2 style="text-align: center; margin-bottom: 20px;">
+      <i class="fas fa-edit"></i> Edit Team
+    </h2>
+    
+    <form id="teamEditForm">
+      <!-- Team Basic Info -->
+      <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 12px 0; color: #0047ab; font-size: 14px;">
+          <i class="fas fa-info-circle"></i> Team Information
+        </h4>
+        <input type="hidden" id="editTeamId">
+        
+        <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" id="editTeamName" class="info-input" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
+          </div>
+          <div class="form-group">
+            <label>Area</label>
+            <select id="editTeamArea" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
+              <option value="">Select Area</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label>Team Leader</label>
+            <select id="editTeamLeader" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
+              <option value="">No leader assigned</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="editTeamStatus" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Team Members Section -->
+      <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 12px 0; color: #0047ab; font-size: 14px; display: flex; align-items: center; justify-content: space-between;">
+          <span><i class="fas fa-user-cog"></i> Team Members</span>
+          <button type="button" id="addMemberBtn" class="btn-primary" style="padding: 6px 16px; font-size: 12px; border-radius: 30px;">
+            <i class="fas fa-plus"></i> Add Member
+          </button>
+        </h4>
+        
+        <div id="teamMembersList" style="max-height: 200px; overflow-y: auto;">
+          <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 13px;">
+            Loading members...
+          </div>
+        </div>
+        
+        <!-- Add Member Dropdown -->
+        <div id="addMemberSection" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+          <div class="form-row" style="grid-template-columns: 1fr auto; gap: 12px;">
+            <div class="form-group">
+              <label>Select Technician</label>
+              <select id="addMemberSelect" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
+                <option value="">Loading technicians...</option>
+              </select>
+            </div>
+            <div class="form-group" style="justify-content: flex-end;">
+              <button type="button" id="confirmAddMemberBtn" class="btn-primary" style="padding: 10px 24px; border-radius: 30px;">
+                <i class="fas fa-plus"></i> Add
+              </button>
+              <button type="button" id="cancelAddMemberBtn" class="btn-reset" style="padding: 10px 16px; border-radius: 30px; margin-top: 4px;">
+                <i class="fas fa-times"></i> Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal Actions -->
+      <div class="modal-actions" style="margin-top: 20px; justify-content: flex-end;">
+        <button type="button" id="cancelTeamEditBtn" class="btn cancel" style="min-width: 100px;">Cancel</button>
+        <button type="submit" class="btn confirm" style="min-width: 120px;">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= INFO MODAL ================= -->
+<div id="viewInfoModal" class="info-modal">
+  <div class="info-modal-container">
+    <div class="info-modal-wrapper">
+      <!-- Header -->
+      <div class="info-modal-header">
+        <div class="info-modal-header-left">
+          <div class="info-modal-title">
+            <h3>Technician Information</h3>
+            <p>View and manage technician details</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="info-modal-body">
+        <!-- Personal Information Section -->
+        <div class="info-section">
+          <div class="info-section-header">
+            <i class="fas fa-user-circle"></i>
+            <span>Personal Information</span>
+          </div>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-id-card"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Technician ID</label>
+                <input type="text" id="infoTechnicianId" class="info-input" readonly>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Full Name</label>
+                <input type="text" id="infoName" class="info-input" readonly>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Email Address</label>
+                <input type="text" id="infoEmail" class="info-input" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Information Section -->
+        <div class="info-section">
+          <div class="info-section-header">
+            <i class="fas fa-laptop"></i>
+            <span>Account Information</span>
+          </div>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-map-marker-alt"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Area Assignment</label>
+                <input type="text" id="infoArea" class="info-input" readonly>
+              </div>
+            </div>
+            <!-- Team Field -->
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Assigned Team</label>
+                <input type="text" id="infoTeam" class="info-input" readonly placeholder="Not assigned">
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-toggle-on"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Account Status</label>
+                <div class="info-status-wrapper">
+                  <span id="infoStatus" class="info-status-badge"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="info-modal-footer">
+        <button class="info-modal-btn" id="closeInfoModalBtn">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SLOT DETAILS MODAL (ENHANCED) ================= -->
+<div id="superSlotDetailsModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="slot-details-container">
+            <div class="slot-details-header">
+                <div class="slot-details-header-left">
+                    <i class="fas fa-info-circle"></i>
+                    <h2 id="superSlotModalTitle">Slot Details</h2>
+                </div>
+                <button class="slot-details-close" onclick="closeSuperSlotModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="slot-details-body" id="superSlotDetailsContent">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= DELETE TECHNICIAN MODAL ================= -->
+<div id="deleteTechnicianModal" class="modal">
+  <div class="modal-content">
+
+    <h2> Confirm Delete</h2>
+    <p id="deleteTechnicianText"></p>
+    <div class="modal-actions">
+      <button id="cancelDeleteTechnician" class="btn cancel">Cancel</button>
+      <button id="confirmDeleteTechnician" class="btn confirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STATUS MODAL ================= -->
+<div id="statusModal" class="modal">
+  <div class="modal-content">
+    <h3 id="statusModalTitle"></h3>
+    <p id="statusModalText"></p>
+    <div class="modal-actions">
+      <button id="cancelStatus" class="btn cancel">Cancel</button>
+      <button id="confirmStatus" class="btn confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DELETE TEAM MODAL ================= -->
+<div id="deleteTeamModal" class="modal delete-team-modal">
+  <div class="modal-content delete-team-content">
+    <span class="close-btn delete-team-close" id="closeDeleteTeamModalBtn">&times;</span>
+    <div class="delete-team-icon">
+      <i class="fas fa-trash-alt"></i>
+    </div>
+    <h2 class="delete-team-title">Confirm Delete Team</h2>
+    <p class="delete-team-text" id="deleteTeamText">Are you sure you want to delete this team?</p>
+    <div class="delete-team-note">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>Technicians assigned to this team will be unassigned.</span>
+    </div>
+    <div class="delete-team-actions">
+      <button id="cancelDeleteTeam" class="btn delete-team-cancel">Cancel</button>
+      <button id="confirmDeleteTeam" class="btn delete-team-confirm">Delete Team</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CONFIRM TEAM CHANGES MODAL ================= -->
+<div id="confirmTeamChangesModal" class="modal">
+  <div class="modal-content" style="max-width: 500px; text-align: left;">
+    <span class="close-btn" id="closeConfirmTeamChangesModal">&times;</span>
+    <h2 style="text-align: center; margin-bottom: 16px;">
+      <i class="fas fa-check-circle" style="color: #0047ab;"></i> Confirm Changes
+    </h2>
+    <div id="confirmTeamChangesContent" style="max-height: 400px; overflow-y: auto; padding: 0 4px;">
+      <!-- Dynamic content will be inserted here -->
+    </div>
+    <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
+      <button id="cancelTeamChangesBtn" class="btn btn-cancel" style="min-width: 120px;">Cancel</button>
+      <button id="confirmTeamChangesBtn" class="btn btn-confirm" style="min-width: 140px; background: linear-gradient(135deg, #0047ab, #007bff);">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+<div id="allNotificationsModal" class="modal">
+    <div class="modal-content all-notifications-modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-bell"></i> All Notifications</h3>
+            <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="allNotificationsList" class="all-notifications-list">
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button id="markAllReadFromModalBtn" class="btn-cancel">
+                <i class="fas fa-check"></i> Mark all as read
+            </button>
+            <button id="closeAllNotificationsBtn" class="btn-confirm">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<script src="{{ url_for('static', filename='superadmin-technicians.js') }}"></script>
+<script src="/static/notification-system.js"></script>
+<!-- <script src="/static/session-manager.js"></script> -->  <!-- I-comment out or remove -->
+
+<!-- ================= LIGHTWEIGHT SESSION GUARD (bfcache-safe) ================= -->
+<script>
+(function() {
+    function getTabId() {
+        return sessionStorage.getItem('tab_id') || '';
+    }
+
+    async function verifySessionOrRedirect() {
+        const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+        if (!isLoggedIn) {
+            window.location.replace('/');
+            return;
+        }
+        try {
+            const tabId = getTabId();
+            const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+            const data = await response.json();
+            if (!data.valid) {
+                sessionStorage.clear();
+                window.location.replace('/');
+            }
+        } catch (error) {
+            console.error('Session verification failed:', error);
+        }
+    }
+
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            verifySessionOrRedirect();
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            verifySessionOrRedirect();
+        }
+    });
+})();
+</script>
+
+
+</body>
+</html>

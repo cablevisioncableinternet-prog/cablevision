@@ -3,50 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <title>Super Admin | Users</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="/static/cablevision.jpg">
 <link rel="stylesheet" href="{{ url_for('static', filename='superadmin-users.css') }}">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/logout_btn.css">
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ <link rel="stylesheet" href="/static/superadmin-notifications.css">
 </head>
 <body>
 
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="sidebar-brand">
     <h2>Cablevision</h2>
-    <p>Super Administrator</p>
+    <p>Super Administrator Portal</p>
   </div>
 
- <nav class="sidebar-menu">
-  <ul>
-    <li><a href="/superadmin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
-    
-    <li class="divider">
-      <span class="divider-label">MANAGEMENT</span>
-    </li>
-    
-    <li><a href="/superadmin/admins"><i class="fas fa-user-plus"></i><span class="menu-text">Create Administrator</span></a></li>
-    <li><a href="/superadmin/area"><i class="fas fa-map-marker-alt"></i><span class="menu-text">Manage Area</span></a></li>
-    <li class="active"><a href="/superadmin/users"><i class="fas fa-users"></i><span class="menu-text">User Accounts</span></a></li>
-    <li><a href="/superadmin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
-    <li><a href="/superadmin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>    
-    <li class="divider">
-      <span class="divider-label">SERVICES</span>
-    </li>
-    
-    <li><a href="/superadmin/plans"><i class="fas fa-tags"></i><span class="menu-text">Plans</span></a></li>
-    
-    <li class="divider">
-       <span class="divider-label">CONTENT</span>
-    </li>
-    
-    <li><a href="/superadmin/announcements"><i class="fas fa-bullhorn"></i><span class="menu-text">Announcements</span></a></li>
-    <li><a href="/superadmin/advertisement"><i class="fas fa-ad"></i><span class="menu-text">Advertisement</span></a></li>
-  </ul>
-</nav>
+  <nav class="sidebar-menu">
+    <ul>
+           <li><a href="/superadmin"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg><span class="menu-text">Dashboard</span></a></li>
+      
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li><a href="/superadmin/admins">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M19 8v6M16 11h6"/>
+  </svg>
+  <span class="menu-text">Administrators</span>
+</a></li>
+
+<li><a href="/superadmin/technicians">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-3 3-3-3 3-3z"/>
+  </svg>
+  <span class="menu-text">Technicians</span>
+</a></li>
+
+<li><a href="/superadmin/area">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z"/>
+    <circle cx="12" cy="11" r="2"/>
+  </svg>
+  <span class="menu-text">Manage Area</span>
+</a></li>
+
+<li class="active"><a href="/superadmin/users">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="8.5" cy="7" r="4"/>
+    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+  <span class="menu-text">User Accounts</span>
+</a></li>
+
+<li><a href="/superadmin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/superadmin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li><a href="/superadmin/archived-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="4" rx="1"/>
+    <path d="M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
+    <path d="M9 12h6"/>
+  </svg>
+  <span class="menu-text">Archived Applications</span>
+</a></li>
+
+<li><a href="/superadmin/plan-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4"/>
+    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+  </svg>
+  <span class="menu-text">Plan Requests</span>
+</a></li>
+
+<li><a href="/superadmin/termination-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 15h8"/>
+  </svg>
+  <span class="menu-text">Termination Requests</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">SERVICES</span>
+</li>
+
+<li><a href="/superadmin/plans">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/>
+    <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" stroke="none"/>
+  </svg>
+  <span class="menu-text">Plans</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">CONTENT</span>
+</li>
+
+<li><a href="/superadmin/announcements">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11v2"/>
+    <path d="M6 10v4l10 4V6L6 10z"/>
+    <path d="M16 8l5-2v12l-5-2"/>
+    <path d="M6 14l1.5 5h2L8 14"/>
+  </svg>
+  <span class="menu-text">Announcements</span>
+</a></li>
+
+<li><a href="/superadmin/advertisement">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12V6a2 2 0 0 1 2-2h10l4 4v4"/>
+    <path d="M4 18a2 2 0 0 0 2 2h8"/>
+    <path d="M14 4v4h4"/>
+    <path d="M12 16h8"/>
+    <path d="M16 12v8"/>
+  </svg>
+  <span class="menu-text">Advertisement</span>
+</a></li>
+    </ul>
+  </nav>
 </div>
 
 <!-- TOP BAR -->
@@ -60,37 +158,47 @@
   </div>
   <div class="top-bar-right">
     <!-- NOTIFICATION BELL -->
-      <div class="notification-dropdown">
-        <button id="notificationBtn" class="notification-btn">
-          <i class="fas fa-bell"></i>
-          <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
-        </button>
-        <div class="notification-menu" id="notificationMenu">
-          <div class="notification-header">
-            <h4>Notifications</h4>
-            <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
-          </div>
-          <div class="notification-list" id="notificationList">
-            <div class="notification-empty">
-              <i class="fas fa-bell-slash"></i>
-              <p>No new notifications</p>
-            </div>
+    <div class="notification-dropdown">
+      <button id="notificationBtn" class="notification-btn">
+        <i class="fas fa-bell"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </button>
+      <div class="notification-menu" id="notificationMenu">
+        <div class="notification-header">
+          <h4>Notifications</h4>
+          <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+          <div class="notification-empty">
+            <i class="fas fa-bell-slash"></i>
+            <p>No new notifications</p>
           </div>
         </div>
+        <div class="notification-footer">
+          <button id="viewAllNotificationsBtn" class="view-all-btn">
+            <i class="fas fa-list"></i> View All Notifications
+          </button>
+        </div>
       </div>
+    </div>
+    
     <!-- PROFILE DROPDOWN -->
     <div class="profile-dropdown">
       <button id="profileBtn">
         <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
-        <span id="profileName"></span>
+        <i class="fas fa-chevron-down"></i>
       </button>
       <ul class="dropdown-menu" id="profileMenu">
-        <li><a href="/superadmin/profile" id="profileLink">Profile</a></li>
-        <li><a href="#" id="logoutBtn">Logout</a></li>
+        <li><a href="/superadmin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/superadmin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+        <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
       </ul>
     </div>
   </div>
 </div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <!-- LOGOUT MODAL -->
 <div id="logoutModal" class="modal">
@@ -99,8 +207,8 @@
     <h2>Confirm Logout</h2>
     <p>Are you sure you want to logout?</p>
     <div class="modal-actions">
-      <button id="cancelLogout" class="btn cancel">Cancel</button>
-      <button id="confirmLogout" class="btn confirm">Logout</button>
+      <button id="cancelLogout" class="btn cancel"> <i class="fas fa-times"></i> Cancel</button>
+      <button id="confirmLogout" class="btn confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
   </div>
 </div>
@@ -108,116 +216,435 @@
 <!-- MAIN -->
 <div class="main-content">
 
-   <!-- DASHBOARD HEADER CARD -->
+  <!-- DASHBOARD HEADER CARD -->
   <div class="dashboard-header-card">
     <div class="dashboard-header-left">
-      <h1> User Management</h1>
+      <h1>User Management</h1>
       <p>Cablevision Systems Corporation</p>
     </div>
     <div class="dashboard-header-right">
     </div>
   </div>
 
-
- <!-- ================= USERS LIST CARD ================= -->
-<div class="card">
-  <div class="card-header">
-    <div class="header-title-section">
-      <h2>Registered Users</h2>
-      <p class="header-subtitle">Manage and monitor all customer accounts</p>
-    </div>
-  </div>
-  
-  <div class="card-body">
-    <!-- Search Section -->
-    <div class="search-section">
-      <div class="search-icon-wrapper">
-        <i class="fas fa-search search-icon"></i>
-      </div>
-      <input type="text" id="searchInput" placeholder="Search by name, email, or user ID...">
-      <button class="search-clear-btn" id="clearSearch" style="display: none;">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-
-    <!-- Filter Section -->
-    <div class="filter-section">
-      <div class="filter-group">
-        <label><i class="fas fa-filter"></i> Filter by Status:</label>
-        <select id="statusFilter" class="filter-select">
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="pending">Pending</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label><i class="fas fa-wifi"></i> Filter by Connection:</label>
-        <select id="connectionFilter" class="filter-select">
-          <option value="all">All Connections</option>
-          <option value="active">Active Connection</option>
-          <option value="inactive">Inactive Connection</option>
-        </select>
+  <!-- ================= USERS LIST CARD ================= -->
+  <div class="card">
+    <div class="card-header">
+      <div class="header-title-section">
+        <h2>Registered Users</h2>
+        <p class="header-subtitle">Manage and monitor all customer accounts</p>
       </div>
       <div class="stats-badge">
-        <span id="userCount">0</span> total users
+        <span id="userCount">0</span> active users
       </div>
     </div>
+    
+    <div class="card-body">
+      <!-- Search Section -->
+      <div class="search-section">
+        <div class="search-icon-wrapper">
+          <i class="fas fa-search search-icon"></i>
+        </div>
+        <input type="text" id="searchInput" placeholder="Search by name, email, or user ID...">
+        <button class="search-clear-btn" id="clearSearch" style="display: none;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-    <!-- Table Wrapper -->
-    <div class="table-wrapper">
-      <table id="usersTable">
-        <thead>
-          <tr>
-            <th> User ID</th>
-            <th> Full Name</th>
-            <th> Email</th>
-            <th> Status</th>
-            <th> Connection</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="usersTableBody">
-          <tr class="loading-row">
-            <td colspan="6">
-              <div class="loading-container">
-                <div class="spinner"></div>
-                <p>Loading users...</p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-       </table>
-    </div>
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <div class="filter-group">
+          <label><i class="fas fa-filter"></i> Filter by Status:</label>
+          <select id="statusFilter" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label><i class="fas fa-wifi"></i> Filter by Connection:</label>
+          <select id="connectionFilter" class="filter-select">
+            <option value="all">All Connections</option>
+            <option value="connected">Connected</option>
+            <option value="disconnected">Disconnected</option>
+          </select>
+        </div>
+      </div>
 
-    <!-- No Data Message -->
-    <div id="noData" class="no-data-message">
-      <i class="fas fa-user-slash"></i>
-      <p>No users available</p>
-      <span>No registered users found in the system</span>
+      <!-- Table Wrapper -->
+      <div class="table-wrapper">
+        <table id="usersTable">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Connection</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr class="loading-row">
+              <td colspan="6">
+                <div class="skeleton-row-loader">
+                  <div class="skeleton-card">
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-row">
+                      <div class="skeleton-line skeleton-short"></div>
+                      <div class="skeleton-line skeleton-short"></div>
+                      <div class="skeleton-line skeleton-short"></div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Data Message -->
+      <div id="noData" class="no-data-message">
+        <i class="fas fa-user-slash"></i>
+        <p>No users available</p>
+        <span>No registered users found in the system</span>
+      </div>
     </div>
   </div>
+
+  <!-- ================= TERMINATED USERS CARD ================= -->
+  <div class="card terminated-card" id="terminatedCard" style="display: none;">
+    <div class="card-header" style="border-bottom-color: #dc2626;">
+      <div class="header-title-section">
+        <h2 style="color: #dc2626;"><i class="fas fa-user-times" style="color: #dc2626;"></i> Terminated Users</h2>
+        <p class="header-subtitle">Accounts that have been permanently terminated</p>
+      </div>
+      <div class="stats-badge" style="background: #fef2f2; color: #991b1b;">
+        <span id="terminatedCount" style="color: #dc2626;">0</span> terminated
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <!-- Search Section for Terminated -->
+      <div class="search-section">
+        <div class="search-icon-wrapper">
+          <i class="fas fa-search search-icon"></i>
+        </div>
+        <input type="text" id="terminatedSearchInput" placeholder="Search terminated users...">
+        <button class="search-clear-btn" id="terminatedClearSearch" style="display: none;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="table-wrapper">
+        <table id="terminatedUsersTable">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Connection</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="terminatedUsersBody">
+            <tr class="loading-row">
+              <td colspan="6">
+                <div class="loading-container">
+                  <div class="spinner"></div>
+                  <p>Loading terminated users...</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Data Message for Terminated -->
+      <div id="noTerminatedData" class="no-data-message" style="display: none;">
+        <i class="fas fa-user-check"></i>
+        <p>No terminated users</p>
+        <span>No terminated accounts found</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- STATUS MODAL -->
+<!-- ================= STATUS MODAL WITH BALANCE INPUT (ENHANCED) ================= -->
 <div id="statusModal" class="modal">
-  <div class="modal-content">
-    <h3 id="statusTitle"></h3>
-    <p id="statusText"></p>
+  <div class="modal-content status-modal-content">
+    <button class="close-btn" id="closeStatusModalBtn">&times;</button>
+    
+    <!-- Modal Header -->
+    <div class="status-modal-header">
+      <div class="status-modal-icon" id="statusModalIcon">
+        <i class="fas fa-user-cog"></i>
+      </div>
+      <h3 id="statusTitle">Confirm Action</h3>
+      <p id="statusText">Are you sure you want to perform this action?</p>
+    </div>
+    
+    <!-- 🔥 BALANCE INPUT FIELD -->
+    <div id="balanceField" style="display: none;">
+      <div class="balance-input-wrapper">
+        <div class="balance-input-label">
+          <i class="fas fa-coins"></i>
+          <span>Remaining Balance</span>
+        </div>
+        <div class="balance-input-group">
+          <span class="balance-currency">₱</span>
+          <input type="text" id="balanceInput" 
+                placeholder="0.00" 
+                class="balance-input-field"
+                autofocus>
+        </div>
+        <small class="balance-hint">
+          <i class="fas fa-info-circle"></i> 
+          Enter the remaining balance of this user (if any)
+        </small>
+      </div>
+    </div>
+    
+    <!-- Modal Actions -->
     <div class="status-modal-actions">
-      <button id="cancelStatus" class="btn cancel">Cancel</button>
-      <button id="confirmStatus" class="btn confirm">Confirm</button>
+      <button id="cancelStatus" class="btn btn-cancel">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button id="confirmStatus" class="btn btn-confirm">
+        <i class="fas fa-check"></i> Confirm
+      </button>
     </div>
   </div>
 </div>
 
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<!-- ================= DELETE CONFIRM MODAL ================= -->
+<div id="deleteModal" class="modal">
+  <div class="modal-content delete-modal-content">
+    <button class="close-btn" id="closeDeleteModalBtn">&times;</button>
+    
+    <!-- Modal Header -->
+    <div class="delete-modal-header">
+      <div class="delete-modal-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3 id="deleteModalTitle">⚠️ Permanently Delete User</h3>
+      <p id="deleteModalText">Are you sure you want to permanently delete this user?</p>
+    </div>
+    
+    <!-- User Info -->
+    <div class="delete-user-info" id="deleteUserInfo">
+      <div class="delete-user-detail">
+        <span class="delete-label">User ID:</span>
+        <span class="delete-value" id="deleteUserId">---</span>
+      </div>
+      <div class="delete-user-detail">
+        <span class="delete-label">Name:</span>
+        <span class="delete-value" id="deleteUserName">---</span>
+      </div>
+    </div>
+    
+    <!-- Warning -->
+    <div class="delete-warning">
+      <i class="fas fa-skull"></i>
+      <div>
+        <strong>This action CANNOT be undone!</strong>
+        <p>This will permanently remove all user data including applications, contracts, and notifications.</p>
+      </div>
+    </div>
+    
+    <!-- Modal Actions -->
+    <div class="delete-modal-actions">
+      <button id="cancelDelete" class="btn btn-cancel">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button id="confirmDelete" class="btn btn-danger">
+        <i class="fas fa-trash"></i> Delete Permanently
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================= VIEW REQUEST MODAL ================= -->
+<div id="requestModal" class="modal">
+  <div class="modal-content status-modal-content">
+    <button class="close-btn" id="closeRequestModalBtn">&times;</button>
+    
+    <div class="status-modal-header">
+      <div class="status-modal-icon" id="requestModalIcon">
+        <i class="fas fa-file-signature"></i>
+      </div>
+      <h3>Reconnection Request</h3>
+      <p>Review the request details before approving.</p>
+    </div>
+    
+    <div class="delete-user-info" id="requestDetails">
+      <div class="delete-user-detail">
+        <span class="delete-label">Name:</span>
+        <span class="delete-value" id="reqFullName">---</span>
+      </div>
+      <div class="delete-user-detail">
+        <span class="delete-label">Contact:</span>
+        <span class="delete-value" id="reqContact">---</span>
+      </div>
+      <div class="delete-user-detail">
+        <span class="delete-label">Email:</span>
+        <span class="delete-value" id="reqEmail">---</span>
+      </div>
+      <div class="delete-user-detail">
+        <span class="delete-label">Address:</span>
+        <span class="delete-value" id="reqAddress">---</span>
+      </div>
+    </div>
+    
+    <!-- ✅ PLAN DETAILS SECTION - UPDATED -->
+    <div id="reqPlanSection" style="padding: 16px 28px; border-top: 1px solid #eef2f6; border-bottom: 1px solid #eef2f6;">
+      <div style="font-size:13px; font-weight:600; color:#1e293b; margin-bottom:10px;">
+        <i class="fas fa-wifi"></i> Plan Details
+      </div>
+      <div class="delete-user-detail">
+        <span class="delete-label">Current Plan:</span>
+        <span class="delete-value" id="reqCurrentPlan">---</span>
+      </div>
+      <div class="delete-user-detail" id="reqNewPlanRow" style="display:none;">
+        <span class="delete-label" style="color: #2563eb;">New Plan:</span>
+        <span class="delete-value" id="reqNewPlan" style="color: #2563eb; font-weight:700;">---</span>
+      </div>
+      <div class="delete-user-detail" id="reqNoChangeRow">
+        <span class="delete-label">Plan Change:</span>
+        <span class="delete-value" style="color: #94a3b8;">No plan change requested</span>
+      </div>
+    </div>
+    
+    <!-- ✅ MODAL ACTIONS - WITH REJECT BUTTON -->
+    <div class="status-modal-actions" style="padding: 16px 28px 20px 28px; gap: 12px;">
+      <button id="cancelRequest" class="btn btn-cancel">
+        <i class="fas fa-times"></i> Close
+      </button>
+      <button id="rejectRequestBtn" class="btn btn-danger" style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-ban"></i> Reject
+      </button>
+      <button id="confirmApproveRequest" class="btn btn-confirm" style="background: linear-gradient(135deg, #0047ab 0%, #007bff 100%); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fas fa-check"></i> Approve
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CONFIRM ACTION MODAL ================= -->
+<div id="confirmActionModal" class="modal">
+  <div class="modal-content status-modal-content" style="max-width: 420px;">
+    <button class="close-btn" id="closeConfirmModalBtn">&times;</button>
+    
+    <div class="status-modal-header" id="confirmModalHeader">
+      <div class="status-modal-icon" id="confirmModalIcon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3 id="confirmModalTitle">Confirm Action</h3>
+      <p id="confirmModalText">Are you sure you want to perform this action?</p>
+    </div>
+    
+    <div class="delete-user-info" id="confirmModalDetails" style="padding: 16px 28px;">
+      <div class="delete-user-detail">
+        <span class="delete-label">Request ID:</span>
+        <span class="delete-value" id="confirmRequestId">---</span>
+      </div>
+      <div class="delete-user-detail">
+        <span class="delete-label">User:</span>
+        <span class="delete-value" id="confirmUserName">---</span>
+      </div>
+      <div class="delete-user-detail" id="confirmPlanChangeRow" style="display:none;">
+        <span class="delete-label">New Plan:</span>
+        <span class="delete-value" id="confirmNewPlan" style="color: #2563eb; font-weight:700;">---</span>
+      </div>
+    </div>
+    
+    <div class="status-modal-actions" style="padding: 12px 28px 24px 28px;">
+      <button id="cancelConfirmAction" class="btn btn-cancel">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button id="executeConfirmAction" class="btn btn-confirm">
+        <i class="fas fa-check"></i> Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+<div id="allNotificationsModal" class="modal">
+    <div class="modal-content all-notifications-modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-bell"></i> All Notifications</h3>
+            <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="allNotificationsList" class="all-notifications-list">
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button id="markAllReadFromModalBtn" class="btn-cancel">
+                <i class="fas fa-check"></i> Mark all as read
+            </button>
+            <button id="closeAllNotificationsBtn" class="btn-confirm">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
 
 <div id="toast"></div>
 
 <script src="{{ url_for('static', filename='superadmin-users.js') }}"></script>
-<script src="/static/session-manager.js"></script>
 <script src="/static/notification-system.js"></script>
+<!-- <script src="/static/session-manager.js"></script> -->  <!-- I-comment out or remove -->
+
+<!-- ================= LIGHTWEIGHT SESSION GUARD (bfcache-safe) ================= -->
+<script>
+(function() {
+    function getTabId() {
+        return sessionStorage.getItem('tab_id') || '';
+    }
+
+    async function verifySessionOrRedirect() {
+        const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+        if (!isLoggedIn) {
+            window.location.replace('/');
+            return;
+        }
+        try {
+            const tabId = getTabId();
+            const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+            const data = await response.json();
+            if (!data.valid) {
+                sessionStorage.clear();
+                window.location.replace('/');
+            }
+        } catch (error) {
+            console.error('Session verification failed:', error);
+        }
+    }
+
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            verifySessionOrRedirect();
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            verifySessionOrRedirect();
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

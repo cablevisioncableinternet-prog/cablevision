@@ -1,12 +1,31 @@
-// ==================== SESSION MANAGEMENT ====================
-// Initialize session manager FIRST
-if (window.SessionManager) {
-    window.SessionManager.init();
-} else {
-    console.error("SessionManager not loaded!");
-    // Fallback: redirect to login if no session
-    if (!localStorage.getItem('userType') || !sessionStorage.getItem('sessionToken')) {
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
+(function() {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
         window.location.replace('/');
+        throw new Error('No session');
+    }
+})();
+
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
     }
 }
 
@@ -370,20 +389,38 @@ let deleteId = null;
 function openDeleteModal(id) {
     deleteId = id;
     if (deleteModal) {
-        deleteModal.style.display = "block";
+        // ✅ I-CENTER ANG MODAL
+        deleteModal.style.display = "flex";
+        deleteModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
 }
 
 function closeDeleteModalFunc() {
     if (deleteModal) {
         deleteModal.style.display = "none";
+        deleteModal.classList.remove('show');
+        document.body.style.overflow = '';
     }
     deleteId = null;
 }
 
 if (closeDeleteModal) closeDeleteModal.onclick = closeDeleteModalFunc;
 if (cancelDeleteBtn) cancelDeleteBtn.onclick = closeDeleteModalFunc;
-window.onclick = e => { if (e.target === deleteModal) closeDeleteModalFunc(); };
+
+// ✅ CLOSE ON OUTSIDE CLICK
+window.addEventListener("click", function(e) {
+    if (e.target === deleteModal) {
+        closeDeleteModalFunc();
+    }
+});
+
+// ✅ CLOSE ON ESCAPE KEY
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && deleteModal && deleteModal.classList.contains('show')) {
+        closeDeleteModalFunc();
+    }
+});
 
 if (confirmDeleteBtn) {
     confirmDeleteBtn.onclick = async () => {
@@ -416,6 +453,85 @@ if (confirmDeleteBtn) {
     };
 }
 
+
+// ==================== HELPER FUNCTION: FORMAT DATE ONLY (NO TIME, NO DAY NAME) ====================
+function formatDateOnly(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        const date = new Date(dateString);
+        
+        if (isNaN(date.getTime())) {
+            return dateString;
+        }
+        
+        // Format as "May 30, 2026" only - no day name, no time
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (e) {
+        return dateString;
+    }
+}
+
+// ==================== HELPER FUNCTION: FORMAT DATE WITH TIME ====================
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    
+    try {
+        // Check if dateString already contains time
+        // Ang format na matatanggap ay "YYYY-MM-DD HH:MM:SS" or "June 11, 2026 at 12:00 AM"
+        
+        let date;
+        
+        // Kung ang dateString ay may " at " (from Firebase format)
+        if (dateString.includes(' at ')) {
+            // I-parse ang "June 11, 2026 at 2:30 PM" format
+            const parts = dateString.split(' at ');
+            if (parts.length === 2) {
+                const datePart = parts[0];
+                const timePart = parts[1];
+                date = new Date(`${datePart} ${timePart}`);
+            } else {
+                date = new Date(dateString);
+            }
+        } 
+        // Kung standard MySQL datetime format "YYYY-MM-DD HH:MM:SS"
+        else if (dateString.includes(' ') && dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
+            const [datePart, timePart] = dateString.split(' ');
+            if (timePart) {
+                const [year, month, day] = datePart.split('-');
+                const [hour, minute, second] = timePart.split(':');
+                // Create date object properly
+                date = new Date(year, month - 1, day, hour, minute, second || 0);
+            } else {
+                date = new Date(dateString);
+            }
+        }
+        else {
+            date = new Date(dateString);
+        }
+        
+        if (isNaN(date.getTime())) {
+            return dateString;
+        }
+        
+        // Format as "May 30, 2026, 2:30 PM"
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (e) {
+        console.error('Date parsing error:', e);
+        return dateString;
+    }
+}
+
 // ==================== RENDER ACTIVE APPLICATIONS ====================
 function renderApplications(data) {
     const tbody = document.getElementById("applicationsBody");
@@ -445,19 +561,29 @@ function renderApplications(data) {
         else if (status === "Request Sent") statusBadgeClass = "status-request-sent";
         else if (status === "Rejected") statusBadgeClass = "status-rejected";
 
+        // ✅ FORMAT DATES - ngayon ay may tamang oras na
+        const formattedDateTime = formatDateTime(app.date_submitted);
+        const formattedBirthdate = formatDateOnly(app.birthdate);
+
+        // ✅ APPLY PROPER CASE - email lang ang hindi naka-proper case
+        const fullName = `${toProperCase(app.first_name || '')} ${toProperCase(app.last_name || '')}`.trim();
+        const barangay = toProperCase(app.barangay || 'N/A');
+        const city = toProperCase(app.city || 'N/A');
+        const email = app.email || '';
+
         let actionButtons = `<div class="action-buttons">
-            <button class="btn-view" data-id="${app.id}">View</button>
+            <button class="btn-view" data-id="${app.id}"> <i class="fas fa-eye"></i> View</button>
         </div>`;
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
-            <td>${app.first_name || ""} ${app.last_name || ""}</td>
-            <td>${app.email || ""}</td>
-            <td>${app.date_submitted || "N/A"}</td>
-            <td>${app.barangay || "N/A"}</td>
-            <td>${app.city || "N/A"}</td>
-            <td>${app.birthdate || "N/A"}</td>
+            <td>${fullName}</td>
+            <td>${email}</td>
+            <td>${formattedDateTime}</td>
+            <td>${barangay}</td>
+            <td>${city}</td>
+            <td>${formattedBirthdate}</td>
             <td><span class="status-badge ${statusBadgeClass}">${status}</span></td>
             <td>${actionButtons}</td>
         `;
@@ -495,36 +621,68 @@ function renderRejectedApplications(data) {
     
     rejectedBody.innerHTML = "";
 
-    if (!data || data.length === 0) {
-        if (rejectedCard) rejectedCard.style.display = "none";
+    // Filter out archived applications from display
+    const nonArchivedRejected = data.filter(app => !app.is_archived);
+
+    if (!nonArchivedRejected || nonArchivedRejected.length === 0) {
+        // Huwag i-hide ang buong card, i-hide lang ang table
+        const rejectedTable = document.getElementById("rejectedApplicationsTable");
+        if (rejectedTable) rejectedTable.style.display = "none";
+        
         if (rejectedCountSpan) rejectedCountSpan.textContent = "0";
+        
+        // I-show ang no data message sa loob ng card
+        const noRejectedDataEl = document.getElementById("noRejectedData");
+        if (noRejectedDataEl) {
+            noRejectedDataEl.style.display = "block";
+        }
+        
+        // SIGURADUHIN NA VISIBLE ANG CARD
+        if (rejectedCard) rejectedCard.style.display = "block";
+        if (rejectedPaginationContainer) rejectedPaginationContainer.style.display = "none";
         return;
     }
     
+    // I-show ang card at table
     if (rejectedCard) rejectedCard.style.display = "block";
-    if (rejectedCountSpan) rejectedCountSpan.textContent = data.length;
+    if (rejectedCountSpan) rejectedCountSpan.textContent = nonArchivedRejected.length;
+    
     const rejectedTable = document.getElementById("rejectedApplicationsTable");
     if (rejectedTable) rejectedTable.style.display = "table";
+    
+    const noRejectedDataEl = document.getElementById("noRejectedData");
+    if (noRejectedDataEl) noRejectedDataEl.style.display = "none";
 
-    data.forEach(app => {
+    nonArchivedRejected.forEach(app => {
         const status = app.status || "Rejected";
         let statusBadgeClass = "status-rejected";
 
+        const formattedDateSubmitted = formatDateTime(app.date_submitted);
+        const formattedBirthdate = formatDateOnly(app.birthdate);
+
+        const fullName = `${toProperCase(app.first_name || '')} ${toProperCase(app.last_name || '')}`.trim();
+        const barangay = toProperCase(app.barangay || 'N/A');
+        const city = toProperCase(app.city || 'N/A');
+        const email = app.email || '';
+        const rejectionReason = app.rejection_reason ? toProperCase(app.rejection_reason) : 'N/A';
+
         let actionButtons = `<div class="action-buttons">
-            <button class="btn-view" data-id="${app.id}">View</button>
-            <button class="btn-delete" data-id="${app.id}">Delete</button>
+            <button class="btn-view" data-id="${app.id}"> <i class="fas fa-eye"></i> View</button>
+            <button class="btn-archive" data-id="${app.id}" data-name="${fullName}">
+                <i class="fas fa-archive"></i> Archive
+            </button>
         </div>`;
 
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
-            <td>${app.first_name || ""} ${app.last_name || ""}</td>
-            <td>${app.email || ""}</td>
-            <td>${app.date_submitted || "N/A"}</td>
-            <td>${app.barangay || "N/A"}</td>
-            <td>${app.city || "N/A"}</td>
-            <td>${app.birthdate || "N/A"}</td>
-            <td>${app.rejection_reason || "N/A"}</td>
+            <td>${fullName}</td>
+            <td>${email}</td>
+            <td>${formattedDateSubmitted}</td>
+            <td>${barangay}</td>
+            <td>${city}</td>
+            <td>${formattedBirthdate}</td>
+            <td>${rejectionReason}</td>
             <td><span class="status-badge ${statusBadgeClass}">${status}</span></td>
             <td>${actionButtons}</td>
         `;
@@ -540,8 +698,13 @@ function attachEvents() {
         btn.onclick = () => window.location.href = `/superadmin/view-application/${btn.dataset.id}`;
     });
     
-    document.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.onclick = () => openDeleteModal(btn.dataset.id);
+    // ✅ ARCHIVE BUTTON EVENTS - ito lang ang natira
+    document.querySelectorAll(".btn-archive").forEach(btn => {
+        btn.onclick = () => {
+            const appId = btn.dataset.id;
+            const appName = btn.dataset.name || 'this application';
+            openArchiveModal(appId, appName);
+        };
     });
 }
 
@@ -583,13 +746,15 @@ function setupSearchAndFilter() {
         let filtered = applicationsData.filter(app => app.status !== "Rejected");
         
         if (searchTerm) {
-            filtered = filtered.filter(app => 
-                (app.application_number && String(app.application_number).toLowerCase().includes(searchTerm)) ||
-                (app.first_name && app.first_name.toLowerCase().includes(searchTerm)) ||
-                (app.last_name && app.last_name.toLowerCase().includes(searchTerm)) ||
-                (`${app.first_name} ${app.last_name}`.toLowerCase().includes(searchTerm)) ||
-                (app.email && app.email.toLowerCase().includes(searchTerm))
-            );
+            filtered = filtered.filter(app => {
+                const fullName = `${toProperCase(app.first_name || '')} ${toProperCase(app.last_name || '')}`.toLowerCase();
+                const email = (app.email || '').toLowerCase();
+                const appNumber = String(app.application_number || '').toLowerCase();
+                
+                return fullName.includes(searchTerm) || 
+                       email.includes(searchTerm) || 
+                       appNumber.includes(searchTerm);
+            });
         }
         
         if (statusValue !== "all") {
@@ -603,12 +768,38 @@ function setupSearchAndFilter() {
         currentPage = 1;
         
         const totalItems = filteredActiveData.length;
-        const totalPages = Math.ceil(totalItems / rowsPerPage);
+        const activeTable = document.getElementById("applicationsTable");
+        const noDataEl = document.getElementById("noData");
         
         if (totalItems === 0) {
-            renderApplications([]);
+            // I-hide ang table, i-show ang no data message
+            if (activeTable) activeTable.style.display = "none";
+            if (noDataEl) {
+                noDataEl.style.display = "block";
+                if (searchTerm || statusValue !== "all") {
+                    noDataEl.innerHTML = `
+                        <div style="text-align: center; padding: 30px 20px;">
+                            <i class="fas fa-search" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                            <p style="font-weight: 600; color: #1e293b; margin: 0;">No active applications match your search</p>
+                            <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Try adjusting your search or filters</p>
+                        </div>
+                    `;
+                } else {
+                    noDataEl.innerHTML = `
+                        <div style="text-align: center; padding: 30px 20px;">
+                            <i class="fas fa-inbox" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                            <p style="font-weight: 600; color: #1e293b; margin: 0;">No active applications found</p>
+                        </div>
+                    `;
+                }
+            }
             if (paginationContainer) paginationContainer.style.display = "none";
         } else {
+            // I-show ang table
+            if (activeTable) activeTable.style.display = "table";
+            if (noDataEl) noDataEl.style.display = "none";
+            
+            const totalPages = Math.ceil(totalItems / rowsPerPage);
             const startIndex = 0;
             const endIndex = Math.min(rowsPerPage, totalItems);
             const pageData = filteredActiveData.slice(startIndex, endIndex);
@@ -620,16 +811,20 @@ function setupSearchAndFilter() {
     function applyRejectedFilters() {
         const searchTerm = rejectedSearchInput ? rejectedSearchInput.value.toLowerCase().trim() : "";
         
-        let filtered = applicationsData.filter(app => app.status === "Rejected");
+        let filtered = applicationsData.filter(app => app.status === "Rejected" && !app.is_archived);
         
         if (searchTerm) {
-            filtered = filtered.filter(app => 
-                (app.application_number && String(app.application_number).toLowerCase().includes(searchTerm)) ||
-                (app.first_name && app.first_name.toLowerCase().includes(searchTerm)) ||
-                (app.last_name && app.last_name.toLowerCase().includes(searchTerm)) ||
-                (`${app.first_name} ${app.last_name}`.toLowerCase().includes(searchTerm)) ||
-                (app.email && app.email.toLowerCase().includes(searchTerm))
-            );
+            filtered = filtered.filter(app => {
+                const fullName = `${toProperCase(app.first_name || '')} ${toProperCase(app.last_name || '')}`.toLowerCase();
+                const email = (app.email || '').toLowerCase();
+                const appNumber = String(app.application_number || '').toLowerCase();
+                const reason = toProperCase(app.rejection_reason || '').toLowerCase();
+                
+                return fullName.includes(searchTerm) || 
+                       email.includes(searchTerm) || 
+                       appNumber.includes(searchTerm) ||
+                       reason.includes(searchTerm);
+            });
         }
         
         filteredRejectedData = sortRejectedApplications(filtered);
@@ -637,12 +832,44 @@ function setupSearchAndFilter() {
         currentRejectedPage = 1;
         
         const totalItems = filteredRejectedData.length;
-        const totalPages = Math.ceil(totalItems / rejectedRowsPerPage);
+        const rejectedTable = document.getElementById("rejectedApplicationsTable");
+        const rejectedNoData = document.getElementById("noRejectedData");
+        const rejectedCardEl = document.getElementById("rejectedCard");
         
         if (totalItems === 0) {
-            renderRejectedApplications([]);
+            // I-hide ang table, pero i-show ang no data message SA LOOB ng card
+            if (rejectedTable) rejectedTable.style.display = "none";
+            if (rejectedNoData) {
+                rejectedNoData.style.display = "block";
+                if (searchTerm) {
+                    rejectedNoData.innerHTML = `
+                        <div style="text-align: center; padding: 30px 20px;">
+                            <i class="fas fa-search" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                            <p style="font-weight: 600; color: #1e293b; margin: 0;">No rejected applications match your search</p>
+                            <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Try adjusting your search</p>
+                        </div>
+                    `;
+                } else {
+                    rejectedNoData.innerHTML = `
+                        <div style="text-align: center; padding: 30px 20px;">
+                            <p style="font-weight: 600; color: #1e293b; margin: 0;">No rejected applications found</p>
+                            <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">All applications are active</p>
+                        </div>
+                    `;
+                }
+            }
+            // SIGURADUHIN NA VISIBLE ANG CARD
+            if (rejectedCardEl) rejectedCardEl.style.display = "block";
             if (rejectedPaginationContainer) rejectedPaginationContainer.style.display = "none";
+            const rejectedCountSpan = document.getElementById("rejectedCount");
+            if (rejectedCountSpan) rejectedCountSpan.textContent = "0";
         } else {
+            // I-show ang table at i-hide ang no data message
+            if (rejectedTable) rejectedTable.style.display = "table";
+            if (rejectedNoData) rejectedNoData.style.display = "none";
+            if (rejectedCardEl) rejectedCardEl.style.display = "block";
+            
+            const totalPages = Math.ceil(totalItems / rejectedRowsPerPage);
             const startIndex = 0;
             const endIndex = Math.min(rejectedRowsPerPage, totalItems);
             const pageData = filteredRejectedData.slice(startIndex, endIndex);
@@ -788,65 +1015,91 @@ window.addEventListener('pageshow', function(event) {
     }
 });
 
-// ==================== PROFILE & LOGOUT ====================
+// ==================== PROFILE DROPDOWN ====================
 const profileBtn = document.getElementById("profileBtn");
 const profileMenu = document.getElementById("profileMenu");
 
 if (profileBtn && profileMenu) {
-    profileBtn.addEventListener("click", e => { 
-        e.stopPropagation(); 
-        profileMenu.classList.toggle("show"); 
+    profileBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        profileMenu.classList.toggle("show");
+        profileBtn.classList.toggle("active");
     });
-    window.addEventListener("click", e => { 
-        if (!profileBtn.contains(e.target)) profileMenu.classList.remove("show"); 
+    window.addEventListener("click", function(e) {
+        if (!profileBtn.contains(e.target)) {
+            profileMenu.classList.remove("show");
+            profileBtn.classList.remove("active");
+        }
     });
 }
 
 async function loadProfile() {
     try {
-        const session = window.SessionManager ? window.SessionManager.getSession() : null;
-        const username = (session && session.username) || localStorage.getItem('adminUsername') || 'super admin';
-        
-        const res = await fetch(`/api/superadmin/profile?username=${encodeURIComponent(username)}`);
+        const tabId = getTabId();
+        const res = await fetch(`/api/superadmin/profile?tab_id=${tabId}`);
         const profile = await res.json();
         const profileNameSpan = document.getElementById("profileName");
-        if (profileNameSpan) profileNameSpan.textContent = profile.name || profile.username || "Profile";
+        if (profileNameSpan) profileNameSpan.textContent = profile.name || profile.username || "";
     } catch (err) { 
         console.error(err); 
     }
 }
 loadProfile();
 
+// ==================== LOGOUT MODAL ====================
 const logoutBtn = document.getElementById("logoutBtn");
 const logoutModal = document.getElementById("logoutModal");
 
 if (logoutBtn && logoutModal) {
-    logoutBtn.onclick = e => { 
-        e.preventDefault(); 
-        logoutModal.style.display = "block"; 
-    };
-    const closeBtnLogout = logoutModal.querySelector(".close-btn");
-    const cancelLogout = document.getElementById("cancelLogout");
-    const confirmLogout = document.getElementById("confirmLogout");
+    // Open
+    logoutBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        logoutModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    });
     
-    if (closeBtnLogout) closeBtnLogout.onclick = () => logoutModal.style.display = "none";
-    if (cancelLogout) cancelLogout.onclick = () => logoutModal.style.display = "none";
-    
-    if (confirmLogout) {
-        confirmLogout.onclick = () => {
-            if (window.SessionManager) {
-                window.SessionManager.logout('You have been logged out successfully.');
-            } else {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.replace("/");
-            }
-        };
+    // Close - X button
+    const closeBtnLogout = document.getElementById("closeLogoutModal");
+    if (closeBtnLogout) {
+        closeBtnLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
     }
     
-    window.onclick = e => { 
-        if (e.target === logoutModal) logoutModal.style.display = "none"; 
-    };
+    // Close - Cancel button
+    const cancelLogout = document.getElementById("cancelLogout");
+    if (cancelLogout) {
+        cancelLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    
+    // Confirm logout
+    const confirmLogout = document.getElementById("confirmLogout");
+    if (confirmLogout) {
+        confirmLogout.addEventListener("click", function() {
+            const tabId = getTabId();
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+
+            sessionStorage.clear();
+            window.location.replace("/");
+        });
+    }
+    
+    // Close on outside click
+    window.addEventListener("click", function(e) {
+        if (e.target === logoutModal) {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
 }
 
 // ==================== REJECT MODAL ====================
@@ -932,81 +1185,70 @@ window.refreshApplications = function() {
 };
 
 // ==================== TOAST NOTIFICATION ====================
-function showToast(message, type = "success") {
-    let toast = document.getElementById("customToast");
+function showToast(message, type = 'info') {
+    const LABELS = {
+        success: 'Success',
+        error:   'Error',
+        info:    'Notice',
+        loading: 'Please wait'
+    };
+
+    const ICONS = {
+        success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        info:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        loading: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: toastSpin 1s linear infinite; display:block;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    };
+
+    let toast = document.querySelector('.custom-toast');
     if (!toast) {
-        toast = document.createElement("div");
-        toast.id = "customToast";
-        toast.className = "custom-toast";
-        toast.innerHTML = `
-            <div class="toast-content">
-                <i class="fas fa-check-circle"></i>
-                <span id="toastMessage">Success!</span>
-            </div>
-        `;
+        toast = document.createElement('div');
+        toast.className = 'custom-toast';
         document.body.appendChild(toast);
-        
-        if (!document.querySelector("#toastStyles")) {
-            const style = document.createElement("style");
-            style.id = "toastStyles";
-            style.textContent = `
-                .custom-toast {
-                    position: fixed;
-                    bottom: 30px;
-                    right: 30px;
-                    background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
-                    color: white;
-                    padding: 0;
-                    border-radius: 12px;
-                    z-index: 10000;
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-                    animation: slideInRight 0.3s ease;
-                    display: none;
-                    min-width: 300px;
-                    overflow: hidden;
-                }
-                .custom-toast.error {
-                    background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%);
-                }
-                .custom-toast.warning {
-                    background: linear-gradient(135deg, #e69600 0%, #ffb74d 100%);
-                }
-                .custom-toast .toast-content {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px 20px;
-                }
-                .custom-toast .toast-content i {
-                    font-size: 20px;
-                }
-                @keyframes slideInRight {
-                    from {
-                        opacity: 0;
-                        transform: translateX(100px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
+
+        // Inject keyframes + spin once
+        if (!document.getElementById('toast-keyframes')) {
+            const s = document.createElement('style');
+            s.id = 'toast-keyframes';
+            s.textContent = `
+                @keyframes toastSpin     { to { transform: rotate(360deg); } }
+                @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+                @keyframes toastLoading  { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
             `;
-            document.head.appendChild(style);
+            document.head.appendChild(s);
         }
     }
-    
-    const toastMessage = toast.querySelector("#toastMessage");
-    toastMessage.textContent = message;
-    
-    toast.classList.remove("error", "warning");
-    if (type === "error") toast.classList.add("error");
-    else if (type === "warning") toast.classList.add("warning");
-    
-    toast.style.display = "block";
-    
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 4000);
+
+    // Build inner HTML
+    toast.innerHTML = `
+        <div class="custom-toast-body">
+            <span class="custom-toast-icon">${ICONS[type] || ICONS.info}</span>
+            <div class="custom-toast-text">
+                <span class="custom-toast-title">${LABELS[type] || 'Notice'}</span>
+                <span class="custom-toast-message">${message}</span>
+            </div>
+        </div>
+        <div class="custom-toast-progress">
+            <div class="custom-toast-progress-bar"></div>
+        </div>
+    `;
+
+    // Reset class, force reflow, then show
+    toast.className = `custom-toast ${type}`;
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    // Clear any existing hide timer
+    clearTimeout(toast._hideTimer);
+
+    if (type === 'loading') {
+        // Loading stays visible until next showToast call — no auto-hide
+        // Progress bar uses the infinite sweep animation (set in CSS)
+    } else {
+        toast._hideTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
 }
 
 // ==================== HAMBURGER MENU TOGGLE ====================
@@ -1045,6 +1287,10 @@ if (hamburger && sidebar) {
 
 // ==================== INIT ====================
 document.addEventListener("DOMContentLoaded", async () => {
+    // ✅ SESSION CHECK MUNA
+    const isValid = await checkSession();
+    if (!isValid) return;
+    
     detectPageRefresh();
     trackPageLoads();
     
@@ -1075,3 +1321,169 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log("Notification system not found, make sure notification-system.js is loaded");
     }
 });
+
+// ==================== PROFILE DROPDOWN CHEVRON ====================
+(function() {
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileBtn.classList.toggle('active');
+        });
+    }
+})();
+
+
+// ==================== ARCHIVE MODAL ====================
+const archiveModal = document.getElementById("archiveModal");
+let archiveId = null;
+
+function openArchiveModal(id, name) {
+    archiveId = id;
+    
+    // Create archive modal if it doesn't exist
+    let modal = document.getElementById("archiveModal");
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'archiveModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close" id="closeArchiveModal">&times;</span>
+                <h2> Archive Application</h2>
+                <p id="archiveModalMessage">Are you sure you want to archive this application?</p>
+                <p style="font-size: 13px; color: #6b7280; margin-top: 4px;">
+                    <i class="fas fa-info-circle"></i> 
+                    Archived applications will be hidden from the main list but can still be accessed if needed.
+                </p>
+                <div class="modal-buttons">
+                    <button id="confirmArchiveBtn" class="btn-confirm" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);">
+                        <i class="fas fa-archive"></i> Archive
+                    </button>
+                    <button id="cancelArchiveBtn" class="btn-cancel">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Update message with application name
+    const messageEl = document.getElementById("archiveModalMessage");
+    if (messageEl) {
+        messageEl.textContent = `Are you sure you want to archive "${name}"?`;
+    }
+    
+    // Remove existing event listeners
+    const confirmBtn = document.getElementById("confirmArchiveBtn");
+    const cancelBtn = document.getElementById("cancelArchiveBtn");
+    const closeBtn = document.getElementById("closeArchiveModal");
+    
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        newConfirmBtn.onclick = executeArchive;
+    }
+    
+    if (cancelBtn) {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        newCancelBtn.onclick = closeArchiveModalFunc;
+    }
+    
+    if (closeBtn) {
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        newCloseBtn.onclick = closeArchiveModalFunc;
+    }
+    
+    // Show modal
+    modal.style.display = "flex";
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeArchiveModalFunc() {
+    const modal = document.getElementById("archiveModal");
+    if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+    archiveId = null;
+}
+
+async function executeArchive() {
+    if (!archiveId) return;
+    
+    const confirmBtn = document.getElementById("confirmArchiveBtn");
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archiving...';
+    
+    try {
+        const response = await fetch(`/api/superadmin/application/${archiveId}/archive`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Archive failed");
+        }
+        
+        closeArchiveModalFunc();
+        clearCache();
+        await fetchApplications(true);
+        showToast("Application archived successfully", "success");
+        
+    } catch (err) {
+        console.error("Archive error:", err);
+        showToast(err.message || "Error archiving application", "error");
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+}
+
+// Close archive modal on outside click
+window.addEventListener("click", function(e) {
+    const modal = document.getElementById("archiveModal");
+    if (e.target === modal) {
+        closeArchiveModalFunc();
+    }
+});
+
+// Close on Escape key
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        const modal = document.getElementById("archiveModal");
+        if (modal && modal.classList.contains('show')) {
+            closeArchiveModalFunc();
+        }
+    }
+});
+
+// ==================== HELPER FUNCTION: PROPER CASE ====================
+function toProperCase(str) {
+    if (!str) return 'N/A';
+    if (typeof str !== 'string') return str;
+    
+    // Handle special cases like "Dela Cruz", "De Jesus", "Macapagal"
+    const exceptions = ['del', 'de', 'la', 'las', 'los', 'san', 'santa', 'santo', 'dela', 'de la'];
+    
+    return str.toLowerCase().split(' ').map(word => {
+        // Check if word is in exceptions list
+        if (exceptions.includes(word.toLowerCase())) {
+            return word.toLowerCase();
+        }
+        // Handle hyphenated names like "María-Jose"
+        if (word.includes('-')) {
+            return word.split('-').map(part => 
+                part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+            ).join('-');
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+}

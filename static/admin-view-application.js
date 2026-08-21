@@ -37,12 +37,34 @@ function getCleanValue(value) {
 }
 
 // =========================
-// ADMIN INFO RETRIEVAL
+// ADMIN INFO RETRIEVAL - PER TAB (server session is source of truth)
 // =========================
-let adminUsername = localStorage.getItem("adminUsername") || sessionStorage.getItem("adminUsername");
-let adminId = localStorage.getItem("adminId") || sessionStorage.getItem("adminId");
-let adminArea = localStorage.getItem("adminArea") || sessionStorage.getItem("adminArea");
-let adminCity = localStorage.getItem("adminCity") || sessionStorage.getItem("adminCity");
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+let adminUsername = sessionStorage.getItem("adminUsername") || null;
+let adminId = sessionStorage.getItem("adminId") || null;
+let adminArea = sessionStorage.getItem("adminArea") || null;
+let adminCity = sessionStorage.getItem("adminCity") || null;
+
+async function refreshAdminInfoForRequest() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/session-user?tab_id=${tabId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.username) {
+                adminUsername = data.username;
+                sessionStorage.setItem('adminUsername', data.username);
+                return true;
+            }
+        }
+    } catch (error) {
+        console.error('Error refreshing admin username from session:', error);
+    }
+    return false;
+}
 
 // =========================
 // REDIRECT WITH CACHE BUSTING
@@ -65,123 +87,264 @@ async function loadApplication() {
         }
 
         currentApplicationStatus = data.status;
+        
+        // ✅ I-SET ANG REAPPLY STATE MULA SA DATA
+        const reapplyRequested = data.reapply_requested === 1 || data.reapply_requested === true;
+        const reapplyRequestedAt = data.reapply_requested_at || null;
 
-        const setText = (id, val) => {
+        // ============================================================
+        // ✅ HELPER: Set text to "—" if empty, else show value
+        // ============================================================
+        const setTextOrHide = (id, val) => {
             const el = document.getElementById(id);
-            if(el) el.textContent = val || "";
+            if (!el) return;
+            
+            const cleanVal = val || '';
+            if (cleanVal === '' || cleanVal === 'none' || cleanVal === 'N/A' || cleanVal === 'null' || cleanVal === 'NULL') {
+                el.textContent = 'none';
+            } else {
+                el.textContent = cleanVal;
+            }
         };
 
-        // =========================
-        // BASIC INFO - USING CLEAN NAME FUNCTION
-        // =========================
-        setText("application_number", data.application_number);
-        setText("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
-        setText("email", data.email);
-        setText("mobile", data.mobile);
-        setText("secondary_mobile", data.secondary_mobile);
-        setText("phone", data.phone);
-        setText("birthdate", data.birthdate);
-        setText("place_of_birth", data.place_of_birth);
-        setText("mother_maiden_name", data.mother_maiden_name);
-        setText("sex", data.sex);
-        setText("civil_status", data.civil_status);
-        setText("citizenship", data.citizenship);
-        setText("occupation", data.occupation);
-        setText("home_ownership", data.home_ownership);
+        // ============================================================
+        // ✅ HELPER: Set image or hide container if no src
+        // ============================================================
+        const setImgOrHide = (id, src) => {
+            const imgEl = document.getElementById(id);
+            if (!imgEl) return;
+            
+            const cleanSrc = src || '';
+            if (cleanSrc !== '' && cleanSrc !== 'none' && cleanSrc !== 'null' && cleanSrc !== 'NULL') {
+                imgEl.src = cleanSrc;
+                imgEl.style.display = 'block';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'block';
+            } else {
+                imgEl.src = '';
+                imgEl.style.display = 'none';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'none';
+            }
+        };
+
+        // ============================================================
+        // ✅ HELPER: Format birthdate
+        // ============================================================
+        function formatBirthdate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            } catch (e) {
+                return dateStr;
+            }
+        }
 
         // =========================
-        // ADDRESS
+        // BASIC INFO
         // =========================
-        setText("address", data.address);
-        setText("billing_address", data.billing_address);
-        setText("barangay", data.barangay);
-        setText("city", data.city);
-        setText("province", data.province);
-        setText("zip", data.zip);
+        setTextOrHide("application_number", data.application_number);
+        setTextOrHide("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
+
+        // =========================
+        // CONTACT DETAILS
+        // =========================
+        setTextOrHide("email", data.email);
+        setTextOrHide("mobile", data.mobile);
+        setTextOrHide("secondary_mobile", data.secondary_mobile);
+        setTextOrHide("phone", data.phone);
+
+        // =========================
+        // PERSONAL INFORMATION
+        // =========================
+        setTextOrHide("birthdate", formatBirthdate(data.birthdate));
+        setTextOrHide("place_of_birth", data.place_of_birth);
+        setTextOrHide("sex", data.sex);
+        setTextOrHide("civil_status", data.civil_status);
+        setTextOrHide("citizenship", data.citizenship);
+        setTextOrHide("occupation", data.occupation);
+        setTextOrHide("home_ownership", data.home_ownership);
+
+        // =========================
+        // ADDRESS (with House Number and Landmark)
+        // =========================
+        setTextOrHide("address", data.address);
+        setTextOrHide("billing_address", data.billing_address);
+        setTextOrHide("house_number", data.house_number);
+        setTextOrHide("landmark", data.landmark);
+        setTextOrHide("barangay", data.barangay);
+        setTextOrHide("city", data.city);
+        setTextOrHide("province", data.province);
+        setTextOrHide("zip", data.zip);
 
         // =========================
         // EMPLOYMENT
         // =========================
-        setText("employer", data.employer);
-        setText("business_address", data.business_address);
-        setText("business_phone", data.business_phone);
+        setTextOrHide("employer", data.employer);
+        setTextOrHide("business_address", data.business_address);
+        setTextOrHide("business_phone", data.business_phone);
 
         // =========================
         // SPOUSE
         // =========================
-        setText("spouse_name", data.spouse_name);
-        setText("spouse_occupation", data.spouse_occupation);
-        setText("spouse_employer", data.spouse_employer);
-        setText("spouse_phone", data.spouse_phone);
+        setTextOrHide("spouse_name", data.spouse_name);
+        setTextOrHide("spouse_occupation", data.spouse_occupation);
+        setTextOrHide("spouse_employer", data.spouse_employer);
+        setTextOrHide("spouse_phone", data.spouse_phone);
 
         // =========================
         // FAMILY
         // =========================
-        setText("parents_name", data.parents_name);
-        setText("others", data.others);
+        setTextOrHide("father_name", data.father_name);
+        setTextOrHide("mother_maiden_name", data.mother_maiden_name);
 
         // =========================
         // PLAN & SERVICE
         // =========================
-        setText("plan", data.plan);
-        setText("service_type", data.service_type);
-        setText("installation_address", data.installation_address);
-        setText("installation_phone", data.installation_phone);
-        setText("installation_fee", data.installation_fee);
+        setTextOrHide("plan", data.plan);
+        setTextOrHide("service_type", data.service_type);
+        setTextOrHide("installation_address", data.installation_address);
+        setTextOrHide("installation_phone", data.installation_phone);
+        setTextOrHide("installation_fee", data.installation_fee);
 
         // =========================
         // TV SETS TABLE
         // =========================
         const tvTableBody = document.getElementById("tvTableBody");
-        if(tvTableBody){
-            tvTableBody.innerHTML = "";
-            for(let i = 0; i < (data.tv_qty?.length || 0); i++){
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${data.tv_qty[i] || ""}</td>
-                    <td>${data.tv_brand[i] || ""}</td>
-                    <td>${data.tv_type[i] || ""}</td>
-                `;
-                tvTableBody.appendChild(row);
+        const tvCard = document.getElementById("tvCard");
+        
+        if (tvTableBody) {
+            const tvQty = data.tv_qty || [];
+            const tvBrand = data.tv_brand || [];
+            const tvType = data.tv_type || [];
+            
+            const hasTvData = tvQty.some(q => q && q !== '' && q !== '0') || 
+                             tvBrand.some(b => b && b !== '') || 
+                             tvType.some(t => t && t !== '');
+            
+            if (tvCard) {
+                tvCard.style.display = hasTvData ? 'block' : 'none';
+            }
+            
+            if (hasTvData) {
+                tvTableBody.innerHTML = "";
+                for (let i = 0; i < tvQty.length; i++) {
+                    if (tvQty[i] && tvQty[i] !== '' && tvQty[i] !== '0') {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${tvQty[i] || ""}</td>
+                            <td>${tvBrand[i] || ""}</td>
+                            <td>${tvType[i] || ""}</td>
+                        `;
+                        tvTableBody.appendChild(row);
+                    }
+                }
+                if (tvTableBody.children.length === 0 && tvCard) {
+                    tvCard.style.display = 'none';
+                }
+            } else {
+                tvTableBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">No TV details provided</td></tr>`;
             }
         }
 
         // =========================
-        // IMAGES
-        // =========================
-        const setImg = (id, src) => {
-            const imgEl = document.getElementById(id);
-            if(imgEl) imgEl.src = src || "";
-        };
-
-        setImg("signature", data.signature);
-        setImg("id_front", data.id_front);
-        setImg("id_back", data.id_back);
-        setImg("proof_billing", data.proof_billing);
-        setImg("profile_photo", data.profile_photo);
-
-        initMap(data);
-        initImageModal();
-
-        // =========================
         // SUBMISSION DATE/TIME
         // =========================
-        setText("date_submitted", data.date_submitted);
-        setText("time_submitted", data.time_submitted);
+        setTextOrHide("date_submitted", data.date_submitted);
+        setTextOrHide("time_submitted", data.time_submitted);
+
+        // =========================
+        // IMAGES
+        // =========================
+        setImgOrHide("signature", data.signature);
+        setImgOrHide("id_front", data.id_front);
+        setImgOrHide("id_back", data.id_back);
+        setImgOrHide("proof_billing", data.proof_billing);
+        setImgOrHide("profile_photo", data.profile_photo);
+
+        // =========================
+        // INITIALIZE UI COMPONENTS (with error handling)
+        // =========================
+        try {
+            initMap(data);
+        } catch (mapErr) {
+            console.warn("⚠️ Map initialization failed:", mapErr);
+        }
+        
+        try {
+            initImageModal();
+        } catch (imgErr) {
+            console.warn("⚠️ Image modal initialization failed:", imgErr);
+        }
 
         // Store application data for contract view
         window.currentApplicationData = data;
         
         // =========================
-        // TOGGLE ACTION BUTTONS BASED ON STATUS
+        // TOGGLE ACTION BUTTONS BASED ON STATUS (PASS THE REAPPLY STATE)
         // =========================
-        toggleActionButtons(currentApplicationStatus);
+        try {
+            toggleActionButtons(currentApplicationStatus, reapplyRequested, reapplyRequestedAt);
+        } catch (btnErr) {
+            console.warn("⚠️ Action buttons initialization failed:", btnErr);
+        }
+
+        addStatusBadge(data.status);
+        showRejectionReason(data.status, data.rejection_reason);
         
-        // Initialize View Contract button after data is loaded (only if status is approved)
-        initViewContractButton();
+        // Initialize View Contract button after data is loaded
+        try {
+            initViewContractButton();
+        } catch (contractErr) {
+            console.warn("⚠️ View contract button initialization failed:", contractErr);
+        }
 
     } catch(err){
-        console.error("Failed to load application:", err);
+        console.error("❌ Failed to load application:", err);
+        console.error("❌ Error message:", err.message);
+        console.error("❌ Error stack:", err.stack);
+        showToast("Failed to load application data. Please refresh the page.", "error");
+    }
+}
+
+function addStatusBadge(status) {
+    const appNumberDiv = document.querySelector(".app-number");
+    if (appNumberDiv && status) {
+        const existingBadge = document.querySelector(".status-badge-header");
+        if (existingBadge) existingBadge.remove();
+
+        const statusSpan = document.createElement("span");
+        statusSpan.className = `status-badge-header status-${status.toLowerCase()}`;
+        statusSpan.innerHTML = `<i class="fas fa-circle"></i> Status: ${status}`;
+        appNumberDiv.appendChild(statusSpan);
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showRejectionReason(status, reason) {
+    const appNumberDiv = document.querySelector(".app-number");
+    if (!appNumberDiv) return;
+
+    const existingReason = document.querySelector(".rejection-reason-display");
+    if (existingReason) existingReason.remove();
+
+    if (status && status.toLowerCase() === "rejected" && reason && reason.trim() !== "") {
+        const reasonDiv = document.createElement("div");
+        reasonDiv.className = "rejection-reason-display";
+        reasonDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle"></i>
+            <strong>Reason for Rejection:</strong> ${escapeHtml(reason)}
+        `;
+        appNumberDiv.appendChild(reasonDiv);
     }
 }
 
@@ -564,23 +727,173 @@ function toggleViewContractButton(status) {
 // =========================
 // TOGGLE ACTION BUTTONS (APPROVE/REJECT) BASED ON STATUS
 // =========================
-function toggleActionButtons(status) {
+function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedAt = null) {
     const floatingActions = document.getElementById('floatingActions');
-    if (floatingActions) {
-        if (status && status.toLowerCase() === 'pending') {
-            floatingActions.style.display = 'flex';
-            console.log("Action buttons shown (status: pending)");
-        } else {
-            floatingActions.style.display = 'none';
-            console.log("Action buttons hidden (status:", status, ")");
+    const floatingRestoreActions = document.getElementById('floatingRestoreActions');
+    const floatingReapplyActions = document.getElementById('floatingReapplyActions');
+    
+    const statusLower = status ? status.toLowerCase() : '';
+    
+    // ✅ CHECK KUNG MAY ANUMANG PENDING REQUEST
+    checkAnyPendingRequest().then(pendingInfo => {
+        const hasPending = pendingInfo && pendingInfo.hasPending;
+        const pendingStatus = pendingInfo ? pendingInfo.requested_status : null;
+        
+        // PENDING or REQUEST SENT - Show Approve/Reject buttons
+        if (floatingActions) {
+            if (statusLower === 'pending' || statusLower === 'request sent') {
+                if (hasPending) {
+                    // ✅ MAY PENDING REQUEST - I-DISABLE ANG BUTTONS
+                    floatingActions.innerHTML = `
+                        <button class="btn-floating btn-approve-floating" style="opacity:0.5; cursor:not-allowed; background: #94a3b8;" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Approve (Request Pending)</span>
+                        </button>
+                        <button class="btn-floating btn-reject-floating" style="opacity:0.5; cursor:not-allowed; background: #94a3b8;" disabled>
+                            <i class="fas fa-times-circle"></i>
+                            <span>Reject (Request Pending)</span>
+                        </button>
+                    `;
+                    floatingActions.style.display = 'flex';
+                    floatingActions.style.pointerEvents = 'none';
+                    floatingActions.style.opacity = '0.7';
+                } else {
+                    // ✅ WALANG PENDING - ENABLED
+                    floatingActions.innerHTML = `
+                        <button class="btn-floating btn-approve-floating" id="floatingApproveBtn">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Approve Application</span>
+                        </button>
+                        <button class="btn-floating btn-reject-floating" id="floatingRejectBtn">
+                            <i class="fas fa-times-circle"></i>
+                            <span>Reject Application</span>
+                        </button>
+                    `;
+                    floatingActions.style.display = 'flex';
+                    floatingActions.style.pointerEvents = 'auto';
+                    floatingActions.style.opacity = '1';
+                    attachActionButtonEvents();
+                }
+            } else {
+                floatingActions.style.display = 'none';
+            }
         }
+        
+        // REJECTED - Show Reapply button (check reapply_requested state)
+        if (floatingReapplyActions) {
+            if (statusLower === 'rejected') {
+                // ✅ CHECK KUNG MAY REAPPLY_REQUESTED NA
+                if (reapplyRequested) {
+                    let formattedDate = '';
+                    if (reapplyRequestedAt) {
+                        try {
+                            const date = new Date(reapplyRequestedAt.replace(' ', 'T'));
+                            if (!isNaN(date.getTime())) {
+                                const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+                                const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+                                formattedDate = `${date.toLocaleDateString('en-US', dateOptions)} at ${date.toLocaleTimeString('en-US', timeOptions)}`;
+                            }
+                        } catch(e) {
+                            formattedDate = reapplyRequestedAt;
+                        }
+                    }
+                    
+                    floatingReapplyActions.innerHTML = `
+                        <button class="btn-floating btn-reapply-floating" style="opacity:0.6; cursor:not-allowed; background: linear-gradient(135deg, #78716c 0%, #a8a29e 100%);" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            <span class="reapply-btn-text">
+                                <strong>Reapply Requested</strong>
+                                ${formattedDate ? `<small>Request sent on ${formattedDate}</small>` : ''}
+                            </span>
+                        </button>
+                    `;
+                    floatingReapplyActions.style.display = 'flex';
+                    floatingReapplyActions.style.pointerEvents = 'none';
+                    floatingReapplyActions.style.opacity = '0.8';
+                } else if (hasPending && pendingStatus === 'Reapply') {
+                    // ✅ MAY PENDING REAPPLY REQUEST
+                    floatingReapplyActions.innerHTML = `
+                        <button class="btn-floating btn-reapply-floating" style="opacity:0.6; cursor:not-allowed; background: linear-gradient(135deg, #78716c 0%, #a8a29e 100%);" disabled>
+                            <i class="fas fa-clock"></i>
+                            <span class="reapply-btn-text">
+                                <strong>Request Pending</strong>
+                                <small>Waiting for superadmin approval...</small>
+                            </span>
+                        </button>
+                    `;
+                    floatingReapplyActions.style.display = 'flex';
+                    floatingReapplyActions.style.pointerEvents = 'none';
+                    floatingReapplyActions.style.opacity = '0.6';
+                } else {
+                    // ✅ WALANG REAPPLY REQUESTED AT WALANG PENDING
+                    floatingReapplyActions.innerHTML = `
+                        <button class="btn-floating btn-reapply-floating" id="floatingReapplyBtn">
+                            <i class="fas fa-redo-alt"></i>
+                            <span>Request Reapply</span>
+                        </button>
+                    `;
+                    floatingReapplyActions.style.display = 'flex';
+                    floatingReapplyActions.style.pointerEvents = 'auto';
+                    floatingReapplyActions.style.opacity = '1';
+                    attachReapplyButtonEvents();
+                }
+            } else {
+                floatingReapplyActions.style.display = 'none';
+            }
+        }
+    });
+}
+
+// ✅ BAGONG FUNCTION - CHECK ANY PENDING REQUEST
+async function checkAnyPendingRequest() {
+    try {
+        const res = await fetch(`/api/admin/check-pending-request/${appId}`);
+        const data = await res.json();
+        return data;
+    } catch (e) {
+        console.error('Error checking pending request:', e);
+        return { hasPending: false };
     }
+}
+
+// ✅ I-UPDATE ANG OLD FUNCTION PARA GAMITIN ANG BAGO
+async function checkPendingReapplyRequest() {
+    const result = await checkAnyPendingRequest();
+    // Para sa backward compatibility, return true kung may pending na Reapply
+    return result.hasPending && result.requested_status === 'Reapply';
+}
+
+
+// =========================
+// PREVENT FLOATING BUTTONS INTERACTION WHEN MODAL IS OPEN
+// =========================
+function setupModalPointerEvents() {
+    const floatingActions = document.querySelectorAll('.floating-actions');
+    
+    // Kapag may modal na nag-show, i-disable ang floating buttons
+    document.addEventListener('shown.bs.modal', function(e) {
+        floatingActions.forEach(el => {
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0.4';
+            el.style.transition = 'opacity 0.3s ease';
+        });
+    });
+    
+    // Kapag nag-close ang modal, i-restore ang floating buttons
+    document.addEventListener('hidden.bs.modal', function(e) {
+        floatingActions.forEach(el => {
+            el.style.pointerEvents = 'auto';
+            el.style.opacity = '1';
+        });
+    });
 }
 
 // =========================
 // SEND REQUEST TO SUPERADMIN
 // =========================
 async function sendAdminRequest(status, reason = null) {
+    await refreshAdminInfoForRequest();
+    
     if (!adminUsername) {
         showToast("Admin username not found. Please login again.", "error");
         return false;
@@ -601,16 +914,19 @@ async function sendAdminRequest(status, reason = null) {
         const data = await response.json();
         
         if (response.ok) {
-            showToast(data.message || `Request to ${status.toLowerCase()} application sent to superadmin!`);
+            const displayAction = status === "Pending" ? "restore" : status.toLowerCase();
+            showToast(data.message || `Request to ${displayAction} application sent to superadmin!`);
             currentApplicationStatus = "Request Sent";
-            toggleActionButtons(currentApplicationStatus);
-
-            sessionStorage.setItem('refresh_superadmin_applications', 'true');
-            console.log("Superadmin refresh flag set");
             
-            setTimeout(() => {
-                redirectToApplicationsList();
-            }, 1500);
+            // ✅ I-DISABLE AGAD ANG LAHAT NG BUTTONS
+            toggleActionButtons('request sent', false, null);
+            
+            if (status !== "Reapply") {
+                sessionStorage.setItem('refresh_superadmin_applications', 'true');
+                setTimeout(() => {
+                    redirectToApplicationsList();
+                }, 1500);
+            }
             
             return true;
         } else {
@@ -788,6 +1104,8 @@ function setupRejectModalEvents() {
     }
 }
 
+
+
 // =========================
 // ATTACH ACTION BUTTON EVENT LISTENERS
 // =========================
@@ -805,6 +1123,233 @@ function attachActionButtonEvents() {
         const newRejectBtn = rejectBtn.cloneNode(true);
         rejectBtn.parentNode.replaceChild(newRejectBtn, rejectBtn);
         newRejectBtn.addEventListener('click', showRejectModal);
+    }
+}
+
+
+// =========================
+// RESTORE REQUEST MODAL HANDLERS
+// =========================
+function showRestoreRequestModal() {
+    const applicantName = document.getElementById('full_name')?.textContent || 'this applicant';
+    
+    const modalApplicantName = document.getElementById('restoreApplicantName');
+    if (modalApplicantName) {
+        modalApplicantName.textContent = applicantName;
+    }
+    
+    const modalButtons = document.querySelector('#restoreRequestModal .modal-footer');
+    const modalLoading = document.getElementById('restoreRequestModalLoading');
+    const confirmBtn = document.getElementById('confirmRestoreRequestBtn');
+    
+    if (modalButtons) modalButtons.style.display = "flex";
+    if (modalLoading) modalLoading.style.display = "none";
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-undo"></i> Yes, Request Restore';
+    }
+    
+    const restoreModal = new bootstrap.Modal(document.getElementById('restoreRequestModal'));
+    restoreModal.show();
+}
+
+async function processRestoreRequest() {
+    const modalButtons = document.querySelector('#restoreRequestModal .modal-footer');
+    const modalLoading = document.getElementById('restoreRequestModalLoading');
+    const confirmBtn = document.getElementById('confirmRestoreRequestBtn');
+    
+    if (modalButtons) modalButtons.style.display = "none";
+    if (modalLoading) {
+        modalLoading.style.display = "block";
+        // ✅ PALITAN ANG SPINNER PARA MAGING BLUE
+        const spinner = modalLoading.querySelector('.spinner-border');
+        if (spinner) {
+            spinner.classList.remove('text-warning');
+            spinner.classList.add('text-primary');
+        }
+    }
+    if (confirmBtn) confirmBtn.disabled = true;
+    
+    // ✅ Ginagamit ang existing sendAdminRequest function, "Pending" ang status
+    const success = await sendAdminRequest("Pending");
+    
+    if (success) {
+        const restoreModal = bootstrap.Modal.getInstance(document.getElementById('restoreRequestModal'));
+        if (restoreModal) restoreModal.hide();
+    } else {
+        if (modalButtons) modalButtons.style.display = "flex";
+        if (modalLoading) modalLoading.style.display = "none";
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-undo"></i> Yes, Request Restore';
+        }
+    }
+}
+
+function setupRestoreRequestModalEvents() {
+    const confirmBtn = document.getElementById('confirmRestoreRequestBtn');
+    const cancelBtn = document.getElementById('cancelRestoreRequestBtn');
+    const closeBtn = document.getElementById('closeRestoreRequestModal');
+    
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', processRestoreRequest);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            const restoreModal = bootstrap.Modal.getInstance(document.getElementById('restoreRequestModal'));
+            if (restoreModal) restoreModal.hide();
+        });
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            const restoreModal = bootstrap.Modal.getInstance(document.getElementById('restoreRequestModal'));
+            if (restoreModal) restoreModal.hide();
+        });
+    }
+}
+
+function attachRestoreButtonEvents() {
+    const restoreBtn = document.getElementById('floatingRestoreBtn');
+    if (restoreBtn) {
+        const newRestoreBtn = restoreBtn.cloneNode(true);
+        restoreBtn.parentNode.replaceChild(newRestoreBtn, restoreBtn);
+        newRestoreBtn.addEventListener('click', showRestoreRequestModal);
+    }
+}
+
+
+// =========================
+// REAPPLY REQUEST MODAL HANDLERS
+// =========================
+function showReapplyRequestModal() {
+    const applicantName = document.getElementById('full_name')?.textContent || 'this applicant';
+    
+    // ✅ KUHAIN ANG REJECTION REASON MULA SA ELEMENT
+    const rejectionReasonEl = document.querySelector('.rejection-reason-display');
+    let rejectionReason = 'No reason provided';
+    if (rejectionReasonEl) {
+        // Extract text after "Reason for Rejection:"
+        const text = rejectionReasonEl.textContent || '';
+        const match = text.match(/Reason for Rejection:\s*(.+)/);
+        if (match && match[1]) {
+            rejectionReason = match[1].trim();
+        }
+    }
+    
+    const reasonBox = document.getElementById('reapplyRejectionReasonBox');
+    if (reasonBox) {
+        reasonBox.textContent = rejectionReason;
+    }
+    
+    // Reset message input
+    const messageInput = document.getElementById('reapplyMessage');
+    if (messageInput) {
+        messageInput.value = '';
+        messageInput.classList.remove('is-invalid');
+    }
+    const counter = document.getElementById('reapplyMsgCount');
+    if (counter) counter.textContent = '0';
+    const msgError = document.getElementById('reapplyMessageError');
+    if (msgError) msgError.classList.add('d-none');
+    
+    const modalButtons = document.querySelector('#reapplyRequestModal .modal-footer');
+    const modalLoading = document.getElementById('reapplyRequestModalLoading');
+    const confirmBtn = document.getElementById('confirmReapplyRequestBtn');
+    
+    if (modalButtons) modalButtons.style.display = "flex";
+    if (modalLoading) modalLoading.style.display = "none";
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Request';
+    }
+    
+    const reapplyModal = new bootstrap.Modal(document.getElementById('reapplyRequestModal'));
+    reapplyModal.show();
+}
+
+async function processReapplyRequest() {
+    const modalButtons = document.querySelector('#reapplyRequestModal .modal-footer');
+    const modalLoading = document.getElementById('reapplyRequestModalLoading');
+    const confirmBtn = document.getElementById('confirmReapplyRequestBtn');
+    const messageInput = document.getElementById('reapplyMessage');
+    const messageError = document.getElementById('reapplyMessageError');
+    
+    const message = messageInput ? messageInput.value.trim() : '';
+    if (!message) {
+        if (messageError) messageError.classList.remove('d-none');
+        if (messageInput) messageInput.classList.add('is-invalid');
+        showToast("Please enter a message for the customer.", "warning");
+        return;
+    }
+    
+    if (modalButtons) modalButtons.style.display = "none";
+    if (modalLoading) modalLoading.style.display = "block";
+    if (confirmBtn) confirmBtn.disabled = true;
+    
+    const success = await sendAdminRequest("Reapply", message);
+    
+    if (success) {
+        const reapplyModal = bootstrap.Modal.getInstance(document.getElementById('reapplyRequestModal'));
+        if (reapplyModal) reapplyModal.hide();
+        
+        // ✅ I-UPDATE ANG BUTTON STATE AGAD
+        setTimeout(() => {
+            toggleActionButtons('rejected');
+        }, 300);
+    } else {
+        if (modalButtons) modalButtons.style.display = "flex";
+        if (modalLoading) modalLoading.style.display = "none";
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Request';
+        }
+    }
+}
+
+function setupReapplyRequestModalEvents() {
+    const confirmBtn = document.getElementById('confirmReapplyRequestBtn');
+    const cancelBtn = document.getElementById('cancelReapplyRequestBtn');
+    const closeBtn = document.getElementById('closeReapplyRequestModal');
+    
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', processReapplyRequest);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            const reapplyModal = bootstrap.Modal.getInstance(document.getElementById('reapplyRequestModal'));
+            if (reapplyModal) reapplyModal.hide();
+        });
+    }
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            const reapplyModal = bootstrap.Modal.getInstance(document.getElementById('reapplyRequestModal'));
+            if (reapplyModal) reapplyModal.hide();
+        });
+    }
+    
+    // Character counter for message input
+    const messageInput = document.getElementById('reapplyMessage');
+    if (messageInput) {
+        messageInput.addEventListener('input', function() {
+            const counter = document.getElementById('reapplyMsgCount');
+            if (counter) counter.textContent = this.value.length;
+            const msgError = document.getElementById('reapplyMessageError');
+            if (msgError) msgError.classList.add('d-none');
+            this.classList.remove('is-invalid');
+        });
+    }
+}
+
+function attachReapplyButtonEvents() {
+    const reapplyBtn = document.getElementById('floatingReapplyBtn');
+    if (reapplyBtn) {
+        const newReapplyBtn = reapplyBtn.cloneNode(true);
+        reapplyBtn.parentNode.replaceChild(newReapplyBtn, reapplyBtn);
+        newReapplyBtn.addEventListener('click', showReapplyRequestModal);
     }
 }
 
@@ -908,14 +1453,18 @@ function initViewContractButton() {
     }
 }
 
-// =========================
-// INITIALIZE ON PAGE LOAD
-// =========================
 document.addEventListener('DOMContentLoaded', () => {
     loadApplication();
     setupApproveModalEvents();
     setupRejectModalEvents();
+    setupRestoreRequestModalEvents();
+    setupReapplyRequestModalEvents();  // ✅ ADD THIS
     attachActionButtonEvents();
+    attachRestoreButtonEvents();
+    setupModalPointerEvents();
 });
 
-loadApplication();
+
+
+
+

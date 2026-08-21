@@ -1,3 +1,34 @@
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
+(function() {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
+        window.location.replace('/');
+        throw new Error('No session');
+    }
+})();
+
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
+    }
+}
+
 const appId = window.location.pathname.split("/").pop();
 let currentApplicationStatus = null;
 let currentContractNumber = null;
@@ -52,110 +83,206 @@ async function loadApplication() {
         // Store the application status
         currentApplicationStatus = data.status;
 
-        const setText = (id, val) => {
+        // ============================================================
+        // ✅ HELPER: Set text to "—" if empty, else show value
+        // ============================================================
+        const setTextOrHide = (id, val) => {
             const el = document.getElementById(id);
-            if(el) el.textContent = val || "";
+            if (!el) return;
+            
+            const cleanVal = val || '';
+            if (cleanVal === '' || cleanVal === 'none' || cleanVal === 'N/A' || cleanVal === 'null') {
+                el.textContent = 'none';
+            } else {
+                el.textContent = cleanVal;
+            }
         };
 
+        // ============================================================
+        // ✅ HELPER: Set image or hide container if no src
+        // ============================================================
+        const setImgOrHide = (id, src) => {
+            const imgEl = document.getElementById(id);
+            if (!imgEl) return;
+            
+            if (src && src !== '' && src !== 'none' && src !== 'null') {
+                imgEl.src = src;
+                imgEl.style.display = 'block';
+                // Show parent container
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'block';
+            } else {
+                imgEl.src = '';
+                imgEl.style.display = 'none';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'none';
+            }
+        };
+
+        // ============================================================
+        // ✅ HELPER: Get clean full name
+        // ============================================================
+        function getCleanFullName(firstName, middleName, lastName, suffix) {
+            const nameParts = [];
+            
+            if (firstName && firstName !== 'none' && firstName.trim() !== '') {
+                nameParts.push(firstName);
+            }
+            if (middleName && middleName !== 'none' && middleName.trim() !== '') {
+                nameParts.push(middleName);
+            }
+            if (lastName && lastName !== 'none' && lastName.trim() !== '') {
+                nameParts.push(lastName);
+            }
+            if (suffix && suffix !== 'none' && suffix.trim() !== '') {
+                nameParts.push(suffix);
+            }
+            
+            return nameParts.join(' ') || '—';
+        }
+
+        // ============================================================
+        // ✅ HELPER: Format birthdate
+        // ============================================================
+        function formatBirthdate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
         // =========================
-        // BASIC INFO - USING CLEAN NAME FUNCTION
+        // BASIC INFO
         // =========================
-        setText("application_number", data.application_number);
-        setText("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
-        setText("email", data.email);
-        setText("mobile", data.mobile);
-        setText("secondary_mobile", data.secondary_mobile);
-        setText("phone", data.phone);
-        setText("birthdate", data.birthdate);
-        setText("place_of_birth", data.place_of_birth);
-        setText("mother_maiden_name", data.mother_maiden_name);
-        setText("sex", data.sex);
-        setText("civil_status", data.civil_status);
-        setText("citizenship", data.citizenship);
-        setText("occupation", data.occupation);
-        setText("home_ownership", data.home_ownership);
+        setTextOrHide("application_number", data.application_number);
+        setTextOrHide("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
+        
+        // =========================
+        // CONTACT DETAILS
+        // =========================
+        setTextOrHide("email", data.email);
+        setTextOrHide("mobile", data.mobile);
+        setTextOrHide("secondary_mobile", data.secondary_mobile);
+        setTextOrHide("phone", data.phone);
+
+        // =========================
+        // PERSONAL INFORMATION
+        // =========================
+        setTextOrHide("birthdate", formatBirthdate(data.birthdate));
+        setTextOrHide("place_of_birth", data.place_of_birth);
+        setTextOrHide("sex", data.sex);
+        setTextOrHide("civil_status", data.civil_status);
+        setTextOrHide("citizenship", data.citizenship);
+        setTextOrHide("occupation", data.occupation);
+        setTextOrHide("home_ownership", data.home_ownership);
 
         // =========================
         // ADDRESS
         // =========================
-        setText("address", data.address);
-        setText("billing_address", data.billing_address);
-        setText("house_number", data.house_number);
-        setText("landmark", data.landmark);
-        setText("barangay", data.barangay);
-        setText("city", data.city);
-        setText("province", data.province);
-        setText("zip", data.zip);
+        setTextOrHide("address", data.address);
+        setTextOrHide("billing_address", data.billing_address);
+        setTextOrHide("house_number", data.house_number);
+        setTextOrHide("landmark", data.landmark);
+        setTextOrHide("barangay", data.barangay);
+        setTextOrHide("city", data.city);
+        setTextOrHide("province", data.province);
+        setTextOrHide("zip", data.zip);
 
         // =========================
         // EMPLOYMENT
         // =========================
-        setText("employer", data.employer);
-        setText("business_address", data.business_address);
-        setText("business_phone", data.business_phone);
+        setTextOrHide("employer", data.employer);
+        setTextOrHide("business_address", data.business_address);
+        setTextOrHide("business_phone", data.business_phone);
 
         // =========================
         // SPOUSE
         // =========================
-        setText("spouse_name", data.spouse_name);
-        setText("spouse_occupation", data.spouse_occupation);
-        setText("spouse_employer", data.spouse_employer);
-        setText("spouse_phone", data.spouse_phone);
+        setTextOrHide("spouse_name", data.spouse_name);
+        setTextOrHide("spouse_occupation", data.spouse_occupation);
+        setTextOrHide("spouse_employer", data.spouse_employer);
+        setTextOrHide("spouse_phone", data.spouse_phone);
 
         // =========================
         // FAMILY
         // =========================
-        setText("parents_name", data.parents_name);
-        setText("others", data.others);
+        setTextOrHide("father_name", data.father_name);
+        setTextOrHide("mother_maiden_name", data.mother_maiden_name);
 
         // =========================
         // PLAN & SERVICE
         // =========================
-        setText("plan", data.plan);
-        setText("service_type", data.service_type);
-        setText("installation_address", data.installation_address);
-        setText("installation_phone", data.installation_phone);
-        setText("installation_fee", data.installation_fee);
+        setTextOrHide("plan", data.plan);
+        setTextOrHide("service_type", data.service_type);
+        setTextOrHide("installation_address", data.installation_address);
+        setTextOrHide("installation_phone", data.installation_phone);
+        setTextOrHide("installation_fee", data.installation_fee);
 
         // =========================
         // TV SETS TABLE
         // =========================
         const tvTableBody = document.getElementById("tvTableBody");
-        if(tvTableBody){
-            tvTableBody.innerHTML = "";
-            for(let i = 0; i < (data.tv_qty?.length || 0); i++){
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${data.tv_qty[i] || ""}</td>
-                    <td>${data.tv_brand[i] || ""}</td>
-                    <td>${data.tv_type[i] || ""}</td>
-                `;
-                tvTableBody.appendChild(row);
+        const tvCard = document.getElementById("tvCard");
+        
+        if (tvTableBody) {
+            const tvQty = data.tv_qty || [];
+            const tvBrand = data.tv_brand || [];
+            const tvType = data.tv_type || [];
+            
+            // Check if there's any TV data
+            const hasTvData = tvQty.some(q => q && q !== '' && q !== '0') || 
+                             tvBrand.some(b => b && b !== '') || 
+                             tvType.some(t => t && t !== '');
+            
+            if (tvCard) {
+                tvCard.style.display = hasTvData ? 'block' : 'none';
+            }
+            
+            if (hasTvData) {
+                tvTableBody.innerHTML = "";
+                for (let i = 0; i < tvQty.length; i++) {
+                    if (tvQty[i] && tvQty[i] !== '' && tvQty[i] !== '0') {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${tvQty[i] || ""}</td>
+                            <td>${tvBrand[i] || ""}</td>
+                            <td>${tvType[i] || ""}</td>
+                        `;
+                        tvTableBody.appendChild(row);
+                    }
+                }
+                // If after filtering no rows, hide the card
+                if (tvTableBody.children.length === 0 && tvCard) {
+                    tvCard.style.display = 'none';
+                }
+            } else {
+                tvTableBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">No TV details provided</td></tr>`;
             }
         }
 
         // =========================
-        // IMAGES
-        // =========================
-        const setImg = (id, src) => {
-            const imgEl = document.getElementById(id);
-            if(imgEl) imgEl.src = src || "";
-        };
-
-        setImg("signature", data.signature);
-        setImg("id_front", data.id_front);
-        setImg("id_back", data.id_back);
-        setImg("proof_billing", data.proof_billing);
-        setImg("profile_photo", data.profile_photo);
-
-        initMap(data);
-        initImageModal();
-
-        // =========================
         // SUBMISSION DATE/TIME
         // =========================
-        setText("date_submitted", data.date_submitted);
-        setText("time_submitted", data.time_submitted);
+        setTextOrHide("date_submitted", data.date_submitted);
+        setTextOrHide("time_submitted", data.time_submitted);
+
+        // =========================
+        // IMAGES
+        // =========================
+        setImgOrHide("signature", data.signature);
+        setImgOrHide("id_front", data.id_front);
+        setImgOrHide("id_back", data.id_back);
+        setImgOrHide("proof_billing", data.proof_billing);
+        setImgOrHide("profile_photo", data.profile_photo);
+
+        // Initialize map and image modal
+        initMap(data);
+        initImageModal();
 
         // Store application data for contract view
         window.currentApplicationData = data;
@@ -165,6 +292,7 @@ async function loadApplication() {
 
     } catch(err){
         console.error("Failed to load application:", err);
+        showToast("Failed to load application data", "error");
     }
 }
 
@@ -588,11 +716,11 @@ function initViewContractButton() {
     }
 }
 
-// =========================
-// INITIALIZE ON PAGE LOAD
-// =========================
-document.addEventListener('DOMContentLoaded', () => {
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', async () => {
+    // ✅ SESSION CHECK MUNA
+    const isValid = await checkSession();
+    if (!isValid) return;
+    
     loadApplication();
 });
-
-loadApplication();

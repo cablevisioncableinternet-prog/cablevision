@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Technician | Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/static/technician-dashboard.css">
+  <link rel="stylesheet" href="/static/technician-notifications.css">
+  <link rel="stylesheet" href="/static/device-alert.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h2>Cablevision</h2>
+      <p>Technician Portal</p>
+    </div>
+
+   <nav class="sidebar-menu">
+    <ul>
+<li class="active"><a href="/technician/dashboard">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg>
+  <span class="menu-text">Dashboard</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li><a href="/technician/technician-napbox">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="6" rx="1"/>
+    <rect x="7" y="14" width="10" height="6" rx="1"/>
+    <path d="M12 10v4"/>
+    <path d="M8 17h.01M12 17h.01M16 17h.01"/>
+  </svg>
+  <span class="menu-text">NAP Box Slots</span>
+</a></li>
+
+<li><a href="/technician/slot-assignments">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2"/>
+    <path d="M16 2v4M8 2v4M3 10h18"/>
+    <path d="M9 16l2 2 4-4"/>
+  </svg>
+  <span class="menu-text">Installation Management</span>
+</a></li>
+    </ul>
+  </nav>
+  </aside>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button class="hamburger" id="hamburgerBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div class="top-bar-right">
+      <!-- NOTIFICATION DROPDOWN -->
+      <div class="notification-dropdown">
+        <button id="notificationBtn" class="notification-btn">
+          <i class="fas fa-bell"></i>
+          <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+        </button>
+        <div class="notification-menu" id="notificationMenu">
+          <div class="notification-header">
+            <h4>Notifications</h4>
+            <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+          </div>
+          <div class="notification-list" id="notificationList">
+            <div class="notification-empty">
+              <i class="fas fa-bell-slash"></i>
+              <p>No new notifications</p>
+            </div>
+          </div>
+          <div class="notification-footer">
+            <button id="viewAllNotificationsBtn" class="view-all-btn">
+              <i class="fas fa-list"></i> View All Notifications
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- PROFILE DROPDOWN -->
+      <div class="profile-dropdown">
+        <button id="profileBtn">
+          <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+          <span id="profileName"></span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <ul class="dropdown-menu" id="profileMenu">
+          <li><a href="/technician/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/technician/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+          <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+ <!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal logout-modal">
+  <div class="modal-content logout-modal-content">
+    <span class="close-btn logout-close-btn" id="closeLogoutModal">&times;</span>
+    <div class="logout-icon-wrapper">
+    </div>
+    <h2 class="logout-title">Confirm Logout</h2>
+    <p class="logout-message">Are you sure you want to logout?</p>
+    <div class="logout-actions">
+      <button id="cancelLogout" class="btn logout-cancel"> <i class="fas fa-times"></i> Cancel</button>
+      <button id="confirmLogout" class="btn logout-confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+</div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- DASHBOARD HEADER -->
+    <div class="dashboard-header-card">
+      <div class="dashboard-header-left">
+        <h1 id="technicianDashboardTitle">Technician Dashboard</h1>
+        <p>Cablevision Systems Corporation</p>
+      </div>
+
+      <div class="dashboard-header-right">
+        <div class="date-box">
+          <i class="fas fa-calendar-alt"></i>
+          <span id="currentDay"></span>, <span id="currentDate"></span>
+        </div>
+        <div class="time-box">
+          <i class="fas fa-clock"></i>
+          <span id="liveTime"></span>
+        </div>
+      </div>
+    </div>
+
+<!-- STATS CARDS - VERTICAL BREAKDOWN -->
+<div class="stats-grid">
+  <!-- Card 1 - Total Slots -->
+  <div class="stat-card">
+    <div class="stat-card-inner">
+      <div class="stat-icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0004ab" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-number" id="totalSlots">0</div>
+        <div class="stat-label">Total Slots</div>
+      </div>
+    </div>
+    <div class="stat-breakdown">
+      <div class="breakdown-item">
+        <span class="breakdown-label">Today</span>
+        <span class="breakdown-value" id="slotsToday">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Week</span>
+        <span class="breakdown-value" id="slotsWeek">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Month</span>
+        <span class="breakdown-value" id="slotsMonth">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2 - Available Slots -->
+  <div class="stat-card">
+    <div class="stat-card-inner">
+      <div class="stat-icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0004ab" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-number" id="availableSlots">0</div>
+        <div class="stat-label">Available Slots</div>
+      </div>
+    </div>
+    <div class="stat-breakdown">
+      <div class="breakdown-item">
+        <span class="breakdown-label">Today</span>
+        <span class="breakdown-value" id="availableToday">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Week</span>
+        <span class="breakdown-value" id="availableWeek">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Month</span>
+        <span class="breakdown-value" id="availableMonth">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3 - Occupied Slots -->
+  <div class="stat-card">
+    <div class="stat-card-inner">
+      <div class="stat-icon-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <polyline points="16 11 18 13 22 9"></polyline>
+          </svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-number" id="occupiedSlots">0</div>
+        <div class="stat-label">Occupied Slots</div>
+      </div>
+    </div>
+    <div class="stat-breakdown">
+      <div class="breakdown-item">
+        <span class="breakdown-label">Today</span>
+        <span class="breakdown-value" id="occupiedToday">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Week</span>
+        <span class="breakdown-value" id="occupiedWeek">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Month</span>
+        <span class="breakdown-value" id="occupiedMonth">0</span>
+      </div>
+    </div>
+  </div>
+
+   <!-- Card 4 - NAP Boxes -->
+  <div class="stat-card">
+    <div class="stat-card-inner">
+      <div class="stat-icon-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0004ab" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="6" rx="1"/>
+            <rect x="7" y="14" width="10" height="6" rx="1"/>
+            <path d="M12 10v4"/>
+            <path d="M8 17h.01M12 17h.01M16 17h.01"/>
+          </svg>
+      </div>
+      <div class="stat-info">
+        <div class="stat-number" id="totalNapboxes">0</div>
+        <div class="stat-label">NAP Boxes</div>
+      </div>
+    </div>
+    <div class="stat-breakdown">
+      <div class="breakdown-item">
+        <span class="breakdown-label">Today</span>
+        <span class="breakdown-value" id="napboxesToday">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Week</span>
+        <span class="breakdown-value" id="napboxesWeek">0</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="breakdown-label">This Month</span>
+        <span class="breakdown-value" id="napboxesMonth">0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS SECTION -->
+<div class="charts-container">
+  <div class="chart-card trend-chart">
+    <div class="chart-header">
+      <div class="chart-title">
+        <div class="header-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Slot Status Trend</h3>
+      </div>
+    </div>
+
+    <!-- TIME PERIOD SELECTOR -->
+    <div class="period-selector">
+      <div class="period-label">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Time Period</span>
+      </div>
+      <div class="period-buttons">
+        <button class="filter-tab active" data-period="all-months">
+          <span>All Months</span>
+        </button>
+        <button class="filter-tab" data-period="day">
+          <span>Today</span>
+        </button>
+        <button class="filter-tab" data-period="week">
+          <span>This Week</span>
+        </button>
+        <div class="filter-dropdown-wrapper">
+          <button class="filter-tab dropdown-toggle" id="monthDropdownBtn">
+            <span id="selectedMonthLabel">This Month</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="monthDropdownMenu">
+            <!-- Months will be populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrapper">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+  
+  <div class="chart-card distribution-chart">
+    <div class="chart-header">
+      <div class="header-icon">
+        <i class="fas fa-chart-pie"></i>
+      </div>
+      <div class="header-text">
+        <h3>Slot Distribution</h3>
+        <p class="chart-subtitle">Current Status Overview</p>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="distributionChart"></canvas>
+    </div>
+    <div class="stats-summary">
+      <div class="summary-item">
+        <span class="summary-label">Occupied %</span>
+        <span class="summary-value" id="occupiedPercent">0%</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Available %</span>
+        <span class="summary-value" id="availablePercent">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT ACTIVITIES & SUMMARY -->
+<div class="bottom-section">
+  <div class="recent-activities">
+    <div class="section-header">
+      <div class="section-title">
+        <div class="title-icon">
+          <i class="fas fa-history"></i>
+        </div>
+        <div class="title-content">
+          <h3>Recent Activities</h3>
+        </div>
+      </div>
+    </div>
+    <div class="activities-list" id="activitiesList">
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading activities...</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="quick-summary">
+    <div class="section-header">
+      <div class="section-title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="4" y="14" width="4" height="8" rx="1" />
+  <rect x="10" y="8" width="4" height="14" rx="1" />
+  <rect x="16" y="3" width="4" height="19" rx="1" />
+</svg>
+        <h3>Quick Summary</h3>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="4" width="18" height="18" rx="2" />
+  <line x1="3" y1="10" x2="21" y2="10" />
+  <line x1="8" y1="2" x2="8" y2="6" />
+  <line x1="16" y1="2" x2="16" y2="6" />
+  <rect x="8" y="12" width="8" height="8" rx="1" />
+</svg>
+        </div>
+        <div class="summary-info">
+          <span class="summary-label">Today's Activity</span>
+          <span class="summary-number" id="todayActivity">0</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="19" y1="5" x2="5" y2="19" />
+  <circle cx="6.5" cy="6.5" r="2.5" />
+  <circle cx="17.5" cy="17.5" r="2.5" />
+</svg>
+        </div>
+        <div class="summary-info">
+          <span class="summary-label">Occupancy Rate</span>
+          <span class="summary-number" id="occupancyRate">0%</span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+  <path d="M2 17l10 5 10-5" />
+  <path d="M2 12l10 5 10-5" />
+</svg>
+        </div>
+        <div class="summary-info">
+          <span class="summary-label">Avg Slots/NAP</span>
+          <span class="summary-number" id="avgSlotsPerNap">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </main>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+  <div id="allNotificationsModal" class="modal">
+      <div class="modal-content all-notifications-modal-content">
+          <div class="modal-header">
+              <h3><i class="fas fa-bell"></i> All Notifications</h3>
+              <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 0;">
+              <div id="allNotificationsList" class="all-notifications-list">
+                  <div class="notification-empty">
+                      <i class="fas fa-bell-slash"></i>
+                      <p>No notifications</p>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer" style="justify-content: center;">
+              <button id="markAllReadFromModalBtn" class="btn-cancel">
+                  <i class="fas fa-check"></i> Mark all as read
+              </button>
+              <button id="closeAllNotificationsBtn" class="btn-confirm">
+                  <i class="fas fa-times"></i> Close
+              </button>
+          </div>
+      </div>
+  </div>
+
+  <!-- JS SCRIPTS -->
+<!-- JS SCRIPTS -->
+<script src="/static/technician-notifications.js"></script>
+<script src="/static/technician-dashboard.js"></script>
+<script src="/static/device-monitor.js"></script>
+<!-- <script src="/static/session-manager.js"></script> -->  <!-- I-comment out or remove -->
+
+<!-- ================= LIGHTWEIGHT SESSION GUARD (bfcache-safe) ================= -->
+<script>
+(function() {
+    function getTabId() {
+        return sessionStorage.getItem('tab_id') || '';
+    }
+
+    async function verifySessionOrRedirect() {
+        const isLoggedIn = sessionStorage.getItem('technicianId') && sessionStorage.getItem('sessionActive') === 'true';
+        if (!isLoggedIn) {
+            window.location.replace('/');
+            return;
+        }
+        try {
+            const tabId = getTabId();
+            const response = await fetch(`/api/technician/verify-session?tab_id=${tabId}`);
+            const data = await response.json();
+            if (!data.valid) {
+                sessionStorage.clear();
+                window.location.replace('/');
+            }
+        } catch (error) {
+            console.error('Session verification failed:', error);
+        }
+    }
+
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            verifySessionOrRedirect();
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            verifySessionOrRedirect();
+        }
+    });
+})();
+</script>
+
+
+</body>
+</html>

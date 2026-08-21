@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin View Customers</title>
+<title>Administrator | View Customers</title>
 <link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -13,6 +13,7 @@
 <!-- CSS -->
 <link rel="stylesheet" href="/static/admin-view-customers.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="/static/admin-notifications.css">
 </head>
 <body>
 
@@ -20,18 +21,48 @@
 <aside class="sidebar">
     <div class="sidebar-brand">
       <h2>Cablevision</h2>
-      <p>Administrator</p>
+      <p>Administrator Portal</p>
     </div>
    <nav class="sidebar-menu">
   <ul>
-    <li><a href="/admin"><i class="fas fa-chart-line"></i><span class="menu-text">Dashboard</span></a></li>
-    
-    <li class="divider">
-      <span class="divider-label">MANAGEMENT</span>
-    </li>
-    
-    <li class="active"><a href="/admin/view-customers"><i class="fas fa-user-circle"></i><span class="menu-text">View Customers</span></a></li>
-    <li><a href="/admin/internet-applications"><i class="fas fa-file-alt"></i><span class="menu-text">View Applications</span></a></li>
+<li><a href="/admin">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg>
+  <span class="menu-text">Dashboard</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li class="active"><a href="/admin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/admin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li><a href="/admin/napbox">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="6" rx="1"/>
+    <rect x="7" y="14" width="10" height="6" rx="1"/>
+    <path d="M12 10v4"/>
+    <path d="M8 17h.01M12 17h.01M16 17h.01"/>
+  </svg>
+  <span class="menu-text">NAP Box</span>
+</a></li>
   </ul>
 </nav>
 </aside>
@@ -65,19 +96,26 @@
             <p>No new notifications</p>
           </div>
         </div>
+        <div class="notification-footer">
+          <button id="viewAllNotificationsBtn" class="view-all-btn">
+            <i class="fas fa-list"></i> View All Notifications
+          </button>
+        </div>
       </div>
     </div>
-    <!-- PROFILE DROPDOWN -->
-    <div class="profile-dropdown">
-      <button id="profileBtn">
-        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
-        <span id="profileName"></span>
-      </button>
-      <ul class="dropdown-menu" id="profileMenu">
-        <li><a href="/admin/profile">Profile</a></li>
-        <li><a href="#" id="logoutBtn">Logout</a></li>
-      </ul>
-    </div>
+  <!-- PROFILE DROPDOWN -->
+<div class="profile-dropdown">
+  <button id="profileBtn">
+    <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+    <span id="profileName"></span>
+    <i class="fas fa-chevron-down"></i>
+  </button>
+  <ul class="dropdown-menu" id="profileMenu">
+    <li><a href="/admin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/admin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+    <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+  </ul>
+</div>
   </div>
 </div>
 
@@ -88,8 +126,8 @@
     <h2>Confirm Logout</h2>
     <p>Are you sure you want to logout?</p>
     <div class="modal-actions">
-      <button id="cancelLogout" class="btn cancel">Cancel</button>
-      <button id="confirmLogout" class="btn confirm">Logout</button>
+      <button id="cancelLogout" class="btn cancel"> <i class="fas fa-times"></i> Cancel</button>
+      <button id="confirmLogout" class="btn confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
   </div>
 </div>  
@@ -162,10 +200,17 @@
         </thead>
         <tbody id="approvedCustomersBody">
           <tr class="loading-row">
-              <td colspan="9">  <!-- ✅ 8 naging 9 -->
-                  <div class="loading-container">
-                      <div class="spinner"></div>
-                      <p>Loading customers...</p>
+              <td colspan="9">
+                  <div class="skeleton-row-loader">
+                      <div class="skeleton-card">
+                          <div class="skeleton-title"></div>
+                          <div class="skeleton-line"></div>
+                          <div class="skeleton-row">
+                              <div class="skeleton-line skeleton-short"></div>
+                              <div class="skeleton-line skeleton-short"></div>
+                              <div class="skeleton-line skeleton-short"></div>
+                          </div>
+                      </div>
                   </div>
               </td>
           </tr>
@@ -214,8 +259,34 @@
   </div>
 </div>
 
+<!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+<div id="allNotificationsModal" class="modal">
+    <div class="modal-content all-notifications-modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-bell"></i> All Notifications</h3>
+            <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="allNotificationsList" class="all-notifications-list">
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button id="markAllReadFromModalBtn" class="btn-cancel">
+                <i class="fas fa-check"></i> Mark all as read
+            </button>
+            <button id="closeAllNotificationsBtn" class="btn-confirm">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script type="module" src="/static/admin-view-customers.js"></script>
 <script src="/static/admin-notifications.js"></script>
-<script src="/static/session-manager.js"></script>
+<!-- <script src="/static/session-manager.js"></script> -->
 </body>
 </html>

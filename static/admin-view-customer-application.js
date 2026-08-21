@@ -28,12 +28,24 @@ function getCleanFullName(firstName, middleName, lastName, suffix) {
     return nameParts.join(' ') || 'Not provided';
 }
 
-// Helper function to get clean value (for other fields)
+
+
+// ============================================================
+// ✅ HELPER: Get clean value (handles all null-like values)
+// ============================================================
 function getCleanValue(value) {
-    if (!value || value === 'none' || value.trim() === '') {
+    if (value === undefined || value === null) return '';
+    
+    // Convert to string and trim
+    let strVal = String(value).trim();
+    
+    // Check for null-like values (case-insensitive)
+    const nullValues = ['', 'none', 'null', 'NULL', 'N/A', 'undefined', 'NaN', '-'];
+    if (nullValues.includes(strVal)) {
         return '';
     }
-    return value;
+    
+    return strVal;
 }
 
 // =========================
@@ -42,127 +54,239 @@ function getCleanValue(value) {
 async function loadApplication() {
     try {
         const res = await fetch(`/api/superadmin/application/${appId}`);
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("API Error Response:", errorText);
+            showToast(`Failed to load application: ${res.status}`, "error");
+            return;
+        }
+        
         const data = await res.json();
 
-        if(data.error){
-            alert(data.error);
+        if (data.error) {
+            showToast(data.error, "error");
             return;
         }
 
         // Store the application status
         currentApplicationStatus = data.status;
 
-        const setText = (id, val) => {
+        // ============================================================
+        // ✅ HELPER: Set text to "—" if empty, else show value
+        // ============================================================
+        const setTextOrHide = (id, val) => {
             const el = document.getElementById(id);
-            if(el) el.textContent = val || "";
+            if (!el) return;
+            
+            const cleanVal = getCleanValue(val);
+            if (cleanVal === '') {
+                el.textContent = '—';
+            } else {
+                el.textContent = cleanVal;
+            }
         };
 
-        // =========================
-        // BASIC INFO - USING CLEAN NAME FUNCTION
-        // =========================
-        setText("application_number", data.application_number);
-        setText("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
-        setText("email", data.email);
-        setText("mobile", data.mobile);
-        setText("secondary_mobile", data.secondary_mobile);
-        setText("phone", data.phone);
-        setText("birthdate", data.birthdate);
-        setText("place_of_birth", data.place_of_birth);
-        setText("mother_maiden_name", data.mother_maiden_name);
-        setText("sex", data.sex);
-        setText("civil_status", data.civil_status);
-        setText("citizenship", data.citizenship);
-        setText("occupation", data.occupation);
-        setText("home_ownership", data.home_ownership);
+        // ============================================================
+        // ✅ HELPER: Set image or hide container if no src
+        // ============================================================
+        const setImgOrHide = (id, src) => {
+            const imgEl = document.getElementById(id);
+            if (!imgEl) return;
+            
+            const cleanSrc = getCleanValue(src);
+            if (cleanSrc !== '') {
+                imgEl.src = cleanSrc;
+                imgEl.style.display = 'block';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'block';
+            } else {
+                imgEl.src = '';
+                imgEl.style.display = 'none';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'none';
+            }
+        };
 
-        // =========================
-        // ADDRESS
-        // =========================
-        setText("address", data.address);
-        setText("billing_address", data.billing_address);
-        setText("barangay", data.barangay);
-        setText("city", data.city);
-        setText("province", data.province);
-        setText("zip", data.zip);
-
-        // =========================
-        // EMPLOYMENT
-        // =========================
-        setText("employer", data.employer);
-        setText("business_address", data.business_address);
-        setText("business_phone", data.business_phone);
-
-        // =========================
-        // SPOUSE
-        // =========================
-        setText("spouse_name", data.spouse_name);
-        setText("spouse_occupation", data.spouse_occupation);
-        setText("spouse_employer", data.spouse_employer);
-        setText("spouse_phone", data.spouse_phone);
-
-        // =========================
-        // FAMILY
-        // =========================
-        setText("parents_name", data.parents_name);
-        setText("others", data.others);
-
-        // =========================
-        // PLAN & SERVICE
-        // =========================
-        setText("plan", data.plan);
-        setText("service_type", data.service_type);
-        setText("installation_address", data.installation_address);
-        setText("installation_phone", data.installation_phone);
-        setText("installation_fee", data.installation_fee);
-        
-        // =========================
-        // TV SETS TABLE
-        // =========================
-        const tvTableBody = document.getElementById("tvTableBody");
-        if(tvTableBody){
-            tvTableBody.innerHTML = "";
-            for(let i = 0; i < (data.tv_qty?.length || 0); i++){
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${data.tv_qty[i] || ""}</td>
-                    <td>${data.tv_brand[i] || ""}</td>
-                    <td>${data.tv_type[i] || ""}</td>
-                `;
-                tvTableBody.appendChild(row);
+        // ============================================================
+        // ✅ HELPER: Format birthdate
+        // ============================================================
+        function formatBirthdate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            } catch (e) {
+                return dateStr;
             }
         }
 
         // =========================
-        // IMAGES
+        // BASIC INFO
         // =========================
-        const setImg = (id, src) => {
-            const imgEl = document.getElementById(id);
-            if(imgEl) imgEl.src = src || "";
-        };
+        setTextOrHide("application_number", data.application_number);
+        setTextOrHide("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
 
-        setImg("signature", data.signature);
-        setImg("id_front", data.id_front);
-        setImg("id_back", data.id_back);
-        setImg("proof_billing", data.proof_billing);
-        setImg("profile_photo", data.profile_photo);
+        // =========================
+        // CONTACT DETAILS
+        // =========================
+        setTextOrHide("email", data.email);
+        setTextOrHide("mobile", data.mobile);
+        setTextOrHide("secondary_mobile", data.secondary_mobile);
+        setTextOrHide("phone", data.phone);
 
-        initMap(data);
-        initImageModal();
+        // =========================
+        // PERSONAL INFORMATION
+        // =========================
+        setTextOrHide("birthdate", formatBirthdate(data.birthdate));
+        setTextOrHide("place_of_birth", data.place_of_birth);
+        setTextOrHide("sex", data.sex);
+        setTextOrHide("civil_status", data.civil_status);
+        setTextOrHide("citizenship", data.citizenship);
+        setTextOrHide("occupation", data.occupation);
+        setTextOrHide("home_ownership", data.home_ownership);
+
+        // =========================
+        // ADDRESS (with House Number and Landmark)
+        // =========================
+        setTextOrHide("address", data.address);
+        setTextOrHide("billing_address", data.billing_address);
+        setTextOrHide("house_number", data.house_number);
+        setTextOrHide("landmark", data.landmark);
+        setTextOrHide("barangay", data.barangay);
+        setTextOrHide("city", data.city);
+        setTextOrHide("province", data.province);
+        setTextOrHide("zip", data.zip);
+
+        // =========================
+        // EMPLOYMENT
+        // =========================
+        setTextOrHide("employer", data.employer);
+        setTextOrHide("business_address", data.business_address);
+        setTextOrHide("business_phone", data.business_phone);
+
+        // =========================
+        // SPOUSE
+        // =========================
+        setTextOrHide("spouse_name", data.spouse_name);
+        setTextOrHide("spouse_occupation", data.spouse_occupation);
+        setTextOrHide("spouse_employer", data.spouse_employer);
+        setTextOrHide("spouse_phone", data.spouse_phone);
+
+        // =========================
+        // FAMILY
+        // =========================
+        setTextOrHide("father_name", data.father_name);
+        setTextOrHide("mother_maiden_name", data.mother_maiden_name);
+
+        // =========================
+        // PLAN & SERVICE
+        // =========================
+        setTextOrHide("plan", data.plan);
+        setTextOrHide("service_type", data.service_type);
+        setTextOrHide("installation_address", data.installation_address);
+        setTextOrHide("installation_phone", data.installation_phone);
+        setTextOrHide("installation_fee", data.installation_fee);
+
+        // =========================
+        // TV SETS TABLE
+        // =========================
+        try {
+            const tvTableBody = document.getElementById("tvTableBody");
+            const tvCard = document.getElementById("tvCard");
+            
+            if (tvTableBody) {
+                const tvQty = data.tv_qty || [];
+                const tvBrand = data.tv_brand || [];
+                const tvType = data.tv_type || [];
+                
+                const hasTvData = tvQty.some(q => q && getCleanValue(q) !== '') || 
+                                 tvBrand.some(b => b && getCleanValue(b) !== '') || 
+                                 tvType.some(t => t && getCleanValue(t) !== '');
+                
+                if (tvCard) {
+                    tvCard.style.display = hasTvData ? 'block' : 'none';
+                }
+                
+                if (hasTvData) {
+                    tvTableBody.innerHTML = "";
+                    for (let i = 0; i < tvQty.length; i++) {
+                        const qty = getCleanValue(tvQty[i]);
+                        if (qty !== '' && qty !== '0') {
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                                <td>${qty || ""}</td>
+                                <td>${getCleanValue(tvBrand[i]) || ""}</td>
+                                <td>${getCleanValue(tvType[i]) || ""}</td>
+                            `;
+                            tvTableBody.appendChild(row);
+                        }
+                    }
+                    if (tvTableBody.children.length === 0 && tvCard) {
+                        tvCard.style.display = 'none';
+                    }
+                } else {
+                    tvTableBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">No TV details provided</td></tr>`;
+                }
+            }
+        } catch (tvError) {
+            console.warn("Error rendering TV table:", tvError);
+            // Don't fail the whole load for TV table issues
+        }
 
         // =========================
         // SUBMISSION DATE/TIME
         // =========================
-        setText("date_submitted", data.date_submitted);
-        setText("time_submitted", data.time_submitted);
+        setTextOrHide("date_submitted", data.date_submitted);
+        setTextOrHide("time_submitted", data.time_submitted);
+
+        // =========================
+        // IMAGES
+        // =========================
+        setImgOrHide("signature", data.signature);
+        setImgOrHide("id_front", data.id_front);
+        setImgOrHide("id_back", data.id_back);
+        setImgOrHide("proof_billing", data.proof_billing);
+        setImgOrHide("profile_photo", data.profile_photo);
+
+        // =========================
+        // MAP & IMAGE MODAL - WRAPPED IN TRY-CATCH
+        // =========================
+        try {
+            initMap(data);
+        } catch (mapError) {
+            console.warn("Map initialization error:", mapError);
+            // Map is non-critical, continue
+        }
+        
+        try {
+            initImageModal();
+        } catch (imgModalError) {
+            console.warn("Image modal initialization error:", imgModalError);
+            // Image modal is non-critical, continue
+        }
 
         // Store application data for contract view
         window.currentApplicationData = data;
         
         // Initialize View Contract button after data is loaded
-        initViewContractButton();
+        try {
+            initViewContractButton();
+        } catch (contractBtnError) {
+            console.warn("View contract button initialization error:", contractBtnError);
+            // Non-critical, continue
+        }
 
-    } catch(err){
+        // ✅ SUCCESS - No error toast!
+        console.log("✅ Application loaded successfully!");
+
+    } catch (err) {
         console.error("Failed to load application:", err);
+        console.error("Error details:", err.message);
+        // ✅ Only show error toast for critical failures
+        showToast("Failed to load application data. Please refresh the page.", "error");
     }
 }
 
@@ -621,19 +745,27 @@ function showToast(message, type = 'success') {
 // INITIALIZE VIEW CONTRACT BUTTON
 // =========================
 function initViewContractButton() {
-    toggleViewContractButton(currentApplicationStatus);
-    
-    const viewContractBtn = document.getElementById('viewContractBtn');
-    if (viewContractBtn) {
-        const newViewContractBtn = viewContractBtn.cloneNode(true);
-        viewContractBtn.parentNode.replaceChild(newViewContractBtn, viewContractBtn);
-        newViewContractBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            viewContract();
-        });
-        console.log("View Contract button event listener attached");
-    } else {
-        console.log("View Contract button not found in DOM");
+    try {
+        toggleViewContractButton(currentApplicationStatus);
+        
+        const viewContractBtn = document.getElementById('viewContractBtn');
+        if (viewContractBtn) {
+            // Remove existing event listeners
+            const newViewContractBtn = viewContractBtn.cloneNode(true);
+            viewContractBtn.parentNode.replaceChild(newViewContractBtn, viewContractBtn);
+            
+            // Add new event listener
+            newViewContractBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                viewContract();
+            });
+            console.log("✅ View Contract button event listener attached");
+        } else {
+            console.warn("⚠️ View Contract button not found in DOM");
+        }
+    } catch (err) {
+        console.warn("⚠️ Error initializing view contract button:", err);
+        // Don't throw, just log
     }
 }
 

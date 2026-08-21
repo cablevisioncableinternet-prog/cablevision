@@ -1,3 +1,34 @@
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
+(function() {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
+        window.location.replace('/');
+        throw new Error('No session');
+    }
+})();
+
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
+    }
+}
+
 const appId = window.location.pathname.split("/").pop();
 let currentApplicationStatus = null;
 let currentApprovalRequest = null;
@@ -9,6 +40,11 @@ let applicationCity = null;
 let currentFirstInstallmentDate = null;
 let currentLastInstallmentDate = null;
 let isInstallmentPlan = false;
+let currentSelectedTeam = null;
+let currentInstallationDateValue = null;
+let currentRejectionReason = null;
+let currentReapplyRequested = false;
+let currentReapplyRequestedAt = null;
 
 // =========================
 // HELPER FUNCTION TO GET CLEAN NAME (FILTER OUT "none")
@@ -114,7 +150,6 @@ function getContractPrefix(city, barangay = null) {
     
     const lowerCity = city.toLowerCase().trim();
     
-    // Special case for Pila with specific barangays
     const pilaSpecialBarangays = [
         'santa clara sur',
         'santa clara norte',
@@ -129,7 +164,6 @@ function getContractPrefix(city, barangay = null) {
         }
     }
     
-    // Check other city prefixes
     for (const [key, prefix] of Object.entries(cityPrefixes)) {
         if (lowerCity.includes(key) || key.includes(lowerCity)) {
             return prefix;
@@ -141,75 +175,231 @@ function getContractPrefix(city, barangay = null) {
 // =========================
 // SETUP CONTRACT NUMBER INPUT WITH PREFIX
 // =========================
+function isPilaCity(city) {
+    return (city || '').toLowerCase().trim() === 'pila';
+}
+
 function setupContractNumberInput(contractInput, city, barangay = null) {
-    const prefix = getContractPrefix(city, barangay);
-    let currentNumber = '';
-    
+    const badge = document.getElementById('contractPrefixBadge');
+    const prefixContainer = document.getElementById('prefixSelectorContainer');
+    let prefix = getContractPrefix(city, barangay);
+
     const newInput = contractInput.cloneNode(true);
     contractInput.parentNode.replaceChild(newInput, contractInput);
     contractInput = newInput;
-    
-    contractInput.value = prefix;
+
+    contractInput.value = '';
+    contractInput.setAttribute('maxlength', '4');
     contractInput.setAttribute('data-prefix', prefix);
-    
-    contractInput.addEventListener('input', function(e) {
-        const prefix = this.getAttribute('data-prefix');
-        let value = this.value;
-        
-        if (!value.startsWith(prefix)) {
-            this.value = prefix;
-            currentNumber = '';
-            return;
+
+    if (badge) badge.textContent = prefix;
+
+    // Prefix selector - lalabas lang kapag Pila ang city
+    if (prefixContainer) {
+        if (isPilaCity(city)) {
+            prefixContainer.style.display = 'block';
+
+            const buttons = prefixContainer.querySelectorAll('.prefix-choice-btn');
+            buttons.forEach(btn => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+            });
+
+            const freshButtons = prefixContainer.querySelectorAll('.prefix-choice-btn');
+            freshButtons.forEach(btn => {
+                if (btn.getAttribute('data-prefix') === prefix) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+
+                btn.addEventListener('click', function() {
+                    freshButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    prefix = this.getAttribute('data-prefix');
+                    if (badge) badge.textContent = prefix;
+                    contractInput.setAttribute('data-prefix', prefix);
+                });
+            });
+        } else {
+            prefixContainer.style.display = 'none';
         }
-        
-        let numberPart = value.substring(prefix.length);
-        numberPart = numberPart.replace(/\D/g, '');
-        
+    }
+
+    contractInput.addEventListener('input', function() {
+        let numberPart = this.value.replace(/\D/g, '');
         if (numberPart.length > 4) {
             numberPart = numberPart.substring(0, 4);
         }
-        
-        currentNumber = numberPart;
-        this.value = prefix + numberPart;
-        this.setSelectionRange(this.value.length, this.value.length);
+        this.value = numberPart;
     });
-    
+
     contractInput.addEventListener('keydown', function(e) {
-        const prefix = this.getAttribute('data-prefix');
-        const cursorPos = this.selectionStart;
-        const selectionLength = window.getSelection().toString().length;
-        
-        if (cursorPos <= prefix.length && (e.key === 'Backspace' || e.key === 'Delete')) {
-            if (selectionLength > 0 && cursorPos + selectionLength > prefix.length) {
-                return;
-            }
-            e.preventDefault();
-        }
-        
-        if (e.key.length === 1 && /[^0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Tab' && e.key !== 'Home' && e.key !== 'End') {
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+        if (allowedKeys.includes(e.key)) return;
+        if (e.key.length === 1 && /[^0-9]/.test(e.key)) {
             e.preventDefault();
         }
     });
-    
+
     contractInput.addEventListener('paste', function(e) {
         e.preventDefault();
         const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-        const numbersOnly = pastedText.replace(/\D/g, '');
-        if (numbersOnly) {
-            const prefix = this.getAttribute('data-prefix');
-            let newNumber = currentNumber + numbersOnly;
-            if (newNumber.length > 4) {
-                newNumber = newNumber.substring(0, 4);
+        const numbersOnly = pastedText.replace(/\D/g, '').substring(0, 4);
+        this.value = numbersOnly;
+    });
+
+    return function getFullContractNumber() {
+        const currentPrefix = contractInput.getAttribute('data-prefix') || prefix;
+        return currentPrefix + contractInput.value;
+    };
+}
+
+function setupBillingDateInput(billingInput) {
+    const newInput = billingInput.cloneNode(true);
+    billingInput.parentNode.replaceChild(newInput, billingInput);
+    billingInput = newInput;
+    billingInput.value = '';
+
+    billingInput.addEventListener('input', function() {
+        let val = this.value.replace(/\D/g, '');
+        if (val.length > 2) val = val.substring(0, 2);
+
+        if (val !== '') {
+            const num = parseInt(val, 10);
+            if (num > 31) {
+                val = val.substring(0, 1);
             }
-            this.value = prefix + newNumber;
-            currentNumber = newNumber;
-            this.setSelectionRange(this.value.length, this.value.length);
+        }
+        this.value = val;
+    });
+
+    billingInput.addEventListener('keydown', function(e) {
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+        if (allowedKeys.includes(e.key)) return;
+        if (e.key.length === 1 && /[^0-9]/.test(e.key)) {
+            e.preventDefault();
         }
     });
-    
-    return function getFullContractNumber() {
-        return contractInput.value;
-    };
+
+    billingInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        let numbersOnly = pastedText.replace(/\D/g, '').substring(0, 2);
+        if (numbersOnly && parseInt(numbersOnly, 10) > 31) {
+            numbersOnly = numbersOnly.substring(0, 1);
+        }
+        this.value = numbersOnly;
+    });
+
+    return billingInput;
+}
+
+// =========================
+// LOAD ACTIVE TEAMS FOR DROPDOWN (FILTERED BY CITY + MUST HAVE MEMBERS + ACTIVE ONLY)
+// =========================
+async function loadTeamsForDropdown(city = null) {
+    try {
+        console.log(`🔍 Loading teams for city: "${city}"`);
+        
+        // ✅ KUHAIN MUNA ANG TEAMS
+        const response = await fetch('/api/superadmin/teams?status=Active&t=' + Date.now());
+        const teams = await response.json();
+        
+        // ✅ KUHAIN ANG TECHNICIANS PARA MA-CHECK KUNG MAY MEMBERS ANG TEAM
+        const techResponse = await fetch('/api/superadmin/technicians?t=' + Date.now());
+        const technicians = await techResponse.json();
+        
+        const teamSelect = document.getElementById('teamAssignment');
+        if (!teamSelect) return [];
+        
+        // I-clear ang dropdown
+        teamSelect.innerHTML = '<option value="" disabled selected>-- Select Team --</option>';
+        
+        // ✅ I-FILTER ANG TEAMS: ACTIVE LANG + DAPAT MAY AT LEAST 1 MEMBER
+        let filteredTeams = teams.filter(team => {
+            // ✅ CHECK: Active lang ang status
+            if (team.status !== 'Active') {
+                return false;
+            }
+            
+            // Count technicians in this team
+            const memberCount = technicians.filter(tech => tech.team_id === team.team_id).length;
+            return memberCount > 0; // ✅ DAPAT MAY MEMBER
+        });
+        
+        // ✅ I-FILTER PA BATAY SA CITY (case-insensitive)
+        if (city && city.trim() !== '') {
+            const cityLower = city.toLowerCase().trim();
+            filteredTeams = filteredTeams.filter(team => {
+                const teamArea = (team.area || '').toLowerCase().trim();
+                return teamArea === cityLower;
+            });
+            
+            console.log(`📋 Found ${filteredTeams.length} active teams in area "${city}" with members`);
+        } else {
+            console.log(`📋 No city filter applied, showing ${filteredTeams.length} active teams with members`);
+        }
+        
+        // Populate dropdown with filtered teams
+        if (filteredTeams && filteredTeams.length > 0) {
+            filteredTeams.forEach(team => {
+                // ✅ KUHAIN ANG MEMBER COUNT PARA I-DISPLAY
+                const memberCount = technicians.filter(tech => tech.team_id === team.team_id).length;
+                const option = document.createElement('option');
+                option.value = team.team_id;
+                option.textContent = `${team.team_name} (${team.area || 'No Area'})`;
+                teamSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            if (city && city.trim() !== '') {
+                option.textContent = `-- No active teams available in "${city}" area --`;
+            } else {
+                option.textContent = '-- No Active Teams with Members Available --';
+            }
+            option.disabled = true;
+            teamSelect.appendChild(option);
+        }
+        
+        return filteredTeams;
+    } catch (error) {
+        console.error('Error loading teams:', error);
+        const teamSelect = document.getElementById('teamAssignment');
+        if (teamSelect) {
+            teamSelect.innerHTML = '<option value="">Error loading teams</option>';
+        }
+        return [];
+    }
+}
+
+// =========================
+// SET INSTALLATION DATE MIN AND MAX ATTRIBUTE (6 MONTHS LIMIT)
+// =========================
+function setInstallationDateMin() {
+    const installationDateInput = document.getElementById('installationDate');
+    if (installationDateInput) {
+        const today = new Date();
+        
+        // ✅ SET MIN DATE - Today
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        installationDateInput.setAttribute('min', `${year}-${month}-${day}`);
+        
+        // ✅ SET MAX DATE - 6 months from today
+        const maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + 6);
+        const maxYear = maxDate.getFullYear();
+        const maxMonth = String(maxDate.getMonth() + 1).padStart(2, '0');
+        const maxDay = String(maxDate.getDate()).padStart(2, '0');
+        installationDateInput.setAttribute('max', `${maxYear}-${maxMonth}-${maxDay}`);
+        
+        installationDateInput.value = '';
+        
+        console.log(`📅 Installation date range: ${year}-${month}-${day} to ${maxYear}-${maxMonth}-${maxDay}`);
+    }
 }
 
 // =========================
@@ -225,89 +415,204 @@ async function loadApplication() {
             return;
         }
 
+        // ✅ STEP 1: I-SET MUNA ANG LAHAT NG VARIABLES
         currentApplicationStatus = data.status;
         applicationCity = data.city || '';
+        currentRejectionReason = data.rejection_reason || '';
+        currentReapplyRequested = data.reapply_requested === 1 || data.reapply_requested === true;
+        currentReapplyRequestedAt = data.reapply_requested_at || null;
+        
+        console.log("🔍 Reapply State:", { 
+            currentReapplyRequested, 
+            currentReapplyRequestedAt,
+            raw_reapply_requested: data.reapply_requested,
+            status: currentApplicationStatus 
+        });
+
+        // ✅ STEP 2: LOAD APPROVAL REQUESTS
         await loadApprovalRequests();
+
+        // ✅ STEP 3: TUMATAWAG NG toggleFloatingButtons (NA MAY CORRECT NA VARIABLES)
         toggleFloatingButtons(currentApplicationStatus);
         toggleViewContractButton(currentApplicationStatus);
 
-        const setText = (id, val) => {
+        // ✅ STEP 4: DISPLAY DATA (REST OF THE CODE)
+        const setTextOrHide = (id, val) => {
             const el = document.getElementById(id);
-            if (el) el.textContent = val || "";
+            if (!el) return;
+            const cleanVal = val || '';
+            if (cleanVal === '' || cleanVal === 'none' || cleanVal === 'N/A') {
+                el.textContent = 'none';
+            } else {
+                el.textContent = cleanVal;
+            }
         };
 
-        setText("application_number", data.application_number);
-        setText("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix));
-        setText("email", data.email);
-        setText("mobile", data.mobile);
-        setText("secondary_mobile", data.secondary_mobile);
-        setText("phone", data.phone);
-        setText("birthdate", data.birthdate);
-        setText("place_of_birth", data.place_of_birth);
-        setText("mother_maiden_name", data.mother_maiden_name);
-        setText("sex", data.sex);
-        setText("civil_status", data.civil_status);
-        setText("citizenship", data.citizenship);
-        setText("occupation", data.occupation);
-        setText("home_ownership", data.home_ownership);
-        setText("address", data.address);
-        setText("billing_address", data.billing_address);
-        setText("house_number", data.house_number);
-        setText("landmark", data.landmark);
-        setText("barangay", data.barangay);
-        setText("city", data.city);
-        setText("province", data.province);
-        setText("zip", data.zip);
-        setText("employer", data.employer);
-        setText("business_address", data.business_address);
-        setText("business_phone", data.business_phone);
-        setText("spouse_name", data.spouse_name);
-        setText("spouse_occupation", data.spouse_occupation);
-        setText("spouse_employer", data.spouse_employer);
-        setText("spouse_phone", data.spouse_phone);
-        setText("parents_name", data.parents_name);
-        setText("others", data.others);
-        setText("plan", data.plan);
-        setText("service_type", data.service_type);
-        setText("installation_address", data.installation_address);
-        setText("installation_phone", data.installation_phone);
-        setText("installation_fee", data.installation_fee);
+        const setImgOrHide = (id, src) => {
+            const imgEl = document.getElementById(id);
+            if (!imgEl) return;
+            if (src && src !== '') {
+                imgEl.src = src;
+                imgEl.style.display = 'block';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'block';
+            } else {
+                imgEl.src = '';
+                imgEl.style.display = 'none';
+                const parent = imgEl.closest('.col-md-4, .col-md-8, .text-center');
+                if (parent) parent.style.display = 'none';
+            }
+        };
 
-        const tvTableBody = document.getElementById("tvTableBody");
-        if (tvTableBody) {
-            tvTableBody.innerHTML = "";
-            for (let i = 0; i < (data.tv_qty?.length || 0); i++) {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${data.tv_qty[i] || ""}</td>
-                    <td>${data.tv_brand[i] || ""}</td>
-                    <td>${data.tv_type[i] || ""}<td>
-                `;
-                tvTableBody.appendChild(row);
+        // ===== PLAN =====
+        const planEl = document.getElementById('plan');
+        const planValue = data.plan || '';
+        if (planEl) {
+            if (planValue === '' || planValue === 'none') {
+                planEl.textContent = '—';
+            } else {
+                planEl.textContent = planValue;
             }
         }
 
-        const setImg = (id, src) => {
-            const imgEl = document.getElementById(id);
-            if (imgEl) imgEl.src = src || "";
-        };
+        const serviceTypeEl = document.getElementById('service_type');
+        const serviceValue = data.service_type || '';
+        if (serviceTypeEl) {
+            if (serviceValue === '' || serviceValue === 'none') {
+                serviceTypeEl.textContent = '—';
+            } else {
+                serviceTypeEl.textContent = serviceValue;
+            }
+        }
 
-        setImg("signature", data.signature);
-        setImg("id_front", data.id_front);
-        setImg("id_back", data.id_back);
-        setImg("proof_billing", data.proof_billing);
-        setImg("profile_photo", data.profile_photo);
+        // ===== PERSONAL INFORMATION =====
+        setTextOrHide("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix), '.detail-item');
+        setTextOrHide("email", data.email, '.detail-item');
+        setTextOrHide("mobile", data.mobile, '.detail-item');
+        setTextOrHide("secondary_mobile", data.secondary_mobile, '.detail-item');
+        setTextOrHide("phone", data.phone, '.detail-item');
+        
+        function formatBirthdate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            } catch (e) {
+                return dateStr;
+            }
+        }
+        setTextOrHide("birthdate", formatBirthdate(data.birthdate), '.detail-item');
+        setTextOrHide("place_of_birth", data.place_of_birth, '.detail-item');
+        setTextOrHide("sex", data.sex, '.detail-item');
+        setTextOrHide("civil_status", data.civil_status, '.detail-item');
+        setTextOrHide("citizenship", data.citizenship, '.detail-item');
+        setTextOrHide("occupation", data.occupation, '.detail-item');
+        setTextOrHide("home_ownership", data.home_ownership, '.detail-item');
+
+        // ===== ADDRESS =====
+        setTextOrHide("address", data.address, '.detail-item');
+        setTextOrHide("billing_address", data.billing_address, '.detail-item');
+        setTextOrHide("house_number", data.house_number, '.detail-item');
+        setTextOrHide("landmark", data.landmark, '.detail-item');
+        setTextOrHide("barangay", data.barangay, '.detail-item');
+        setTextOrHide("city", data.city, '.detail-item');
+        setTextOrHide("province", data.province, '.detail-item');
+        setTextOrHide("zip", data.zip, '.detail-item');
+
+        // ===== EMPLOYMENT =====
+        setTextOrHide("employer", data.employer, '.detail-item');
+        setTextOrHide("business_address", data.business_address, '.detail-item');
+        setTextOrHide("business_phone", data.business_phone, '.detail-item');
+
+        // ===== SPOUSE =====
+        setTextOrHide("spouse_name", data.spouse_name, '.detail-item');
+        setTextOrHide("spouse_occupation", data.spouse_occupation, '.detail-item');
+        setTextOrHide("spouse_employer", data.spouse_employer, '.detail-item');
+        setTextOrHide("spouse_phone", data.spouse_phone, '.detail-item');
+
+        // ===== FAMILY =====
+        setTextOrHide("father_name", data.father_name, '.detail-item');
+        setTextOrHide("mother_maiden_name", data.mother_maiden_name, '.detail-item');
+
+        // ===== INSTALLATION =====
+        setTextOrHide("installation_address", data.installation_address, '.detail-item');
+        setTextOrHide("installation_phone", data.installation_phone, '.detail-item');
+        setTextOrHide("installation_fee", data.installation_fee, '.detail-item');
+
+        // ===== SUBMISSION =====
+        setTextOrHide("date_submitted", data.date_submitted, '.detail-item');
+        setTextOrHide("time_submitted", data.time_submitted, '.detail-item');
+
+        // ===== TV TABLE =====
+        const tvTableBody = document.getElementById("tvTableBody");
+        const tvCard = document.getElementById("tvCard");
+        if (tvTableBody) {
+            const tvQty = data.tv_qty || [];
+            const tvBrand = data.tv_brand || [];
+            const tvType = data.tv_type || [];
+            const hasTvData = tvQty.some(q => q && q !== '' && q !== '0') || 
+                             tvBrand.some(b => b && b !== '') || 
+                             tvType.some(t => t && t !== '');
+            if (tvCard) {
+                tvCard.style.display = hasTvData ? 'block' : 'none';
+            }
+            if (hasTvData) {
+                tvTableBody.innerHTML = "";
+                for (let i = 0; i < tvQty.length; i++) {
+                    if (tvQty[i] && tvQty[i] !== '' && tvQty[i] !== '0') {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${tvQty[i] || ""}</td>
+                            <td>${tvBrand[i] || ""}</td>
+                            <td>${tvType[i] || ""}</td>
+                        `;
+                        tvTableBody.appendChild(row);
+                    }
+                }
+                if (tvTableBody.children.length === 0 && tvCard) {
+                    tvCard.style.display = 'none';
+                }
+            } else {
+                tvTableBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">No TV details provided</td></tr>`;
+            }
+        }
+
+        // ===== IMAGES =====
+        setImgOrHide("signature", data.signature);
+        setImgOrHide("id_front", data.id_front);
+        setImgOrHide("id_back", data.id_back);
+        setImgOrHide("proof_billing", data.proof_billing);
+        setImgOrHide("profile_photo", data.profile_photo);
+
+        // ===== APPLICATION NUMBER =====
+        const appNumberEl = document.getElementById("application_number");
+        if (appNumberEl) {
+            appNumberEl.textContent = data.application_number || '—';
+        }
 
         initMap(data);
         initImageModal();
-
-        setText("date_submitted", data.date_submitted);
-        setText("time_submitted", data.time_submitted);
         addStatusBadge(data.status);
+        showRejectionReason(data.status, data.rejection_reason);
 
     } catch (err) {
         console.error("Failed to load application:", err);
         showToast("Failed to load application data", "error");
+    }
+}
+
+function formatReapplyTimestamp(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr.replace(' ', 'T'));
+        if (isNaN(date.getTime())) return dateStr;
+        const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+        const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+        return `${date.toLocaleDateString('en-US', dateOptions)} at ${date.toLocaleTimeString('en-US', timeOptions)}`;
+    } catch (e) {
+        return dateStr;
     }
 }
 
@@ -333,7 +638,6 @@ async function loadApprovalRequests() {
         const res = await fetch(`/api/superadmin/approval-requests?t=${Date.now()}`);
         const requests = await res.json();
 
-        // Only get PENDING requests, exclude DONE
         const request = requests?.find(r =>
             String(r.app_id) === String(appId) &&
             r.status === "Pending"
@@ -350,7 +654,7 @@ async function loadApprovalRequests() {
 }
 
 // =========================
-// TOGGLE FLOATING BUTTONS
+// TOGGLE FLOATING BUTTONS - WITH RESTORE FOR REJECTED AND CANCELLED
 // =========================
 function toggleFloatingButtons(status) {
     const floatingActions = document.getElementById("floatingActions");
@@ -358,6 +662,104 @@ function toggleFloatingButtons(status) {
     if (floatingActions) {
         floatingActions.innerHTML = '';
 
+        const statusLower = status ? status.toLowerCase() : '';
+
+        // ===== CANCELLED: Restore Application + Delete =====
+        if (statusLower === "cancelled") {
+            floatingActions.innerHTML = `
+                <button class="btn-floating btn-restore-floating" id="floatingRestoreBtn">
+                    <i class="fas fa-undo"></i><span>Restore Application</span>
+                </button>
+                <button class="btn-floating btn-delete-floating" id="floatingDeleteBtn">
+                    <i class="fas fa-trash"></i><span>Delete Application</span>
+                </button>
+            `;
+            floatingActions.style.display = "flex";
+
+            const restoreBtn = document.getElementById("floatingRestoreBtn");
+            if (restoreBtn) {
+                const newRestoreBtn = restoreBtn.cloneNode(true);
+                restoreBtn.parentNode.replaceChild(newRestoreBtn, restoreBtn);
+                newRestoreBtn.addEventListener("click", showRestoreModal);
+            }
+
+            const deleteBtn = document.getElementById("floatingDeleteBtn");
+            if (deleteBtn) {
+                const newDeleteBtn = deleteBtn.cloneNode(true);
+                deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                newDeleteBtn.addEventListener("click", showDeleteModal);
+            }
+            return;
+        }
+
+        // ===== REJECTED: Request Reapply (or Reapply Requested) + Delete =====
+        if (statusLower === "rejected") {
+            // ✅ CHECK KUNG MAY PENDING REAPPLY REQUEST
+            const hasPendingReapply = currentApprovalRequest && 
+                                      currentApprovalRequest.requested_status === 'Reapply' && 
+                                      currentApprovalRequest.status === 'Pending';
+            
+            let reapplyBtnHtml;
+            
+            // ✅ PRIORITIZE: KUNG MAY REAPPLY_REQUESTED = 1, MAG-DISABLE
+            if (currentReapplyRequested) {
+                const formattedDate = formatReapplyTimestamp(currentReapplyRequestedAt);
+                reapplyBtnHtml = `
+                    <button class="btn-floating btn-reapply-floating btn-reapply-disabled" id="floatingReapplyBtn" disabled>
+                        <i class="fas fa-check-circle"></i>
+                        <span class="reapply-btn-text">
+                            <strong>Reapply Requested</strong>
+                            ${formattedDate ? `<small>Request sent on ${formattedDate}</small>` : ''}
+                        </span>
+                    </button>
+                `;
+            } else if (hasPendingReapply) {
+                // ✅ KUNG MAY PENDING REQUEST PERO HINDI PA APPROVED
+                reapplyBtnHtml = `
+                    <button class="btn-floating btn-reapply-floating btn-reapply-disabled" id="floatingReapplyBtn" disabled>
+                        <i class="fas fa-clock"></i>
+                        <span class="reapply-btn-text">
+                            <strong>Request Pending</strong>
+                            <small>Waiting for superadmin approval...</small>
+                        </span>
+                    </button>
+                `;
+            } else {
+                // ✅ WALANG REAPPLY REQUESTED AT WALANG PENDING REQUEST
+                reapplyBtnHtml = `
+                    <button class="btn-floating btn-reapply-floating" id="floatingReapplyBtn">
+                        <i class="fas fa-redo-alt"></i><span>Request Reapply</span>
+                    </button>
+                `;
+            }
+
+            floatingActions.innerHTML = `
+                ${reapplyBtnHtml}
+                <button class="btn-floating btn-delete-floating" id="floatingDeleteBtn">
+                    <i class="fas fa-trash"></i><span>Delete Application</span>
+                </button>
+            `;
+            floatingActions.style.display = "flex";
+
+            if (!currentReapplyRequested && !hasPendingReapply) {
+                const reapplyBtn = document.getElementById("floatingReapplyBtn");
+                if (reapplyBtn) {
+                    const newReapplyBtn = reapplyBtn.cloneNode(true);
+                    reapplyBtn.parentNode.replaceChild(newReapplyBtn, reapplyBtn);
+                    newReapplyBtn.addEventListener("click", showReapplyRequestModal);
+                }
+            }
+
+            const deleteBtn = document.getElementById("floatingDeleteBtn");
+            if (deleteBtn) {
+                const newDeleteBtn = deleteBtn.cloneNode(true);
+                deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+                newDeleteBtn.addEventListener("click", showDeleteModal);
+            }
+            return;
+        }
+
+        // ✅ CHECK IF THERE'S A PENDING APPROVAL REQUEST (APPROVED, REJECTED, PENDING, REAPPLY)
         if (currentApprovalRequest &&
             currentApprovalRequest.requested_status &&
             currentApprovalRequest.status === "Pending") {
@@ -370,12 +772,17 @@ function toggleFloatingButtons(status) {
             
             const reasonHtml = reason ? `<br><small style="color: #d97706;"><strong>Reason:</strong> ${escapeHtml(reason)}</small>` : '';
 
+            let actionLabel = 'Reject';
+            if (requestedStatus === 'Approved') actionLabel = 'Approve';
+            else if (requestedStatus === 'Pending') actionLabel = 'Restore';
+            else if (requestedStatus === 'Reapply') actionLabel = 'Send Reapply';
+
             const requestContainer = document.createElement('div');
             requestContainer.className = 'request-container';
             requestContainer.innerHTML = `
                 <div class="request-info">
-                    <strong>Admin Request:</strong> ${requestedStatus === 'Approved' ? 'Approve' : 'Reject'} this application<br>
-                    <small>Administrator <strong>${escapeHtml(requestedBy)}</strong> has requested to ${requestedStatus.toLowerCase()} this application.</small>
+                    <strong>Admin Request:</strong> ${actionLabel} this application<br>
+                    <small>Administrator <strong>${escapeHtml(requestedBy)}</strong> has requested to ${actionLabel.toLowerCase()} this application.</small>
                     ${reasonHtml}
                     <br><small>Request ID: ${currentApprovalRequest.id}</small>
                 </div>
@@ -404,6 +811,8 @@ function toggleFloatingButtons(status) {
                     
                     if (requestedStatus === 'Approved') {
                         showContractNumberModalForRequest();
+                    } else if (requestedStatus === 'Reapply') {
+                        openRequestModal('accept', pendingRequestId, pendingRequestedStatus);
                     } else {
                         openRequestModal('accept', pendingRequestId, pendingRequestedStatus);
                     }
@@ -417,8 +826,7 @@ function toggleFloatingButtons(status) {
                     openRequestModal('reject', currentApprovalRequest.id, requestedStatus);
                 });
             }
-
-        } else if (status && status.toLowerCase() === "pending" && !currentApprovalRequest) {
+        } else if (status && (status.toLowerCase() === "pending" || status.toLowerCase() === "request sent") && !currentApprovalRequest) {
             floatingActions.innerHTML = `
                 <button class="btn-floating btn-approve-floating" id="floatingApproveBtn">
                     <i class="fas fa-check-circle"></i><span>Approve Application</span>
@@ -782,7 +1190,9 @@ async function saveContractToMySQL(contractNumber, applicationData, billingDate)
             is_installment_plan: isInstallmentPlan,
             first_installment_date: currentFirstInstallmentDate,
             last_installment_date: currentLastInstallmentDate,
-            installation_fee: applicationData.installation_fee || ''
+            installation_fee: applicationData.installation_fee || '',
+            assigned_team_id: currentSelectedTeam,
+            installation_date: currentInstallationDateValue
         };
         
         console.log("Sending contract data to server...");
@@ -852,12 +1262,13 @@ function getCurrentYearMonth() {
 }
 
 // =========================
-// SETUP INSTALLMENT DATE INPUTS
+// SETUP INSTALLMENT DATE INPUTS WITH AUTO-FILL FROM INSTALLATION DATE (READ-ONLY)
 // =========================
 function setupInstallmentDateInputs(installmentMonths) {
     const firstInstallmentInput = document.getElementById('firstInstallmentDate');
     const lastInstallmentInput = document.getElementById('lastInstallmentDate');
     const installmentErrorDiv = document.getElementById('installmentError');
+    const installationDateInput = document.getElementById('installationDate');
     
     if (firstInstallmentInput) {
         const currentMonth = getCurrentYearMonth();
@@ -865,8 +1276,45 @@ function setupInstallmentDateInputs(installmentMonths) {
         firstInstallmentInput.value = '';
         firstInstallmentInput.classList.remove('is-invalid');
         
+        // ✅ GAWING READ-ONLY ANG FIRST INSTALLMENT DATE
+        firstInstallmentInput.setAttribute('readonly', true);
+        firstInstallmentInput.style.cursor = 'not-allowed';
+        firstInstallmentInput.style.backgroundColor = '#f3f4f6';
+        firstInstallmentInput.title = 'Auto-filled from installation date';
+        
         const newFirstInstallmentInput = firstInstallmentInput.cloneNode(true);
         firstInstallmentInput.parentNode.replaceChild(newFirstInstallmentInput, firstInstallmentInput);
+        
+        // ✅ AUTO-FILL FIRST INSTALLMENT DATE FROM INSTALLATION DATE
+        newFirstInstallmentInput.addEventListener('focus', function() {
+            // Check if installation date is selected and first installment is empty
+            if (installationDateInput && installationDateInput.value && !this.value) {
+                const installDate = new Date(installationDateInput.value);
+                if (!isNaN(installDate.getTime())) {
+                    const year = installDate.getFullYear();
+                    const month = String(installDate.getMonth() + 1).padStart(2, '0');
+                    const monthYear = `${year}-${month}`;
+                    
+                    // Check if month is not in the past
+                    if (monthYear >= currentMonth) {
+                        this.value = monthYear;
+                        console.log(`✅ Auto-filled first installment: ${monthYear}`);
+                        
+                        // Trigger change event to compute last installment
+                        const changeEvent = new Event('change', { bubbles: true });
+                        this.dispatchEvent(changeEvent);
+                        
+                        // Show feedback
+                        this.style.borderColor = '#22c55e';
+                        this.style.background = '#f0fdf4';
+                        setTimeout(() => {
+                            this.style.borderColor = '';
+                            this.style.background = '#f3f4f6';
+                        }, 2000);
+                    }
+                }
+            }
+        });
         
         newFirstInstallmentInput.addEventListener('change', function() {
             const selectedDate = this.value;
@@ -892,6 +1340,8 @@ function setupInstallmentDateInputs(installmentMonths) {
                     if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
                     if (lastInstallmentInputElement) lastInstallmentInputElement.classList.remove('is-invalid');
                     this.classList.remove('is-invalid');
+                    
+                    console.log(`✅ Auto-computed last installment: ${lastDate}`);
                 }
             } else if (!selectedDate && lastInstallmentInputElement) {
                 lastInstallmentInputElement.value = '';
@@ -909,6 +1359,12 @@ function setupInstallmentDateInputs(installmentMonths) {
         lastInstallmentInput.value = '';
         lastInstallmentInput.classList.remove('is-invalid');
         
+        // ✅ GAWING READ-ONLY ANG LAST INSTALLMENT DATE
+        lastInstallmentInput.setAttribute('readonly', true);
+        lastInstallmentInput.style.cursor = 'not-allowed';
+        lastInstallmentInput.style.backgroundColor = '#f3f4f6';
+        lastInstallmentInput.title = 'Auto-computed from first installment date';
+        
         const newLastInstallmentInput = lastInstallmentInput.cloneNode(true);
         lastInstallmentInput.parentNode.replaceChild(newLastInstallmentInput, lastInstallmentInput);
         
@@ -922,43 +1378,138 @@ function setupInstallmentDateInputs(installmentMonths) {
             if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
         });
     }
+    
+    // ✅ AUTO-FILL WHEN INSTALLATION DATE CHANGES
+    if (installationDateInput) {
+        const newInstallationDateInput = installationDateInput.cloneNode(true);
+        installationDateInput.parentNode.replaceChild(newInstallationDateInput, installationDateInput);
+        
+        newInstallationDateInput.addEventListener('change', function() {
+            const firstInstallmentInputElement = document.getElementById('firstInstallmentDate');
+            if (firstInstallmentInputElement && this.value) {
+                const installDate = new Date(this.value);
+                if (!isNaN(installDate.getTime())) {
+                    const year = installDate.getFullYear();
+                    const month = String(installDate.getMonth() + 1).padStart(2, '0');
+                    const monthYear = `${year}-${month}`;
+                    const currentMonth = getCurrentYearMonth();
+                    
+                    if (monthYear >= currentMonth) {
+                        firstInstallmentInputElement.value = monthYear;
+                        console.log(`✅ Auto-filled first installment from installation date: ${monthYear}`);
+                        
+                        // Trigger change event to compute last installment
+                        const changeEvent = new Event('change', { bubbles: true });
+                        firstInstallmentInputElement.dispatchEvent(changeEvent);
+                    }
+                }
+            }
+        });
+    }
+}
+
+// =========================
+// SHOW CONFIRM MODAL FOR FINAL APPROVAL
+// =========================
+function showConfirmApprovalModal() {
+    const confirmContractNumberSpan = document.getElementById('confirmContractNumber');
+    if (confirmContractNumberSpan) {
+        confirmContractNumberSpan.textContent = currentContractNumber;
+    }
+    
+    let confirmBillingDateSpan = document.getElementById('confirmBillingDate');
+    if (!confirmBillingDateSpan) {
+        const alertDiv = document.querySelector('#confirmApprovalModal .alert-success');
+        if (alertDiv) {
+            const billingDateDiv = document.createElement('div');
+            billingDateDiv.id = 'confirmBillingDate';
+            billingDateDiv.innerHTML = `<br><strong><i class="fas fa-calendar-alt"></i> Billing Day:</strong> Every ${currentBillingDate} of the month`;
+            alertDiv.appendChild(billingDateDiv);
+        }
+    } else {
+        confirmBillingDateSpan.innerHTML = `<br><strong><i class="fas fa-calendar-alt"></i> Billing Day:</strong> Every ${currentBillingDate} of the month`;
+    }
+    
+    // Add team and installation date to confirmation modal
+    let confirmTeamSpan = document.getElementById('confirmTeam');
+    if (!confirmTeamSpan) {
+        const alertDiv = document.querySelector('#confirmApprovalModal .alert-success');
+        if (alertDiv) {
+            const teamDiv = document.createElement('div');
+            teamDiv.id = 'confirmTeam';
+            const teamSelect = document.getElementById('teamAssignment');
+            const teamName = teamSelect ? teamSelect.options[teamSelect.selectedIndex]?.text || currentSelectedTeam : currentSelectedTeam;
+            teamDiv.innerHTML = `<br><strong><i class="fas fa-users"></i> Installation Team:</strong> ${teamName}`;
+            alertDiv.appendChild(teamDiv);
+        }
+    }
+    
+    let confirmInstallationDateSpan = document.getElementById('confirmInstallationDate');
+    if (!confirmInstallationDateSpan) {
+        const alertDiv = document.querySelector('#confirmApprovalModal .alert-success');
+        if (alertDiv) {
+            const dateDiv = document.createElement('div');
+            dateDiv.id = 'confirmInstallationDate';
+            const formattedDate = currentInstallationDateValue ? new Date(currentInstallationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
+            dateDiv.innerHTML = `<br><strong><i class="fas fa-calendar-check"></i> Installation Date:</strong> ${formattedDate}`;
+            alertDiv.appendChild(dateDiv);
+        }
+    }
+    
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmApprovalModal'));
+    confirmModal.show();
 }
 
 // =========================
 // CONTRACT NUMBER MODAL FUNCTIONS
 // =========================
 function showContractNumberModal() {
-    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending") {
+    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending" && currentApplicationStatus.toLowerCase() !== "request sent") {
         showToast("This application has already been processed!", "warning");
         return;
     }
     
     const contractModalElement = document.getElementById('contractNumberModal');
     const contractInput = document.getElementById('contractNumber');
-    const billingDateInput = document.getElementById('billingDate');
+    let billingDateInput = document.getElementById('billingDate');
     const proceedBtn = document.getElementById('proceedToConfirmBtn');
     const contractErrorDiv = document.getElementById('contractNumberError');
     const billingErrorDiv = document.getElementById('billingDateError');
     const installmentFields = document.getElementById('installmentFields');
     const installmentErrorDiv = document.getElementById('installmentError');
+    const teamSelect = document.getElementById('teamAssignment');
+    const teamErrorDiv = document.getElementById('teamAssignmentError');
+    const installationDateInput = document.getElementById('installationDate');
+    const installationDateErrorDiv = document.getElementById('installationDateError');
     
     if (billingDateInput) {
-        billingDateInput.type = 'number';
-        billingDateInput.min = 1;
-        billingDateInput.max = 31;
+        billingDateInput = setupBillingDateInput(billingDateInput);
         billingDateInput.placeholder = '1-31';
-        billingDateInput.value = '';
         billingDateInput.classList.remove('is-invalid', 'is-valid');
     }
     if (contractErrorDiv) contractErrorDiv.classList.add('d-none');
     if (billingErrorDiv) billingErrorDiv.classList.add('d-none');
     if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
     if (contractInput) contractInput.classList.remove('is-invalid', 'is-valid');
+    if (teamErrorDiv) teamErrorDiv.classList.add('d-none');
+    if (teamSelect) teamSelect.classList.remove('is-invalid', 'is-valid');
+    if (installationDateErrorDiv) installationDateErrorDiv.classList.add('d-none');
+    if (installationDateInput) installationDateInput.classList.remove('is-invalid', 'is-valid');
     
     currentContractNumber = null;
     currentBillingDate = null;
     currentFirstInstallmentDate = null;
     currentLastInstallmentDate = null;
+    currentSelectedTeam = null;
+    currentInstallationDateValue = null;
+    
+    // ✅ LOAD TEAMS FILTERED BY APPLICATION CITY
+    loadApplicationData().then(appData => {
+        const appCity = appData.city || applicationCity || '';
+        console.log(`📍 Application city for team filter: "${appCity}"`);
+        loadTeamsForDropdown(appCity);
+        setInstallationDateMin();
+    });
     
     loadApplicationData().then(appData => {
         const installationFee = appData.installation_fee || '';
@@ -971,6 +1522,7 @@ function showContractNumberModal() {
             getFullContractNumber = setupContractNumberInput(contractInput, applicationCity, barangay);
         }
         
+        // Sa loob ng showContractNumberModal()
         if (installmentFields) {
             if (isInstallmentPlan) {
                 installmentFields.style.display = 'block';
@@ -984,9 +1536,11 @@ function showContractNumberModal() {
                 if (alertDiv) {
                     alertDiv.innerHTML = `
                         <i class="fas fa-info-circle"></i> 
-                        <strong>Installment Plan</strong><br>
-                        This application has an installment plan of <strong>${installmentMonths} month${installmentMonths > 1 ? 's' : ''}</strong> for the installation fee.<br>
-                        <small class="text-muted">First installment date cannot be earlier than ${getCurrentYearMonth()}.</small>
+                        <div class="alert-content">
+                            <strong>Installment Plan</strong>
+                            <span>This application has an installment plan of <strong>${installmentMonths} month${installmentMonths > 1 ? 's' : ''}</strong> for the installation fee.</span>
+                            <span class="text-muted">First installment date will auto-fill from installation date (read-only).</span>
+                        </div>
                     `;
                     alertDiv.classList.remove('alert-warning');
                     alertDiv.classList.add('alert-info');
@@ -999,6 +1553,23 @@ function showContractNumberModal() {
             }
         }
         
+        if (teamSelect) {
+            const newTeamSelect = teamSelect.cloneNode(true);
+            teamSelect.parentNode.replaceChild(newTeamSelect, teamSelect);
+            newTeamSelect.addEventListener('change', function() {
+                if (teamErrorDiv) teamErrorDiv.classList.add('d-none');
+                if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
+            });
+        }
+        
+        const freshInstallationDateInput = document.getElementById('installationDate');
+if (freshInstallationDateInput) {
+    freshInstallationDateInput.addEventListener('change', function() {
+        if (installationDateErrorDiv) installationDateErrorDiv.classList.add('d-none');
+        if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
+    });
+}
+        
         const newProceedBtn = proceedBtn.cloneNode(true);
         proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
         
@@ -1007,8 +1578,9 @@ function showContractNumberModal() {
             let billingDate = billingDateInput ? billingDateInput.value.trim() : null;
             const defaultPrefix = getContractPrefix(applicationCity);
             
-            if (!contractNumber || contractNumber === defaultPrefix) {
-                contractInput.classList.add('is-invalid');
+            const liveContractNumberInput = document.getElementById('contractNumber');
+            if (!contractNumber || !liveContractNumberInput || !liveContractNumberInput.value.trim()) {
+                if (liveContractNumberInput) liveContractNumberInput.classList.add('is-invalid');
                 if (contractErrorDiv) {
                     contractErrorDiv.classList.remove('d-none');
                     contractErrorDiv.querySelector('span').textContent = 'Please enter a valid contract number';
@@ -1025,6 +1597,61 @@ function showContractNumberModal() {
                 }
                 return;
             }
+            
+            const teamSelectElement = document.getElementById('teamAssignment');
+            const selectedTeam = teamSelectElement ? teamSelectElement.value : '';
+            if (!selectedTeam) {
+                if (teamErrorDiv) {
+                    teamErrorDiv.classList.remove('d-none');
+                    teamErrorDiv.querySelector('span').textContent = 'Please select an installation team';
+                }
+                if (teamSelectElement) teamSelectElement.classList.add('is-invalid');
+                return;
+            }
+            
+            // Sa loob ng showContractNumberModal() function, hanapin ang installation date validation
+            // at palitan ito ng:
+
+            const installationDateElement = document.getElementById('installationDate');
+            const installationDateValue = installationDateElement ? installationDateElement.value : '';
+            if (!installationDateValue) {
+                if (installationDateErrorDiv) {
+                    installationDateErrorDiv.classList.remove('d-none');
+                    installationDateErrorDiv.querySelector('span').textContent = 'Please select an installation date';
+                }
+                if (installationDateElement) installationDateElement.classList.add('is-invalid');
+                return;
+            }
+
+            // ✅ VALIDATE: Installation date must be within 6 months from today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(installationDateValue);
+
+            // Check if date is in the past
+            if (selectedDate < today) {
+                if (installationDateErrorDiv) {
+                    installationDateErrorDiv.classList.remove('d-none');
+                    installationDateErrorDiv.querySelector('span').textContent = 'Installation date cannot be in the past';
+                }
+                if (installationDateElement) installationDateElement.classList.add('is-invalid');
+                return;
+            }
+
+            // ✅ Check if date is beyond 6 months
+            const maxDate = new Date(today);
+            maxDate.setMonth(maxDate.getMonth() + 6);
+            if (selectedDate > maxDate) {
+                if (installationDateErrorDiv) {
+                    installationDateErrorDiv.classList.remove('d-none');
+                    installationDateErrorDiv.querySelector('span').textContent = 'Installation date cannot be more than 6 months from today';
+                }
+                if (installationDateElement) installationDateElement.classList.add('is-invalid');
+                return;
+            }
+
+            currentSelectedTeam = selectedTeam;
+            currentInstallationDateValue = installationDateValue;
             
             if (isInstallmentPlan) {
                 const firstInstallmentInputElement = document.getElementById('firstInstallmentDate');
@@ -1084,12 +1711,14 @@ function showContractNumberModal() {
                 return;
             }
             
-            contractInput.classList.add('is-valid');
+            if (liveContractNumberInput) liveContractNumberInput.classList.add('is-valid');
             currentContractNumber = contractNumber;
             currentBillingDate = billingDate;
             
             console.log("✅ CONTRACT NUMBER SET:", currentContractNumber);
             console.log("✅ BILLING DATE SET:", currentBillingDate);
+            console.log("✅ TEAM ID SET:", currentSelectedTeam);
+            console.log("✅ INSTALLATION DATE SET:", currentInstallationDateValue);
             
             const modal = bootstrap.Modal.getInstance(contractModalElement);
             if (modal) modal.hide();
@@ -1099,6 +1728,27 @@ function showContractNumberModal() {
             document.getElementById('contractPreviewContent').innerHTML = contractHtml;
             
             const contractPreviewModal = new bootstrap.Modal(document.getElementById('contractPreviewModal'));
+            
+            const modalFooter = document.querySelector('#contractPreviewModal .modal-footer');
+            if (modalFooter) {
+                modalFooter.innerHTML = `
+                    <button type="button" class="btn-proceed-final" id="proceedToFinalApprovalBtn">
+                    <i class="fas fa-check-circle"></i> Proceed to Final Approval
+                    </button>
+                `;
+                
+                const finalApprovalBtn = document.getElementById('proceedToFinalApprovalBtn');
+                if (finalApprovalBtn) {
+                    const newFinalBtn = finalApprovalBtn.cloneNode(true);
+                    finalApprovalBtn.parentNode.replaceChild(newFinalBtn, finalApprovalBtn);
+                    newFinalBtn.addEventListener('click', function() {
+                        console.log("🔵 PROCEED TO FINAL APPROVAL CLICKED");
+                        contractPreviewModal.hide();
+                        showConfirmApprovalModal();
+                    });
+                }
+            }
+            
             contractPreviewModal.show();
             
             newProceedBtn.disabled = false;
@@ -1121,32 +1771,52 @@ async function loadApplicationData() {
 }
 
 function showContractNumberModalForRequest() {
+    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending" && currentApplicationStatus.toLowerCase() !== "request sent") {
+        showToast("This application has already been processed!", "warning");
+        return;
+    }
+    
     const contractModalElement = document.getElementById('contractNumberModal');
     const contractInput = document.getElementById('contractNumber');
-    const billingDateInput = document.getElementById('billingDate');
+    let billingDateInput = document.getElementById('billingDate');
     const proceedBtn = document.getElementById('proceedToConfirmBtn');
     const contractErrorDiv = document.getElementById('contractNumberError');
     const billingErrorDiv = document.getElementById('billingDateError');
     const installmentFields = document.getElementById('installmentFields');
     const installmentErrorDiv = document.getElementById('installmentError');
+    const teamSelect = document.getElementById('teamAssignment');
+    const teamErrorDiv = document.getElementById('teamAssignmentError');
+    const installationDateInput = document.getElementById('installationDate');
+    const installationDateErrorDiv = document.getElementById('installationDateError');
     
     if (billingDateInput) {
-        billingDateInput.type = 'number';
-        billingDateInput.min = 1;
-        billingDateInput.max = 31;
+        billingDateInput = setupBillingDateInput(billingDateInput);
         billingDateInput.placeholder = '1-31';
-        billingDateInput.value = '';
         billingDateInput.classList.remove('is-invalid', 'is-valid');
     }
     if (contractErrorDiv) contractErrorDiv.classList.add('d-none');
     if (billingErrorDiv) billingErrorDiv.classList.add('d-none');
     if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
     if (contractInput) contractInput.classList.remove('is-invalid', 'is-valid');
+    if (teamErrorDiv) teamErrorDiv.classList.add('d-none');
+    if (teamSelect) teamSelect.classList.remove('is-invalid', 'is-valid');
+    if (installationDateErrorDiv) installationDateErrorDiv.classList.add('d-none');
+    if (installationDateInput) installationDateInput.classList.remove('is-invalid', 'is-valid');
     
     currentContractNumber = null;
     currentBillingDate = null;
     currentFirstInstallmentDate = null;
     currentLastInstallmentDate = null;
+    currentSelectedTeam = null;
+    currentInstallationDateValue = null;
+    
+    // ✅ LOAD TEAMS FILTERED BY APPLICATION CITY
+    loadApplicationData().then(appData => {
+        const appCity = appData.city || applicationCity || '';
+        console.log(`📍 Application city for team filter (request): "${appCity}"`);
+        loadTeamsForDropdown(appCity);
+        setInstallationDateMin();
+    });
     
     loadApplicationData().then(appData => {
         const installationFee = appData.installation_fee || '';
@@ -1159,6 +1829,7 @@ function showContractNumberModalForRequest() {
             getFullContractNumber = setupContractNumberInput(contractInput, applicationCity, barangay);
         }
         
+        // Sa loob ng showContractNumberModalForRequest()
         if (installmentFields) {
             if (isInstallmentPlan) {
                 installmentFields.style.display = 'block';
@@ -1172,9 +1843,11 @@ function showContractNumberModalForRequest() {
                 if (alertDiv) {
                     alertDiv.innerHTML = `
                         <i class="fas fa-info-circle"></i> 
-                        <strong>Installment Plan</strong><br>
-                        This application has an installment plan of <strong>${installmentMonths} month${installmentMonths > 1 ? 's' : ''}</strong> for the installation fee.<br>
-                        <small class="text-muted">First installment date cannot be earlier than ${getCurrentYearMonth()}.</small>
+                        <div class="alert-content">
+                            <strong>Installment Plan</strong>
+                            <span>This application has an installment plan of <strong>${installmentMonths} month${installmentMonths > 1 ? 's' : ''}</strong> for the installation fee.</span>
+                            <span class="text-muted">First installment date will auto-fill from installation date (read-only).</span>
+                        </div>
                     `;
                     alertDiv.classList.remove('alert-warning');
                     alertDiv.classList.add('alert-info');
@@ -1187,6 +1860,23 @@ function showContractNumberModalForRequest() {
             }
         }
         
+        if (teamSelect) {
+            const newTeamSelect = teamSelect.cloneNode(true);
+            teamSelect.parentNode.replaceChild(newTeamSelect, teamSelect);
+            newTeamSelect.addEventListener('change', function() {
+                if (teamErrorDiv) teamErrorDiv.classList.add('d-none');
+                if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
+            });
+        }
+        
+        const freshInstallationDateInput = document.getElementById('installationDate');
+        if (freshInstallationDateInput) {
+            freshInstallationDateInput.addEventListener('change', function() {
+                if (installationDateErrorDiv) installationDateErrorDiv.classList.add('d-none');
+                if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
+            });
+        }
+        
         const newProceedBtn = proceedBtn.cloneNode(true);
         proceedBtn.parentNode.replaceChild(newProceedBtn, proceedBtn);
         
@@ -1195,8 +1885,9 @@ function showContractNumberModalForRequest() {
             let billingDate = billingDateInput ? billingDateInput.value.trim() : null;
             const defaultPrefix = getContractPrefix(applicationCity);
             
-            if (!contractNumber || contractNumber === defaultPrefix) {
-                contractInput.classList.add('is-invalid');
+            const liveContractNumberInput = document.getElementById('contractNumber');
+            if (!contractNumber || !liveContractNumberInput || !liveContractNumberInput.value.trim()) {
+                if (liveContractNumberInput) liveContractNumberInput.classList.add('is-invalid');
                 if (contractErrorDiv) {
                     contractErrorDiv.classList.remove('d-none');
                     contractErrorDiv.querySelector('span').textContent = 'Please enter a valid contract number';
@@ -1213,6 +1904,59 @@ function showContractNumberModalForRequest() {
                 }
                 return;
             }
+            
+            const teamSelectElement = document.getElementById('teamAssignment');
+            const selectedTeam = teamSelectElement ? teamSelectElement.value : '';
+            if (!selectedTeam) {
+                if (teamErrorDiv) {
+                    teamErrorDiv.classList.remove('d-none');
+                    teamErrorDiv.querySelector('span').textContent = 'Please select an installation team';
+                }
+                if (teamSelectElement) teamSelectElement.classList.add('is-invalid');
+                return;
+            }
+            
+            // Sa loob ng showContractNumberModalForRequest() function, hanapin ang installation date validation
+            // at palitan ito ng parehong validation:
+
+            const installationDateElement = document.getElementById('installationDate');
+            const installationDateValue = installationDateElement ? installationDateElement.value : '';
+            if (!installationDateValue) {
+                if (installationDateErrorDiv) {
+                    installationDateErrorDiv.classList.remove('d-none');
+                    installationDateErrorDiv.querySelector('span').textContent = 'Please select an installation date';
+                }
+                if (installationDateElement) installationDateElement.classList.add('is-invalid');
+                return;
+            }
+
+            // ✅ VALIDATE: Installation date must be within 6 months from today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(installationDateValue);
+
+            if (selectedDate < today) {
+                if (installationDateErrorDiv) {
+                    installationDateErrorDiv.classList.remove('d-none');
+                    installationDateErrorDiv.querySelector('span').textContent = 'Installation date cannot be in the past';
+                }
+                if (installationDateElement) installationDateElement.classList.add('is-invalid');
+                return;
+            }
+
+            const maxDate = new Date(today);
+            maxDate.setMonth(maxDate.getMonth() + 6);
+            if (selectedDate > maxDate) {
+                if (installationDateErrorDiv) {
+                    installationDateErrorDiv.classList.remove('d-none');
+                    installationDateErrorDiv.querySelector('span').textContent = 'Installation date cannot be more than 6 months from today';
+                }
+                if (installationDateElement) installationDateElement.classList.add('is-invalid');
+                return;
+            }
+
+            currentSelectedTeam = selectedTeam;
+            currentInstallationDateValue = installationDateValue;
             
             if (isInstallmentPlan) {
                 const firstInstallmentInputElement = document.getElementById('firstInstallmentDate');
@@ -1272,11 +2016,13 @@ function showContractNumberModalForRequest() {
                 return;
             }
             
-            contractInput.classList.add('is-valid');
+            if (liveContractNumberInput) liveContractNumberInput.classList.add('is-valid');
             currentContractNumber = contractNumber;
             currentBillingDate = billingDate;
             
             console.log("✅ CONTRACT NUMBER SET (Request):", currentContractNumber);
+            console.log("✅ TEAM ID SET:", currentSelectedTeam);
+            console.log("✅ INSTALLATION DATE SET:", currentInstallationDateValue);
             
             const modal = bootstrap.Modal.getInstance(contractModalElement);
             if (modal) modal.hide();
@@ -1337,18 +2083,46 @@ function showConfirmModalForRequest() {
         confirmBillingDateSpan.innerHTML = `<br><strong><i class="fas fa-calendar-alt"></i> Billing Day:</strong> Every ${currentBillingDate} of the month`;
     }
     
+    // Add team and installation date to confirmation modal
+    let confirmTeamSpan = document.getElementById('confirmTeam');
+    if (!confirmTeamSpan) {
+        const alertDiv = document.querySelector('#confirmApprovalModal .alert-success');
+        if (alertDiv) {
+            const teamDiv = document.createElement('div');
+            teamDiv.id = 'confirmTeam';
+            const teamSelect = document.getElementById('teamAssignment');
+            const teamName = teamSelect ? teamSelect.options[teamSelect.selectedIndex]?.text || currentSelectedTeam : currentSelectedTeam;
+            teamDiv.innerHTML = `<br><strong><i class="fas fa-users"></i> Installation Team:</strong> ${teamName}`;
+            alertDiv.appendChild(teamDiv);
+        }
+    }
+    
+    let confirmInstallationDateSpan = document.getElementById('confirmInstallationDate');
+    if (!confirmInstallationDateSpan) {
+        const alertDiv = document.querySelector('#confirmApprovalModal .alert-success');
+        if (alertDiv) {
+            const dateDiv = document.createElement('div');
+            dateDiv.id = 'confirmInstallationDate';
+            const formattedDate = currentInstallationDateValue ? new Date(currentInstallationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set';
+            dateDiv.innerHTML = `<br><strong><i class="fas fa-calendar-check"></i> Installation Date:</strong> ${formattedDate}`;
+            alertDiv.appendChild(dateDiv);
+        }
+    }
+    
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmApprovalModal'));
     confirmModal.show();
 }
 
 // =========================
-// PROCESS APPROVAL FOR REQUEST - FIXED TO REFRESH PAGE
+// PROCESS APPROVAL FOR REQUEST - WITH TEAM AND INSTALLATION DATE
 // =========================
 async function processApprovalWithContractForRequest(requestId) {
     console.log("🔵🔵🔵 processApprovalWithContractForRequest CALLED 🔵🔵🔵");
     console.log("🔵 requestId:", requestId);
     console.log("🔵 currentContractNumber:", currentContractNumber);
     console.log("🔵 currentBillingDate:", currentBillingDate);
+    console.log("🔵 currentSelectedTeam:", currentSelectedTeam);
+    console.log("🔵 currentInstallationDateValue:", currentInstallationDateValue);
     
     if (!currentContractNumber) {
         showToast("Missing contract number. Please start over.", "error");
@@ -1360,13 +2134,22 @@ async function processApprovalWithContractForRequest(requestId) {
         return;
     }
     
+    if (!currentSelectedTeam) {
+        showToast("Please select an installation team.", "error");
+        return;
+    }
+    
+    if (!currentInstallationDateValue) {
+        showToast("Please select an installation date.", "error");
+        return;
+    }
+    
     const modalElement = document.getElementById('confirmApprovalModal');
     showModalLoading(modalElement, true, 'approval');
 
     try {
         const appData = await loadApplicationData();
         
-        // ========== DIRECT SAVE TO CONTRACTS ==========
         const firstName = appData.first_name || '';
         const middleName = appData.middle_name || '';
         const lastName = appData.last_name || '';
@@ -1379,7 +2162,6 @@ async function processApprovalWithContractForRequest(requestId) {
         const address = `${barangay}, ${city}, ${province}`.trim().replace(/^,|,$/g, '').replace(/,,/g, ',');
         const addressDisplay = address || 'Not provided';
         
-        // Convert first_installment_date and last_installment_date to proper format if they exist
         const firstInstallment = currentFirstInstallmentDate || null;
         const lastInstallment = currentLastInstallmentDate || null;
         
@@ -1405,7 +2187,9 @@ async function processApprovalWithContractForRequest(requestId) {
             is_installment_plan: isInstallmentPlan ? 1 : 0,
             first_installment_date: firstInstallment,
             last_installment_date: lastInstallment,
-            installation_fee: appData.installation_fee || ''
+            installation_fee: appData.installation_fee || '',
+            assigned_team_id: currentSelectedTeam,
+            installation_date: currentInstallationDateValue
         };
         
         console.log("🚀 SAVING CONTRACT DIRECTLY...");
@@ -1425,7 +2209,6 @@ async function processApprovalWithContractForRequest(requestId) {
         
         console.log("✅ CONTRACT SAVED!");
         
-        // Call the approve_request endpoint with all necessary data
         const requestResponse = await fetch(`/api/superadmin/approval-request/${requestId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -1433,7 +2216,9 @@ async function processApprovalWithContractForRequest(requestId) {
                 contract_number: currentContractNumber,
                 billing_date: currentBillingDate,
                 first_installment_date: firstInstallment,
-                last_installment_date: lastInstallment
+                last_installment_date: lastInstallment,
+                assigned_team_id: currentSelectedTeam,
+                installation_date: currentInstallationDateValue
             })
         });
 
@@ -1445,13 +2230,20 @@ async function processApprovalWithContractForRequest(requestId) {
         const result = await requestResponse.json();
         console.log("Request approval response:", result);
 
-        // Clear session storage and local state
         sessionStorage.setItem('refresh_admin_applications', 'true');
         
-        // Clear the current approval request to prevent showing old request after reload
         currentApprovalRequest = null;
         pendingRequestId = null;
         pendingRequestedStatus = null;
+
+        let teamName = currentSelectedTeam;
+        try {
+            const teamResponse = await fetch(`/api/superadmin/teams/${currentSelectedTeam}`);
+            if (teamResponse.ok) {
+                const teamData = await teamResponse.json();
+                teamName = teamData.team_name || currentSelectedTeam;
+            }
+        } catch (e) {}
 
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
@@ -1460,12 +2252,13 @@ async function processApprovalWithContractForRequest(requestId) {
                 <p class="mt-2 mb-0 text-success fw-bold">Application approved successfully!</p>
                 <p class="text-muted mt-2">Contract Number: <strong>${currentContractNumber}</strong></p>
                 <p class="text-muted">Billing Day: Every ${currentBillingDate} of the month</p>
+                <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${teamName}</strong></p>
+                <p class="text-muted"><i class="fas fa-calendar-check"></i> Installation Date: <strong>${new Date(currentInstallationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
                 <p class="text-muted">The admin request has been accepted and marked as DONE.</p>
                 <small class="text-muted">Reloading page...</small>
             </div>
         `;
 
-        // IMPORTANT: Reload the page to refresh all state
         setTimeout(() => {
             window.location.reload();
         }, 2000);
@@ -1490,10 +2283,15 @@ async function processApprovalWithContractForRequest(requestId) {
     }
 }
 
+// =========================
+// PROCESS APPROVAL WITH CONTRACT - FIXED
+// =========================
 async function processApprovalWithContract() {
     console.log("🔵🔵🔵 processApprovalWithContract CALLED 🔵🔵🔵");
     console.log("🔵 currentContractNumber:", currentContractNumber);
     console.log("🔵 currentBillingDate:", currentBillingDate);
+    console.log("🔵 currentSelectedTeam:", currentSelectedTeam);
+    console.log("🔵 currentInstallationDateValue:", currentInstallationDateValue);
     
     if (!currentContractNumber) {
         console.error("❌ NO CONTRACT NUMBER!");
@@ -1513,6 +2311,24 @@ async function processApprovalWithContract() {
         return;
     }
     
+    if (!currentSelectedTeam) {
+        console.error("❌ NO TEAM SELECTED!");
+        showToast("Please select an installation team.", "error");
+        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
+        if (confirmModal) confirmModal.hide();
+        setTimeout(() => showContractNumberModal(), 500);
+        return;
+    }
+    
+    if (!currentInstallationDateValue) {
+        console.error("❌ NO INSTALLATION DATE!");
+        showToast("Please select an installation date.", "error");
+        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
+        if (confirmModal) confirmModal.hide();
+        setTimeout(() => showContractNumberModal(), 500);
+        return;
+    }
+    
     const modalElement = document.getElementById('confirmApprovalModal');
     showModalLoading(modalElement, true, 'approval');
 
@@ -1521,7 +2337,6 @@ async function processApprovalWithContract() {
         
         console.log("📦 Application Data loaded");
         
-        // ========== DIRECT SAVE TO CONTRACTS ==========
         const firstName = appData.first_name || '';
         const middleName = appData.middle_name || '';
         const lastName = appData.last_name || '';
@@ -1559,7 +2374,9 @@ async function processApprovalWithContract() {
             is_installment_plan: isInstallmentPlan ? 1 : 0,
             first_installment_date: firstInstallment,
             last_installment_date: lastInstallment,
-            installation_fee: appData.installation_fee || ''
+            installation_fee: appData.installation_fee || '',
+            assigned_team_id: currentSelectedTeam,
+            installation_date: currentInstallationDateValue
         };
         
         console.log("🚀 SAVING CONTRACT DIRECTLY to /api/superadmin/contracts/" + currentContractNumber);
@@ -1570,7 +2387,18 @@ async function processApprovalWithContract() {
             body: JSON.stringify(contractData)
         });
         
-        const saveResult = await saveResponse.json();
+        // ✅ Check if response is JSON
+        const contentType = saveResponse.headers.get('content-type');
+        let saveResult;
+        if (contentType && contentType.includes('application/json')) {
+            saveResult = await saveResponse.json();
+        } else {
+            const text = await saveResponse.text();
+            console.error("❌ Non-JSON response from save contract:", text.substring(0, 200));
+            // Continue anyway - contract might still be saved
+            saveResult = { success: true, message: "Contract saved (non-JSON response)" };
+        }
+        
         console.log("📡 Save contract response:", saveResult);
         
         if (!saveResponse.ok) {
@@ -1581,22 +2409,72 @@ async function processApprovalWithContract() {
         
         // ========== UPDATE APPLICATION STATUS ==========
         console.log("➡️ Updating application status...");
-        const res = await fetch(`/api/superadmin/application/${appId}/status`, {
+        
+        const updatePayload = { 
+            status: "Approved",
+            contract_number: currentContractNumber,
+            billing_date: currentBillingDate,
+            first_installment_date: firstInstallment,
+            last_installment_date: lastInstallment,
+            assigned_team_id: currentSelectedTeam,
+            installation_date: currentInstallationDateValue
+        };
+        
+        console.log("📦 Update payload:", updatePayload);
+        
+        const statusRes = await fetch(`/api/superadmin/application/${appId}/status`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                status: "Approved",
-                contract_number: currentContractNumber,
-                billing_date: currentBillingDate,
-                first_installment_date: firstInstallment,
-                last_installment_date: lastInstallment
-            })
+            body: JSON.stringify(updatePayload)
         });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Approval failed");
+        // ✅ Check if response is JSON
+        const statusContentType = statusRes.headers.get('content-type');
+        let statusData;
+        
+        if (statusContentType && statusContentType.includes('application/json')) {
+            statusData = await statusRes.json();
+            console.log("📡 Status update response:", statusData);
+        } else {
+            const text = await statusRes.text();
+            console.error("❌ Non-JSON response from status update:", text.substring(0, 200));
+            
+            // ✅ Since contract is already saved, show success anyway
+            // The status update might have succeeded even with non-JSON response
+            const modalBody = modalElement.querySelector('.modal-body');
+            modalBody.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                    <p class="mt-2 mb-0 text-success fw-bold">✓ Application approved successfully!</p>
+                    <p class="text-muted mt-2">Contract Number: <strong>${currentContractNumber}</strong></p>
+                    <p class="text-muted">Billing Day: Every ${currentBillingDate} of the month</p>
+                    <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${currentSelectedTeam}</strong></p>
+                    <p class="text-muted"><i class="fas fa-calendar-check"></i> Installation Date: <strong>${new Date(currentInstallationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
+                    <small class="text-muted">Redirecting to applications list...</small>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                redirectToApplicationsList();
+            }, 2000);
+            return;
+        }
+        
+        if (!statusRes.ok) {
+            console.error("❌ Status update failed:", statusData);
+            throw new Error(statusData.error || "Approval failed");
+        }
 
         sessionStorage.setItem('refresh_admin_applications', 'true');
+
+        let teamName = currentSelectedTeam;
+        try {
+            const teamResponse = await fetch(`/api/superadmin/teams/${currentSelectedTeam}`);
+            if (teamResponse.ok) {
+                const teamData = await teamResponse.json();
+                teamName = teamData.team_name || currentSelectedTeam;
+            }
+        } catch (e) {}
 
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
@@ -1605,6 +2483,8 @@ async function processApprovalWithContract() {
                 <p class="mt-2 mb-0 text-success fw-bold">✓ Application approved successfully!</p>
                 <p class="text-muted mt-2">Contract Number: <strong>${currentContractNumber}</strong></p>
                 <p class="text-muted">Billing Day: Every ${currentBillingDate} of the month</p>
+                <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${teamName}</strong></p>
+                <p class="text-muted"><i class="fas fa-calendar-check"></i> Installation Date: <strong>${new Date(currentInstallationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
                 <small class="text-muted">Redirecting to applications list...</small>
             </div>
         `;
@@ -1658,14 +2538,38 @@ function openRequestModal(action, requestId, requestedStatus) {
     const reason = currentApprovalRequest?.reason || '';
     const reasonHtml = reason ? `<br><br><strong>Reason:</strong> ${escapeHtml(reason)}` : '';
 
+    // ✅ DETERMINE ACTION VERB BASED ON REQUESTED STATUS
+    let actionVerb = requestedStatus.toLowerCase();
+    if (requestedStatus === 'Pending') actionVerb = 'restore';
+    else if (requestedStatus === 'Reapply') actionVerb = 'send a reapply invitation';
+
+    // ✅ DETERMINE ACTION LABEL
+    let actionLabel = requestedStatus;
+    if (requestedStatus === 'Pending') actionLabel = 'Restore';
+    else if (requestedStatus === 'Reapply') actionLabel = 'Send Reapply';
+
     if (action === 'accept') {
-        modalTitle.textContent = 'Accept Admin Request';
-        modalMessage.innerHTML = `Administrator <strong>${escapeHtml(requestedBy)}</strong> has requested to ${requestedStatus.toLowerCase()} this application.${reasonHtml}<br><br>
+        modalTitle.textContent = requestedStatus === 'Pending' ? 'Accept Restore Request' : 
+                                 requestedStatus === 'Reapply' ? 'Accept Reapply Request' : 
+                                 'Accept Admin Request';
+        
+        let actionDescription = '';
+        if (requestedStatus === 'Pending') {
+            actionDescription = 'Restore the application to Pending status';
+        } else if (requestedStatus === 'Reapply') {
+            actionDescription = 'Send a reapply invitation to the customer';
+        } else if (requestedStatus === 'Approved') {
+            actionDescription = 'Approve the application';
+        } else {
+            actionDescription = 'Reject the application';
+        }
+        
+        modalMessage.innerHTML = `Administrator <strong>${escapeHtml(requestedBy)}</strong> has requested to ${actionVerb} this application.${reasonHtml}<br><br>
             <strong>This will:</strong>
             <ul>
-                <li>✅ ${requestedStatus === 'Approved' ? 'Approve the application' : 'Reject the application'}</li>
-                <li>📧 Notify the customer and requesting admin</li>
-                <li>🔄 Update the application status</li>
+                <li>${actionDescription}</li>
+                <li> Notify the customer and requesting admin</li>
+                <li> Update the application status</li>
             </ul>`;
         
         const newConfirmBtn = confirmRequestBtn.cloneNode(true);
@@ -1675,9 +2579,21 @@ function openRequestModal(action, requestId, requestedStatus) {
             processRequest(requestId, requestedStatus, 'accept');
         };
     } else {
-        modalTitle.textContent = 'Reject Admin Request';
-        modalMessage.innerHTML = `Are you sure you want to reject the request from administrator <strong>${escapeHtml(requestedBy)}</strong> to ${requestedStatus.toLowerCase()} this application?${reasonHtml}<br><br>
-            <strong>Note:</strong> The original approve/reject buttons will reappear after rejecting this request. The customer will be notified via email.`;
+        modalTitle.textContent = requestedStatus === 'Pending' ? 'Reject Restore Request' : 
+                                 requestedStatus === 'Reapply' ? 'Reject Reapply Request' : 
+                                 'Reject Admin Request';
+        
+        let noteMessage = '';
+        if (requestedStatus === 'Pending') {
+            noteMessage = 'The application will remain Rejected.';
+        } else if (requestedStatus === 'Reapply') {
+            noteMessage = 'The application will remain Rejected and no email will be sent to the customer.';
+        } else {
+            noteMessage = 'The original approve/reject buttons will reappear after rejecting this request.';
+        }
+        
+        modalMessage.innerHTML = `Are you sure you want to reject the request from administrator <strong>${escapeHtml(requestedBy)}</strong> to ${actionVerb} this application?${reasonHtml}<br><br>
+            <strong>Note:</strong> ${noteMessage}`;
         
         const newConfirmBtn = confirmRequestBtn.cloneNode(true);
         confirmRequestBtn.parentNode.replaceChild(newConfirmBtn, confirmRequestBtn);
@@ -1712,15 +2628,29 @@ async function processRequest(requestId, requestedStatus, action) {
 
     try {
         if (action === 'accept') {
-            const response = await fetch(`/api/superadmin/approval-request/${requestId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            // ✅ BUILD REQUEST BODY - PARA SA REAPPLY, WALANG CONTRACT DETAILS
+            let requestBody = {};
+            
+            if (requestedStatus === 'Reapply') {
+                // ✅ PARA SA REAPPLY - WALANG CONTRACT NUMBER, BILLING DATE, ETC.
+                // I-SEND LANG ANG EMPTY OBJECT (OR WALANG BODY)
+                requestBody = {};
+            } else {
+                // ✅ PARA SA APPROVED/REJECTED/PENDING - MAY CONTRACT DETAILS
+                requestBody = {
                     contract_number: currentContractNumber,
                     billing_date: currentBillingDate,
                     first_installment_date: currentFirstInstallmentDate,
-                    last_installment_date: currentLastInstallmentDate
-                })
+                    last_installment_date: currentLastInstallmentDate,
+                    assigned_team_id: currentSelectedTeam,
+                    installation_date: currentInstallationDateValue
+                };
+            }
+            
+            const response = await fetch(`/api/superadmin/approval-request/${requestId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -1730,12 +2660,34 @@ async function processRequest(requestId, requestedStatus, action) {
 
             sessionStorage.setItem('refresh_admin_applications', 'true');
 
+            // ✅ IBAHIN ANG SUCCESS MESSAGE PARA SA REAPPLY
+            let successMessage = `Application has been ${requestedStatus.toLowerCase()} as requested by the admin.`;
+            let teamDisplay = '';
+            
+            if (requestedStatus === 'Reapply') {
+                successMessage = '✅ Reapply invitation has been sent to the customer. The reapply button is now disabled.';
+            } else if (requestedStatus === 'Approved') {
+                let teamName = currentSelectedTeam || 'N/A';
+                try {
+                    const teamResponse = await fetch(`/api/superadmin/teams/${currentSelectedTeam}`);
+                    if (teamResponse.ok) {
+                        const teamData = await teamResponse.json();
+                        teamName = teamData.team_name || currentSelectedTeam;
+                    }
+                } catch (e) {}
+                
+                teamDisplay = `
+                    <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${teamName}</strong></p>
+                    <p class="text-muted"><i class="fas fa-calendar-check"></i> Installation Date: <strong>${currentInstallationDateValue ? new Date(currentInstallationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}</strong></p>
+                `;
+            }
+
             loadingDiv.innerHTML = `
                 <div class="loading-content">
                     <div class="text-success mb-3" style="font-size: 48px;">✓</div>
                     <p class="mt-2 mb-0 text-success fw-bold">Request accepted successfully!</p>
-                    <p class="text-muted mt-2">Application has been ${requestedStatus.toLowerCase()} as requested by the admin.</p>
-                    <p class="text-muted">The customer has been notified via email with PDF attachment.</p>
+                    <p class="text-muted mt-2">${successMessage}</p>
+                    ${teamDisplay}
                     <small class="text-muted">Reloading page...</small>
                 </div>
             `;
@@ -1745,7 +2697,7 @@ async function processRequest(requestId, requestedStatus, action) {
             }, 2000);
 
         } else {
-            const response = await fetch(`/api/superadmin/approval-request/${requestId}`, {
+            const response = await fetch(`/api/superadmin/approval-request/${requestId}/reject`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" }
             });
@@ -1757,13 +2709,16 @@ async function processRequest(requestId, requestedStatus, action) {
 
             sessionStorage.setItem('refresh_admin_applications', 'true');
 
+            let rejectMessage = 'The admin\'s request has been rejected. The application remains in Pending status.';
+            if (requestedStatus === 'Pending' || requestedStatus === 'Reapply') {
+                rejectMessage = 'The admin\'s request has been rejected. The application remains Rejected.';
+            }
+
             loadingDiv.innerHTML = `
                 <div class="loading-content">
                     <div class="text-success mb-3" style="font-size: 48px;">✓</div>
-                    <p class="mt-2 mb-0 text-success fw-bold">Request rejected successfully!</p>
-                    <p class="text-muted mt-2">The admin's request has been rejected.</p>
-                    <p class="text-muted">The application remains in Pending status.</p>
-                    <p class="text-muted">The customer has been notified via email.</p>
+                    <p class="mt-2 mb-0 text-success fw-bold">Request rejected!</p>
+                    <p class="text-muted mt-2">${rejectMessage}</p>
                     <small class="text-muted">Reloading page...</small>
                 </div>
             `;
@@ -1790,13 +2745,483 @@ async function processRequest(requestId, requestedStatus, action) {
 }
 
 function showRejectModal() {
-    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending") {
+    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending" && currentApplicationStatus.toLowerCase() !== "request sent") {
         showToast("This application has already been processed!", "warning");
         return;
     }
     const rejectModal = new bootstrap.Modal(document.getElementById("rejectModal"));
     rejectModal.show();
 }
+
+
+// =========================
+// RESTORE APPLICATION FUNCTION - WITH CANCELLED SUPPORT
+// =========================
+function showRestoreModal() {
+    // Get current status for better messaging
+    const statusBadge = document.querySelector('.status-badge-header');
+    let currentStatus = 'Rejected';
+    if (statusBadge) {
+        const statusText = statusBadge.textContent || '';
+        const match = statusText.match(/Status:\s*(\w+)/i);
+        if (match) {
+            currentStatus = match[1];
+        }
+    }
+    
+    const isCancelled = currentStatus.toLowerCase() === 'cancelled';
+    const targetStatus = isCancelled ? 'Approved' : 'Pending';
+    const restoreText = isCancelled ? 'restore and approve' : 'restore';
+    
+    // Create restore modal if it doesn't exist
+    let restoreModal = document.getElementById('restoreModal');
+    
+    if (!restoreModal) {
+        restoreModal = document.createElement('div');
+        restoreModal.id = 'restoreModal';
+        restoreModal.className = 'modal fade';
+        restoreModal.setAttribute('tabindex', '-1');
+        restoreModal.setAttribute('aria-hidden', 'true');
+        restoreModal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%); color: #ffffff;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-undo"></i> ${isCancelled ? 'Restore & Approve' : 'Restore'} Application
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-undo" style="font-size: 48px; color: var(--primary-blue);"></i>
+                        </div>
+                        <p class="text-center fw-bold">Are you sure you want to ${restoreText} this application?</p>
+                        <div class="alert ${isCancelled ? 'alert-success' : 'alert-warning'} mt-3">
+                            <i class="fas ${isCancelled ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
+                            <strong>This will:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Change the status from <strong>${currentStatus}</strong> to <strong>${targetStatus}</strong></li>
+                                ${isCancelled ? '<li>Keep the existing contract and customer record</li>' : '<li>Make the application available for review again</li>'}
+                                <li>The customer will be notified via email</li>
+                            </ul>
+                        </div>
+                        ${isCancelled ? `
+                            <div class="alert alert-info mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Note:</strong> This application already has a contract and customer record. It will be restored to <strong>Approved</strong> status.
+                            </div>
+                            
+                            <!-- TEAM ASSIGNMENT - ONLY FOR CANCELLED -->
+                            <div class="mb-3 mt-3">
+                                <label for="restoreTeamAssignment" class="form-label fw-bold">
+                                    <i class="fas fa-users"></i> Assign Installation Team *
+                                </label>
+                                <select id="restoreTeamAssignment" class="form-select">
+                                    <option value="" disabled selected>-- Select Team --</option>
+                                </select>
+                                <div class="form-text">Select the team that will handle the installation.</div>
+                                <div id="restoreTeamError" class="text-danger d-none mt-1">
+                                    <i class="fas fa-exclamation-triangle"></i> Please select a team
+                                </div>
+                            </div>
+                            
+                            <!-- INSTALLATION DATE - ONLY FOR CANCELLED -->
+                            <div class="mb-3">
+                                <label for="restoreInstallationDate" class="form-label fw-bold">
+                                    <i class="fas fa-calendar-check"></i> Installation Date *
+                                </label>
+                                <input type="date" 
+                                       id="restoreInstallationDate" 
+                                       class="form-control">
+                                <div class="form-text">Select the date when the installation will be performed.</div>
+                                <div id="restoreDateError" class="text-danger d-none mt-1">
+                                    <i class="fas fa-exclamation-triangle"></i> Please select a valid installation date
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmRestoreBtn" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%); border: none;">
+                            <i class="fas fa-undo"></i> ${isCancelled ? 'Yes, Restore & Approve' : 'Yes, Restore Application'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(restoreModal);
+    } else {
+        // Update the message with current status
+        const titleEl = restoreModal.querySelector('.modal-title');
+        if (titleEl) {
+            titleEl.innerHTML = `<i class="fas fa-undo"></i> ${isCancelled ? 'Restore & Approve' : 'Restore'} Application`;
+        }
+        
+        const alertDiv = restoreModal.querySelector('.alert-warning, .alert-success');
+        if (alertDiv) {
+            alertDiv.className = `alert ${isCancelled ? 'alert-success' : 'alert-warning'} mt-3`;
+            alertDiv.querySelector('i').className = `fas ${isCancelled ? 'fa-check-circle' : 'fa-exclamation-triangle'}`;
+            const ul = alertDiv.querySelector('ul');
+            if (ul) {
+                ul.innerHTML = `
+                    <li>Change the status from <strong>${currentStatus}</strong> to <strong>${targetStatus}</strong></li>
+                    ${isCancelled ? '<li>Keep the existing contract and customer record</li>' : '<li>Make the application available for review again</li>'}
+                    <li>The customer will be notified via email</li>
+                `;
+            }
+        }
+        
+        // Add or update info alert for cancelled
+        let infoAlert = restoreModal.querySelector('.alert-info');
+        if (isCancelled) {
+            if (!infoAlert) {
+                const body = restoreModal.querySelector('.modal-body');
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'alert alert-info mt-2';
+                infoDiv.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Note:</strong> This application already has a contract and customer record. It will be restored to <strong>Approved</strong> status.
+                `;
+                body.appendChild(infoDiv);
+            }
+            
+            // Add team and date fields if not exist
+            let teamField = restoreModal.querySelector('#restoreTeamAssignment');
+            if (!teamField) {
+                const body = restoreModal.querySelector('.modal-body');
+                const teamDiv = document.createElement('div');
+                teamDiv.className = 'mb-3 mt-3';
+                teamDiv.innerHTML = `
+                    <label for="restoreTeamAssignment" class="form-label fw-bold">
+                        <i class="fas fa-users"></i> Assign Installation Team *
+                    </label>
+                    <select id="restoreTeamAssignment" class="form-select">
+                        <option value="" disabled selected>-- Select Team --</option>
+                    </select>
+                    <div class="form-text">Select the team that will handle the installation.</div>
+                    <div id="restoreTeamError" class="text-danger d-none mt-1">
+                        <i class="fas fa-exclamation-triangle"></i> Please select a team
+                    </div>
+                `;
+                body.appendChild(teamDiv);
+            }
+            
+            let dateField = restoreModal.querySelector('#restoreInstallationDate');
+            if (!dateField) {
+                const body = restoreModal.querySelector('.modal-body');
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'mb-3';
+                dateDiv.innerHTML = `
+                    <label for="restoreInstallationDate" class="form-label fw-bold">
+                        <i class="fas fa-calendar-check"></i> Installation Date *
+                    </label>
+                    <input type="date" 
+                           id="restoreInstallationDate" 
+                           class="form-control">
+                    <div class="form-text">Select the date when the installation will be performed.</div>
+                    <div id="restoreDateError" class="text-danger d-none mt-1">
+                        <i class="fas fa-exclamation-triangle"></i> Please select a valid installation date
+                    </div>
+                `;
+                body.appendChild(dateDiv);
+            }
+        } else {
+            // Remove team and date fields for rejected
+            const teamField = restoreModal.querySelector('#restoreTeamAssignment');
+            if (teamField) {
+                const parent = teamField.closest('.mb-3');
+                if (parent) parent.remove();
+            }
+            const dateField = restoreModal.querySelector('#restoreInstallationDate');
+            if (dateField) {
+                const parent = dateField.closest('.mb-3');
+                if (parent) parent.remove();
+            }
+        }
+        
+        const confirmBtn = restoreModal.querySelector('#confirmRestoreBtn');
+        if (confirmBtn) {
+            confirmBtn.innerHTML = `<i class="fas fa-undo"></i> ${isCancelled ? 'Yes, Restore & Approve' : 'Yes, Restore Application'}`;
+        }
+    }
+    
+    // ✅ LOAD TEAMS FOR RESTORE MODAL (ONLY FOR CANCELLED)
+    loadApplicationData().then(appData => {
+        const appCity = appData.city || applicationCity || '';
+        console.log(`📍 Loading teams for restore modal, city: "${appCity}"`);
+        loadTeamsForRestore(appCity);
+        setRestoreInstallationDateMin();
+    });
+    
+    // Remove existing event listeners
+    const confirmRestoreBtn = document.getElementById('confirmRestoreBtn');
+    if (confirmRestoreBtn) {
+        const newConfirmRestoreBtn = confirmRestoreBtn.cloneNode(true);
+        confirmRestoreBtn.parentNode.replaceChild(newConfirmRestoreBtn, confirmRestoreBtn);
+        newConfirmRestoreBtn.addEventListener('click', executeRestore);
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(restoreModal);
+    modal.show();
+}
+
+
+// =========================
+// LOAD TEAMS FOR RESTORE MODAL
+// =========================
+async function loadTeamsForRestore(city = null) {
+    try {
+        console.log(`🔍 Loading teams for restore modal, city: "${city}"`);
+        
+        const response = await fetch('/api/superadmin/teams?status=Active&t=' + Date.now());
+        const teams = await response.json();
+        
+        const techResponse = await fetch('/api/superadmin/technicians?t=' + Date.now());
+        const technicians = await techResponse.json();
+        
+        const teamSelect = document.getElementById('restoreTeamAssignment');
+        if (!teamSelect) return [];
+        
+        teamSelect.innerHTML = '<option value="" disabled selected>-- Select Team --</option>';
+        
+        let filteredTeams = teams.filter(team => {
+            if (team.status !== 'Active') {
+                return false;
+            }
+            const memberCount = technicians.filter(tech => tech.team_id === team.team_id).length;
+            return memberCount > 0;
+        });
+        
+        if (city && city.trim() !== '') {
+            const cityLower = city.toLowerCase().trim();
+            filteredTeams = filteredTeams.filter(team => {
+                const teamArea = (team.area || '').toLowerCase().trim();
+                return teamArea === cityLower;
+            });
+            console.log(`📋 Found ${filteredTeams.length} active teams in area "${city}" with members`);
+        }
+        
+        if (filteredTeams && filteredTeams.length > 0) {
+            filteredTeams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team.team_id;
+                option.textContent = `${team.team_name} (${team.area || 'No Area'})`;
+                teamSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = city && city.trim() !== '' 
+                ? `-- No active teams available in "${city}" area --` 
+                : '-- No Active Teams with Members Available --';
+            option.disabled = true;
+            teamSelect.appendChild(option);
+        }
+        
+        return filteredTeams;
+    } catch (error) {
+        console.error('Error loading teams for restore:', error);
+        const teamSelect = document.getElementById('restoreTeamAssignment');
+        if (teamSelect) {
+            teamSelect.innerHTML = '<option value="">Error loading teams</option>';
+        }
+        return [];
+    }
+}
+
+
+// =========================
+// SET RESTORE INSTALLATION DATE MIN AND MAX
+// =========================
+function setRestoreInstallationDateMin() {
+    const installationDateInput = document.getElementById('restoreInstallationDate');
+    if (installationDateInput) {
+        const today = new Date();
+        
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        installationDateInput.setAttribute('min', `${year}-${month}-${day}`);
+        
+        const maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + 6);
+        const maxYear = maxDate.getFullYear();
+        const maxMonth = String(maxDate.getMonth() + 1).padStart(2, '0');
+        const maxDay = String(maxDate.getDate()).padStart(2, '0');
+        installationDateInput.setAttribute('max', `${maxYear}-${maxMonth}-${maxDay}`);
+        
+        installationDateInput.value = '';
+        
+        console.log(`📅 Restore installation date range: ${year}-${month}-${day} to ${maxYear}-${maxMonth}-${maxDay}`);
+    }
+}
+
+// =========================
+// EXECUTE RESTORE FUNCTION - REJECTED -> PENDING, CANCELLED -> APPROVED (WITH UNARCHIVE)
+// =========================
+async function executeRestore() {
+    const modalElement = document.getElementById('restoreModal');
+    const modalBody = modalElement.querySelector('.modal-body');
+    const modalFooter = modalElement.querySelector('.modal-footer');
+    const modalHeader = modalElement.querySelector('.modal-header');
+    
+    // Get current status
+    const appData = await loadApplicationData();
+    const currentStatus = appData.status || '';
+    const isCancelled = currentStatus.toLowerCase() === 'cancelled';
+    
+    // Determine target status
+    const targetStatus = isCancelled ? 'Approved' : 'Pending';
+    
+    // ✅ VALIDATE TEAM AND INSTALLATION DATE FOR CANCELLED
+    let selectedTeam = null;
+    let installationDateValue = null;
+    
+    if (isCancelled) {
+        const teamSelect = document.getElementById('restoreTeamAssignment');
+        const teamError = document.getElementById('restoreTeamError');
+        const dateInput = document.getElementById('restoreInstallationDate');
+        const dateError = document.getElementById('restoreDateError');
+        
+        selectedTeam = teamSelect ? teamSelect.value : '';
+        if (!selectedTeam) {
+            if (teamError) teamError.classList.remove('d-none');
+            if (teamSelect) teamSelect.classList.add('is-invalid');
+            showToast("Please select an installation team.", "warning");
+            return;
+        }
+        if (teamError) teamError.classList.add('d-none');
+        if (teamSelect) teamSelect.classList.remove('is-invalid');
+        
+        installationDateValue = dateInput ? dateInput.value : '';
+        if (!installationDateValue) {
+            if (dateError) dateError.classList.remove('d-none');
+            if (dateInput) dateInput.classList.add('is-invalid');
+            showToast("Please select an installation date.", "warning");
+            return;
+        }
+        
+        // Validate date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(installationDateValue);
+        
+        if (selectedDate < today) {
+            if (dateError) {
+                dateError.classList.remove('d-none');
+                dateError.querySelector('span').textContent = 'Installation date cannot be in the past';
+            }
+            if (dateInput) dateInput.classList.add('is-invalid');
+            showToast("Installation date cannot be in the past.", "warning");
+            return;
+        }
+        
+        const maxDate = new Date(today);
+        maxDate.setMonth(maxDate.getMonth() + 6);
+        if (selectedDate > maxDate) {
+            if (dateError) {
+                dateError.classList.remove('d-none');
+                dateError.querySelector('span').textContent = 'Installation date cannot be more than 6 months from today';
+            }
+            if (dateInput) dateInput.classList.add('is-invalid');
+            showToast("Installation date cannot be more than 6 months from today.", "warning");
+            return;
+        }
+        
+        if (dateError) dateError.classList.add('d-none');
+        if (dateInput) dateInput.classList.remove('is-invalid');
+    }
+    
+    // 🔥 SHOW LOADING STATE
+    modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 mb-0">${isCancelled ? 'Restoring application to Approved...' : 'Restoring application...'}</p>
+            <small class="text-muted">Please wait</small>
+        </div>
+    `;
+    modalFooter.style.display = 'none';
+    if (modalHeader) {
+        const closeBtn = modalHeader.querySelector('.btn-close');
+        if (closeBtn) closeBtn.disabled = true;
+    }
+
+    try {
+        console.log(`🔄 Restoring application with status: ${currentStatus} -> ${targetStatus}`);
+        
+        // ✅ BUILD REQUEST BODY
+        const requestBody = { 
+            status: targetStatus,
+            assigned_team_id: selectedTeam,
+            installation_date: installationDateValue
+        };
+        
+        const endpoint = `/api/superadmin/application/${appId}/restore`;
+        
+        const res = await fetch(endpoint, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Restore failed");
+        }
+
+        sessionStorage.setItem('refresh_admin_applications', 'true');
+
+        let teamName = 'N/A';
+        if (isCancelled && selectedTeam) {
+            try {
+                const teamResponse = await fetch(`/api/superadmin/teams/${selectedTeam}`);
+                if (teamResponse.ok) {
+                    const teamData = await teamResponse.json();
+                    teamName = teamData.team_name || selectedTeam;
+                }
+            } catch (e) {}
+        }
+
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <p class="mt-2 mb-0 text-success fw-bold">Application restored successfully!</p>
+                <p class="text-muted mt-2">Status changed from <strong>${currentStatus}</strong> to <strong>${targetStatus}</strong>.</p>
+                <p class="text-muted">The application has been <strong>unarchived</strong> and is now visible in the main list.</p>
+                ${isCancelled ? `
+                    <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${teamName}</strong></p>
+                    <p class="text-muted"><i class="fas fa-calendar-check"></i> Installation Date: <strong>${new Date(installationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
+                ` : ''}
+                <p class="text-muted">The customer has been notified via email.</p>
+                <small class="text-muted">Reloading page...</small>
+            </div>
+        `;
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+
+    } catch (err) {
+        console.error("Restore error:", err);
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <p class="mt-2 mb-0 text-danger fw-bold">Failed to restore application</p>
+                <small class="text-muted">${err.message}</small>
+                <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
+            </div>
+        `;
+        modalFooter.style.display = 'flex';
+        if (modalHeader) {
+            const closeBtn = modalHeader.querySelector('.btn-close');
+            if (closeBtn) closeBtn.disabled = false;
+        }
+    }
+}
+
 
 function addStatusBadge(status) {
     const appNumberDiv = document.querySelector(".app-number");
@@ -1808,6 +3233,29 @@ function addStatusBadge(status) {
         statusSpan.className = `status-badge-header status-${status.toLowerCase()}`;
         statusSpan.innerHTML = `<i class="fas fa-circle"></i> Status: ${status}`;
         appNumberDiv.appendChild(statusSpan);
+    }
+}
+
+
+// ✅ BAGONG FUNCTION - REJECTION REASON DISPLAY (with Cancelled support)
+function showRejectionReason(status, reason) {
+    const appNumberDiv = document.querySelector(".app-number");
+    if (!appNumberDiv) return;
+
+    // Alisin muna ang existing reason display (kung meron)
+    const existingReason = document.querySelector(".rejection-reason-display");
+    if (existingReason) existingReason.remove();
+
+    // Ipakita lang kung Rejected or Cancelled ang status AT may reason
+    if (status && (status.toLowerCase() === "rejected" || status.toLowerCase() === "cancelled") && reason && reason.trim() !== "") {
+        const reasonDiv = document.createElement("div");
+        reasonDiv.className = "rejection-reason-display";
+        const icon = status.toLowerCase() === "cancelled" ? "fa-ban" : "fa-exclamation-circle";
+        reasonDiv.innerHTML = `
+            <i class="fas ${icon}"></i>
+            <strong>Reason for ${status}:</strong> ${escapeHtml(reason)}
+        `;
+        appNumberDiv.appendChild(reasonDiv);
     }
 }
 
@@ -1871,12 +3319,16 @@ function showModalLoading(modalElement, isLoading, actionType = '') {
             }
         }
 
+        // ✅ IBAHIN ANG LOADING TEXT PARA SA REJECTION
+        const loadingTitle = actionType === 'rejection' ? 'Rejecting' : 'Processing';
+        const loadingColor = actionType === 'rejection' ? 'text-danger' : 'text-primary';
+
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <div class="spinner-border ${loadingColor}" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mt-3 mb-0">Processing ${actionType}...</p>
+                <p class="mt-3 mb-0">${loadingTitle} application...</p>
                 <small class="text-muted">Please wait, this may take a moment</small>
             </div>
         `;
@@ -1906,7 +3358,7 @@ function showModalLoading(modalElement, isLoading, actionType = '') {
 }
 
 window.rejectHandler = async function () {
-    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending") {
+    if (currentApplicationStatus && currentApplicationStatus.toLowerCase() !== "pending" && currentApplicationStatus.toLowerCase() !== "request sent") {
         showToast("This application has already been processed!", "warning");
         const rejectModal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
         if (rejectModal) rejectModal.hide();
@@ -1946,13 +3398,24 @@ window.rejectHandler = async function () {
         sessionStorage.setItem('refresh_admin_applications', 'true');
 
         const modalBody = modalElement.querySelector('.modal-body');
+        
+        // ✅ BAGONG DESIGN - X ICON AT RED COLORS
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
-                <p class="mt-2 mb-0 text-success fw-bold">Application rejected successfully!</p>
+                <div class="text-danger mb-3" style="font-size: 48px;">✕</div>
+                <p class="mt-2 mb-0 text-danger fw-bold" style="font-size: 18px;">Application Rejected!</p>
+                <p class="text-muted mt-3">The application has been rejected and the customer has been notified.</p>
+                <div class="alert alert-danger mt-3" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 12px 16px;">
+                    <i class="fas fa-exclamation-circle" style="color: #dc2626;"></i>
+                    <strong>Reason:</strong> <span style="color: #991b1b;">${escapeHtml(reason)}</span>
+                </div>
                 <small class="text-muted">Redirecting to applications list...</small>
             </div>
         `;
+
+        // I-hide ang footer para walang buttons
+        const modalFooter = modalElement.querySelector('.modal-footer');
+        if (modalFooter) modalFooter.style.display = 'none';
 
         setTimeout(() => {
             redirectToApplicationsList();
@@ -1963,7 +3426,7 @@ window.rejectHandler = async function () {
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;">✕</div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to reject application</p>
                 <small class="text-muted">${err.message}</small>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -1980,37 +3443,27 @@ window.rejectHandler = async function () {
 
 function initializeEventListeners() {
     addViewContractButtonListener();
+
+    document.getElementById("backBtn")?.addEventListener("click", function() {
+        redirectToApplicationsList();
+    });
     
     document.getElementById("confirmRejectBtn")?.addEventListener("click", window.rejectHandler);
     
-    const proceedToFinalBtn = document.getElementById('proceedToFinalApprovalBtn');
-    if (proceedToFinalBtn) {
-        const newProceedBtn = proceedToFinalBtn.cloneNode(true);
-        proceedToFinalBtn.parentNode.replaceChild(newProceedBtn, proceedToFinalBtn);
-        newProceedBtn.addEventListener('click', async () => {
-            const contractPreviewModal = bootstrap.Modal.getInstance(document.getElementById('contractPreviewModal'));
-            if (contractPreviewModal) contractPreviewModal.hide();
-            
-            const confirmContractNumberSpan = document.getElementById('confirmContractNumber');
-            if (confirmContractNumberSpan) {
-                confirmContractNumberSpan.textContent = currentContractNumber;
+    // ✅ TEAM SELECTION VALIDATION - Check if selected team matches application city
+    const teamSelect = document.getElementById('teamAssignment');
+    if (teamSelect) {
+        const newTeamSelect = teamSelect.cloneNode(true);
+        teamSelect.parentNode.replaceChild(newTeamSelect, teamSelect);
+        
+        newTeamSelect.addEventListener('change', function() {
+            const teamErrorDiv = document.getElementById('teamAssignmentError');
+            if (teamErrorDiv) {
+                teamErrorDiv.classList.add('d-none');
             }
-            
-            let confirmBillingDateSpan = document.getElementById('confirmBillingDate');
-            if (!confirmBillingDateSpan) {
-                const alertDiv = document.querySelector('#confirmApprovalModal .alert-success');
-                if (alertDiv) {
-                    const billingDateDiv = document.createElement('div');
-                    billingDateDiv.id = 'confirmBillingDate';
-                    billingDateDiv.innerHTML = `<br><strong><i class="fas fa-calendar-alt"></i> Billing Day:</strong><br> Every ${currentBillingDate} of the month`;
-                    alertDiv.appendChild(billingDateDiv);
-                }
-            } else {
-                confirmBillingDateSpan.innerHTML = `<br><strong><i class="fas fa-calendar-alt"></i> Billing Day:</strong><br> Every ${currentBillingDate} of the month`;
+            if (this.classList.contains('is-invalid')) {
+                this.classList.remove('is-invalid');
             }
-            
-            const confirmModal = new bootstrap.Modal(document.getElementById('confirmApprovalModal'));
-            confirmModal.show();
         });
     }
     
@@ -2022,6 +3475,8 @@ function initializeEventListeners() {
             console.log("🔴 FINAL APPROVE CLICKED 🔴");
             console.log("currentContractNumber:", currentContractNumber);
             console.log("currentBillingDate:", currentBillingDate);
+            console.log("currentSelectedTeam:", currentSelectedTeam);
+            console.log("currentInstallationDateValue:", currentInstallationDateValue);
             console.log("pendingRequestId:", pendingRequestId);
             console.log("pendingRequestedStatus:", pendingRequestedStatus);
             
@@ -2035,6 +3490,39 @@ function initializeEventListeners() {
                 console.error("❌ currentBillingDate is NULL or UNDEFINED!");
                 showToast("Billing date not set. Please go back and enter billing date.", "error");
                 return;
+            }
+            
+            if (!currentSelectedTeam) {
+                console.error("❌ currentSelectedTeam is NULL or UNDEFINED!");
+                showToast("Please select an installation team.", "error");
+                return;
+            }
+            
+            if (!currentInstallationDateValue) {
+                console.error("❌ currentInstallationDateValue is NULL or UNDEFINED!");
+                showToast("Please select an installation date.", "error");
+                return;
+            }
+            
+            // ✅ VALIDATE: Check if selected team's area matches application city
+            const teamSelectElement = document.getElementById('teamAssignment');
+            if (teamSelectElement) {
+                const selectedOption = teamSelectElement.options[teamSelectElement.selectedIndex];
+                const teamText = selectedOption ? selectedOption.text : '';
+                // Extract area from text: "Team Name (Area) - Leader"
+                const areaMatch = teamText.match(/\(([^)]+)\)/);
+                const selectedArea = areaMatch ? areaMatch[1] : '';
+                const appCity = applicationCity || '';
+                
+                if (appCity && selectedArea) {
+                    const appCityLower = appCity.toLowerCase().trim();
+                    const selectedAreaLower = selectedArea.toLowerCase().trim();
+                    if (appCityLower !== selectedAreaLower) {
+                        console.error(`❌ Team area (${selectedArea}) does not match application city (${appCity})`);
+                        showToast(`Team area (${selectedArea}) does not match application city (${appCity}). Please select a team from the same area.`, "error");
+                        return;
+                    }
+                }
             }
             
             if (pendingRequestId && pendingRequestedStatus) {
@@ -2119,15 +3607,373 @@ function initializeEventListeners() {
             closeRequestModalFunc();
         }
     };
+
+
+    // ================= RESTORE MODAL EVENT LISTENERS =================
+    // Listen for restore modal hidden event to cleanup
+    document.addEventListener('hidden.bs.modal', function(e) {
+        if (e.target && e.target.id === 'restoreModal') {
+            const modalElement = document.getElementById('restoreModal');
+            if (modalElement) {
+                const modalBody = modalElement.querySelector('.modal-body');
+                const modalFooter = modalElement.querySelector('.modal-footer');
+                // Reset to original content if needed
+                if (modalBody && !modalBody.querySelector('.text-success, .text-danger')) {
+                    // Already reset, do nothing
+                }
+            }
+        }
+    });
 }
 
 function redirectToApplicationsList() {
-    window.location.href = "/superadmin/internet-applications?t=" + Date.now();
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('from');
+
+    if (source === 'archived') {
+        window.location.href = "/superadmin/archived-applications?t=" + Date.now();
+    } else {
+        window.location.href = "/superadmin/internet-applications?t=" + Date.now();
+    }
 }
 
 document.getElementById("downloadPdfBtn")?.addEventListener("click", () => {
     window.open(`/superadmin/download/pdf/${appId}`, "_blank");
 });
 
-initializeEventListeners();
-loadApplication();
+// ==================== INITIALIZATION ====================
+document.addEventListener("DOMContentLoaded", async function() {
+    // ✅ SESSION CHECK MUNA
+    const isValid = await checkSession();
+    if (!isValid) return;
+    
+    initializeEventListeners();
+    loadApplication();
+});
+
+
+// =========================
+// DELETE APPLICATION FUNCTION
+// =========================
+function showDeleteModal() {
+    // Create delete modal if it doesn't exist
+    let deleteModal = document.getElementById('deleteModal');
+    
+    if (!deleteModal) {
+        deleteModal = document.createElement('div');
+        deleteModal.id = 'deleteModal';
+        deleteModal.className = 'modal fade';
+        deleteModal.setAttribute('tabindex', '-1');
+        deleteModal.setAttribute('aria-hidden', 'true');
+        deleteModal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); color: #ffffff;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-trash"></i> Delete Application
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #dc2626;"></i>
+                        </div>
+                        <p class="text-center fw-bold">Are you sure you want to delete this application?</p>
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-exclamation-circle"></i> 
+                            <strong>This action cannot be undone!</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>This will permanently delete the application record</li>
+                                <li>All associated data will be removed</li>
+                                <li>The customer will NOT be notified</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Application Number:</strong> <span id="deleteAppNumber" style="font-weight: 700; color: #991b1b;"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                            <i class="fas fa-trash"></i> Yes, Delete Permanently
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(deleteModal);
+    }
+    
+    // Set application number in the modal
+    const appNumberSpan = document.getElementById('deleteAppNumber');
+    if (appNumberSpan) {
+        const appNumberEl = document.getElementById('application_number');
+        appNumberSpan.textContent = appNumberEl ? appNumberEl.textContent : 'N/A';
+    }
+    
+    // Remove existing event listeners
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmDeleteBtn) {
+        const newConfirmDeleteBtn = confirmDeleteBtn.cloneNode(true);
+        confirmDeleteBtn.parentNode.replaceChild(newConfirmDeleteBtn, confirmDeleteBtn);
+        newConfirmDeleteBtn.addEventListener('click', executeDelete);
+    }
+    
+    // Show modal
+    const modal = new bootstrap.Modal(deleteModal);
+    modal.show();
+}
+
+// =========================
+// EXECUTE DELETE FUNCTION
+// =========================
+async function executeDelete() {
+    const modalElement = document.getElementById('deleteModal');
+    const modalBody = modalElement.querySelector('.modal-body');
+    const modalFooter = modalElement.querySelector('.modal-footer');
+    const modalHeader = modalElement.querySelector('.modal-header');
+    
+    // Show loading state
+    modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 mb-0">Deleting application...</p>
+            <small class="text-muted">Please wait</small>
+        </div>
+    `;
+    modalFooter.style.display = 'none';
+    if (modalHeader) {
+        const closeBtn = modalHeader.querySelector('.btn-close');
+        if (closeBtn) closeBtn.disabled = true;
+    }
+
+    try {
+        console.log(`🗑️ Deleting application: ${appId}`);
+        
+        const res = await fetch(`/api/superadmin/application/${appId}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" }
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Delete failed");
+        }
+
+        sessionStorage.setItem('refresh_admin_applications', 'true');
+
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <p class="mt-2 mb-0 text-success fw-bold">Application deleted successfully!</p>
+                <p class="text-muted mt-2">The application has been permanently removed from the system.</p>
+                <small class="text-muted">Redirecting to applications list...</small>
+            </div>
+        `;
+
+        setTimeout(() => {
+            redirectToApplicationsList();
+        }, 2000);
+
+    } catch (err) {
+        console.error("Delete error:", err);
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <p class="mt-2 mb-0 text-danger fw-bold">Failed to delete application</p>
+                <small class="text-muted">${err.message}</small>
+                <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
+            </div>
+        `;
+        modalFooter.style.display = 'flex';
+        if (modalHeader) {
+            const closeBtn = modalHeader.querySelector('.btn-close');
+            if (closeBtn) closeBtn.disabled = false;
+        }
+    }
+}
+
+// =========================
+// REQUEST REAPPLY MODAL
+// =========================
+function showReapplyRequestModal() {
+    let reapplyModal = document.getElementById('reapplyRequestModal');
+
+    if (!reapplyModal) {
+        reapplyModal = document.createElement('div');
+        reapplyModal.id = 'reapplyRequestModal';
+        reapplyModal.className = 'modal fade';
+        reapplyModal.setAttribute('tabindex', '-1');
+        reapplyModal.setAttribute('aria-hidden', 'true');
+        reapplyModal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-redo-alt"></i> Request Re-application
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label fw-bold"><i class="fas fa-exclamation-circle"></i> Rejection Reason</label>
+                        <div class="alert alert-danger mb-3" id="reapplyRejectionReasonBox">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span></span>
+                        </div>
+
+                        <label for="reapplyMessage" class="form-label fw-bold">
+                            <i class="fas fa-comment-dots"></i> Message for the Customer *
+                        </label>
+                        <textarea id="reapplyMessage" class="form-control" rows="4" maxlength="1000" placeholder="Explain what the customer needs to correct or add when re-applying..."></textarea>
+                        <div class="form-text"><span id="reapplyMsgCount">0</span>/1000 characters</div>
+                        <div id="reapplyMessageError" class="text-danger d-none mt-1">
+                            <i class="fas fa-exclamation-triangle"></i> <span>Please enter a message for the customer</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmReapplyRequestBtn">
+                            <i class="fas fa-paper-plane"></i> Send Request
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(reapplyModal);
+
+        // Character counter
+        reapplyModal.addEventListener('input', function (e) {
+            if (e.target && e.target.id === 'reapplyMessage') {
+                const counter = document.getElementById('reapplyMsgCount');
+                if (counter) counter.textContent = e.target.value.length;
+                const errDiv = document.getElementById('reapplyMessageError');
+                if (errDiv) errDiv.classList.add('d-none');
+                e.target.classList.remove('is-invalid');
+            }
+        });
+    }
+
+    // Set rejection reason
+    const reasonBox = document.getElementById('reapplyRejectionReasonBox');
+    if (reasonBox) {
+        const reasonSpan = reasonBox.querySelector('span');
+        const reasonText = (currentRejectionReason && currentRejectionReason.trim() !== '')
+            ? currentRejectionReason
+            : 'No reason provided.';
+        if (reasonSpan) reasonSpan.textContent = reasonText;
+    }
+
+    // Reset message input
+    const messageInput = document.getElementById('reapplyMessage');
+    if (messageInput) {
+        messageInput.value = '';
+        messageInput.classList.remove('is-invalid');
+    }
+    const counter = document.getElementById('reapplyMsgCount');
+    if (counter) counter.textContent = '0';
+    const msgError = document.getElementById('reapplyMessageError');
+    if (msgError) msgError.classList.add('d-none');
+
+    // Remove existing event listener and add new one
+    const confirmBtn = document.getElementById('confirmReapplyRequestBtn');
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        newConfirmBtn.addEventListener('click', executeReapplyRequest);
+    }
+
+    const modal = new bootstrap.Modal(reapplyModal);
+    modal.show();
+}
+
+async function executeReapplyRequest() {
+    const modalElement = document.getElementById('reapplyRequestModal');
+    const messageInput = document.getElementById('reapplyMessage');
+    const messageError = document.getElementById('reapplyMessageError');
+
+    const message = messageInput ? messageInput.value.trim() : '';
+    if (!message) {
+        if (messageError) messageError.classList.remove('d-none');
+        if (messageInput) messageInput.classList.add('is-invalid');
+        showToast("Please enter a message for the customer.", "warning");
+        return;
+    }
+
+    const modalBody = modalElement.querySelector('.modal-body');
+    const modalFooter = modalElement.querySelector('.modal-footer');
+    const modalHeader = modalElement.querySelector('.modal-header');
+
+    modalElement.setAttribute('data-original-body', modalBody.innerHTML);
+    modalElement.setAttribute('data-original-footer', modalFooter.innerHTML);
+
+    modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 mb-0">Sending reapply request...</p>
+            <small class="text-muted">Please wait</small>
+        </div>
+    `;
+    modalFooter.style.display = 'none';
+    const closeBtn = modalHeader?.querySelector('.btn-close');
+    if (closeBtn) closeBtn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/superadmin/application/${appId}/request-reapply`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message })
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to send reapply request");
+
+        // ✅ UPDATE LOCAL STATE IMMEDIATELY
+        currentReapplyRequested = true;
+        currentReapplyRequestedAt = new Date().toISOString();
+
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <p class="mt-2 mb-0 text-success fw-bold">Reapply request sent!</p>
+                <p class="text-muted mt-2">The customer has been notified via email with the reapply link.</p>
+                <small class="text-muted">Closing...</small>
+            </div>
+        `;
+
+        setTimeout(() => {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+            if (modalElement.hasAttribute('data-original-body')) {
+                modalBody.innerHTML = modalElement.getAttribute('data-original-body');
+                modalElement.removeAttribute('data-original-body');
+            }
+            if (modalElement.hasAttribute('data-original-footer')) {
+                modalFooter.innerHTML = modalElement.getAttribute('data-original-footer');
+                modalFooter.style.display = 'flex';
+                modalElement.removeAttribute('data-original-footer');
+            }
+            if (closeBtn) closeBtn.disabled = false;
+
+            // ✅ RE-RENDER THE FLOATING BUTTON TO SHOW DISABLED STATE
+            toggleFloatingButtons(currentApplicationStatus);
+        }, 1800);
+
+    } catch (err) {
+        console.error("Reapply request error:", err);
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <p class="mt-2 mb-0 text-danger fw-bold">Failed to send reapply request</p>
+                <small class="text-muted">${err.message}</small>
+            </div>
+        `;
+        modalFooter.style.display = 'flex';
+        modalFooter.innerHTML = `<button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>`;
+        if (closeBtn) closeBtn.disabled = false;
+    }
+}

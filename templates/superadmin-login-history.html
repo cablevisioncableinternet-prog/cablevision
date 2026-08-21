@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Super Admin | Login History</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="/static/superadmin-dashboard.css">
+<link rel="stylesheet" href="/static/superadmin-login-history.css">
+<link rel="stylesheet" href="/static/device-alert.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <h2>Cablevision</h2>
+    <p>Super Administrator Portal</p>
+  </div>
+
+ <nav class="sidebar-menu">
+  <ul>
+<li><a href="/superadmin"> 
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg><span class="menu-text">Dashboard</span>
+</a></li>
+      
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li><a href="/superadmin/admins">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M19 8v6M16 11h6"/>
+  </svg>
+  <span class="menu-text">Administrators</span>
+</a></li>
+
+<li><a href="/superadmin/technicians">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-3 3-3-3 3-3z"/>
+  </svg>
+  <span class="menu-text">Technicians</span>
+</a></li>
+
+<li><a href="/superadmin/area">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10z"/>
+    <circle cx="12" cy="11" r="2"/>
+  </svg>
+  <span class="menu-text">Manage Area</span>
+</a></li>
+
+<li><a href="/superadmin/users">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="8.5" cy="7" r="4"/>
+    <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+  <span class="menu-text">User Accounts</span>
+</a></li>
+
+<li><a href="/superadmin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/superadmin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li><a href="/superadmin/archived-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="4" rx="1"/>
+    <path d="M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/>
+    <path d="M9 12h6"/>
+  </svg>
+  <span class="menu-text">Archived Applications</span>
+</a></li>
+
+<li><a href="/superadmin/plan-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5-4v4h4"/>
+    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+  </svg>
+  <span class="menu-text">Plan Requests</span>
+</a></li>
+
+<li><a href="/superadmin/termination-requests">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 15h8"/>
+  </svg>
+  <span class="menu-text">Termination Requests</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">SERVICES</span>
+</li>
+
+<li><a href="/superadmin/plans">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/>
+    <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" stroke="none"/>
+  </svg>
+  <span class="menu-text">Plans</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">CONTENT</span>
+</li>
+
+<li><a href="/superadmin/announcements">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 11v2"/>
+    <path d="M6 10v4l10 4V6L6 10z"/>
+    <path d="M16 8l5-2v12l-5-2"/>
+    <path d="M6 14l1.5 5h2L8 14"/>
+  </svg>
+  <span class="menu-text">Announcements</span>
+</a></li>
+
+<li><a href="/superadmin/advertisement">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12V6a2 2 0 0 1 2-2h10l4 4v4"/>
+    <path d="M4 18a2 2 0 0 0 2 2h8"/>
+    <path d="M14 4v4h4"/>
+    <path d="M12 16h8"/>
+    <path d="M16 12v8"/>
+  </svg>
+  <span class="menu-text">Advertisement</span>
+</a></li>
+  </ul>
+</nav>
+</aside>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <button class="hamburger" id="hamburgerBtn">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  
+  <div class="top-bar-left"></div>
+
+  <div class="top-bar-right">
+    <!-- PROFILE DROPDOWN -->
+    <div class="profile-dropdown">
+      <button id="profileBtn">
+        <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+        <span id="profileName"></span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      <ul class="dropdown-menu" id="profileMenu">
+        <li><a href="/superadmin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/superadmin/login-history" id="loginHistoryLink" class="active"><i class="fas fa-history"></i> Login History</a></li>
+        <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+  <!-- PAGE HEADER CARD -->
+  <div class="dashboard-header-card history-page-header">
+    <div class="dashboard-header-left">
+      <h1>Login History & Active Devices</h1>
+      <p>Monitor current active sessions and log out recognized or unfamiliar devices</p>
+    </div>
+    <div class="dashboard-header-right">
+      <button class="btn-logout-all" id="logoutAllDevicesBtn">
+        <i class="fas fa-power-off"></i> Logout All Devices
+      </button>
+    </div>
+  </div>
+
+  <!-- CURRENT DEVICE SECTION -->
+  <section class="history-section">
+    <div class="section-title">
+      <i class="fas fa-laptop"></i> Current Logged In Device
+    </div>
+    
+    <div id="currentDeviceContainer">
+      <div style="text-align: center; padding: 20px; color: #64748b;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 8px;"></i>
+        <p>Loading current device information...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OTHER DEVICES & HISTORY SECTION -->
+  <section class="history-section">
+    <div class="section-title">
+      <i class="fas fa-mobile-alt"></i> Other Logged In Devices & History
+    </div>
+
+    <!-- BATCH SELECTION TOOLBAR -->
+    <div class="batch-toolbar" id="batchToolbar">
+      <div class="batch-left">
+        <label class="select-all-checkbox-wrap">
+          <input type="checkbox" id="selectAllDevices">
+          Select All
+        </label>
+        <span class="selected-count-badge" id="selectedCountBadge">0 selected</span>
+      </div>
+      <button class="btn-logout-selected" id="logoutSelectedBtn">
+        <i class="fas fa-sign-out-alt"></i> Logout Selected
+      </button>
+    </div>
+
+    <!-- DEVICES LIST / TABLE -->
+    <div class="devices-table-container">
+      <table class="devices-table" id="devicesTable">
+        <thead>
+          <tr>
+            <th style="width: 40px;"></th>
+            <th>Device & Browser</th>
+            <th>Location & IP Address</th>
+            <th>Login Time</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="otherDevicesTbody">
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 24px; color: #64748b;">
+              <i class="fas fa-spinner fa-spin"></i> Loading devices list...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-devices" id="emptyDevicesState" style="display: none;">
+      <h3>No Other Active Devices</h3>
+      <p>Your account is currently only active on this device.</p>
+    </div>
+  </section>
+</main>
+
+ <!-- LOGOUT MODAL -->
+<div id="logoutModal" class="modal logout-modal">
+  <div class="modal-content logout-modal-content">
+    <span class="close-btn logout-close-btn" id="closeLogoutModal">&times;</span>
+    <div class="logout-icon-wrapper">
+    </div>
+    <h2 class="logout-title">Confirm Logout</h2>
+    <p class="logout-message">Are you sure you want to logout?</p>
+    <div class="logout-actions">
+      <button id="cancelLogout" class="btn logout-cancel"> <i class="fas fa-times"></i> Cancel</button>
+      <button id="confirmLogout" class="btn logout-confirm"> <i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEVICE LOGOUT CONFIRMATION MODAL -->
+<div id="deviceLogoutModal" class="device-logout-modal">
+  <div class="logout-modal-box">
+    <div class="modal-icon-alert">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3 id="modalLogoutTitle">Confirm Device Logout</h3>
+    <p id="modalLogoutMessage">Are you sure you want to log out the selected device? Once logged out, the device session info will be deleted.</p>
+
+    <div class="modal-device-preview" id="modalDevicePreview">
+      <i class="fas fa-desktop"></i> <span id="modalDeviceText">Selected Device</span>
+    </div>
+
+    <div class="logout-modal-actions">
+      <button type="button" class="btn-modal-cancel" id="btnCancelDeviceLogout"> <i class="fas fa-times"></i> Cancel</button>
+      <button type="button" class="btn-modal-confirm" id="btnConfirmDeviceLogout"> <i class="fas fa-sign-out-alt"></i> Confirm Logout</button>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script src="/static/superadmin-login-history.js"></script>
+<script src="/static/device-monitor.js"></script>
+
+<!-- LIGHTWEIGHT SESSION GUARD -->
+<script>
+(function() {
+    function getTabId() {
+        return sessionStorage.getItem('tab_id') || '';
+    }
+
+    async function verifySessionOrRedirect() {
+        const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+        if (!isLoggedIn) {
+            window.location.replace('/');
+            return;
+        }
+        try {
+            const tabId = getTabId();
+            const response = await fetch(`/api/superadmin/verify-session?tab_id=${tabId}`);
+            const data = await response.json();
+            if (!data.valid) {
+                sessionStorage.clear();
+                window.location.replace('/');
+            }
+        } catch (error) {
+            console.error('Session verification failed:', error);
+        }
+    }
+
+    verifySessionOrRedirect();
+
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            verifySessionOrRedirect();
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            verifySessionOrRedirect();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

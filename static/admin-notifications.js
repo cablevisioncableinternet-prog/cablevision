@@ -53,6 +53,156 @@ class AdminNotificationSystem {
             markAllReadBtn.parentNode.replaceChild(newMarkBtn, markAllReadBtn);
             newMarkBtn.addEventListener('click', () => this.markAllAsRead());
         }
+
+        // ✅ VIEW ALL NOTIFICATIONS BUTTON
+        const viewAllBtn = document.getElementById('viewAllNotificationsBtn');
+        if (viewAllBtn) {
+            const newViewAllBtn = viewAllBtn.cloneNode(true);
+            viewAllBtn.parentNode.replaceChild(newViewAllBtn, viewAllBtn);
+
+            newViewAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (notificationMenu) notificationMenu.classList.remove('show');
+                this.openAllNotificationsModal();
+            });
+        }
+
+        // ✅ ALL NOTIFICATIONS MODAL - CLOSE HANDLERS
+        const allModal = document.getElementById('allNotificationsModal');
+        const closeAllModalBtn = document.getElementById('closeAllNotificationsModal');
+        const closeAllBtn = document.getElementById('closeAllNotificationsBtn');
+        const markAllReadFromModalBtn = document.getElementById('markAllReadFromModalBtn');
+
+        if (closeAllModalBtn) {
+            closeAllModalBtn.addEventListener('click', () => this.closeAllNotificationsModal());
+        }
+        if (closeAllBtn) {
+            closeAllBtn.addEventListener('click', () => this.closeAllNotificationsModal());
+        }
+        if (allModal) {
+            allModal.addEventListener('click', (e) => {
+                if (e.target === allModal) this.closeAllNotificationsModal();
+            });
+        }
+        if (markAllReadFromModalBtn) {
+            markAllReadFromModalBtn.addEventListener('click', async () => {
+                await this.markAllAsRead();
+                this.renderAllNotificationsModal();
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('allNotificationsModal');
+                if (modal && modal.classList.contains('show')) {
+                    this.closeAllNotificationsModal();
+                }
+            }
+        });
+    }
+
+    // ✅ OPEN ALL NOTIFICATIONS MODAL
+    async openAllNotificationsModal() {
+        await this.fetchNotifications();
+        this.renderAllNotificationsModal();
+
+        const modal = document.getElementById('allNotificationsModal');
+        if (modal) {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeAllNotificationsModal() {
+        const modal = document.getElementById('allNotificationsModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // ✅ RENDER FULL LIST NG NOTIFICATIONS SA MODAL (kaparehong icon/type logic ng renderNotifications)
+    renderAllNotificationsModal() {
+        const container = document.getElementById('allNotificationsList');
+        if (!container) return;
+
+        if (this.notifications.length === 0) {
+            container.innerHTML = `
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            `;
+            return;
+        }
+
+        const html = this.notifications.map(notif => {
+            const isUnread = !notif.read;
+            let type = 'info';
+            let icon = 'fa-info-circle';
+
+            if (notif.type === 'request_approved') {
+                type = 'approved';
+                icon = 'fa-check-circle';
+            } else if (notif.type === 'request_rejected') {
+                type = 'rejected';
+                icon = 'fa-times-circle';
+            } else if (notif.type === 'new_application') {
+                type = 'new_application';
+                icon = 'fa-file-alt';
+            }
+
+            return `
+                <div class="notification-item ${isUnread ? 'unread' : ''}" data-id="${notif.id}" data-related-id="${notif.relatedId || notif.request_id}" data-type="${notif.type || ''}">
+                    <div class="notification-icon ${type}">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${this.escapeHtml(notif.title || 'Notification')}</div>
+                        <div class="notification-message">${this.escapeHtml(notif.message)}</div>
+                        <div class="notification-time">${this.getTimeAgo(notif.timestamp)}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+
+        container.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+                const id = item.dataset.id;
+                const relatedId = item.dataset.relatedId;
+                const type = item.dataset.type;
+
+                await this.markAsRead(id);
+                this.renderAllNotificationsModal();
+
+                if (!relatedId) return;
+
+                const goToApplicationDetails = [
+                    'new_application',
+                    'request_approved',
+                    'request_rejected'
+                ];
+
+                const goToCustomersList = [
+                    'slot_assigned',
+                    'installation_update',
+                    'plan_change_request',
+                    'plan_change_processed',
+                    'termination_request',
+                    'termination_processed'
+                ];
+
+                if (goToApplicationDetails.includes(type)) {
+                    window.location.href = `/admin/view-application/${relatedId}`;
+                } else if (goToCustomersList.includes(type)) {
+                    window.location.href = `/admin/view-customers?highlight=${relatedId}`;
+                } else {
+                    window.location.href = `/admin/view-application/${relatedId}`;
+                }
+            });
+        });
     }
 
     getAdminIdentifier() {
@@ -143,7 +293,7 @@ class AdminNotificationSystem {
             }
             
             return `
-                <div class="notification-item ${isUnread ? 'unread' : ''}" data-id="${notif.id}" data-related-id="${notif.relatedId || notif.request_id}">
+                <div class="notification-item ${isUnread ? 'unread' : ''}" data-id="${notif.id}" data-related-id="${notif.relatedId || notif.request_id}" data-type="${notif.type || ''}">
                     <div class="notification-icon ${type}">
                         <i class="fas ${icon}"></i>
                     </div>
@@ -165,9 +315,32 @@ class AdminNotificationSystem {
             newItem.addEventListener('click', async () => {
                 const id = newItem.dataset.id;
                 const relatedId = newItem.dataset.relatedId;
+                const type = newItem.dataset.type;
+                
                 await this.markAsRead(id);
-                if (relatedId) {
-                    // Redirect to the application view
+                
+                if (!relatedId) return;
+                
+                const goToApplicationDetails = [
+                    'new_application',
+                    'request_approved',
+                    'request_rejected'
+                ];
+                
+                const goToCustomersList = [
+                    'slot_assigned',
+                    'installation_update',
+                    'plan_change_request',
+                    'plan_change_processed',
+                    'termination_request',
+                    'termination_processed'
+                ];
+                
+                if (goToApplicationDetails.includes(type)) {
+                    window.location.href = `/admin/view-application/${relatedId}`;
+                } else if (goToCustomersList.includes(type)) {
+                    window.location.href = `/admin/view-customers?highlight=${relatedId}`;
+                } else {
                     window.location.href = `/admin/view-application/${relatedId}`;
                 }
             });

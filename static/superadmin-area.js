@@ -1,12 +1,31 @@
-// ==================== SESSION MANAGEMENT ====================
-// Initialize session manager FIRST
-if (window.SessionManager) {
-    window.SessionManager.init();
-} else {
-    console.error("SessionManager not loaded!");
-    // Fallback: redirect to login if no session
-    if (!localStorage.getItem('userType') || !sessionStorage.getItem('sessionToken')) {
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
+(function() {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
         window.location.replace('/');
+        throw new Error('No session');
+    }
+})();
+
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
     }
 }
 
@@ -111,79 +130,87 @@ function clearAreasCache() {
     console.log("Areas cache cleared");
 }
 
-// =========================
-// PROFILE DROPDOWN & LOGOUT
-// =========================
+// ==================== PROFILE DROPDOWN ====================
 const profileBtn = document.getElementById("profileBtn");
 const profileMenu = document.getElementById("profileMenu");
 
 if (profileBtn && profileMenu) {
-    profileBtn.addEventListener("click", (e) => {
+    profileBtn.addEventListener("click", function(e) {
         e.stopPropagation();
         profileMenu.classList.toggle("show");
+        profileBtn.classList.toggle("active");
     });
-
-    window.addEventListener("click", (e) => {
+    window.addEventListener("click", function(e) {
         if (!profileBtn.contains(e.target)) {
             profileMenu.classList.remove("show");
+            profileBtn.classList.remove("active");
         }
     });
 }
 
 async function loadProfile() {
     try {
-        const res = await fetch("/api/superadmin/profile");
-        if (!res.ok) throw new Error("Failed to fetch profile");
+        const tabId = getTabId();
+        const res = await fetch(`/api/superadmin/profile?tab_id=${tabId}`);
         const profile = await res.json();
         const profileNameSpan = document.getElementById("profileName");
-        if (profileNameSpan) profileNameSpan.textContent = profile.username || "Profile";
-    } catch (err) {
-        console.error(err);
+        if (profileNameSpan) profileNameSpan.textContent = profile.name || profile.username || "";
+    } catch (err) { 
+        console.error(err); 
     }
 }
-loadProfile();
 
 // ==================== LOGOUT MODAL ====================
 const logoutBtn = document.getElementById("logoutBtn");
 const logoutModal = document.getElementById("logoutModal");
 
 if (logoutBtn && logoutModal) {
-    const logoutCloseBtn = logoutModal.querySelector(".close-btn");
-    const cancelLogout = document.getElementById("cancelLogout");
-    const confirmLogout = document.getElementById("confirmLogout");
-
-    logoutBtn.addEventListener("click", (e) => {
+    // Open
+    logoutBtn.addEventListener("click", function(e) {
         e.preventDefault();
-        logoutModal.style.display = "block";
+        logoutModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
     });
-
-    if (logoutCloseBtn) {
-        logoutCloseBtn.addEventListener("click", () => {
-            logoutModal.style.display = "none";
+    
+    // Close - X button
+    const closeBtnLogout = document.getElementById("closeLogoutModal");
+    if (closeBtnLogout) {
+        closeBtnLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
         });
     }
-
+    
+    // Close - Cancel button
+    const cancelLogout = document.getElementById("cancelLogout");
     if (cancelLogout) {
-        cancelLogout.addEventListener("click", () => {
-            logoutModal.style.display = "none";
+        cancelLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
         });
     }
-
+    
+    // Confirm logout
+    const confirmLogout = document.getElementById("confirmLogout");
     if (confirmLogout) {
-        confirmLogout.addEventListener("click", () => {
-            if (window.SessionManager) {
-                window.SessionManager.logout('You have been logged out successfully.');
-            } else {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.replace("/");
-            }
+        confirmLogout.addEventListener("click", function() {
+            const tabId = getTabId();
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+
+            sessionStorage.clear();
+            window.location.replace("/");
         });
     }
-
-    window.addEventListener("click", (e) => {
+    
+    // Close on outside click
+    window.addEventListener("click", function(e) {
         if (e.target === logoutModal) {
-            logoutModal.style.display = "none";
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
         }
     });
 }
@@ -223,7 +250,7 @@ async function loadProvinces() {
 // LOAD RESTRICTED CITIES - ONLY 4 SELECTED CITIES
 // =========================
 function loadRestrictedCities() {
-    cityEl.innerHTML = "<option value=''>Select City/Municipality</option>";
+    cityEl.innerHTML = "<option value='' disabled selected>Select City/Municipality</option>";
     cityEl.disabled = false;
     
     const sortedCities = [...restrictedCitiesList].sort();
@@ -271,7 +298,7 @@ cityEl.addEventListener("change", async () => {
                 barangayEl.disabled = true;
                 showToast(`✓ Complete! All ${result.total_barangays} barangays have been added.`, "success");
             } else {
-                barangayEl.innerHTML = '<option value="">Select Barangay</option>';
+                barangayEl.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
                 missingBarangays.forEach(barangay => {
                     const displayBarangay = toProperCase(barangay);
                     barangayEl.innerHTML += `<option value="${barangay}">${displayBarangay}</option>`;
@@ -763,29 +790,71 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// =========================
-// TOAST NOTIFICATION
-// =========================
-function showToast(message, type = "success") {
-    const toast = document.getElementById("toast");
-    const toastMessage = document.getElementById("toastMessage");
-    
-    if (!toast || !toastMessage) return;
-    
-    toastMessage.textContent = message;
-    toast.classList.remove("error", "warning");
-    
-    if (type === "error") {
-        toast.classList.add("error");
-    } else if (type === "warning") {
-        toast.classList.add("warning");
+// ==================== TOAST NOTIFICATION ====================
+function showToast(message, type = 'info') {
+    const LABELS = {
+        success: 'Success',
+        error:   'Error',
+        info:    'Notice',
+        loading: 'Please wait'
+    };
+
+    const ICONS = {
+        success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        info:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        loading: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: toastSpin 1s linear infinite; display:block;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    };
+
+    let toast = document.querySelector('.custom-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        document.body.appendChild(toast);
+
+        // Inject keyframes + spin once
+        if (!document.getElementById('toast-keyframes')) {
+            const s = document.createElement('style');
+            s.id = 'toast-keyframes';
+            s.textContent = `
+                @keyframes toastSpin     { to { transform: rotate(360deg); } }
+                @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+                @keyframes toastLoading  { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+            `;
+            document.head.appendChild(s);
+        }
     }
-    
-    toast.style.display = "block";
-    
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 4000);
+
+    // Build inner HTML
+    toast.innerHTML = `
+        <div class="custom-toast-body">
+            <span class="custom-toast-icon">${ICONS[type] || ICONS.info}</span>
+            <div class="custom-toast-text">
+                <span class="custom-toast-title">${LABELS[type] || 'Notice'}</span>
+                <span class="custom-toast-message">${message}</span>
+            </div>
+        </div>
+        <div class="custom-toast-progress">
+            <div class="custom-toast-progress-bar"></div>
+        </div>
+    `;
+
+    // Reset class, force reflow, then show
+    toast.className = `custom-toast ${type}`;
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    // Clear any existing hide timer
+    clearTimeout(toast._hideTimer);
+
+    if (type === 'loading') {
+        // Loading stays visible until next showToast call — no auto-hide
+        // Progress bar uses the infinite sweep animation (set in CSS)
+    } else {
+        toast._hideTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
 }
 
 // =========================
@@ -803,7 +872,11 @@ document.addEventListener("visibilitychange", () => {
 // =========================
 // INITIALIZATION
 // =========================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    const isValid = await checkSession();
+    if (!isValid) return;
+
+    loadProfile();
     loadProvinces();
     loadAreas();
     
@@ -812,3 +885,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+// ==================== PROFILE DROPDOWN CHEVRON ====================
+(function() {
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileBtn.classList.toggle('active');
+        });
+    }
+})();

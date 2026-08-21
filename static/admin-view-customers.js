@@ -1,4 +1,82 @@
-// ===================== ADMIN VIEW CUSTOMERS JS =====================
+// ===================== ADMIN VIEW CUSTOMERS JS - WITH TAB ID SUPPORT =====================
+
+// ==================== GET TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== GET ADMIN USERNAME FROM FLASK SESSION ====================
+async function getAdminUsername() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/session-user?tab_id=${tabId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.username) {
+                localStorage.setItem('adminUsername', data.username);
+                sessionStorage.setItem('adminUsername', data.username);
+                return data.username;
+            }
+        }
+    } catch (error) {
+        console.error('Error getting admin username from session:', error);
+    }
+    return localStorage.getItem('adminUsername') || null;
+}
+
+// ==================== GET ADMIN AREA FROM FLASK SESSION ====================
+async function getAdminArea() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/session-user?tab_id=${tabId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.area) {
+                localStorage.setItem('adminArea', data.area);
+                sessionStorage.setItem('adminArea', data.area);
+                return data.area;
+            }
+        }
+    } catch (error) {
+        console.error('Error getting admin area from session:', error);
+    }
+    return localStorage.getItem('adminArea') || null;
+}
+
+// ==================== REFRESH ADMIN INFO FROM SESSION ====================
+async function refreshAdminInfo() {
+    const adminUsername = await getAdminUsername();
+    const tabId = getTabId();
+    
+    if (!adminUsername) {
+        console.error("No admin username found in session");
+        return false;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/profile?username=${encodeURIComponent(adminUsername)}&tab_id=${tabId}`);
+        if (response.ok) {
+            const profile = await response.json();
+            if (profile.id) {
+                localStorage.setItem("adminId", profile.id);
+                sessionStorage.setItem("adminId", profile.id);
+            }
+            if (profile.area) {
+                localStorage.setItem("adminArea", profile.area);
+                sessionStorage.setItem("adminArea", profile.area);
+            }
+            if (profile.city) {
+                localStorage.setItem("adminCity", profile.city);
+                sessionStorage.setItem("adminCity", profile.city);
+            }
+            console.log("Admin info refreshed:", { adminUsername, area: profile.area });
+            return true;
+        }
+    } catch (error) {
+        console.error("Error refreshing admin info:", error);
+    }
+    return false;
+}
 
 let approvedData = [];
 let filteredData = [];
@@ -14,8 +92,6 @@ const paginationContainer = document.getElementById("paginationControls");
 const loading = document.createElement("p");
 
 // ==================== SORTING FUNCTION ====================
-// Sort customers by installation status: Pending first, then Ongoing, then Installed
-// Within each status group, sort by approval_date (oldest first)
 function sortCustomersByInstallationStatus(customers) {
     const statusOrder = {
         'Pending': 1,
@@ -29,16 +105,12 @@ function sortCustomersByInstallationStatus(customers) {
         const orderA = statusOrder[statusA] || 99;
         const orderB = statusOrder[statusB] || 99;
         
-        // First sort by installation status
         if (orderA !== orderB) {
             return orderA - orderB;
         }
         
-        // If same status, sort by approval_date (oldest first)
         const dateA = a.approval_date ? new Date(a.approval_date) : new Date(0);
         const dateB = b.approval_date ? new Date(b.approval_date) : new Date(0);
-        
-        // For oldest first (ascending order)
         return dateA - dateB;
     });
 }
@@ -61,8 +133,6 @@ const cancelBtn = document.getElementById("cancelBtn");
 const closeModalBtn = document.getElementById("closeModalBtn");
 const modalLoading = document.getElementById("modalLoading");
 const modalButtons = document.querySelector(".modal-buttons");
-
-const adminUsername = localStorage.getItem("adminUsername");
 
 // ===============================
 // SESSION CACHE MANAGEMENT
@@ -233,12 +303,25 @@ function renderCurrentPage() {
     renderPaginationControls(totalPages, totalItems);
 }
 
-// ================= FETCH (WITH CACHE) =================
+// ================= FETCH (WITH CACHE AND TAB ID) =================
 async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
+    // Refresh admin info from session
+    await refreshAdminInfo();
+    
+    const adminUsername = localStorage.getItem("adminUsername") || sessionStorage.getItem("adminUsername");
+    const tabId = getTabId();
+    
+    if (!adminUsername) {
+        console.error("No admin username found");
+        if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">Please login again. Admin username not found.</td></tr>`;
+        }
+        return;
+    }
+    
     if (!forceRefresh && isCacheValid()) {
         const cachedCustomers = loadCustomersFromCache();
         if (cachedCustomers && cachedCustomers.length > 0) {
-            // Sort cached data by installation status
             approvedData = sortCustomersByInstallationStatus(cachedCustomers);
             filteredData = [...approvedData];
             currentPage = 1;
@@ -255,15 +338,15 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
             if (paginationContainer) paginationContainer.style.display = "none";
         }
 
-        const res = await fetch(`/api/admin/approved-applications?username=${adminUsername}`);
+        console.log(`Fetching customers for admin: ${adminUsername}, tabId: ${tabId}`);
+        const res = await fetch(`/api/admin/approved-applications?username=${encodeURIComponent(adminUsername)}&tab_id=${tabId}`);
         let data = await res.json();
 
         if (!res.ok) {
-            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">${data.error}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">${data.error}</td></tr>`;
             return;
         }
 
-        // Sort data by installation status
         data = sortCustomersByInstallationStatus(data || []);
         
         approvedData = data || [];
@@ -277,7 +360,7 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
 
     } catch (err) {
         console.error(err);
-        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Server error</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">Server error</td></tr>`;
     } finally {
         if (!silent) loading.style.display = "none";
         isManualRefresh = false;
@@ -367,13 +450,13 @@ function renderTable(data) {
     sortedData.forEach(app => {
         const installation = app.installation_status || "Pending";
         const plan = app.plan || "N/A";
-        const speed = app.speed || "N/A";
+        const speed = app.plan_speed || "N/A";
         const email = app.email || "";
-        const contractNumber = app.contract_number || "N/A";  // ✅ KUNIN ANG CONTRACT NUMBER
+        const contractNumber = app.contract_number || "N/A";
 
         const actionButtons = `
             <div class="action-buttons">
-                <button class="btn-view" data-id="${app.id}">View</button>
+                <button class="btn-view" data-id="${app.id}"> <i class="fas fa-eye"></i> View</button>
             </div>
         `;
 
@@ -382,7 +465,7 @@ function renderTable(data) {
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
-            <td><span class="contract-number">${contractNumber}</span></td>  <!-- ✅ CONTRACT NO. COLUMN -->
+            <td><span class="contract-number">${contractNumber}</span></td>
             <td>${app.first_name || ""} ${app.last_name || ""}</td>
             <td>${email}</td>
             <td>${plan}</td>
@@ -400,33 +483,51 @@ function renderTable(data) {
 // ==================== LOGOUT MODAL ====================
 const logoutBtn = document.getElementById("logoutBtn");
 const logoutModal = document.getElementById("logoutModal");
-const logoutCloseBtn = logoutModal ? logoutModal.querySelector(".close-btn") : null;
-const cancelLogout = document.getElementById("cancelLogout");
-const confirmLogout = document.getElementById("confirmLogout");
 
 if (logoutBtn && logoutModal) {
-    logoutBtn.addEventListener("click", e => {
+    logoutBtn.addEventListener("click", function(e) {
         e.preventDefault();
-        logoutModal.style.display = "block";
+        logoutModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
     });
-    if (logoutCloseBtn) {
-        logoutCloseBtn.addEventListener("click", () => logoutModal.style.display = "none");
-    }
-    if (cancelLogout) {
-        cancelLogout.addEventListener("click", () => logoutModal.style.display = "none");
-    }
-    if (confirmLogout) {
-        confirmLogout.addEventListener("click", () => {
-            // Clear all admin data on logout
-            localStorage.removeItem("adminUsername");
-            localStorage.removeItem("adminId");
-            localStorage.removeItem("adminArea");
-            localStorage.removeItem("adminCity");
-            sessionStorage.clear();
-            window.location.href = "/";
+    
+    const closeBtnLogout = document.getElementById("closeLogoutModal");
+    if (closeBtnLogout) {
+        closeBtnLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
         });
     }
-    window.addEventListener("click", e => { if (e.target === logoutModal) logoutModal.style.display = "none"; });
+    
+    const cancelLogout = document.getElementById("cancelLogout");
+    if (cancelLogout) {
+        cancelLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    const confirmLogout = document.getElementById("confirmLogout");
+    if (confirmLogout) {
+        confirmLogout.addEventListener("click", function() {
+            const tabId = getTabId();
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+            
+            sessionStorage.clear();
+            window.location.replace("/");
+        });
+    }
+    
+    window.addEventListener("click", function(e) {
+        if (e.target === logoutModal) {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
 }
 
 // ==================== PROFILE DROPDOWN ====================
@@ -443,26 +544,26 @@ if (profileBtn && profileMenu) {
 
 // ================= LOAD ADMIN PROFILE =================
 async function loadAdminProfile() {
-    let adminUsername = localStorage.getItem("adminUsername");
-    if (!adminUsername) {
-        adminUsername = sessionStorage.getItem("adminUsername");
-    }
+    await refreshAdminInfo();
+    let adminUsername = localStorage.getItem("adminUsername") || sessionStorage.getItem("adminUsername");
+    
     if (!adminUsername) {
         console.error("No admin username found");
         return;
     }
     
     try {
-        const res = await fetch("/api/admin/profile?username=" + encodeURIComponent(adminUsername));
+        const tabId = getTabId();
+        const res = await fetch(`/api/admin/profile?username=${encodeURIComponent(adminUsername)}&tab_id=${tabId}`);
         if (!res.ok) throw new Error("Failed to fetch profile");
         const profile = await res.json();
         
-        const profileNameSpan = document.getElementById("profileName");
-        if (profileNameSpan) {
-            profileNameSpan.textContent = profile.username || profile.name || "Admin";
-        }
+        // Hindi na nagdi-display ng pangalan sa profile
+        // const profileNameSpan = document.getElementById("profileName");
+        // if (profileNameSpan) {
+        //     profileNameSpan.textContent = profile.username || profile.name || "Admin";
+        // }
         
-        // Store admin info in localStorage for other pages
         if (profile.id) {
             localStorage.setItem("adminId", profile.id);
             sessionStorage.setItem("adminId", profile.id);
@@ -479,8 +580,9 @@ async function loadAdminProfile() {
         console.log("Admin profile loaded:", profile.username);
     } catch (err) {
         console.error("Error loading admin profile:", err);
-        const profileNameSpan = document.getElementById("profileName");
-        if (profileNameSpan) profileNameSpan.textContent = "Admin";
+        // Hindi na nagdi-display ng pangalan sa profile
+        // const profileNameSpan = document.getElementById("profileName");
+        // if (profileNameSpan) profileNameSpan.textContent = "Admin";
     }
 }
 
@@ -489,7 +591,6 @@ loadAdminProfile();
 
 // ================= BUTTON EVENTS =================
 function attachEvents() {
-    // Only attach view button events (removed ongoing and installed button events)
     document.querySelectorAll(".btn-view").forEach(btn =>
         btn.addEventListener("click", () => window.location.href = `/admin/view-customer-application/${btn.dataset.id}`)
     );
@@ -514,7 +615,6 @@ function applyFiltersAndPaginate() {
         );
     }
 
-    // Sort filtered data by installation status
     filtered = sortCustomersByInstallationStatus(filtered);
     
     filteredData = filtered;
@@ -531,7 +631,6 @@ if (statusFilter) {
     statusFilter.addEventListener("change", applyFiltersAndPaginate);
 }
 
-// Clear search button
 const clearSearchBtn = document.getElementById("clearSearch");
 if (clearSearchBtn && searchInput) {
     searchInput.addEventListener("input", () => {
@@ -544,85 +643,64 @@ if (clearSearchBtn && searchInput) {
     });
 }
 
-// ================= TOAST NOTIFICATION =================
-function showToast(message, type = "success") {
-    let toast = document.getElementById("customToast");
+// ==================== TOAST NOTIFICATION ====================
+function showToast(message, type = 'info') {
+    const LABELS = {
+        success: 'Success',
+        error:   'Error',
+        info:    'Notice',
+        loading: 'Please wait'
+    };
+
+    const ICONS = {
+        success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        info:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        loading: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: toastSpin 1s linear infinite; display:block;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    };
+
+    let toast = document.querySelector('.custom-toast');
     if (!toast) {
-        toast = document.createElement("div");
-        toast.id = "customToast";
-        toast.className = "custom-toast";
-        toast.innerHTML = `
-            <div class="toast-content">
-                <i class="fas fa-check-circle"></i>
-                <span id="toastMessage">Success!</span>
-            </div>
-        `;
+        toast = document.createElement('div');
+        toast.className = 'custom-toast';
         document.body.appendChild(toast);
-        
-        if (!document.querySelector("#toastStyles")) {
-            const style = document.createElement("style");
-            style.id = "toastStyles";
-            style.textContent = `
-                .custom-toast {
-                    position: fixed;
-                    bottom: 30px;
-                    right: 30px;
-                    background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
-                    color: white;
-                    padding: 0;
-                    border-radius: 12px;
-                    z-index: 10000;
-                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-                    animation: slideInRight 0.3s ease;
-                    display: none;
-                    min-width: 300px;
-                    overflow: hidden;
-                }
-                .custom-toast.error {
-                    background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%);
-                }
-                .custom-toast.warning {
-                    background: linear-gradient(135deg, #e69600 0%, #ffb74d 100%);
-                }
-                .custom-toast .toast-content {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 16px 20px;
-                }
-                .custom-toast .toast-content i {
-                    font-size: 20px;
-                }
-                @keyframes slideInRight {
-                    from {
-                        opacity: 0;
-                        transform: translateX(100px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
+
+        if (!document.getElementById('toast-keyframes')) {
+            const s = document.createElement('style');
+            s.id = 'toast-keyframes';
+            s.textContent = `
+                @keyframes toastSpin     { to { transform: rotate(360deg); } }
+                @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+                @keyframes toastLoading  { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
             `;
-            document.head.appendChild(style);
+            document.head.appendChild(s);
         }
     }
-    
-    const toastMessage = toast.querySelector("#toastMessage");
-    toastMessage.textContent = message;
-    
-    toast.classList.remove("error", "warning");
-    if (type === "error") {
-        toast.classList.add("error");
-    } else if (type === "warning") {
-        toast.classList.add("warning");
+
+    toast.innerHTML = `
+        <div class="custom-toast-body">
+            <span class="custom-toast-icon">${ICONS[type] || ICONS.info}</span>
+            <div class="custom-toast-text">
+                <span class="custom-toast-title">${LABELS[type] || 'Notice'}</span>
+                <span class="custom-toast-message">${message}</span>
+            </div>
+        </div>
+        <div class="custom-toast-progress">
+            <div class="custom-toast-progress-bar"></div>
+        </div>
+    `;
+
+    toast.className = `custom-toast ${type}`;
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    clearTimeout(toast._hideTimer);
+
+    if (type !== 'loading') {
+        toast._hideTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
     }
-    
-    toast.style.display = "block";
-    
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 4000);
 }
 
 // ================= AUTO REFRESH =================
@@ -664,8 +742,21 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// ================= VISIBILITY CHANGE - REFRESH ON TAB SWITCH =================
+document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden) {
+        console.log('👁️ Tab became visible, refreshing customers...');
+        await refreshAdminInfo();
+        clearCustomersCache();
+        fetchApprovedCustomers(true);
+    }
+});
+
 // ================= INITIAL LOAD =================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    // First, refresh admin info from session
+    await refreshAdminInfo();
+    
     detectPageRefresh();
     checkForRefreshIndicator();
     trackPageLoads();
@@ -716,3 +807,16 @@ window.addEventListener('resize', function() {
         }
     }
 });
+
+// ==================== PROFILE DROPDOWN CHEVRON ====================
+(function() {
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileBtn.classList.toggle('active');
+        });
+    }
+})();

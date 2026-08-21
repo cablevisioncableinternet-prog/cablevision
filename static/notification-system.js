@@ -154,7 +154,7 @@ async function sendNotification(title, message, type, relatedId = null, redirect
                 message: message,
                 type: type,
                 relatedId: relatedId,
-                redirectUrl: redirectUrl, // Add redirect URL for click action
+                redirectUrl: redirectUrl,
                 timestamp: new Date().toISOString(),
                 read: false
             })
@@ -186,17 +186,20 @@ function getRedirectUrl(notification) {
     // Determine redirect URL based on notification type
     switch (type) {
         case 'new_application':
-            return `/superadmin/view-application/${relatedId}`;
         case 'admin_request':
-            return `/superadmin/internet-applications?highlight=${relatedId}`;
-        case 'approved':
-            return `/superadmin/view-customer-application/${relatedId}`;
-        case 'rejected':
+        case 'superadmin_action':
             return `/superadmin/view-application/${relatedId}`;
-        case 'installation_updated':
-            return `/superadmin/view-customer-application/${relatedId}`;
-        case 'contract_generated':
-            return `/superadmin/view-customer-application/${relatedId}`;
+        case 'admin_login':
+            return `/superadmin/admins`;
+        case 'reconnect_request':
+            return `/superadmin/users`;
+        case 'termination_request':
+            return `/superadmin/termination-requests`;
+        case 'plan_change_request':
+            return `/superadmin/plan-requests`;
+        case 'slot_assigned':
+        case 'installation_update':
+            return `/superadmin/view-customers`;
         default:
             return '/superadmin/internet-applications';
     }
@@ -225,12 +228,10 @@ async function handleNotificationClick(notificationId) {
 // ==================== UI FUNCTIONS ====================
 
 // Update notification badge count
-// Update notification badge count
 async function updateNotificationBadge() {
     const badge = document.getElementById('notificationBadge');
     
     try {
-        // Use separate endpoint for unread count
         const response = await fetch('/api/superadmin/notifications/unread/count');
         if (response.ok) {
             const data = await response.json();
@@ -246,7 +247,6 @@ async function updateNotificationBadge() {
         }
     } catch (err) {
         console.error('Error updating badge:', err);
-        // Fallback: compute from notifications array
         const unreadCount = notifications.filter(n => !n.read).length;
         if (badge) {
             if (unreadCount > 0) {
@@ -282,43 +282,98 @@ function getTimeAgo(timestamp) {
     return new Date(timestamp).toLocaleDateString();
 }
 
-// Get notification icon based on type
+// Get notification icon based on type - NO COLORS
 function getNotificationIcon(type) {
     switch (type) {
+        // New application
         case 'new_application':
             return '<i class="fas fa-file-alt"></i>';
+        
+        // Admin login
+        case 'admin_login':
+            return '<i class="fas fa-sign-in-alt"></i>';
+        
+        // Admin requests (approve/reject/restore)
         case 'admin_request':
             return '<i class="fas fa-user-check"></i>';
-        case 'approved':
-            return '<i class="fas fa-check-circle"></i>';
-        case 'rejected':
-            return '<i class="fas fa-times-circle"></i>';
+        
+        // Super admin actions
+        case 'superadmin_action':
+            return '<i class="fas fa-user-shield"></i>';
+        
+        // Reconnect request
+        case 'reconnect_request':
+            return '<i class="fas fa-sync-alt"></i>';
+        
+        // Termination request
+        case 'termination_request':
+            return '<i class="fas fa-user-slash"></i>';
+        
+        // Plan change request
+        case 'plan_change_request':
+            return '<i class="fas fa-exchange-alt"></i>';
+        
+        // Slot assigned
+        case 'slot_assigned':
+            return '<i class="fas fa-user-plus"></i>';
+        
+        // Installation updates
+        case 'installation_update':
         case 'installation_updated':
             return '<i class="fas fa-tools"></i>';
+        
+        // Approved
+        case 'approved':
+            return '<i class="fas fa-check-circle"></i>';
+        
+        // Rejected
+        case 'rejected':
+            return '<i class="fas fa-times-circle"></i>';
+        
+        // Contract generated
         case 'contract_generated':
             return '<i class="fas fa-file-contract"></i>';
+        
+        // Payment received
         case 'payment_received':
             return '<i class="fas fa-money-bill-wave"></i>';
+        
+        // Default
         default:
             return '<i class="fas fa-bell"></i>';
     }
 }
 
-// Get notification icon class
+// Get notification icon class for CSS styling
 function getNotificationIconClass(type) {
     switch (type) {
         case 'new_application':
             return 'new_application';
+        case 'admin_login':
+            return 'admin_login';
         case 'admin_request':
             return 'admin_request';
+        case 'superadmin_action':
+            return 'superadmin_action';
+        case 'reconnect_request':
+            return 'reconnect_request';
+        case 'termination_request':
+            return 'termination_request';
+        case 'plan_change_request':
+            return 'plan_change_request';
+        case 'slot_assigned':
+            return 'slot_assigned';
+        case 'installation_update':
+        case 'installation_updated':
+            return 'installation_update';
         case 'approved':
             return 'approved';
         case 'rejected':
             return 'rejected';
-        case 'installation_updated':
-            return 'installation_updated';
         case 'contract_generated':
             return 'contract_generated';
+        case 'payment_received':
+            return 'payment_received';
         default:
             return 'default';
     }
@@ -361,14 +416,11 @@ function renderNotificationList() {
     
     // Add click handlers for notification items (redirect on click)
     document.querySelectorAll('.notification-item').forEach(item => {
-        // Remove existing listeners by cloning approach (handled by event delegation or direct assignment)
         const notificationId = parseInt(item.dataset.id);
         
-        // Use event delegation pattern to avoid duplicate listeners
         item.removeEventListener('click', item._clickHandler);
         
         const clickHandler = (e) => {
-            // Don't trigger if clicking on delete button
             if (e.target.closest('.notification-delete')) return;
             e.stopPropagation();
             handleNotificationClick(notificationId);
@@ -380,7 +432,6 @@ function renderNotificationList() {
     
     // Add delete handlers
     document.querySelectorAll('.notification-delete').forEach(btn => {
-        // Remove existing listeners
         btn.removeEventListener('click', btn._deleteHandler);
         
         const deleteHandler = (e) => {
@@ -396,6 +447,71 @@ function renderNotificationList() {
 
 // ==================== INITIALIZATION ====================
 
+// Render FULL list ng notifications sa "View All" modal
+function renderAllNotificationsList() {
+    const container = document.getElementById('allNotificationsList');
+    if (!container) return;
+
+    if (notifications.length === 0) {
+        container.innerHTML = `
+            <div class="notification-empty">
+                <i class="fas fa-bell-slash"></i>
+                <p>No notifications</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = notifications.map(notification => {
+        const iconHtml = getNotificationIcon(notification.type);
+        const iconClass = getNotificationIconClass(notification.type);
+        const timeAgo = getTimeAgo(notification.timestamp);
+        const unreadClass = notification.read ? '' : 'unread';
+
+        return `
+            <div class="notification-item ${unreadClass}" data-id="${notification.id}" data-redirect-url="${escapeHtml(getRedirectUrl(notification))}">
+                <div class="notification-icon ${iconClass}">
+                    ${iconHtml}
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${escapeHtml(notification.title)}</div>
+                    <div class="notification-message">${escapeHtml(notification.message)}</div>
+                    <div class="notification-time">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.querySelectorAll('.notification-item').forEach(item => {
+        const notificationId = parseInt(item.dataset.id);
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleNotificationClick(notificationId);
+        });
+    });
+}
+
+// Buksan ang "View All Notifications" modal
+async function openAllNotificationsModal() {
+    await fetchNotifications();
+    renderAllNotificationsList();
+
+    const modal = document.getElementById('allNotificationsModal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Isara ang "View All Notifications" modal
+function closeAllNotificationsModal() {
+    const modal = document.getElementById('allNotificationsModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
 // Initialize notification system
 function initNotifications() {
     fetchNotifications();
@@ -404,7 +520,6 @@ function initNotifications() {
     const notificationMenu = document.getElementById('notificationMenu');
     
     if (notificationBtn && notificationMenu) {
-        // Remove existing listeners to avoid duplicates
         const newNotificationBtn = notificationBtn.cloneNode(true);
         notificationBtn.parentNode.replaceChild(newNotificationBtn, notificationBtn);
         
@@ -428,11 +543,55 @@ function initNotifications() {
             markAllAsRead();
         });
     }
+
+    // ✅ VIEW ALL NOTIFICATIONS BUTTON
+    const viewAllBtn = document.getElementById('viewAllNotificationsBtn');
+    if (viewAllBtn) {
+        const newViewAllBtn = viewAllBtn.cloneNode(true);
+        viewAllBtn.parentNode.replaceChild(newViewAllBtn, viewAllBtn);
+
+        newViewAllBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (notificationMenu) notificationMenu.classList.remove('show');
+            openAllNotificationsModal();
+        });
+    }
+
+    // ✅ ALL NOTIFICATIONS MODAL - CLOSE HANDLERS
+    const allModal = document.getElementById('allNotificationsModal');
+    const closeAllModalBtn = document.getElementById('closeAllNotificationsModal');
+    const closeAllBtn = document.getElementById('closeAllNotificationsBtn');
+    const markAllReadFromModalBtn = document.getElementById('markAllReadFromModalBtn');
+
+    if (closeAllModalBtn) {
+        closeAllModalBtn.addEventListener('click', closeAllNotificationsModal);
+    }
+    if (closeAllBtn) {
+        closeAllBtn.addEventListener('click', closeAllNotificationsModal);
+    }
+    if (allModal) {
+        allModal.addEventListener('click', (e) => {
+            if (e.target === allModal) closeAllNotificationsModal();
+        });
+    }
+    if (markAllReadFromModalBtn) {
+        markAllReadFromModalBtn.addEventListener('click', async () => {
+            await markAllAsRead();
+            renderAllNotificationsList();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('allNotificationsModal');
+            if (modal && modal.classList.contains('show')) {
+                closeAllNotificationsModal();
+            }
+        }
+    });
     
-    // Start polling if not already running
     if (notificationInterval) clearInterval(notificationInterval);
     notificationInterval = setInterval(() => {
-        // Only fetch if the notification menu is not open or page is visible
         if (!document.hidden) {
             fetchNotifications();
         }
@@ -477,6 +636,17 @@ async function sendNewApplicationNotification(applicationId, applicantName) {
     );
 }
 
+// Send notification for admin login
+async function sendAdminLoginNotification(adminName) {
+    return await sendNotification(
+        'Admin Login',
+        `${adminName} has logged in to the admin panel.`,
+        'admin_login',
+        null,
+        `/superadmin/admins`
+    );
+}
+
 // Send notification for admin approval request
 async function sendAdminRequestNotification(applicationId, adminName, requestedStatus) {
     const statusText = requestedStatus === 'Approved' ? 'approve' : 'reject';
@@ -486,6 +656,61 @@ async function sendAdminRequestNotification(applicationId, adminName, requestedS
         'admin_request',
         applicationId,
         `/superadmin/internet-applications?highlight=${applicationId}`
+    );
+}
+
+// Send notification for reconnect request
+async function sendReconnectRequestNotification(userId, userName) {
+    return await sendNotification(
+        'Reconnect Request',
+        `${userName} has requested to reconnect their account.`,
+        'reconnect_request',
+        userId,
+        `/superadmin/users`
+    );
+}
+
+// Send notification for termination request
+async function sendTerminationRequestNotification(userId, userName) {
+    return await sendNotification(
+        'Termination Request',
+        `${userName} has requested to terminate their account.`,
+        'termination_request',
+        userId,
+        `/superadmin/termination-requests`
+    );
+}
+
+// Send notification for plan change request
+async function sendPlanChangeRequestNotification(userId, userName, currentPlan, requestedPlan) {
+    return await sendNotification(
+        'Plan Change Request',
+        `${userName} has requested to change their plan from ${currentPlan} to ${requestedPlan}.`,
+        'plan_change_request',
+        userId,
+        `/superadmin/plan-requests`
+    );
+}
+
+// Send notification for slot assigned
+async function sendSlotAssignedNotification(applicationId, installerName) {
+    return await sendNotification(
+        'Slot Assigned',
+        `Technician ${installerName} has been assigned for installation.`,
+        'slot_assigned',
+        applicationId,
+        `/superadmin/view-customers`
+    );
+}
+
+// Send notification for installation update
+async function sendInstallationUpdateNotification(applicationId, status) {
+    return await sendNotification(
+        'Installation Status Update',
+        `Installation status for application #${applicationId} has been updated to: ${status}`,
+        'installation_update',
+        applicationId,
+        `/superadmin/view-customers`
     );
 }
 
@@ -516,13 +741,21 @@ async function sendApplicationRejectedNotification(applicationId, applicantName,
 window.NotificationSystem = {
     init: initNotifications,
     stop: stopNotifications,
+    openAllModal: openAllNotificationsModal,
+    closeAllModal: closeAllNotificationsModal,
     fetch: fetchNotifications,
     markAsRead: markAsRead,
     markAllAsRead: markAllAsRead,
     delete: deleteNotification,
     send: sendNotification,
     sendNewApplication: sendNewApplicationNotification,
+    sendAdminLogin: sendAdminLoginNotification,
     sendAdminRequest: sendAdminRequestNotification,
+    sendReconnectRequest: sendReconnectRequestNotification,
+    sendTerminationRequest: sendTerminationRequestNotification,
+    sendPlanChangeRequest: sendPlanChangeRequestNotification,
+    sendSlotAssigned: sendSlotAssignedNotification,
+    sendInstallationUpdate: sendInstallationUpdateNotification,
     sendApproved: sendApplicationApprovedNotification,
     sendRejected: sendApplicationRejectedNotification,
     getNotifications: () => notifications,

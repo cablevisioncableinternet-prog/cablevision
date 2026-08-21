@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Administrator | NAP Box </title>
+<link rel="icon" href="/static/cablevision.jpg" type="image/jpeg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- CSS -->
+<link rel="stylesheet" href="/static/admin-napbox.css">
+<link rel="stylesheet" href="/static/admin-notifications.css">
+
+
+</head>
+<body>
+
+<!-- SIDEBAR (same as admin-internet-applications) -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>Cablevision</h2>
+        <p>Administrator Portal</p>
+    </div>
+    <nav class="sidebar-menu">
+        <ul>
+<li><a href="/admin">
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l5-5 4 3 7-8"/>
+      <path d="M3 21h18"/>
+    </svg>
+  <span class="menu-text">Dashboard</span>
+</a></li>
+
+<li class="divider">
+  <span class="divider-label">MANAGEMENT</span>
+</li>
+
+<li><a href="/admin/view-customers">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="4"/>
+    <path d="M4 20a8 8 0 0 1 16 0"/>
+  </svg>
+  <span class="menu-text">View Customers</span>
+</a></li>
+
+<li><a href="/admin/internet-applications">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+  <span class="menu-text">View Applications</span>
+</a></li>
+
+<li class="active"><a href="/admin/napbox">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="6" rx="1"/>
+    <rect x="7" y="14" width="10" height="6" rx="1"/>
+    <path d="M12 10v4"/>
+    <path d="M8 17h.01M12 17h.01M16 17h.01"/>
+  </svg>
+  <span class="menu-text">NAP Box</span>
+</a></li>
+        </ul>
+    </nav>
+</aside>
+
+<!-- TOP BAR (same as admin-internet-applications) -->
+<div class="top-bar">
+    <div class="top-bar-left">
+        <button class="hamburger" id="hamburgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+    <div class="top-bar-right">
+        <!-- Notification Dropdown -->
+        <div class="notification-dropdown">
+            <button id="notificationBtn" class="notification-btn">
+                <i class="fas fa-bell"></i>
+                <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+            </button>
+            <div class="notification-menu" id="notificationMenu">
+                <div class="notification-header">
+                    <h4>Notifications</h4>
+                    <button id="markAllReadBtn" class="mark-read-btn">Mark all as read</button>
+                </div>
+                <div class="notification-list" id="notificationList">
+                    <div class="notification-empty">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No new notifications</p>
+                    </div>
+                </div>
+                <div class="notification-footer">
+                    <button id="viewAllNotificationsBtn" class="view-all-btn">
+                        <i class="fas fa-list"></i> View All Notifications
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PROFILE DROPDOWN -->
+        <div class="profile-dropdown">
+            <button id="profileBtn">
+                <img src="/static/cablevision.jpg" alt="Profile" class="profile-icon">
+                <span id="profileName"></span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <ul class="dropdown-menu" id="profileMenu">
+                <li><a href="/admin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li><a href="/admin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div id="logoutModal" class="logout-modal">
+    <div class="logout-modal-content">
+        
+        <h2>Confirm Logout</h2>
+        <p>Are you sure you want to logout?</p>
+        <div class="logout-modal-actions">
+            <button class="btn cancel" id="cancelLogout"> <i class="fas fa-times"></i> Cancel</button>
+            <button class="btn confirm" id="confirmLogout"> <i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    <!-- Dashboard Header Card (same as admin-internet-applications) -->
+    <div class="dashboard-header-card">
+        <div class="dashboard-header-left">
+            <h1>NAP Box Slots Monitoring</h1>
+            <p>Cablevision Systems Corporation</p>
+        </div>
+        <div class="dashboard-header-right">
+        </div>
+    </div>
+
+    <!-- Main Applications Card (same style as internet-applications) -->
+    <div class="applications-card">
+        <div class="card-header">
+            <div class="header-title-section">
+                <h2>NAP Box Monitoring</h2>
+                <p class="header-subtitle">View all NAP boxes and slot occupancy across all areas</p>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Statistics Grid -->
+            <div class="napbox-stats-grid">
+                <div class="napbox-stat-card">
+                    <div class="napbox-stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="napbox-stat-info">
+                        <h3 id="adminTotalSlots">0</h3>
+                        <p>Total Slots</p>
+                    </div>
+                </div>
+                <div class="napbox-stat-card">
+                    <div class="napbox-stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="m9 12 2 2 4-4"></path>
+                        </svg>
+                    </div>
+                    <div class="napbox-stat-info">
+                        <h3 id="adminAvailableSlots">0</h3>
+                        <p>Available Slots</p>
+                    </div>
+                </div>
+                <div class="napbox-stat-card">
+                    <div class="napbox-stat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="16 11 18 13 22 9"></polyline>
+                        </svg>
+                    </div>
+                    <div class="napbox-stat-info">
+                        <h3 id="adminOccupiedSlots">0</h3>
+                        <p>Occupied Slots</p>
+                    </div>
+                </div>
+                <div class="napbox-stat-card">
+                    <div class="napbox-stat-icon">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="napbox-stat-info">
+                        <h3 id="adminNapboxCountDisplay">0</h3>
+                        <p>NAP Boxes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Row -->
+            <div class="filter-row">
+                <div class="filter-wrapper">
+                    <i class="fas fa-filter"></i>
+                    <select id="adminBarangayFilter" class="barangay-select">
+                        <option value="">All Barangays</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Map and Slots Grid -->
+            <div class="napbox-monitoring-grid">
+                <!-- LEFT: Map Card -->
+                <div class="map-card">
+                    <div class="map-card-header">
+                        <div class="map-card-header-left">
+                            <h3>   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg> NAP Box Locations Map</h3>
+                        </div>
+                        <button id="adminRefreshDataBtn" class="refresh-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 4v6h-6"></path>
+                                <path d="M1 20v-6h6"></path>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+                                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+                            </svg>
+                            Refresh Data
+                        </button>
+                    </div>
+                    <div id="adminNapboxMap"></div>
+
+                        <div class="admin-map-controls">
+                            <button id="adminAddNapboxBtn" class="admin-add-napbox-btn">
+                                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                                    </svg>
+                                    Add NAP Box
+                            </button>
+                        </div>
+                    <div class="map-legend-footer">
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #22c55e;"></span>
+                            <span>Available Slot</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #ef4444;"></span>
+                            <span>Occupied Slot</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color circle" style="background: #dc2626;"></span>
+                            <span>NAP Box Location</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color line" style="background: #dc2626;"></span>
+                            <span>500m Coverage</span>
+                        </div>
+                        <div class="legend-item"><span class="legend-color boundary"></span><span>Municipal Boundary</span></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Slots Card -->
+                <div class="slots-card">
+                    <div class="slots-card-header">
+                        <h3>   
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0047ab" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                        </svg> 
+                        NAP Box Slots</h3>
+                        <div class="slots-filters">
+                            <button class="filter-chip active" data-filter="all">All</button>
+                            <button class="filter-chip" data-filter="available">Available</button>
+                            <button class="filter-chip" data-filter="occupied">Occupied</button>
+                        </div>
+                    </div>
+                    <div class="slots-grid-container">
+                        <div id="adminSlotsGrid" class="slots-grid slots-grid-skeleton">
+                            <div class="skeleton-card">
+                                <div class="skeleton-line skeleton-title"></div>
+                                <div class="skeleton-line skeleton-subtitle"></div>
+                                <div class="skeleton-row">
+                                    <div class="skeleton-line skeleton-chip"></div>
+                                    <div class="skeleton-line skeleton-chip"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-card">
+                                <div class="skeleton-line skeleton-title"></div>
+                                <div class="skeleton-line skeleton-subtitle"></div>
+                                <div class="skeleton-row">
+                                    <div class="skeleton-line skeleton-chip"></div>
+                                    <div class="skeleton-line skeleton-chip"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-card">
+                                <div class="skeleton-line skeleton-title"></div>
+                                <div class="skeleton-line skeleton-subtitle"></div>
+                                <div class="skeleton-row">
+                                    <div class="skeleton-line skeleton-chip"></div>
+                                    <div class="skeleton-line skeleton-chip"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+          <div class="slots-footer" style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; text-align: center;">
+            <i class="fas fa-info-circle"></i> Click on any slot to view details
+          </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ================= SLOT DETAILS MODAL (ENHANCED) ================= -->
+<div id="adminSlotDetailsModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="slot-details-container">
+            <div class="slot-details-header">
+                <div class="slot-details-header-left">
+                    <i class="fas fa-info-circle"></i>
+                    <h2 id="adminSlotModalTitle">Slot Details</h2>
+                </div>
+                <button class="slot-details-close" onclick="closeAdminSlotModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="slot-details-body" id="adminSlotDetailsContent">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= EDIT SLOT MODAL (MATCHING SLOT DETAILS THEME) ================= -->
+<div id="editSlotModal" class="modal">
+    <div class="modal-content">
+        <!-- Header -->
+        <div class="edit-modal-header">
+            <div class="edit-modal-header-left">
+                <i class="fas fa-pencil-alt"></i>
+                <h2>Edit Slot <small>Update customer information</small></h2>
+            </div>
+            <button class="edit-modal-close" id="closeEditModalBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="edit-modal-body">
+            <!-- Slot Number (read-only) -->
+            <div class="edit-form-group">
+                <label for="editSlotNumber">
+                    <i class="fas fa-hashtag"></i> Slot Number
+                </label>
+                <input type="text" id="editSlotNumber" class="form-input" readonly>
+            </div>
+
+            <!-- Customer Name -->
+            <div class="edit-form-group">
+                <label for="editCustomerName">
+                    <i class="fas fa-user"></i> Customer Name <span class="required-star">*</span>
+                </label>
+                <input type="text" id="editCustomerName" class="form-input" placeholder="Enter customer name" required>
+                <div id="editNameError" class="edit-error-message">
+                    <i class="fas fa-exclamation-circle"></i> Customer name is required when slot is OCCUPIED
+                </div>
+            </div>
+
+            <!-- Contract Number -->
+            <div class="edit-form-group">
+                <label for="editContractNumber">
+                    <i class="fas fa-id-card"></i> Contract Number <span class="required-star">*</span>
+                </label>
+                <div class="prefix-choice-wrapper" id="prefixChoiceWrapper" style="display:none;">
+                    <button type="button" class="prefix-choice-btn" data-prefix="GIF-" id="prefixChoiceGIF">GIF-</button>
+                    <button type="button" class="prefix-choice-btn" data-prefix="POB-" id="prefixChoicePOB">POB-</button>
+                </div>
+                <input type="text" id="editContractNumber" class="form-input" placeholder="Enter contract number" required>
+                <div id="editContractError" class="edit-error-message">
+                    <i class="fas fa-exclamation-circle"></i> Contract number is required when slot is OCCUPIED
+                </div>
+            </div>
+
+            <!-- Customer Phone -->
+            <div class="edit-form-group">
+                <label for="editCustomerPhone">
+                    <i class="fas fa-phone"></i> Customer Phone <span style="color: #94a3b8; font-weight: 400; text-transform: none;">(Optional)</span>
+                </label>
+                <input type="text" id="editCustomerPhone" class="form-input" placeholder="Enter customer phone">
+            </div>
+
+            <!-- Slot Status -->
+            <div class="edit-form-group">
+                <label>
+                    <i class="fas fa-circle"></i> Slot Status
+                </label>
+                <div class="edit-status-wrapper">
+                    <div class="edit-status-option" data-status="occupied" id="editStatusOccupied">
+                        <span class="status-dot occupied-dot"></span>
+                        <i class="fas fa-lock"></i> Occupied
+                    </div>
+                    <div class="edit-status-option" data-status="available" id="editStatusAvailable">
+                        <span class="status-dot available-dot"></span>
+                        <i class="fas fa-unlock"></i> Available
+                    </div>
+                </div>
+                <div class="edit-hint-text">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Changing to "Available" will keep customer data but mark slot as free</span>
+                </div>
+            </div>
+
+            <!-- Warning -->
+            <div style="background: #fef3c7; padding: 12px 16px; border-radius: 12px; border: 1px solid #fde68a; margin-top: 8px;">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <i class="fas fa-exclamation-triangle" style="color: #92400e; font-size: 16px; margin-top: 1px;"></i>
+                    <div style="font-size: 12px; color: #92400e; line-height: 1.5;">
+                        <strong>Important:</strong> Editing this slot will update the customer information immediately.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="edit-actions">
+            <button type="button" id="cancelEditBtn" class="btn-cancel-edit">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="button" id="saveEditBtn" class="btn-save-edit">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ================= ADMIN ADD NAP BOX MODAL ================= -->
+<div id="adminAddNapboxModal" class="modal">
+    <div class="modal-content modal-medium">
+        <div class="admin-add-napbox-container">
+            
+            <!-- ===== STEP 1: COORDINATES ===== -->
+            <div id="adminStep1" class="admin-modal-step">
+                <div class="admin-modal-header">
+                    <h2>Step 1: Enter Coordinates</h2>
+                    <p>Enter the exact GPS coordinates of the NAP box location</p>
+                </div>
+                
+                <div class="admin-modal-body">
+                    <!-- Latitude -->
+                    <div class="form-group">
+                        <label for="adminCoordLatitude">
+                            <i class="fas fa-arrow-up"></i> Latitude
+                        </label>
+                        <div class="admin-coord-input-wrapper">
+                            <span class="admin-coord-prefix">°</span>
+                            <input type="text" id="adminCoordLatitude" class="admin-form-control" 
+                                   placeholder="Enter latitude (e.g. 14.274037)" autocomplete="off">
+                        </div>
+                        <div class="admin-coord-tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            Format: Decimal degrees (e.g. 14.274037)
+                        </div>
+                    </div>
+                    
+                    <!-- Longitude -->
+                    <div class="form-group">
+                        <label for="adminCoordLongitude">
+                            <i class="fas fa-arrow-right"></i> Longitude
+                        </label>
+                        <div class="admin-coord-input-wrapper">
+                            <span class="admin-coord-prefix">°</span>
+                            <input type="text" id="adminCoordLongitude" class="admin-form-control" 
+                                   placeholder="Enter longitude (e.g. 121.455957)" autocomplete="off">
+                        </div>
+                        <div class="admin-coord-tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            Format: Decimal degrees (e.g. 121.455957)
+                        </div>
+                    </div>
+                    
+                    <!-- Validation Result -->
+                    <div id="adminCoordValidationResult" style="display: none;"></div>
+                    
+                    <!-- Actions -->
+                    <div class="admin-modal-actions">
+                        <button id="adminValidateCoordsBtn" class="admin-btn-validate">
+                            <i class="fas fa-check-circle"></i> Validate Location
+                        </button>
+                        <button id="adminCancelAddBtn" class="admin-btn-cancel">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ===== STEP 2: NAP BOX DETAILS ===== -->
+            <div id="adminStep2" class="admin-modal-step" style="display: none;">
+                <div class="admin-modal-header">
+                    <h2>Step 2: NAP Box Details</h2>
+                    <p>Configure the NAP box settings</p>
+                </div>
+                
+                <div class="admin-modal-body">
+                    <!-- Location Preview -->
+                    <div class="admin-location-preview" id="adminLocationPreview">
+                        <div class="admin-location-preview-header">
+                            <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                            <span style="font-weight: 600; color: #166534;">Location Validated</span>
+                        </div>
+                        <div class="admin-location-preview-details">
+                            <div class="admin-location-preview-row">
+                                <span class="admin-location-preview-label"><i class="fas fa-map-pin"></i> Coordinates</span>
+                                <span class="admin-location-preview-value" id="adminPreviewCoords">-</span>
+                            </div>
+                            <div class="admin-location-preview-row">
+                                <span class="admin-location-preview-label"><i class="fas fa-tag"></i> Barangay</span>
+                                <span class="admin-location-preview-value" id="adminPreviewBarangay">-</span>
+                            </div>
+                            <div class="admin-location-preview-row">
+                                <span class="admin-location-preview-label"><i class="fas fa-building"></i> Area</span>
+                                <span class="admin-location-preview-value" id="adminPreviewArea">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- NAP Box Name -->
+                    <div class="form-group">
+                        <label for="adminNapboxName">
+                            <i class="fas fa-tag"></i> NAP Box Name
+                        </label>
+                        <input type="text" id="adminNapboxName" class="admin-form-control" 
+                               placeholder="Enter NAP box name" autocomplete="off">
+                        <div class="admin-napbox-helper-text">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Enter the full NAP box name manually. This field cannot be empty.</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Number of Slots -->
+                    <div class="form-group">
+                        <label for="adminNapboxSlots">
+                            <i class="fas fa-layer-group"></i> Number of Slots
+                        </label>
+                        <select id="adminNapboxSlots" class="admin-form-control">
+                            <option value="8">8 Slots</option>
+                            <option value="16">16 Slots</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="admin-modal-actions">
+                        <button id="adminBackToCoordsBtn" class="admin-btn-back">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button id="adminProceedAddBtn" class="admin-btn-proceed">
+                            <i class="fas fa-plus-circle"></i> Add NAP Box
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- ================= CLEAR SLOT CONFIRM MODAL (ADMIN) ================= -->
+<div id="deleteNapboxModal" class="modal deletenapbox-modal">
+    <div class="modal-content clear-slot-modal-content">
+        <button class="close-btn" id="closeDeleteNapboxModal" onclick="adminCloseDeleteNapboxModal()">&times;</button>
+        <div class="clear-slot-modal-header">
+            <div class="clear-slot-modal-icon">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <h3 id="deleteNapboxModalTitle"> Delete NAP Box</h3>
+            <p id="deleteNapboxModalText">This will permanently delete the selected NAP Box and all associated slots. This action cannot be undone.</p>
+        </div>
+        <div class="clear-slot-info">
+            <div class="clear-slot-detail">
+                <span class="clear-label">NAP Box:</span>
+                <span class="clear-value" id="deleteNapboxName">---</span>
+            </div>
+        </div>
+        <div class="delete-napbox-actions">
+            <button id="cancelDeleteNapbox" class="btn btn-cancel" onclick="adminCloseDeleteNapboxModal()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button id="confirmDeleteNapbox" class="btn btn-danger" onclick="adminExecuteDeleteNapbox()">
+                <i class="fas fa-trash-alt"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= CLEAR SLOT CONFIRM MODAL (ADMIN) ================= -->
+<div id="clearSlotModal" class="modal">
+    <div class="modal-content clear-slot-modal-content">
+        <button class="close-btn" id="closeClearSlotModal">&times;</button>
+        
+        <!-- Modal Header -->
+        <div class="clear-slot-modal-header">
+            <div class="clear-slot-modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="clearSlotModalTitle">⚠️ Clear Slot Data</h3>
+            <p id="clearSlotModalText">This will permanently remove all customer data from this slot.</p>
+        </div>
+        
+        <!-- Slot Info -->
+        <div class="clear-slot-info" id="clearSlotInfo">
+            <div class="clear-slot-detail">
+                <span class="clear-label">Slot Number:</span>
+                <span class="clear-value" id="clearSlotNumber">---</span>
+            </div>
+            <div class="clear-slot-detail">
+                <span class="clear-label">NAP Box:</span>
+                <span class="clear-value" id="clearNapboxName">---</span>
+            </div>
+            <div class="clear-slot-detail">
+                <span class="clear-label">Customer:</span>
+                <span class="clear-value" id="clearCustomerName">---</span>
+            </div>
+        </div>
+        
+        <!-- Warning -->
+        <div class="clear-slot-warning">
+            <i class="fas fa-skull"></i>
+            <div>
+                <strong>This action CANNOT be undone!</strong>
+                <p>This will permanently remove customer name, phone, application number, contract number, and installation date from this slot.</p>
+            </div>
+        </div>
+        
+        <!-- Modal Actions -->
+        <div class="clear-slot-actions">
+            <button id="cancelClearSlot" class="btn btn-cancel">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button id="confirmClearSlot" class="btn btn-danger">
+                <i class="fas fa-eraser"></i> Clear Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= ALL NOTIFICATIONS MODAL ================= -->
+<div id="allNotificationsModal" class="modal">
+    <div class="modal-content all-notifications-modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-bell"></i> All Notifications</h3>
+            <button class="close-modal" id="closeAllNotificationsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+            <div id="allNotificationsList" class="all-notifications-list">
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button id="markAllReadFromModalBtn" class="btn-cancel">
+                <i class="fas fa-check"></i> Mark all as read
+            </button>
+            <button id="closeAllNotificationsBtn" class="btn-confirm">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/static/admin-notifications.js"></script>
+<script src="/static/admin-napbox.js"></script>
+<!-- <script src="/static/session-manager.js"></script> -->
+
+<script>
+// Profile dropdown chevron rotation
+(function() {
+    const profileBtn = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+    
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileBtn.classList.toggle('active');
+        });
+    }
+})();
+
+// Hamburger menu toggle
+const hamburger = document.getElementById('hamburgerBtn');
+const sidebar = document.querySelector('.sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+function toggleSidebar() {
+    if (!sidebar) return;
+    sidebar.classList.toggle('active');
+    if (hamburger) hamburger.classList.toggle('active');
+    if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+    if (sidebar.classList.contains('active')) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+}
+
+if (hamburger) hamburger.addEventListener('click', toggleSidebar);
+if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+
+window.addEventListener('resize', function() {
+    if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+        if (hamburger) hamburger.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Logout modal functionality
+const logoutBtn = document.getElementById('logoutBtn');
+const logoutModal = document.getElementById('logoutModal');
+const cancelLogout = document.getElementById('cancelLogout');
+const confirmLogout = document.getElementById('confirmLogout');
+const closeLogoutModalBtn = document.getElementById('closeLogoutModalBtn');
+
+if (logoutBtn && logoutModal) {
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutModal.classList.add('show');
+        logoutModal.style.display = 'flex';
+    });
+    
+    const closeLogoutModal = () => {
+        logoutModal.classList.remove('show');
+        logoutModal.style.display = 'none';
+    };
+    
+    if (cancelLogout) cancelLogout.addEventListener('click', closeLogoutModal);
+    if (closeLogoutModalBtn) closeLogoutModalBtn.addEventListener('click', closeLogoutModal);
+    
+    if (confirmLogout) {
+        confirmLogout.addEventListener('click', () => {
+            const tabId = sessionStorage.getItem('tab_id') || '';
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+
+            sessionStorage.clear();
+            window.location.replace('/');
+        });
+    }
+    
+    window.addEventListener('click', (e) => {
+        if (e.target === logoutModal) closeLogoutModal();
+    });
+}
+</script>
+
+</body>
+</html>

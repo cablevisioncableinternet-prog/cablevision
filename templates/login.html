@@ -32,7 +32,7 @@
 
       <div class="input-group">
          <i class="fas fa-user"></i>
-         <input type="text" id="username" placeholder="Enter username" autocomplete="username" required>
+         <input type="text" id="username" placeholder="Enter username / ID" autocomplete="username" required>
       </div>
 
       <div class="input-group password-wrapper">
@@ -41,7 +41,7 @@
       </div>
 
       <button type="submit" class="login-btn" id="loginBtn">
-         <span id="btnText">Login</span>
+         <span id="btnText"> <i class="fas fa-sign-in-alt"></i> Login</span>
          <span id="loader" class="loader hidden"></span>
       </button>
 
@@ -55,9 +55,50 @@
 
    <div class="footer-text">© Cablevision Cable-Internet</div>
 
+   <!-- VIEW ACCOUNT ID LINK -->
+<div class="guide-link">
+    <a href="#" id="accountGuideBtn" class="guide-link-btn">
+        <i class="fas fa-id-card"></i> View Account IDs
+    </a>
 </div>
 
-<!-- ================= FORGOT PASSWORD MODAL (KATULAD NG USER) ================= -->
+<!-- ACCOUNT GUIDE MODAL (SMALL SQUARE) -->
+<div id="accountGuideModal" class="guide-modal">
+    <div class="guide-modal-content">
+        <div class="guide-modal-header">
+            <h4><i class="fas fa-id-card"></i> Account ID Reference</h4>
+            <button class="guide-modal-close">&times;</button>
+        </div>
+        <div class="guide-modal-body">
+            <!-- Admin -->
+            <div class="info-card">
+                <div class="info-label">
+                    <i class="fas fa-user-cog"></i>
+                    <span>Administrator</span>
+                </div>
+                <div class="info-code">ACV</div>
+            </div>
+
+            <!-- Technicians -->
+            <div class="info-card">
+                <div class="info-label">
+                    <i class="fas fa-tools"></i>
+                    <span>Technicians</span>
+                </div>
+                <div class="tech-items">
+                    <div class="tech-code">TPIL <span>- Pila</span></div>
+                    <div class="tech-code">TSTC <span>- Santa Cruz</span></div>
+                    <div class="tech-code">TMAG <span>- Magdalena</span></div>
+                    <div class="tech-code">TPSN <span>- Pagsanjan</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
 <div id="forgotPasswordModal" class="forgot-modal">
     <div class="forgot-modal-content">
         <div class="forgot-modal-header">
@@ -74,15 +115,16 @@
                     <i class="fas fa-envelope"></i>
                     <input type="text" id="fpIdentifier" placeholder="Email Address" autocomplete="off">
                 </div>
-                <button id="sendCodeBtn" class="forgot-btn-primary">Send Verification Code</button>
+                <button id="sendCodeBtn" class="forgot-btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send Verification Code
+                </button>
                 <div id="fpMessage" class="forgot-message"></div>
             </div>
 
             <!-- STEP 2: 6-digit OTP boxes + new password -->
-            <!-- STEP 2: 6-digit OTP boxes + new password -->
             <div id="fpStep2" class="forgot-step" style="display: none;">
                 <p class="forgot-step-title">Reset Password</p>
-                <p class="forgot-step-desc">Enter the 6‑digit code sent to your email, then set a new password.</p>
+                <p class="forgot-step-desc">Enter the 6‑digit code sent to your email</p>
                 
                 <!-- 6 DIGIT BOXES -->
                 <div class="verification-code-inputs">
@@ -99,7 +141,6 @@
                     <input type="password" id="fpNewPassword" placeholder="New Password">
                 </div>
 
-                <!-- ADD THIS - Confirm Password Field -->
                 <div class="forgot-input-group">
                     <i class="fas fa-lock"></i>
                     <input type="password" id="fpConfirmPassword" placeholder="Confirm New Password">
@@ -110,29 +151,44 @@
                     <span id="otpTimer" class="forgot-timer">05:00</span>
                 </div>
 
-                <button id="resetPasswordBtn" class="forgot-btn-primary">Reset Password</button>
-                <button id="resendOtpBtn" class="forgot-btn-secondary" disabled>Resend Code</button>
+                <button id="resetPasswordBtn" class="forgot-btn-primary">
+                    <i class="fas fa-key"></i> Reset Password
+                </button>
+                <button id="resendOtpBtn" class="forgot-btn-secondary" disabled>
+                    <i class="fas fa-redo"></i> Resend Code
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ================= GOOGLE AUTHENTICATOR MODAL ================= -->
+<div id="gaVerificationModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 420px;">
+        <span class="close ga-modal-close">&times;</span>
+        <h2>Verify with Google Authenticator</h2>
+        <p class="modal-subtitle">Enter the 6-digit code from your authenticator app to continue.</p>
+        <div class="verification-code-inputs">
+            <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
+            <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
+            <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
+            <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
+            <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
+            <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
+        </div>
+        <button type="button" id="gaVerifyBtn" class="login-btn" style="margin-top: 16px;">Verify Code</button>
+        <div id="gaModalError" class="error-message" style="display:none; margin-top: 12px;"></div>
+    </div>
+</div>
+
 <!-- JavaScript Modules -->
 <script type="module" src="/static/login.js"></script>
-<script type="module" src="/static/session-manager.js"></script>
+<!-- <script type="module" src="/static/session-manager.js"></script> -->
 
 <script>
 // Clear any leftover session data on login page
 (function() {
     sessionStorage.clear();
-    const keepKeys = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!keepKeys.includes(key)) localStorage.removeItem(key);
-    }
-    const logoutMessage = sessionStorage.getItem('logoutMessage');
-    if (logoutMessage) console.log(logoutMessage);
-    sessionStorage.removeItem('logoutMessage');
     history.replaceState(null, null, window.location.href);
 })();
 </script>

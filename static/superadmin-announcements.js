@@ -1,50 +1,253 @@
-// ==================== SESSION MANAGEMENT ====================
-// Initialize session manager FIRST
-if (window.SessionManager) {
-    window.SessionManager.init();
-} else {
-    console.error("SessionManager not loaded!");
-    // Fallback: redirect to login if no session
-    if (!localStorage.getItem('userType') || !sessionStorage.getItem('sessionToken')) {
+// ==================== TAB ID HELPER ====================
+function getTabId() {
+    return sessionStorage.getItem('tab_id') || '';
+}
+
+// ==================== SESSION MANAGEMENT - PER TAB ====================
+(function() {
+    const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
+    if (!isLoggedIn) {
         window.location.replace('/');
+        throw new Error('No session');
+    }
+})();
+
+async function checkSession() {
+    const tabId = getTabId();
+    try {
+        const response = await fetch(`/api/admin/verify-session?tab_id=${tabId}`);
+        const data = await response.json();
+        if (!data.valid) {
+            sessionStorage.clear();
+            window.location.replace('/');
+            return false;
+        }
+        return true;
+    } catch (error) {
+        console.error('Session verification failed:', error);
+        return false;
     }
 }
 
-let editID = null
-let deleteID = null
-let allAnnouncements = []
-let expiryCheckInterval = null
+// ==================== HAMBURGER MENU TOGGLE ====================
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    console.log('Hamburger button:', hamburgerBtn);
+    console.log('Sidebar element:', sidebar);
+    console.log('Overlay element:', overlay);
+
+    if (hamburgerBtn && sidebar) {
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            hamburgerBtn.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
+            
+            if (sidebar.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+            
+            console.log('Sidebar toggled. Active:', sidebar.classList.contains('active'));
+        }
+        
+        hamburgerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Hamburger clicked!');
+            toggleSidebar();
+        });
+        
+        if (overlay) {
+            overlay.addEventListener('click', function(e) {
+                console.log('Overlay clicked!');
+                toggleSidebar();
+            });
+        }
+        
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768 && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                if (hamburgerBtn) hamburgerBtn.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                console.log('Sidebar closed on resize');
+            }
+        });
+    } else {
+        console.error('Hamburger or Sidebar not found!');
+        console.log('hamburger element:', hamburgerBtn);
+        console.log('sidebar element:', sidebar);
+    }
+});
 
 // ==================== TOAST NOTIFICATION ====================
-function showToast(message, type = "success") {
-    const toast = document.getElementById("toast");
-    if (!toast) return;
-    
-    toast.style.background = type === "success" ? "#28a745" : "#dc3545";
-    toast.textContent = message;
-    toast.style.display = "block";
-    
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 3000);
+function showToast(message, type = 'info') {
+    const LABELS = {
+        success: 'Success',
+        error:   'Error',
+        info:    'Notice',
+        loading: 'Please wait'
+    };
+
+    const ICONS = {
+        success: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+        error:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+        info:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        loading: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: toastSpin 1s linear infinite; display:block;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+    };
+
+    let toast = document.querySelector('.custom-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        document.body.appendChild(toast);
+
+        if (!document.getElementById('toast-keyframes')) {
+            const s = document.createElement('style');
+            s.id = 'toast-keyframes';
+            s.textContent = `
+                @keyframes toastSpin     { to { transform: rotate(360deg); } }
+                @keyframes toastProgress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+                @keyframes toastLoading  { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+            `;
+            document.head.appendChild(s);
+        }
+    }
+
+    toast.innerHTML = `
+        <div class="custom-toast-body">
+            <span class="custom-toast-icon">${ICONS[type] || ICONS.info}</span>
+            <div class="custom-toast-text">
+                <span class="custom-toast-title">${LABELS[type] || 'Notice'}</span>
+                <span class="custom-toast-message">${message}</span>
+            </div>
+        </div>
+        <div class="custom-toast-progress">
+            <div class="custom-toast-progress-bar"></div>
+        </div>
+    `;
+
+    toast.className = `custom-toast ${type}`;
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    clearTimeout(toast._hideTimer);
+
+    if (type === 'loading') {
+        // Loading stays visible
+    } else {
+        toast._hideTimer = setTimeout(function() {
+            toast.classList.remove('show');
+        }, 3000);
+    }
 }
 
-// ================= LOAD ANNOUNCEMENTS =================
+// ==================== PROFILE DROPDOWN ====================
+const profileBtn = document.getElementById("profileBtn");
+const profileMenu = document.getElementById("profileMenu");
+
+if (profileBtn && profileMenu) {
+    profileBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        profileMenu.classList.toggle("show");
+        profileBtn.classList.toggle("active");
+    });
+    window.addEventListener("click", function(e) {
+        if (!profileBtn.contains(e.target)) {
+            profileMenu.classList.remove("show");
+            profileBtn.classList.remove("active");
+        }
+    });
+}
+
+async function loadProfile() {
+    try {
+        const tabId = getTabId();
+        const res = await fetch(`/api/superadmin/profile?tab_id=${tabId}`);
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const profile = await res.json();
+        const profileNameSpan = document.getElementById("profileName");
+        if (profileNameSpan) profileNameSpan.textContent = profile.name || profile.username || "";
+    } catch (err) {
+        console.error(err);
+    }
+}
+loadProfile();
+
+// ==================== LOGOUT MODAL ====================
+const logoutBtn = document.getElementById("logoutBtn");
+const logoutModal = document.getElementById("logoutModal");
+
+if (logoutBtn && logoutModal) {
+    logoutBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        logoutModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    });
+    
+    const closeBtnLogout = document.getElementById("closeLogoutModal");
+    const cancelLogout = document.getElementById("cancelLogout");
+    const confirmLogout = document.getElementById("confirmLogout");
+    
+    if (closeBtnLogout) {
+        closeBtnLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    if (cancelLogout) {
+        cancelLogout.addEventListener("click", function() {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    if (confirmLogout) {
+        confirmLogout.addEventListener("click", function() {
+            const tabId = getTabId();
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab_id: tabId })
+            }).catch(() => {});
+
+            sessionStorage.clear();
+            window.location.replace("/");
+        });
+    }
+    
+    window.addEventListener("click", function(e) {
+        if (e.target === logoutModal) {
+            logoutModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
+}
+
+// ==================== GLOBAL VARIABLES ====================
+let editID = null;
+let deleteID = null;
+let allAnnouncements = [];
+let expiryCheckInterval = null;
+
+// ==================== LOAD ANNOUNCEMENTS ====================
 async function loadAnnouncements(forceRefresh = false) {
     const textOnlyContainer = document.getElementById("textOnlyContainer");
     const withImageContainer = document.getElementById("withImageContainer");
     
     if (!textOnlyContainer || !withImageContainer) return;
 
-    // Delete expired announcements from DB
     await deleteExpiredAnnouncementsFromDB();
 
-    // Check cache
     if (!forceRefresh) {
         const cached = sessionStorage.getItem("announcements");
         if (cached) {
             const data = JSON.parse(cached);
-            allAnnouncements = data.filter(a => !isExpired(a.expirationDate));
+            allAnnouncements = data.filter(function(a) { return !isExpired(a.expirationDate); });
             renderTwoColumns();
             
             if (allAnnouncements.length !== data.length) {
@@ -54,7 +257,6 @@ async function loadAnnouncements(forceRefresh = false) {
         }
     }
 
-    // Show spinners
     textOnlyContainer.innerHTML = `
         <div class="spinner-wrapper">
             <div class="spinner"></div>
@@ -74,31 +276,34 @@ async function loadAnnouncements(forceRefresh = false) {
         
         let data = await res.json();
         
-        // Transform data - imagePath becomes imageUrl for display
-        data = data.map(ann => ({
-            ...ann,
-            imageUrl: ann.imagePath ? `/static/${ann.imagePath}` : null
-        }));
+        data = data.map(function(ann) {
+            return {
+                ...ann,
+                imageUrl: ann.imagePath ? ann.imagePath : null
+            };
+        });
+        
+        console.log("Fetched announcements:", data);
         
         const beforeFilterCount = data.length;
-        allAnnouncements = data.filter(a => !isExpired(a.expirationDate));
+        allAnnouncements = data.filter(function(a) { return !isExpired(a.expirationDate); });
         
         if (beforeFilterCount !== allAnnouncements.length) {
-            console.log(`Filtered out ${beforeFilterCount - allAnnouncements.length} expired announcements`);
+            console.log("Filtered out " + (beforeFilterCount - allAnnouncements.length) + " expired announcements");
         }
 
         sessionStorage.setItem("announcements", JSON.stringify(allAnnouncements));
         renderTwoColumns();
 
     } catch (err) {
-        textOnlyContainer.innerHTML = `<p style="color:red;text-align:center;">Failed to load announcements.</p>`;
-        withImageContainer.innerHTML = `<p style="color:red;text-align:center;">Failed to load announcements.</p>`;
+        textOnlyContainer.innerHTML = '<p style="color:red;text-align:center;">Failed to load announcements.</p>';
+        withImageContainer.innerHTML = '<p style="color:red;text-align:center;">Failed to load announcements.</p>';
         console.error(err);
         showToast("Failed to load announcements", "error");
     }
 }
 
-// ================= RENDER TWO COLUMNS =================
+// ==================== RENDER TWO COLUMNS ====================
 function renderTwoColumns() {
     const textOnlyContainer = document.getElementById("textOnlyContainer");
     const withImageContainer = document.getElementById("withImageContainer");
@@ -107,15 +312,12 @@ function renderTwoColumns() {
     
     if (!textOnlyContainer || !withImageContainer) return;
     
-    // Filter announcements by image presence
-    const textOnlyPosts = allAnnouncements.filter(a => !a.imagePath);
-    const withImagePosts = allAnnouncements.filter(a => a.imagePath);
+    var textOnlyPosts = allAnnouncements.filter(function(a) { return !a.imagePath; });
+    var withImagePosts = allAnnouncements.filter(function(a) { return a.imagePath; });
     
-    // Update badges
     if (textOnlyBadge) textOnlyBadge.textContent = textOnlyPosts.length;
     if (withImageBadge) withImageBadge.textContent = withImagePosts.length;
     
-    // Render Text-Only Column
     if (textOnlyPosts.length === 0) {
         textOnlyContainer.innerHTML = `
             <div class="empty-state">
@@ -124,10 +326,9 @@ function renderTwoColumns() {
             </div>
         `;
     } else {
-        textOnlyContainer.innerHTML = textOnlyPosts.map(a => renderAnnouncementCard(a)).join('');
+        textOnlyContainer.innerHTML = textOnlyPosts.map(function(a) { return renderAnnouncementCard(a); }).join('');
     }
     
-    // Render With-Image Column
     if (withImagePosts.length === 0) {
         withImageContainer.innerHTML = `
             <div class="empty-state">
@@ -136,35 +337,35 @@ function renderTwoColumns() {
             </div>
         `;
     } else {
-        withImageContainer.innerHTML = withImagePosts.map(a => renderAnnouncementCard(a)).join('');
+        withImageContainer.innerHTML = withImagePosts.map(function(a) { return renderAnnouncementCard(a); }).join('');
     }
 }
 
-// ================= RENDER SINGLE ANNOUNCEMENT CARD =================
+// ==================== RENDER ANNOUNCEMENT CARD ====================
 function renderAnnouncementCard(a) {
-    const imageHtml = a.imagePath ? `
+    var imageHtml = a.imagePath ? `
         <div class="announcement-image">
             <img src="${escapeHtml(a.imageUrl)}" alt="Announcement image" onerror="this.src='/static/default-announcement.jpg'">
         </div>
     ` : '';
     
-    let expiryHtml = '';
+    var expiryHtml = '';
     if (a.expirationDate) {
-        const expDateTime = new Date(a.expirationDate);
-        const daysLeft = Math.ceil((expDateTime - new Date()) / (1000 * 60 * 60 * 24));
+        var expDateTime = new Date(a.expirationDate);
+        var daysLeft = Math.ceil((expDateTime - new Date()) / (1000 * 60 * 60 * 24));
         if (daysLeft <= 3 && daysLeft > 0) {
-            expiryHtml = `<span class="expiry-badge expiry-warning"><i class="fas fa-exclamation-triangle"></i> Expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}</span>`;
+            expiryHtml = '<span class="expiry-badge expiry-warning"><i class="fas fa-exclamation-triangle"></i> Expires in ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + '</span>';
         } else if (daysLeft > 0) {
-            expiryHtml = `<span class="expiry-badge"><i class="fas fa-hourglass-half"></i> Expires: ${formatExpirationForDisplay(a.expirationDate)}</span>`;
+            expiryHtml = '<span class="expiry-badge"><i class="fas fa-hourglass-half"></i> Expires: ' + formatExpirationForDisplay(a.expirationDate) + '</span>';
         }
     }
 
-    const titleDisplay = a.title ? a.title : '';
-    const hasTitle = a.title && a.title !== '';
-    const hasMessage = a.message && a.message !== '';
-    const hasImage = a.imagePath && a.imagePath !== '';
-    const messageDisplay = hasMessage ? a.message : '';
-    const isImageOnly = !hasTitle && !hasMessage && hasImage;
+    var titleDisplay = a.title ? a.title : '';
+    var hasTitle = a.title && a.title !== '';
+    var hasMessage = a.message && a.message !== '';
+    var hasImage = a.imagePath && a.imagePath !== '';
+    var messageDisplay = hasMessage ? a.message : '';
+    var isImageOnly = !hasTitle && !hasMessage && hasImage;
     
     if (isImageOnly) {
         return `
@@ -174,7 +375,7 @@ function renderAnnouncementCard(a) {
                         <div class="announcement-date">
                             <i class="fas fa-calendar-alt"></i> ${a.date}
                         </div>
-                        ${expiryHtml ? `<div class="announcement-expiry">${expiryHtml}</div>` : ''}
+                        ${expiryHtml ? '<div class="announcement-expiry">' + expiryHtml + '</div>' : ''}
                     </div>
                     <div class="announcement-actions">
                         <button class="edit-btn" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
@@ -194,13 +395,11 @@ function renderAnnouncementCard(a) {
         <div class="announcement-card">
             <div class="announcement-header">
                 <div class="announcement-info">
-                    ${hasTitle ? `<div class="announcement-title">
-                        <i class="fas fa-bullhorn"></i> ${escapeHtml(titleDisplay)}
-                    </div>` : ''}
+                    ${hasTitle ? '<div class="announcement-title"><i class="fas fa-bullhorn"></i> ' + escapeHtml(titleDisplay) + '</div>' : ''}
                     <div class="announcement-date">
                         <i class="fas fa-calendar-alt"></i> ${a.date}
                     </div>
-                    ${expiryHtml ? `<div class="announcement-expiry">${expiryHtml}</div>` : ''}
+                    ${expiryHtml ? '<div class="announcement-expiry">' + expiryHtml + '</div>' : ''}
                 </div>
                 <div class="announcement-actions">
                     <button class="edit-btn" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
@@ -211,31 +410,13 @@ function renderAnnouncementCard(a) {
                     </button>
                 </div>
             </div>
-            ${hasMessage ? `<div class="announcement-message">
-                ${escapeHtml(messageDisplay)}
-            </div>` : ''}
+            ${hasMessage ? '<div class="announcement-message">' + escapeHtml(messageDisplay) + '</div>' : ''}
             ${imageHtml}
         </div>
     `;
 }
 
-// ================= CLOSE EDIT MODAL =================
-function closeEditModal() {
-    const modal = document.getElementById("editModal");
-    if (modal) modal.style.display = "none";
-    document.body.style.overflow = "";
-    editID = null;
-    
-    const fileInput = document.getElementById("editAnnouncementImage");
-    if (fileInput) fileInput.value = "";
-    
-    const previewContainer = document.getElementById("editImagePreviewContainer");
-    if (previewContainer) previewContainer.style.display = "none";
-    
-    const previewImg = document.getElementById("editImagePreview");
-    if (previewImg) previewImg.src = "";
-}
-
+// ==================== ESCAPE HTML ====================
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -246,41 +427,51 @@ function escapeHtml(str) {
     });
 }
 
-// ================= CREATE ANNOUNCEMENT (with file upload) =================
+// ==================== CREATE ANNOUNCEMENT ====================
 async function createAnnouncement() {
-    const title = document.getElementById("title").value.trim();
-    const message = document.getElementById("message").value.trim();
-    const imageFile = document.getElementById("announcementImage").files[0];
-    const expiryValue = document.getElementById("expiryValue").value;
-    const expiryUnit = document.getElementById("expiryUnit").value;
+    var title = document.getElementById("title").value.trim();
+    var message = document.getElementById("message").value.trim();
+    var imageFile = document.getElementById("announcementImage").files[0];
+    var expiryValue = document.getElementById("expiryValue").value;
+    var expiryUnit = document.getElementById("expiryUnit").value;
   
     if (!title && !message && !imageFile) {
         showToast("Please provide either title/message or an image", "error");
         return;
     }
     
-    const expirationDate = calculateExpirationDate(expiryValue, expiryUnit);
+    // ✅ VALIDATE IMAGE TYPE (if image is selected)
+    if (imageFile) {
+        var fileExt = imageFile.name.split('.').pop().toLowerCase();
+        var validTypes = ['png', 'jpeg', 'jpg'];
+        if (!validTypes.includes(fileExt)) {
+            showToast("Only PNG and JPEG images are allowed!", "error");
+            return;
+        }
+    }
     
-    const createBtn = document.querySelector(".btn-primary");
-    const originalText = createBtn.innerHTML;
+    var expirationDate = calculateExpirationDate(expiryValue, expiryUnit);
+    
+    var createBtn = document.querySelector(".btn-primary");
+    var originalText = createBtn.innerHTML;
     createBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
     createBtn.disabled = true;
     
     try {
-        const formData = new FormData();
+        var formData = new FormData();
         if (title) formData.append("title", title);
         if (message) formData.append("message", message);
         if (imageFile) formData.append("image", imageFile);
         if (expirationDate) formData.append("expirationDate", expirationDate);
         
-        const res = await fetch("/api/superadmin/announcements", {
+        var res = await fetch("/api/superadmin/announcements", {
             method: "POST",
-            body: formData  // Use FormData, not JSON
+            body: formData
         });
         
         if (!res.ok) throw new Error("Failed to create announcement");
         
-        showToast(`✓ Announcement posted! Will expire in ${expiryValue} ${expiryUnit}`, "success");
+        showToast("✓ Announcement posted! Will expire in " + expiryValue + " " + expiryUnit, "success");
         
         document.getElementById("title").value = "";
         document.getElementById("message").value = "";
@@ -288,6 +479,9 @@ async function createAnnouncement() {
         document.getElementById("imagePreviewContainer").style.display = "none";
         document.getElementById("expiryValue").value = "1";
         document.getElementById("expiryUnit").value = "weeks";
+        
+        var charCountSpan = document.getElementById("charCount");
+        if (charCountSpan) charCountSpan.textContent = "0";
         
         sessionStorage.removeItem("announcements");
         await loadAnnouncements(true);
@@ -301,10 +495,33 @@ async function createAnnouncement() {
     }
 }
 
-// ================= EDIT MODAL =================
+// ==================== CLEAR FORM ====================
+function clearForm() {
+    document.getElementById("title").value = "";
+    document.getElementById("message").value = "";
+    document.getElementById("announcementImage").value = "";
+    document.getElementById("imagePreviewContainer").style.display = "none";
+    document.getElementById("expiryValue").value = "1";
+    document.getElementById("expiryUnit").value = "weeks";
+    var charCountSpan = document.getElementById("charCount");
+    if (charCountSpan) charCountSpan.textContent = "0";
+}
+
+// ==================== CHARACTER COUNTER ====================
+function setupCharCounter() {
+    var messageTextarea = document.getElementById('message');
+    var charCountSpan = document.getElementById('charCount');
+    
+    if (messageTextarea && charCountSpan) {
+        messageTextarea.addEventListener('input', function() {
+            charCountSpan.textContent = this.value.length;
+        });
+    }
+}
+
 function setupEditCharCounter() {
-    const editMessageTextarea = document.getElementById('editMessage');
-    const editCharCountSpan = document.getElementById('editCharCount');
+    var editMessageTextarea = document.getElementById('editMessage');
+    var editCharCountSpan = document.getElementById('editCharCount');
     
     if (editMessageTextarea && editCharCountSpan) {
         editMessageTextarea.addEventListener('input', function() {
@@ -313,18 +530,19 @@ function setupEditCharCounter() {
     }
 }
 
+// ==================== EDIT MODAL ====================
 function openEditModal(id, title, message, imagePath, expirationDate) {
     editID = id;
     document.getElementById("editTitle").value = title || '';
     document.getElementById("editMessage").value = message || '';
     
-    const editCharCountSpan = document.getElementById('editCharCount');
+    var editCharCountSpan = document.getElementById('editCharCount');
     if (editCharCountSpan) editCharCountSpan.textContent = (message || '').length;
     
     if (expirationDate) {
-        const now = new Date();
-        const expDate = new Date(expirationDate);
-        const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+        var now = new Date();
+        var expDate = new Date(expirationDate);
+        var diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
         
         if (diffDays > 0) {
             if (diffDays >= 30) {
@@ -346,10 +564,10 @@ function openEditModal(id, title, message, imagePath, expirationDate) {
         document.getElementById("editExpiryUnit").value = "weeks";
     }
     
-    const editImagePreview = document.getElementById("editImagePreview");
-    const editImageContainer = document.getElementById("editImagePreviewContainer");
+    var editImagePreview = document.getElementById("editImagePreview");
+    var editImageContainer = document.getElementById("editImagePreviewContainer");
     if (imagePath && imagePath !== '') {
-        editImagePreview.src = `/static/${imagePath}`;
+        editImagePreview.src = imagePath;
         editImageContainer.style.display = 'block';
         window.currentEditImagePath = imagePath;
     } else {
@@ -364,40 +582,67 @@ function openEditModal(id, title, message, imagePath, expirationDate) {
     document.body.style.overflow = "hidden";
 }
 
+function closeEditModal() {
+    var modal = document.getElementById("editModal");
+    if (modal) modal.style.display = "none";
+    document.body.style.overflow = "";
+    editID = null;
+    
+    var fileInput = document.getElementById("editAnnouncementImage");
+    if (fileInput) fileInput.value = "";
+    
+    var previewContainer = document.getElementById("editImagePreviewContainer");
+    if (previewContainer) previewContainer.style.display = "none";
+    
+    var previewImg = document.getElementById("editImagePreview");
+    if (previewImg) previewImg.src = "";
+}
+
+// ==================== SAVE EDIT ====================
 async function saveEdit() {
-    const title = document.getElementById("editTitle").value.trim();
-    const message = document.getElementById("editMessage").value.trim();
-    const newImageFile = document.getElementById("editAnnouncementImage").files[0];
-    const expiryValue = document.getElementById("editExpiryValue").value;
-    const expiryUnit = document.getElementById("editExpiryUnit").value;
+    var title = document.getElementById("editTitle").value.trim();
+    var message = document.getElementById("editMessage").value.trim();
+    var newImageFile = document.getElementById("editAnnouncementImage").files[0];
+    var expiryValue = document.getElementById("editExpiryValue").value;
+    var expiryUnit = document.getElementById("editExpiryUnit").value;
     
     if (!title && !message && !newImageFile && !window.currentEditImagePath) {
         showToast("Announcement must have title/message or image", "error");
         return;
     }
     
-    const expirationDate = calculateExpirationDate(expiryValue, expiryUnit);
+    // ✅ VALIDATE IMAGE TYPE (if new image is selected)
+    if (newImageFile) {
+        var fileExt = newImageFile.name.split('.').pop().toLowerCase();
+        var validTypes = ['png', 'jpeg', 'jpg'];
+        if (!validTypes.includes(fileExt)) {
+            showToast("Only PNG and JPEG images are allowed!", "error");
+            return;
+        }
+    }
     
-    const saveBtn = document.querySelector("#editModal .edit-modal-btn-primary");
-    const originalText = saveBtn.innerHTML;
+    var expirationDate = calculateExpirationDate(expiryValue, expiryUnit);
+    
+    var saveBtn = document.querySelector("#editModal .edit-modal-btn-primary");
+    var originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     saveBtn.disabled = true;
     
     try {
-        const formData = new FormData();
+        var formData = new FormData();
         if (title) formData.append("title", title);
         if (message) formData.append("message", message);
         if (expirationDate) formData.append("expirationDate", expirationDate);
         if (newImageFile) formData.append("image", newImageFile);
         
-        const res = await fetch(`/api/superadmin/announcements/${editID}`, {
+        var res = await fetch("/api/superadmin/announcements/" + editID, {
             method: "PUT",
             body: formData
         });
         
         if (!res.ok) throw new Error("Failed to update announcement");
         
-        showToast(`✓ Announcement updated! Now expires in ${expiryValue} ${expiryUnit}`, "success");
+        showToast("✓ Announcement updated! Now expires in " + expiryValue + " " + expiryUnit, "success");
         sessionStorage.removeItem("announcements");
         closeEditModal();
         await loadAnnouncements(true);
@@ -411,244 +656,71 @@ async function saveEdit() {
     }
 }
 
-// ================= DELETE =================
+// ==================== DELETE MODAL ====================
 function openDeleteModal(id) {
-    deleteID = id
-    document.getElementById("deleteModal").style.display = "flex"
-    document.body.style.overflow = "hidden"
+    deleteID = id;
+    document.getElementById("deleteModal").style.display = "flex";
+    document.body.style.overflow = "hidden";
 }
 
 function closeDeleteModal() {
-    document.getElementById("deleteModal").style.display = "none"
-    document.body.style.overflow = ""
-    deleteID = null
+    document.getElementById("deleteModal").style.display = "none";
+    document.body.style.overflow = "";
+    deleteID = null;
 }
 
 async function confirmDelete() {
-    const deleteBtn = document.querySelector("#deleteModal .btn.confirm");
-    const originalText = deleteBtn.innerHTML;
+    var deleteBtn = document.querySelector("#deleteModal .btn.confirm");
+    var originalText = deleteBtn.innerHTML;
     deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
     deleteBtn.disabled = true;
     
     try {
-        const res = await fetch(`/api/superadmin/announcements/${deleteID}`, {
+        var res = await fetch("/api/superadmin/announcements/" + deleteID, {
             method: "DELETE"
-        })
+        });
         
         if (!res.ok) throw new Error("Failed to delete announcement");
         
-        showToast("Announcement deleted successfully!", "success")
-        sessionStorage.removeItem("announcements")
-        closeDeleteModal()
-        await loadAnnouncements(true)
+        showToast("Announcement deleted successfully!", "success");
+        sessionStorage.removeItem("announcements");
+        closeDeleteModal();
+        await loadAnnouncements(true);
         
     } catch (err) {
-        console.error(err)
-        showToast("Failed to delete announcement", "error")
+        console.error(err);
+        showToast("Failed to delete announcement", "error");
     } finally {
         deleteBtn.innerHTML = originalText;
         deleteBtn.disabled = false;
     }
 }
 
-// ================= CLEAR FORM =================
-function clearForm() {
-    document.getElementById("title").value = ""
-    document.getElementById("message").value = ""
-    const charCountSpan = document.getElementById("charCount");
-    if (charCountSpan) charCountSpan.textContent = "0";
-}
-
-// ================= CHARACTER COUNTER =================
-function setupCharCounter() {
-    const messageTextarea = document.getElementById('message');
-    const charCountSpan = document.getElementById('charCount');
-    
-    if (messageTextarea && charCountSpan) {
-        messageTextarea.addEventListener('input', function() {
-            charCountSpan.textContent = this.value.length;
-        });
-    }
-}
-
-// ==================== LOGOUT MODAL ====================
-const logoutBtn = document.getElementById("logoutBtn");
-const logoutModal = document.getElementById("logoutModal");
-
-if (logoutBtn && logoutModal) {
-    const logoutCloseBtn = logoutModal.querySelector(".close-btn");
-    const cancelLogout = document.getElementById("cancelLogout");
-    const confirmLogout = document.getElementById("confirmLogout");
-
-    logoutBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        logoutModal.style.display = "block";
-    });
-
-    if (logoutCloseBtn) {
-        logoutCloseBtn.addEventListener("click", () => {
-            logoutModal.style.display = "none";
-        });
-    }
-
-    if (cancelLogout) {
-        cancelLogout.addEventListener("click", () => {
-            logoutModal.style.display = "none";
-        });
-    }
-
-    if (confirmLogout) {
-        confirmLogout.addEventListener("click", () => {
-            if (window.SessionManager) {
-                window.SessionManager.logout();
-            } else {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.replace("/");
-            }
-        });
-    }
-
-    window.addEventListener("click", (e) => {
-        if (e.target === logoutModal) {
-            logoutModal.style.display = "none";
-        }
-    });
-}
-
-// ==================== PROFILE DROPDOWN ====================
-const profileBtn = document.getElementById("profileBtn");
-const profileMenu = document.getElementById("profileMenu");
-
-if (profileBtn && profileMenu) {
-    profileBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        profileMenu.classList.toggle("show");
-    });
-
-    window.addEventListener("click", e => {
-        if (!profileBtn.contains(e.target)) {
-            profileMenu.classList.remove("show");
-        }
-    });
-}
-
-async function loadProfile() {
-    try {
-        const res = await fetch("/api/superadmin/profile");
-        if (!res.ok) throw new Error("Failed to fetch profile");
-        const profile = await res.json();
-        const profileNameSpan = document.getElementById("profileName");
-        if (profileNameSpan) profileNameSpan.textContent = profile.username || "Profile";
-    } catch (err) {
-        console.error(err);
-    }
-}
-loadProfile();
-
-// ==================== HAMBURGER MENU ====================
-function setupHamburgerMenu() {
-    const hamburgerBtn = document.getElementById("hamburgerBtn");
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebarOverlay");
-    
-    if (!hamburgerBtn || !sidebar) return;
-    
-    hamburgerBtn.addEventListener("click", () => {
-        sidebar.classList.toggle("active");
-        if (overlay) overlay.classList.toggle("active");
-    });
-    
-    if (overlay) {
-        overlay.addEventListener("click", () => {
-            sidebar.classList.remove("active");
-            overlay.classList.remove("active");
-        });
-    }
-}
-setupHamburgerMenu();
-
-// ================= CLOSE MODALS =================
-document.addEventListener("keydown", function(event) {
-    if (event.key === "Escape") {
-        const editModal = document.getElementById("editModal");
-        const deleteModal = document.getElementById("deleteModal");
-        const logoutModalElem = document.getElementById("logoutModal");
-        
-        if (editModal && editModal.style.display === "flex") closeEditModal();
-        if (deleteModal && deleteModal.style.display === "flex") closeDeleteModal();
-        if (logoutModalElem && logoutModalElem.style.display === "block") logoutModalElem.style.display = "none";
-    }
-});
-
-window.addEventListener("click", (e) => {
-    const editModal = document.getElementById("editModal");
-    const deleteModal = document.getElementById("deleteModal");
-    
-    if (e.target === editModal) closeEditModal();
-    if (e.target === deleteModal) closeDeleteModal();
-});
-
-// ================= PERIODIC EXPIRY CHECK =================
-function startPeriodicExpiryCheck() {
-    if (expiryCheckInterval) {
-        clearInterval(expiryCheckInterval);
-    }
-    
-    expiryCheckInterval = setInterval(async () => {
-        console.log("Running periodic expiry check...");
-        
-        const hasExpired = allAnnouncements.some(a => isExpired(a.expirationDate));
-        
-        if (hasExpired) {
-            console.log("Expired announcements detected, cleaning up...");
-            
-            const beforeCount = allAnnouncements.length;
-            allAnnouncements = allAnnouncements.filter(a => !isExpired(a.expirationDate));
-            renderTwoColumns();
-            
-            console.log(`Removed ${beforeCount - allAnnouncements.length} expired from view`);
-            
-            await deleteExpiredAnnouncementsFromDB();
-            showToast(`${beforeCount - allAnnouncements.length} expired announcement(s) removed`, "success");
-        }
-    }, 60000);
-}
-
-function stopPeriodicExpiryCheck() {
-    if (expiryCheckInterval) {
-        clearInterval(expiryCheckInterval);
-        expiryCheckInterval = null;
-    }
-}
-
-// ================= INIT =================
-document.addEventListener("DOMContentLoaded", () => {
-    loadAnnouncements();
-    setupCharCounter();
-    setupEditCharCounter();
-    startPeriodicExpiryCheck();
-    
-    if (window.NotificationSystem) {
-        window.NotificationSystem.init();
-    }
-});
-
-window.addEventListener("beforeunload", () => {
-    stopPeriodicExpiryCheck();
-});
-
-// ================= IMAGE PREVIEW =================
+// ==================== IMAGE PREVIEW WITH VALIDATION ====================
 function previewImage(input, previewId) {
-    const container = input.closest('.input-group')?.querySelector(`#${previewId}Container`);
-    const previewImg = document.getElementById(previewId);
+    var container = input.closest('.input-group').querySelector('#' + previewId + 'Container');
+    var previewImg = document.getElementById(previewId);
+    
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
+        var file = input.files[0];
+        var fileExt = file.name.split('.').pop().toLowerCase();
+        
+        // ✅ VALIDATE: Only PNG and JPEG allowed
+        var validTypes = ['png', 'jpeg', 'jpg'];
+        if (!validTypes.includes(fileExt)) {
+            showToast("Only PNG and JPEG images are allowed!", "error");
+            input.value = '';
+            if (container) container.style.display = 'none';
+            if (previewImg) previewImg.src = '';
+            return;
+        }
+        
+        var reader = new FileReader();
+        reader.onload = function(e) {
             previewImg.src = e.target.result;
             if (container) container.style.display = 'block';
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
     } else {
         if (container) container.style.display = 'none';
         if (previewImg) previewImg.src = '';
@@ -668,10 +740,10 @@ function removeEditImage() {
     window.editImageRemoved = true;
 }
 
-// ================= EXPIRATION HELPERS =================
+// ==================== EXPIRATION HELPERS ====================
 function calculateExpirationDate(value, unit) {
-    const now = new Date();
-    const num = parseInt(value);
+    var now = new Date();
+    var num = parseInt(value);
     
     switch(unit) {
         case 'days':
@@ -693,12 +765,12 @@ function calculateExpirationDate(value, unit) {
 function isExpired(expirationDate) {
     if (!expirationDate) return false;
     
-    const now = new Date();
-    const expDate = new Date(expirationDate);
+    var now = new Date();
+    var expDate = new Date(expirationDate);
     
-    const nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 
+    var nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 
                             now.getHours(), now.getMinutes(), now.getSeconds());
-    const expUTC = Date.UTC(expDate.getFullYear(), expDate.getMonth(), expDate.getDate(),
+    var expUTC = Date.UTC(expDate.getFullYear(), expDate.getMonth(), expDate.getDate(),
                             expDate.getHours(), expDate.getMinutes(), expDate.getSeconds());
     
     return expUTC <= nowUTC;
@@ -707,7 +779,7 @@ function isExpired(expirationDate) {
 function formatExpirationForDisplay(expirationDate) {
     if (!expirationDate) return 'No expiration';
     
-    const date = new Date(expirationDate);
+    var date = new Date(expirationDate);
     return date.toLocaleString('en-PH', {
         year: 'numeric',
         month: 'long',
@@ -719,19 +791,19 @@ function formatExpirationForDisplay(expirationDate) {
     });
 }
 
-// ================= AUTO-DELETE EXPIRED ANNOUNCEMENTS =================
+// ==================== AUTO-DELETE EXPIRED ANNOUNCEMENTS ====================
 async function deleteExpiredAnnouncementsFromDB() {
     try {
         console.log("Checking for expired announcements in database...");
         
-        const res = await fetch("/api/superadmin/announcements/expired", {
+        var res = await fetch("/api/superadmin/announcements/expired", {
             method: "DELETE"
         });
         
         if (res.ok) {
-            const result = await res.json();
+            var result = await res.json();
             if (result.deletedCount > 0) {
-                console.log(`Deleted ${result.deletedCount} expired announcements`);
+                console.log("Deleted " + result.deletedCount + " expired announcements");
                 sessionStorage.removeItem("announcements");
                 return result.deletedCount;
             } else {
@@ -747,3 +819,134 @@ async function deleteExpiredAnnouncementsFromDB() {
         return 0;
     }
 }
+
+// ==================== PERIODIC EXPIRY CHECK ====================
+function startPeriodicExpiryCheck() {
+    if (expiryCheckInterval) {
+        clearInterval(expiryCheckInterval);
+    }
+    
+    expiryCheckInterval = setInterval(function() {
+        console.log("Running periodic expiry check...");
+        
+        var hasExpired = allAnnouncements.some(function(a) { return isExpired(a.expirationDate); });
+        
+        if (hasExpired) {
+            console.log("Expired announcements detected, cleaning up...");
+            
+            var beforeCount = allAnnouncements.length;
+            allAnnouncements = allAnnouncements.filter(function(a) { return !isExpired(a.expirationDate); });
+            renderTwoColumns();
+            
+            console.log("Removed " + (beforeCount - allAnnouncements.length) + " expired from view");
+            
+            deleteExpiredAnnouncementsFromDB();
+            showToast((beforeCount - allAnnouncements.length) + " expired announcement(s) removed", "success");
+        }
+    }, 60000);
+}
+
+function stopPeriodicExpiryCheck() {
+    if (expiryCheckInterval) {
+        clearInterval(expiryCheckInterval);
+        expiryCheckInterval = null;
+    }
+}
+
+// ==================== DRAG AND DROP VALIDATION ====================
+// Kung may dropzone sa announcements
+function setupDropzoneValidation() {
+    var dropzone = document.getElementById('dropzone');
+    if (!dropzone) return;
+    
+    dropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#0047ab';
+        this.style.background = '#f0f7ff';
+    });
+    
+    dropzone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#cbd5e1';
+        this.style.background = '#fafcff';
+    });
+    
+    dropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#cbd5e1';
+        this.style.background = '#fafcff';
+        
+        var file = e.dataTransfer.files[0];
+        if (file) {
+            var ext = file.name.split('.').pop().toLowerCase();
+            var validTypes = ['png', 'jpeg', 'jpg'];
+            if (validTypes.includes(ext)) {
+                var input = document.getElementById('announcementImage');
+                var dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                input.files = dataTransfer.files;
+                previewImage(input, 'imagePreview');
+                showToast('Image selected', 'success');
+            } else {
+                showToast('Only PNG and JPEG images are allowed!', 'error');
+            }
+        }
+    });
+}
+
+// ==================== KEYBOARD SHORTCUT ====================
+document.addEventListener("keydown", function(event) {
+    if (event.key === "Escape") {
+        var editModal = document.getElementById("editModal");
+        var deleteModal = document.getElementById("deleteModal");
+        var logoutModalElem = document.getElementById("logoutModal");
+        
+        if (editModal && editModal.style.display === "flex") closeEditModal();
+        if (deleteModal && deleteModal.style.display === "flex") closeDeleteModal();
+        if (logoutModalElem && logoutModalElem.classList.contains('show')) {
+            logoutModalElem.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+});
+
+window.addEventListener("click", function(e) {
+    var editModal = document.getElementById("editModal");
+    var deleteModal = document.getElementById("deleteModal");
+    
+    if (e.target === editModal) closeEditModal();
+    if (e.target === deleteModal) closeDeleteModal();
+});
+
+// ==================== INIT ====================
+document.addEventListener("DOMContentLoaded", async function() {
+    // ✅ SESSION CHECK MUNA
+    const isValid = await checkSession();
+    if (!isValid) return;
+    
+    loadAnnouncements();
+    setupCharCounter();
+    setupEditCharCounter();
+    startPeriodicExpiryCheck();
+    
+    if (window.NotificationSystem) {
+        window.NotificationSystem.init();
+    }
+});
+
+window.addEventListener("beforeunload", function() {
+    stopPeriodicExpiryCheck();
+});
+
+// ==================== PROFILE DROPDOWN CHEVRON ====================
+(function() {
+    var profileBtn = document.getElementById('profileBtn');
+    var profileMenu = document.getElementById('profileMenu');
+    
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileBtn.classList.toggle('active');
+        });
+    }
+})();
