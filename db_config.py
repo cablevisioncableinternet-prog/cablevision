@@ -1,3 +1,4 @@
+import os
 import mysql.connector
 from mysql.connector import Error
 
@@ -5,11 +6,11 @@ from mysql.connector import Error
 # DATABASE CONFIG
 # ===============================
 DB_CONFIG = {
-    'host': 'localhost',
-    'database': 'cablevision_db',
-    'user': 'root',
-    'password': '',
-    'port': 3306  # XAMPP default port (change ONLY if you really use 3307)
+    'host': os.getenv('MYSQLHOST', 'localhost'),
+    'database': os.getenv('MYSQLDATABASE', 'cablevision_db'),
+    'user': os.getenv('MYSQLUSER', 'root'),
+    'password': os.getenv('MYSQLPASSWORD', ''),
+    'port': int(os.getenv('MYSQLPORT', 3306))
 }
 
 # ===============================
@@ -30,7 +31,7 @@ def get_db_connection():
 
 
 # ===============================
-# UNIVERSAL QUERY EXECUTOR - FIXED
+# UNIVERSAL QUERY EXECUTOR
 # ===============================
 def execute_query(query, params=None, fetch=False, fetch_one=False):
     connection = get_db_connection()
@@ -40,14 +41,13 @@ def execute_query(query, params=None, fetch=False, fetch_one=False):
         return None
 
     cursor = None
+
     try:
         cursor = connection.cursor(dictionary=True)
 
-        # ✅ I-print ang query at params para sa debugging
         print(f"[QUERY] {query}")
         print(f"[PARAMS] {params}")
 
-        # ✅ I-convert ang params sa tuple kung list
         if isinstance(params, list):
             params = tuple(params)
 
@@ -57,14 +57,13 @@ def execute_query(query, params=None, fetch=False, fetch_one=False):
 
         if fetch:
             result = cursor.fetchall()
-            print(f"[FETCH] Found {len(result) if result else 0} rows")
+            print(f"[FETCH] Found {len(result)} rows")
 
         elif fetch_one:
             result = cursor.fetchone()
             print(f"[FETCH_ONE] Found {'Yes' if result else 'No'}")
 
         else:
-            # ✅ IMPORTANTE: I-COMMIT ANG CHANGES PARA SA INSERT/UPDATE/DELETE
             connection.commit()
             result = cursor.rowcount
             print(f"[AFFECTED] {result} rows affected")
@@ -75,8 +74,10 @@ def execute_query(query, params=None, fetch=False, fetch_one=False):
         print(f"[QUERY ERROR] {e}")
         print(f"[QUERY] {query}")
         print(f"[PARAMS] {params}")
+
         if connection:
             connection.rollback()
+
         return None
 
     finally:
