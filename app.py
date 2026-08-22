@@ -5335,6 +5335,7 @@ def download_pdf(application_number):
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
 
 # ==================== UPDATE APPLICATION STATUS - CONVERTED TO MYSQL ====================
+# ==================== UPDATE APPLICATION STATUS - FIXED ====================
 @app.route("/api/superadmin/application/<string:app_id>/status", methods=["PUT"])
 def update_internet_application_status(app_id):
     conn = None
@@ -5605,31 +5606,38 @@ def update_internet_application_status(app_id):
                 traceback.print_exc()
                 # Don't rollback here, we want to keep the application update
 
-        # ========== SEND EMAIL NOTIFICATION ==========
-        try:
-            customer_email = app_data.get("email")
-            first_name = app_data.get("first_name")
-            application_number = app_data.get("application_number", "N/A")
-            reapplied_count = app_data.get("reapplied_count", 0)
-
-            if customer_email:
-                send_application_status_email(
-                    to_email=customer_email,
-                    first_name=first_name,
-                    status=status,
-                    app_id=application_number,
-                    reason=reason if status == "Rejected" else None,
-                    contract_number=contract_number if status == "Approved" else None,
-                    billing_date=billing_date if status == "Approved" else None,
-                    application_id=app_id,
-                    reapplied_count=reapplied_count
-                )
-                print(f"✅ Email sent to {customer_email}")
-            else:
-                print(f"⚠️ No email address for {app_id}")
-        except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
-            # Don't fail the request if email fails
+                # ========== SEND EMAIL NOTIFICATION ==========
+        # 🔥 TEMPORARILY DISABLED FOR TESTING - TO IDENTIFY 500 ERROR
+        print(f"📧 Email sending skipped for testing - application {app_id} status: {status}")
+        print(f"📧 Would have sent email to: {app_data.get('email')}")
+        print(f"📧 Reason: {reason if status == 'Rejected' else 'N/A'}")
+        
+        # try:
+        #     customer_email = app_data.get("email")
+        #     first_name = app_data.get("first_name")
+        #     application_number = app_data.get("application_number", "N/A")
+        #     reapplied_count = app_data.get("reapplied_count", 0)
+        #
+        #     if customer_email:
+        #         send_application_status_email(
+        #             to_email=customer_email,
+        #             first_name=first_name,
+        #             status=status,
+        #             app_id=application_number,
+        #             reason=reason if status == "Rejected" else None,
+        #             contract_number=contract_number if status == "Approved" else None,
+        #             billing_date=billing_date if status == "Approved" else None,
+        #             application_id=app_id,
+        #             reapplied_count=reapplied_count
+        #         )
+        #         print(f"✅ Email sent to {customer_email}")
+        #     else:
+        #         print(f"⚠️ No email address for {app_id}")
+        # except Exception as email_err:
+        #     print(f"❌ Email error: {email_err}")
+        #     import traceback
+        #     traceback.print_exc()
+        #     # Don't fail the request if email fails
 
         # ✅ ALWAYS RETURN JSON
         return jsonify({
