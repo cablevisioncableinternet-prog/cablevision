@@ -5335,7 +5335,6 @@ def download_pdf(application_number):
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
 
 # ==================== UPDATE APPLICATION STATUS - CONVERTED TO MYSQL ====================
-# ==================== UPDATE APPLICATION STATUS - FIXED ====================
 @app.route("/api/superadmin/application/<string:app_id>/status", methods=["PUT"])
 def update_internet_application_status(app_id):
     conn = None

@@ -3393,13 +3393,27 @@ window.rejectHandler = async function () {
             body: JSON.stringify({ status: "Rejected", reason: reason })
         });
 
-        if (!res.ok) throw new Error("Reject failed");
+        // ✅ I-CHEK MUNA KUNG ANO ANG RESPONSE
+        const contentType = res.headers.get('content-type');
+        let result;
+        
+        if (contentType && contentType.includes('application/json')) {
+            result = await res.json();
+        } else {
+            // ✅ KUNG HINDI JSON, KUHAIN ANG TEXT
+            const text = await res.text();
+            console.error("Non-JSON response:", text);
+            throw new Error(`Server error (${res.status}): ${text.substring(0, 100)}`);
+        }
+
+        if (!res.ok) {
+            throw new Error(result.error || `Failed to reject (${res.status})`);
+        }
 
         sessionStorage.setItem('refresh_admin_applications', 'true');
 
         const modalBody = modalElement.querySelector('.modal-body');
         
-        // ✅ BAGONG DESIGN - X ICON AT RED COLORS
         modalBody.innerHTML = `
             <div class="text-center py-4">
                 <div class="text-danger mb-3" style="font-size: 48px;">✕</div>
@@ -3413,7 +3427,6 @@ window.rejectHandler = async function () {
             </div>
         `;
 
-        // I-hide ang footer para walang buttons
         const modalFooter = modalElement.querySelector('.modal-footer');
         if (modalFooter) modalFooter.style.display = 'none';
 
@@ -3422,13 +3435,13 @@ window.rejectHandler = async function () {
         }, 2000);
 
     } catch (err) {
-        console.error(err);
+        console.error("Reject error:", err);
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
                 <div class="text-danger mb-3" style="font-size: 48px;">✕</div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to reject application</p>
-                <small class="text-muted">${err.message}</small>
+                <p class="text-danger mt-2">${escapeHtml(err.message)}</p>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
             </div>
         `;
