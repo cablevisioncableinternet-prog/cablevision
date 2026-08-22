@@ -8084,11 +8084,12 @@ def approve_request(req_id):
         # Get the approval request
         req_query = """
             SELECT id, request_id, app_id, requested_by, requested_status, status,
-                   admin_id, admin_area, admin_city, reason
+                admin_id, admin_area, admin_city, reason
             FROM approval_requests 
-            WHERE request_id = %s OR id = %s
+            WHERE request_id = %s
+            LIMIT 1
         """
-        cursor.execute(req_query, (req_id, req_id))
+        cursor.execute(req_query, (req_id,))
         req = cursor.fetchone()
         print(f"📝 Approval request found: {req}")
 
@@ -8550,17 +8551,19 @@ def approve_request(req_id):
 
         # ========== 6. MARK REQUEST AS DONE ==========
         processed_at_str = datetime.now().isoformat()
-        update_req_query = """
-            UPDATE approval_requests 
-            SET status = 'Done', 
-                contract_number = %s, 
-                billing_date = %s, 
-                processed_at = %s
-            WHERE request_id = %s OR id = %s
-        """
-        cursor.execute(update_req_query, (contract_number if requested_status == "Approved" else None, 
-                                          billing_date if requested_status == "Approved" else None, 
-                                          processed_at_str, req_id, req_id))
+        cursor.execute("""
+            UPDATE approval_requests  
+            SET status = 'Done',  
+                contract_number = %s,  
+                billing_date = %s,  
+                processed_at = %s 
+            WHERE request_id = %s
+        """, (
+            contract_number if requested_status == "Approved" else None,
+            billing_date if requested_status == "Approved" else None,
+            processed_at_str,
+            req_id
+        ))
         print(f"✅ Request {req_id} marked as Done")
 
         # ========== 7. CREATE GENERAL NOTIFICATION ==========
@@ -8675,12 +8678,13 @@ def reject_request(req_id):
         cursor = conn.cursor(dictionary=True)
         
         req_query = """
-            SELECT id, request_id, app_id, requested_by, requested_status, status,
-                   admin_id, admin_area, admin_city, reason
-            FROM approval_requests 
-            WHERE request_id = %s OR id = %s
+            SELECT id, request_id, app_id, requested_by, requested_status, status, 
+                admin_id, admin_area, admin_city, reason 
+            FROM approval_requests  
+            WHERE request_id = %s
+            LIMIT 1
         """
-        cursor.execute(req_query, (req_id, req_id))
+        cursor.execute(req_query, (req_id,))
         req_data = cursor.fetchone()
         
         if not req_data:
@@ -8704,10 +8708,14 @@ def reject_request(req_id):
             return jsonify({"error": "Application not found"}), 404
         
         cursor.execute("""
-            UPDATE approval_requests 
-            SET status = 'Rejected', processed_at = %s
-            WHERE request_id = %s OR id = %s
-        """, (datetime.now().isoformat(), req_id, req_id))
+            UPDATE approval_requests  
+            SET status = 'Rejected', 
+                processed_at = %s 
+            WHERE request_id = %s
+        """, (
+            datetime.now().isoformat(),
+            req_id
+        ))
         
         # ✅ DETERMINE REVERT STATUS BASED ON REQUESTED STATUS
         if requested_status == "Pending":
