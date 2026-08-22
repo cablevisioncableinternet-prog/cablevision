@@ -5656,7 +5656,7 @@ def update_internet_application_status(app_id):
             cursor.close()
         if conn:
             conn.close()
-            #sender_app_password = "svql qzea vmjt xndx"
+            
             print("🔒 Database connection closed")
 
 
@@ -5671,7 +5671,7 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         from email.mime.application import MIMEApplication
         
         sender_email = "cablevision.cableinternet@gmail.com"
-        sender_app_password = "your_actual_app_password_here"  # ← PALITAN MO ITO
+        sender_app_password = "svql qzea vmjt xndx"
 
         subject = "Cablevision Application Status Update"
 
