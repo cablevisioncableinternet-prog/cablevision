@@ -22,6 +22,9 @@ import base64
 from werkzeug.security import generate_password_hash, check_password_hash
 from db_config import execute_query, get_db_connection
 import mysql.connector
+import socket
+import smtplib
+import threading
 
 # ========== ITO LANG ANG IDINAGDAG ==========
 from db_config import execute_query
@@ -5606,7 +5609,7 @@ def update_internet_application_status(app_id):
                 traceback.print_exc()
                 # Don't rollback here, we want to keep the application update
 
-        # ========== SEND EMAIL NOTIFICATION ==========
+        #========== SEND EMAIL NOTIFICATION ==========
         try:
             customer_email = app_data.get("email")
             first_name = app_data.get("first_name")
@@ -5614,22 +5617,36 @@ def update_internet_application_status(app_id):
             reapplied_count = app_data.get("reapplied_count", 0)
 
             if customer_email:
-                send_application_status_email(
-                    to_email=customer_email,
-                    first_name=first_name,
-                    status=status,
-                    app_id=application_number,
-                    reason=reason if status == "Rejected" else None,
-                    contract_number=contract_number if status == "Approved" else None,
-                    billing_date=billing_date if status == "Approved" else None,
-                    application_id=app_id,
-                    reapplied_count=reapplied_count
-                )
-                print(f"✅ Email sent to {customer_email}")
+                # ✅ I-SEND ANG EMAIL SA BACKGROUND THREAD PARA HINDI MAG-TIMEOUT
+                def send_email_in_background():
+                    try:
+                        send_application_status_email(
+                            to_email=customer_email,
+                            first_name=first_name,
+                            status=status,
+                            app_id=application_number,
+                            reason=reason if status == "Rejected" else None,
+                            contract_number=contract_number if status == "Approved" else None,
+                            billing_date=billing_date if status == "Approved" else None,
+                            application_id=app_id,
+                            reapplied_count=reapplied_count
+                        )
+                        print(f"✅ Background email sent to {customer_email}")
+                    except Exception as bg_err:
+                        print(f"❌ Background email error: {bg_err}")
+                        import traceback
+                        traceback.print_exc()
+                
+                email_thread = threading.Thread(target=send_email_in_background)
+                email_thread.daemon = True
+                email_thread.start()
+                print(f"📧 Email thread started for {customer_email}")
             else:
                 print(f"⚠️ No email address for {app_id}")
         except Exception as email_err:
             print(f"❌ Email error: {email_err}")
+            import traceback
+            traceback.print_exc()
             # Don't fail the request if email fails
 
         # ✅ ALWAYS RETURN JSON
@@ -5656,22 +5673,27 @@ def update_internet_application_status(app_id):
             cursor.close()
         if conn:
             conn.close()
-            
             print("🔒 Database connection closed")
 
 
 # ===============================
-# SEND EMAIL STATUS - FIXED
+# SEND EMAIL STATUS - FIXED WITH TIMEOUT & THREADING
 # ===============================
+import socket
+import smtplib
+import threading
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+
 def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
+    """
+    Send email notification with proper timeout and error handling.
+    Returns: True if email sent successfully, False otherwise.
+    """
     try:
-        import smtplib
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.text import MIMEText
-        from email.mime.application import MIMEApplication
-        
         sender_email = "cablevision.cableinternet@gmail.com"
-        sender_app_password = "svql qzea vmjt xndx"
+        sender_app_password = "svql qzea vmjt xndx"  # ← PALITAN MO ITO
 
         subject = "Cablevision Application Status Update"
 
@@ -5838,9 +5860,9 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
 
         msg.attach(MIMEText(html_body, "html"))
 
-        # ================= PDF ATTACHMENT - SKIP MUNA PARA MA-TEST =================
-        # 🔥 TEMPORARILY DISABLE PDF ATTACHMENT TO TEST
-        print("📄 PDF attachment temporarily disabled for testing")
+        # ================= PDF ATTACHMENT - DISABLED FOR SPEED =================
+        # 🔥 I-DISABLE MUNA ANG PDF PARA HINDI MAG-TIMEOUT
+        print(f"📄 PDF attachment temporarily disabled for email speed")
         
         # if status == "Approved":
         #     try:
@@ -5848,7 +5870,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         #         
         #         if pdf_app_key:
         #             print(f" Generating PDF for application: {pdf_app_key}")
-        #             # Fetch application data from MySQL
         #             query = "SELECT * FROM applications WHERE application_number = %s"
         #             app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
         #             
@@ -5863,30 +5884,42 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         #                         filename=f"Application_{app_id}_Contract_{contract_number}.pdf" if contract_number else f"Application_{app_id}.pdf"
         #                     )
         #                     msg.attach(part)
-        #                     print(f" PDF attached successfully for application {pdf_app_key}")
+        #                     print(f" PDF attached successfully")
         #                 else:
         #                     print(" PDF buffer is empty")
         #             else:
-        #                 print(f" Could not find application data for: {pdf_app_key}")
+        #                 print(f" Could not find application data")
         #         else:
-        #             print(f" Could not find application key for app_id: {app_id}")
-        # 
+        #             print(f" Could not find application key")
         #     except Exception as e:
         #         print(" PDF attachment failed:", e)
-        #         import traceback
-        #         traceback.print_exc()
 
-        # ================= SEND EMAIL =================
+        # ================= SEND EMAIL WITH TIMEOUT =================
         try:
             print(f"📧 Sending email to {to_email}...")
-            server = smtplib.SMTP('smtp.gmail.com', 587)
+            
+            # ✅ MAGDAGDAG NG TIMEOUT PARA HINDI MAG-HANG
+            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
             server.starttls()
             server.login(sender_email, sender_app_password)
             server.send_message(msg)
             server.quit()
+            
             print(f"✅ Email sent to {to_email}")
             return True
 
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"❌ SMTP Authentication error: {e}")
+            return False
+        except smtplib.SMTPException as e:
+            print(f"❌ SMTP error: {e}")
+            return False
+        except socket.timeout:
+            print(f"❌ SMTP connection timeout after 15 seconds")
+            return False
+        except ConnectionRefusedError:
+            print(f"❌ Connection refused - SMTP server unavailable")
+            return False
         except Exception as e:
             print(f"❌ Email send failed: {e}")
             import traceback
