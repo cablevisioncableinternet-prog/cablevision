@@ -20,6 +20,8 @@ from io import BytesIO
 from flask import send_file
 import base64
 from werkzeug.security import generate_password_hash, check_password_hash
+from db_config import execute_query, get_db_connection
+import mysql.connector
 
 # ========== ITO LANG ANG IDINAGDAG ==========
 from db_config import execute_query
@@ -5356,14 +5358,11 @@ def update_internet_application_status(app_id):
         if status not in ["Approved", "Rejected", "Pending"]:
             return jsonify({"error": "Invalid status"}), 400
 
-        # ✅ DIRECT CONNECTION
-        import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="cablevision_db"
-        )
+        conn = get_db_connection()
+
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+
         cursor = conn.cursor(dictionary=True)
 
         # Check if application exists
@@ -7350,13 +7349,11 @@ def restore_application(app_id):
     conn = None
     cursor = None
     try:
-        import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="cablevision_db"
-        )
+        conn = get_db_connection()
+
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+
         cursor = conn.cursor(dictionary=True)
 
         # ✅ START TRANSACTION
@@ -7608,19 +7605,21 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
     team_name = "Not assigned"
     if is_cancelled and assigned_team_id:
         try:
-            conn = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="",
-                database="cablevision_db"
-            )
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT team_name FROM teams WHERE team_id = %s", (assigned_team_id,))
-            team_data = cursor.fetchone()
-            if team_data:
-                team_name = team_data.get('team_name')
-            cursor.close()
-            conn.close()
+            conn = get_db_connection()
+
+            if conn:
+                cursor = conn.cursor(dictionary=True)
+                cursor.execute(
+                    "SELECT team_name FROM teams WHERE team_id = %s",
+                    (assigned_team_id,)
+                )
+                team_data = cursor.fetchone()
+
+                if team_data:
+                    team_name = team_data.get('team_name')
+
+                cursor.close()
+                conn.close()
         except Exception as e:
             print(f"Error fetching team name: {e}")
     else:
@@ -7630,14 +7629,14 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
                 # Try to get the assigned_team_id from the application data
                 app_team_id = application_data.get('assigned_team_id')
                 if app_team_id:
-                    conn = mysql.connector.connect(
-                        host="localhost",
-                        user="root",
-                        password="",
-                        database="cablevision_db"
-                    )
-                    cursor = conn.cursor(dictionary=True)
-                    cursor.execute("SELECT team_name FROM teams WHERE team_id = %s", (app_team_id,))
+                    conn = get_db_connection()
+
+                    if conn:
+                        cursor = conn.cursor(dictionary=True)
+                        cursor.execute(
+                            "SELECT team_name FROM teams WHERE team_id = %s",
+                            (app_team_id,)
+                        )
                     team_data = cursor.fetchone()
                     if team_data:
                         team_name = team_data.get('team_name')
@@ -7784,10 +7783,11 @@ def request_reapply(app_id):
     conn = None
     cursor = None
     try:
-        import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost", user="root", password="", database="cablevision_db"
-        )
+        conn = get_db_connection()
+
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("SELECT * FROM applications WHERE application_number = %s", (app_id,))
