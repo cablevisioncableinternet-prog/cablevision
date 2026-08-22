@@ -25,6 +25,7 @@ import mysql.connector
 import socket
 import smtplib
 import threading
+import ssl
 
 # ========== ITO LANG ANG IDINAGDAG ==========
 from db_config import execute_query
@@ -5676,11 +5677,16 @@ def update_internet_application_status(app_id):
             print("🔒 Database connection closed")
 
 
+
+
+
+
 # ===============================
-# SEND EMAIL STATUS - FIXED WITH TIMEOUT & THREADING
+# SEND EMAIL STATUS - HTML VERSION WITH SSL
 # ===============================
 import socket
 import smtplib
+import ssl
 import threading
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -5689,29 +5695,25 @@ from email.mime.application import MIMEApplication
 def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
     """
     Send email notification with proper timeout and error handling.
+    Uses SSL (port 465) for more reliable connection.
     Returns: True if email sent successfully, False otherwise.
     """
     try:
         sender_email = "cablevision.cableinternet@gmail.com"
-        sender_app_password = "svql qzea vmjt xndx"  # ← PALITAN MO ITO
+        sender_app_password = "svql qzea vmjt xndx"  # ← PALITAN MO ITO!
 
         subject = "Cablevision Application Status Update"
 
         status_color = "#10b981" if status == "Approved" else "#ef4444"
         status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
         status_icon = "✓" if status == "Approved" else "✗"
-
-        # Base URL
-        BASE_URL = "http://127.0.0.1:5001"
         
         if status == "Approved":
             message = f"Congratulations, {first_name}!"
             message_sub = "Your application has been approved successfully."
-            reapply_section = ""
         else:
             message = f"Application Update, {first_name}"
             message_sub = "We regret to inform you about your application status."
-            reapply_section = ""
 
         extra_message = ""
         if status == "Approved":
@@ -5722,9 +5724,7 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                         <strong>What's Next?</strong>
                     </p>
                     <p style="margin: 0; color: #14532d; font-size: 14px;">
-                        Please find attached your application PDF with contract details.<br>
-                        Our team will contact you soon for installation scheduling.<br>
-                        For inquiries, please contact our support team.
+                        Our team will contact you soon for installation scheduling.
                     </p>
                 </div>
                 """
@@ -5735,9 +5735,7 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                         <strong>What's Next?</strong>
                     </p>
                     <p style="margin: 0; color: #14532d; font-size: 14px;">
-                        Please find attached your application PDF.<br>
-                        Our team will contact you soon for installation scheduling.<br>
-                        For inquiries, please contact our support team.
+                        Our team will contact you soon for installation scheduling.
                     </p>
                 </div>
                 """
@@ -5750,34 +5748,24 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                 <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
                     {reason}
                 </p>
-                <p style="margin-top: 12px; color: #7f1d1d; font-size: 13px;">
-                    Our team will reach out via email with instructions if a re-application is possible.
-                </p>
             </div>
             """
 
-        # Contract number display section
         contract_section = ""
         if status == "Approved" and contract_number:
             contract_section = f"""
             <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; text-align: center;">
                 <div style="font-size: 14px; color: #047857; margin-bottom: 8px; letter-spacing: 1px;">CONTRACT NUMBER</div>
                 <div style="font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 2px; font-family: monospace;">{contract_number}</div>
-                <div style="font-size: 11px; color: #059669; margin-top: 8px;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-                <div style="font-size: 11px; color: #047857; margin-top: 6px;">Please keep this number for future reference</div>
             </div>
             """
         
-        # Billing date display section
         billing_section = ""
         if status == "Approved" and billing_date:
             billing_section = f"""
-            <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
-                <div>
-                    <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">BILLING INFORMATION</div>
-                    <div style="font-size: 16px; font-weight: 600; color: #1e3a8a;">Every {billing_date} of the month</div>
-                    <div style="font-size: 11px; color: #3b82f6; margin-top: 4px;">Your monthly bill will be generated on this date</div>
-                </div>
+            <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px;">
+                <div style="font-size: 12px; font-weight: 600; color: #1e40af;">BILLING INFORMATION</div>
+                <div style="font-size: 16px; font-weight: 600; color: #1e3a8a;">Every {billing_date} of the month</div>
             </div>
             """
 
@@ -5786,24 +5774,17 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         <html>
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Cablevision Email</title>
         </head>
-        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
-            
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #eef2ff;">
             <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
                 <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
                     
-                    <!-- HEADER SECTION -->
                     <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                        <div style="position: absolute; top: 20px; right: 25px;">
-                            <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 600; color: #a5f3fc;">STATUS UPDATE</span>
-                        </div>
                         <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
                         <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
                     </div>
 
-                    <!-- STATUS BADGE -->
                     <div style="padding: 20px 28px 0 28px; text-align: center;">
                         <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
                             <span style="font-size: 14px; font-weight: 600; color: {status_color};">
@@ -5812,12 +5793,10 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                         </div>
                     </div>
 
-                    <!-- CONTENT SECTION -->
                     <div style="padding: 20px 28px 32px 28px;">
                         <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">{message}</h2>
                         <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">{message_sub}</p>
 
-                        <!-- Application Details -->
                         <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
                             <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
                                 <div style="font-size: 11px; font-weight: 600; color: #64748b;">Application Number</div>
@@ -5831,7 +5810,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
 
                         {contract_section}
                         {billing_section}
-                        {reapply_section}
                         {extra_message}
 
                         <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
@@ -5841,7 +5819,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                         </div>
                     </div>
 
-                    <!-- FOOTER -->
                     <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
                         <div style="font-size: 11px; color: #64748b;">
                             © 2026 Cablevision Internet Service Provider. All rights reserved.
@@ -5857,52 +5834,23 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         msg['From'] = sender_email
         msg['To'] = to_email
         msg['Subject'] = subject
-
         msg.attach(MIMEText(html_body, "html"))
 
-        # ================= PDF ATTACHMENT - DISABLED FOR SPEED =================
-        # 🔥 I-DISABLE MUNA ANG PDF PARA HINDI MAG-TIMEOUT
-        print(f"📄 PDF attachment temporarily disabled for email speed")
-        
-        # if status == "Approved":
-        #     try:
-        #         pdf_app_key = application_id if application_id else app_id
-        #         
-        #         if pdf_app_key:
-        #             print(f" Generating PDF for application: {pdf_app_key}")
-        #             query = "SELECT * FROM applications WHERE application_number = %s"
-        #             app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
-        #             
-        #             if app_data:
-        #                 pdf_buffer = generate_application_pdf(pdf_app_key, app_data, contract_number)
-        #                 
-        #                 if pdf_buffer:
-        #                     part = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
-        #                     part.add_header(
-        #                         'Content-Disposition',
-        #                         'attachment',
-        #                         filename=f"Application_{app_id}_Contract_{contract_number}.pdf" if contract_number else f"Application_{app_id}.pdf"
-        #                     )
-        #                     msg.attach(part)
-        #                     print(f" PDF attached successfully")
-        #                 else:
-        #                     print(" PDF buffer is empty")
-        #             else:
-        #                 print(f" Could not find application data")
-        #         else:
-        #             print(f" Could not find application key")
-        #     except Exception as e:
-        #         print(" PDF attachment failed:", e)
-
-        # ================= SEND EMAIL WITH TIMEOUT =================
+        # ================= SEND EMAIL WITH SSL =================
         try:
             print(f"📧 Sending email to {to_email}...")
+            print(f"🔹 Using SMTP_SSL on port 465")
             
-            # ✅ MAGDAGDAG NG TIMEOUT PARA HINDI MAG-HANG
-            server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
-            server.starttls()
+            context = ssl.create_default_context()
+            server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=30, context=context)
+            print("🔹 Connected to Gmail SMTP server")
+            
             server.login(sender_email, sender_app_password)
+            print("🔹 Login successful")
+            
             server.send_message(msg)
+            print("🔹 Message sent")
+            
             server.quit()
             
             print(f"✅ Email sent to {to_email}")
@@ -5910,12 +5858,13 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
 
         except smtplib.SMTPAuthenticationError as e:
             print(f"❌ SMTP Authentication error: {e}")
+            print(f"❌ Please check your app password")
             return False
         except smtplib.SMTPException as e:
             print(f"❌ SMTP error: {e}")
             return False
         except socket.timeout:
-            print(f"❌ SMTP connection timeout after 15 seconds")
+            print(f"❌ SMTP connection timeout after 30 seconds")
             return False
         except ConnectionRefusedError:
             print(f"❌ Connection refused - SMTP server unavailable")
@@ -5932,6 +5881,8 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         traceback.print_exc()
         return False
 
+
+#sender_app_password = "svql qzea vmjt xndx"
 
 def calculate_age(birthdate_str):
     if not birthdate_str or birthdate_str == 'none':
