@@ -22,10 +22,6 @@ import base64
 from werkzeug.security import generate_password_hash, check_password_hash
 from db_config import execute_query, get_db_connection
 import mysql.connector
-import socket
-import smtplib
-import threading
-import ssl
 
 # ========== ITO LANG ANG IDINAGDAG ==========
 from db_config import execute_query
@@ -5610,7 +5606,7 @@ def update_internet_application_status(app_id):
                 traceback.print_exc()
                 # Don't rollback here, we want to keep the application update
 
-        #========== SEND EMAIL NOTIFICATION ==========
+        # ========== SEND EMAIL NOTIFICATION ==========
         try:
             customer_email = app_data.get("email")
             first_name = app_data.get("first_name")
@@ -5618,36 +5614,22 @@ def update_internet_application_status(app_id):
             reapplied_count = app_data.get("reapplied_count", 0)
 
             if customer_email:
-                # ✅ I-SEND ANG EMAIL SA BACKGROUND THREAD PARA HINDI MAG-TIMEOUT
-                def send_email_in_background():
-                    try:
-                        send_application_status_email(
-                            to_email=customer_email,
-                            first_name=first_name,
-                            status=status,
-                            app_id=application_number,
-                            reason=reason if status == "Rejected" else None,
-                            contract_number=contract_number if status == "Approved" else None,
-                            billing_date=billing_date if status == "Approved" else None,
-                            application_id=app_id,
-                            reapplied_count=reapplied_count
-                        )
-                        print(f"✅ Background email sent to {customer_email}")
-                    except Exception as bg_err:
-                        print(f"❌ Background email error: {bg_err}")
-                        import traceback
-                        traceback.print_exc()
-                
-                email_thread = threading.Thread(target=send_email_in_background)
-                email_thread.daemon = True
-                email_thread.start()
-                print(f"📧 Email thread started for {customer_email}")
+                send_application_status_email(
+                    to_email=customer_email,
+                    first_name=first_name,
+                    status=status,
+                    app_id=application_number,
+                    reason=reason if status == "Rejected" else None,
+                    contract_number=contract_number if status == "Approved" else None,
+                    billing_date=billing_date if status == "Approved" else None,
+                    application_id=app_id,
+                    reapplied_count=reapplied_count
+                )
+                print(f"✅ Email sent to {customer_email}")
             else:
                 print(f"⚠️ No email address for {app_id}")
         except Exception as email_err:
             print(f"❌ Email error: {email_err}")
-            import traceback
-            traceback.print_exc()
             # Don't fail the request if email fails
 
         # ✅ ALWAYS RETURN JSON
@@ -5677,212 +5659,228 @@ def update_internet_application_status(app_id):
             print("🔒 Database connection closed")
 
 
-
-
-
-
 # ===============================
-# SEND EMAIL STATUS - HTML VERSION WITH SSL
+# SEND EMAIL STATUS
 # ===============================
-import socket
-import smtplib
-import ssl
-import threading
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
-
 def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
-    """
-    Send email notification with proper timeout and error handling.
-    Uses SSL (port 465) for more reliable connection.
-    Returns: True if email sent successfully, False otherwise.
-    """
-    try:
-        sender_email = "cablevision.cableinternet@gmail.com"
-        sender_app_password = "svql qzea vmjt xndx"  # ← PALITAN MO ITO!
+    sender_email = "cablevision.cableinternet@gmail.com"
+    sender_app_password = "svql qzea vmjt xndx"
 
-        subject = "Cablevision Application Status Update"
+    subject = "Cablevision Application Status Update"
 
-        status_color = "#10b981" if status == "Approved" else "#ef4444"
-        status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
-        status_icon = "✓" if status == "Approved" else "✗"
-        
-        if status == "Approved":
-            message = f"Congratulations, {first_name}!"
-            message_sub = "Your application has been approved successfully."
-        else:
-            message = f"Application Update, {first_name}"
-            message_sub = "We regret to inform you about your application status."
+    status_color = "#10b981" if status == "Approved" else "#ef4444"
+    status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
+    status_icon = "✓" if status == "Approved" else "✗"
 
-        extra_message = ""
-        if status == "Approved":
-            if contract_number:
-                extra_message = f"""
-                <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-                    <p style="margin: 0 0 8px 0; color: #166534;">
-                        <strong>What's Next?</strong>
-                    </p>
-                    <p style="margin: 0; color: #14532d; font-size: 14px;">
-                        Our team will contact you soon for installation scheduling.
-                    </p>
-                </div>
-                """
-            else:
-                extra_message = f"""
-                <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-                    <p style="margin: 0 0 8px 0; color: #166534;">
-                        <strong>What's Next?</strong>
-                    </p>
-                    <p style="margin: 0; color: #14532d; font-size: 14px;">
-                        Our team will contact you soon for installation scheduling.
-                    </p>
-                </div>
-                """
+    # Base URL
+    BASE_URL = "http://127.0.0.1:5001"
+    
+    if status == "Approved":
+        message = f"Congratulations, {first_name}!"
+        message_sub = "Your application has been approved successfully."
+        reapply_section = ""
+    else:
+        message = f"Application Update, {first_name}"
+        message_sub = "We regret to inform you about your application status."
+        reapply_section = ""
+
+    extra_message = ""
+    if status == "Approved":
+        if contract_number:
+            extra_message = f"""
+            <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
+                <p style="margin: 0 0 8px 0; color: #166534;">
+                    <strong>What's Next?</strong>
+                </p>
+                <p style="margin: 0; color: #14532d; font-size: 14px;">
+                    Please find attached your application PDF with contract details.<br>
+                    Our team will contact you soon for installation scheduling.<br>
+                    For inquiries, please contact our support team.
+                </p>
+            </div>
+            """
         else:
             extra_message = f"""
-            <div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;">
-                <p style="margin: 0 0 8px 0; color: #991b1b;">
-                    <strong>Reason for Rejection</strong>
+            <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
+                <p style="margin: 0 0 8px 0; color: #166534;">
+                    <strong>What's Next?</strong>
                 </p>
-                <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
-                    {reason}
+                <p style="margin: 0; color: #14532d; font-size: 14px;">
+                    Please find attached your application PDF.<br>
+                    Our team will contact you soon for installation scheduling.<br>
+                    For inquiries, please contact our support team.
                 </p>
             </div>
             """
+    else:
+        extra_message = f"""
+        <div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;">
+            <p style="margin: 0 0 8px 0; color: #991b1b;">
+                <strong>Reason for Rejection</strong>
+            </p>
+            <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
+                {reason}
+            </p>
+            <p style="margin-top: 12px; color: #7f1d1d; font-size: 13px;">
+                Our team will reach out via email with instructions if a re-application is possible.
+            </p>
+        </div>
+        """
 
-        contract_section = ""
-        if status == "Approved" and contract_number:
-            contract_section = f"""
-            <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; text-align: center;">
-                <div style="font-size: 14px; color: #047857; margin-bottom: 8px; letter-spacing: 1px;">CONTRACT NUMBER</div>
-                <div style="font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 2px; font-family: monospace;">{contract_number}</div>
-            </div>
-            """
-        
-        billing_section = ""
-        if status == "Approved" and billing_date:
-            billing_section = f"""
-            <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px;">
-                <div style="font-size: 12px; font-weight: 600; color: #1e40af;">BILLING INFORMATION</div>
+    # Contract number display section
+    contract_section = ""
+    if status == "Approved" and contract_number:
+        contract_section = f"""
+        <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; text-align: center;">
+            <div style="font-size: 14px; color: #047857; margin-bottom: 8px; letter-spacing: 1px;">CONTRACT NUMBER</div>
+            <div style="font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 2px; font-family: monospace;">{contract_number}</div>
+            <div style="font-size: 11px; color: #059669; margin-top: 8px;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
+            <div style="font-size: 11px; color: #047857; margin-top: 6px;">Please keep this number for future reference</div>
+        </div>
+        """
+    
+    # Billing date display section
+    billing_section = ""
+    if status == "Approved" and billing_date:
+        billing_section = f"""
+        <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+            <div>
+                <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">BILLING INFORMATION</div>
                 <div style="font-size: 16px; font-weight: 600; color: #1e3a8a;">Every {billing_date} of the month</div>
+                <div style="font-size: 11px; color: #3b82f6; margin-top: 4px;">Your monthly bill will be generated on this date</div>
             </div>
-            """
+        </div>
+        """
 
-        html_body = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Cablevision Email</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #eef2ff;">
-            <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
-                <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
-                    
-                    <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
-                        <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cablevision Email</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
+        
+        <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
+            <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
+                
+                <!-- HEADER SECTION -->
+                <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
+                    <div style="position: absolute; top: 20px; right: 25px;">
+                        <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 600; color: #a5f3fc;">STATUS UPDATE</span>
+                    </div>
+                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
+                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
+                </div>
+
+                <!-- STATUS BADGE -->
+                <div style="padding: 20px 28px 0 28px; text-align: center;">
+                    <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
+                        <span style="font-size: 14px; font-weight: 600; color: {status_color};">
+                            {status_icon} APPLICATION {status.upper()}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- CONTENT SECTION -->
+                <div style="padding: 20px 28px 32px 28px;">
+                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">{message}</h2>
+                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">{message_sub}</p>
+
+                    <!-- Application Details -->
+                    <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
+                        <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Application Number</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{app_id}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Status</div>
+                            <div style="font-size: 16px; font-weight: 700; color: {status_color};">{status}</div>
+                        </div>
                     </div>
 
-                    <div style="padding: 20px 28px 0 28px; text-align: center;">
-                        <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
-                            <span style="font-size: 14px; font-weight: 600; color: {status_color};">
-                                {status_icon} APPLICATION {status.upper()}
-                            </span>
-                        </div>
+                    {contract_section}
+                    {billing_section}
+                    {reapply_section}
+                    {extra_message}
+
+                    <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                            Thank you for choosing Cablevision!
+                        </p>
                     </div>
+                </div>
 
-                    <div style="padding: 20px 28px 32px 28px;">
-                        <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">{message}</h2>
-                        <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">{message_sub}</p>
-
-                        <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
-                            <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                                <div style="font-size: 11px; font-weight: 600; color: #64748b;">Application Number</div>
-                                <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{app_id}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 11px; font-weight: 600; color: #64748b;">Status</div>
-                                <div style="font-size: 16px; font-weight: 700; color: {status_color};">{status}</div>
-                            </div>
-                        </div>
-
-                        {contract_section}
-                        {billing_section}
-                        {extra_message}
-
-                        <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                            <p style="margin: 0; font-size: 12px; color: #94a3b8;">
-                                Thank you for choosing Cablevision!
-                            </p>
-                        </div>
-                    </div>
-
-                    <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
-                        <div style="font-size: 11px; color: #64748b;">
-                            © 2026 Cablevision Internet Service Provider. All rights reserved.
-                        </div>
+                <!-- FOOTER -->
+                <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
+                    <div style="font-size: 11px; color: #64748b;">
+                        © 2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
             </div>
-        </body>
-        </html>
-        """
+        </div>
+    </body>
+    </html>
+    """
 
-        msg = MIMEMultipart("mixed")
-        msg['From'] = sender_email
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(html_body, "html"))
+    msg = MIMEMultipart("mixed")
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
 
-        # ================= SEND EMAIL WITH SSL =================
+    msg.attach(MIMEText(html_body, "html"))
+
+    # ================= PDF ATTACHMENT =================
+    if status == "Approved":
         try:
-            print(f"📧 Sending email to {to_email}...")
-            print(f"🔹 Using SMTP_SSL on port 465")
+            pdf_app_key = application_id if application_id else app_id
             
-            context = ssl.create_default_context()
-            server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=30, context=context)
-            print("🔹 Connected to Gmail SMTP server")
-            
-            server.login(sender_email, sender_app_password)
-            print("🔹 Login successful")
-            
-            server.send_message(msg)
-            print("🔹 Message sent")
-            
-            server.quit()
-            
-            print(f"✅ Email sent to {to_email}")
-            return True
+            if pdf_app_key:
+                print(f" Generating PDF for application: {pdf_app_key}")
+                # Fetch application data from MySQL
+                query = "SELECT * FROM applications WHERE application_number = %s"
+                app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
+                
+                if app_data:
+                    pdf_buffer = generate_application_pdf(pdf_app_key, app_data, contract_number)
+                    
+                    if pdf_buffer:
+                        part = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
+                        part.add_header(
+                            'Content-Disposition',
+                            'attachment',
+                            filename=f"Application_{app_id}_Contract_{contract_number}.pdf" if contract_number else f"Application_{app_id}.pdf"
+                        )
+                        msg.attach(part)
+                        print(f" PDF attached successfully for application {pdf_app_key}")
+                    else:
+                        print(" PDF buffer is empty")
+                else:
+                    print(f" Could not find application data for: {pdf_app_key}")
+            else:
+                print(f" Could not find application key for app_id: {app_id}")
 
-        except smtplib.SMTPAuthenticationError as e:
-            print(f"❌ SMTP Authentication error: {e}")
-            print(f"❌ Please check your app password")
-            return False
-        except smtplib.SMTPException as e:
-            print(f"❌ SMTP error: {e}")
-            return False
-        except socket.timeout:
-            print(f"❌ SMTP connection timeout after 30 seconds")
-            return False
-        except ConnectionRefusedError:
-            print(f"❌ Connection refused - SMTP server unavailable")
-            return False
         except Exception as e:
-            print(f"❌ Email send failed: {e}")
+            print(" PDF attachment failed:", e)
             import traceback
             traceback.print_exc()
-            return False
+
+    # ================= SEND EMAIL =================
+    try:
+        print("🔹 Sending email with PDF attachment...")
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_app_password)
+        server.send_message(msg)
+        server.quit()
+        print(f" Email sent to {to_email} with PDF attachment")
+        return True
 
     except Exception as e:
-        print(f"❌ CRITICAL: Email function error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f" Email failed: {e}")
         return False
 
-
-#sender_app_password = "svql qzea vmjt xndx"
 
 def calculate_age(birthdate_str):
     if not birthdate_str or birthdate_str == 'none':
