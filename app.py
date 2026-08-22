@@ -8073,9 +8073,11 @@ def approve_request(req_id):
         installation_date = request_data.get("installation_date", None)
         
         import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost", user="root", password="", database="cablevision_db"
-        )
+        conn = get_db_connection()
+
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+
         cursor = conn.cursor(dictionary=True)
         print("✅ Database connected")
         
@@ -8145,7 +8147,7 @@ def approve_request(req_id):
             sender_email = "cablevision.cableinternet@gmail.com"
             sender_app_password = "svql qzea vmjt xndx"
             subject = "Cablevision - Re-application Requested"
-            BASE_URL = "http://127.0.0.1:5001"
+            BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5001").rstrip("/")
             
             safe_reason = html_lib.escape(rejection_reason)
             safe_message = html_lib.escape(reason)  # Admin's message
@@ -8665,10 +8667,11 @@ def reject_request(req_id):
     conn = None
     cursor = None
     try:
-        import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost", user="root", password="", database="cablevision_db"
-        )
+        conn = get_db_connection()
+
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+
         cursor = conn.cursor(dictionary=True)
         
         req_query = """
@@ -11887,319 +11890,751 @@ def get_admin_internet_applications():
 
 
 # ===============================
-# ADMIN REQUEST (NOT DIRECT APPROVE) - CONVERTED TO MYSQL
+# ADMIN REQUEST (NOT DIRECT APPROVE)
+# MYSQL / RAILWAY READY
 # ===============================
 @app.route("/api/admin/application/<app_id>/request", methods=["POST"])
 def admin_request_application(app_id):
+    conn = None
+    cursor = None
+
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         status = data.get("status")
         reason = data.get("reason")
-        
-        username = request.args.get("username") or session.get("admin_username") or session.get("adminUsername")
-        
-        if not username and request.headers.get("X-Admin-Username"):
-            username = request.headers.get("X-Admin-Username")
-        if not username and data.get("username"):
-            username = data.get("username")
 
-        # ✅ ALLOWED STATUSES - Added "Reapply"
-        if status not in ["Approved", "Rejected", "Pending", "Reapply"]:
-            return jsonify({"error": "Invalid status"}), 400
+        # ===============================
+        # GET ADMIN USERNAME
+        # ===============================
+        username = (
+            request.args.get("username")
+            or session.get("admin_username")
+            or session.get("adminUsername")
+        )
 
         if not username:
-            return jsonify({"error": "Admin username required"}), 400
+            username = request.headers.get("X-Admin-Username")
 
-        app_query = "SELECT * FROM applications WHERE application_number = %s"
-        app_data = execute_query(app_query, (app_id,), fetch_one=True)
+        if not username:
+            username = data.get("username")
+
+        # ===============================
+        # VALIDATE STATUS
+        # ===============================
+        if status not in ["Approved", "Rejected", "Pending", "Reapply"]:
+            return jsonify({
+                "error": "Invalid status"
+            }), 400
+
+        if not username:
+            return jsonify({
+                "error": "Admin username required"
+            }), 400
+
+        print("=" * 60)
+        print("🚀 ADMIN REQUEST STARTED")
+        print(f"📌 Application ID: {app_id}")
+        print(f"📌 Requested Status: {status}")
+        print(f"📌 Username: {username}")
+
+        # ===============================
+        # GET APPLICATION
+        # ===============================
+        app_query = """
+            SELECT *
+            FROM applications
+            WHERE application_number = %s
+        """
+
+        app_data = execute_query(
+            app_query,
+            (app_id,),
+            fetch_one=True
+        )
 
         if not app_data:
-            return jsonify({"error": "Application not found"}), 404
+            return jsonify({
+                "error": "Application not found"
+            }), 404
 
-        # ✅ VALIDATIONS
+        # ===============================
+        # VALIDATIONS
+        # ===============================
+
+        # Restore request
         if status == "Pending" and app_data.get("status") != "Rejected":
-            return jsonify({"error": "Only rejected applications can request restore"}), 400
-        
-        # ✅ NEW: Reapply request validation
-        if status == "Reapply" and app_data.get("status") != "Rejected":
-            return jsonify({"error": "Only rejected applications can request reapply"}), 400
-        
-        # ✅ Check if reapply already requested directly by superadmin
-        if status == "Reapply" and app_data.get("reapply_requested"):
-            return jsonify({"error": "A reapply request has already been sent to the customer"}), 400
+            return jsonify({
+                "error": "Only rejected applications can request restore"
+            }), 400
 
+        # Reapply request
+        if status == "Reapply" and app_data.get("status") != "Rejected":
+            return jsonify({
+                "error": "Only rejected applications can request reapply"
+            }), 400
+
+        # Check direct reapply flag
+        if status == "Reapply" and app_data.get("reapply_requested"):
+            return jsonify({
+                "error": "A reapply request has already been sent to the customer"
+            }), 400
+
+        # ===============================
+        # CHECK EXISTING PENDING REQUEST
+        # ===============================
         pending_query = """
-            SELECT request_id FROM approval_requests 
-            WHERE app_id = %s AND status = 'Pending'
+            SELECT request_id
+            FROM approval_requests
+            WHERE app_id = %s
+              AND status = 'Pending'
             LIMIT 1
         """
-        existing_request = execute_query(pending_query, (app_id,), fetch_one=True)
-        
-        if existing_request:
-            return jsonify({"error": "Request already sent"}), 400
 
-        # ========== 🔥 FIX: GET ADMIN INFO - IMPROVED SEARCH ==========
-        print(f"🔍 Searching for admin with username: '{username}'")
-        
-        import mysql.connector
-        admin_conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="cablevision_db"
+        existing_request = execute_query(
+            pending_query,
+            (app_id,),
+            fetch_one=True
         )
-        admin_cursor = admin_conn.cursor(dictionary=True)
-        
-        admin_info = None
-        
-        # Clean the username - remove spaces and normalize
-        clean_username = username.strip().lower().replace(" ", "")
-        print(f"🔍 Cleaned username: '{clean_username}'")
-        
-        # Strategy 1: Exact match on cleaned username (no spaces)
-        admin_cursor.execute("SELECT admin_id, username, area FROM admins WHERE LOWER(REPLACE(username, ' ', '')) = %s", (clean_username,))
-        admin_info = admin_cursor.fetchone()
-        
-        if not admin_info:
-            # Strategy 2: Match on admin_id (if username looks like ACV-XXXX)
-            if clean_username.startswith('acv-') or clean_username.startswith('admin'):
-                admin_cursor.execute("SELECT admin_id, username, area FROM admins WHERE LOWER(admin_id) = %s OR LOWER(username) = %s", (clean_username, clean_username))
-                admin_info = admin_cursor.fetchone()
-        
-        if not admin_info:
-            # Strategy 3: Try partial match
-            admin_cursor.execute("SELECT admin_id, username, area FROM admins WHERE LOWER(REPLACE(username, ' ', '')) LIKE %s", (f"%{clean_username}%",))
-            admin_info = admin_cursor.fetchone()
-        
-        if not admin_info:
-            # Strategy 4: If username contains "super" and "admin", find superadmin
-            if "super" in clean_username and "admin" in clean_username:
-                admin_cursor.execute("SELECT admin_id, username, area FROM admins WHERE LOWER(username) LIKE '%super%admin%'")
-                admin_info = admin_cursor.fetchone()
-        
-        if not admin_info:
-            # Strategy 5: Get first active admin as fallback
-            admin_cursor.execute("SELECT admin_id, username, area FROM admins WHERE status = 'Active' LIMIT 1")
-            admin_info = admin_cursor.fetchone()
-            if admin_info:
-                print(f"⚠️ Using fallback admin: {admin_info.get('admin_id')}")
 
-        admin_cursor.close()
-        admin_conn.close()
-        
-        print(f"🔍 Admin query result: {admin_info}")
-        
+        if existing_request:
+            return jsonify({
+                "error": "Request already sent"
+            }), 400
+
+        # ===============================
+        # GET ADMIN INFORMATION
+        # ===============================
+        print(f"🔍 Searching for admin: '{username}'")
+
+        clean_username = (
+            str(username)
+            .strip()
+            .lower()
+            .replace(" ", "")
+        )
+
+        print(f"🔍 Cleaned username: '{clean_username}'")
+
+        # --------------------------------
+        # Strategy 1
+        # Exact username ignoring spaces
+        # --------------------------------
+        admin_query = """
+            SELECT admin_id, username, area
+            FROM admins
+            WHERE LOWER(REPLACE(username, ' ', '')) = %s
+            LIMIT 1
+        """
+
+        admin_info = execute_query(
+            admin_query,
+            (clean_username,),
+            fetch_one=True
+        )
+
+        # --------------------------------
+        # Strategy 2
+        # Match admin_id
+        # --------------------------------
         if not admin_info:
-            # Get list of all admins for debugging
-            debug_conn = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="",
-                database="cablevision_db"
+
+            admin_query = """
+                SELECT admin_id, username, area
+                FROM admins
+                WHERE LOWER(admin_id) = %s
+                   OR LOWER(username) = %s
+                LIMIT 1
+            """
+
+            admin_info = execute_query(
+                admin_query,
+                (clean_username, clean_username),
+                fetch_one=True
             )
-            debug_cursor = debug_conn.cursor(dictionary=True)
-            debug_cursor.execute("SELECT admin_id, username FROM admins")
-            all_admins = debug_cursor.fetchall()
-            debug_cursor.close()
-            debug_conn.close()
-            
-            admin_list = [f"{a['username']} ({a['admin_id']})" for a in all_admins]
-            
+
+        # --------------------------------
+        # Strategy 3
+        # Partial username match
+        # --------------------------------
+        if not admin_info:
+
+            admin_query = """
+                SELECT admin_id, username, area
+                FROM admins
+                WHERE LOWER(REPLACE(username, ' ', '')) LIKE %s
+                LIMIT 1
+            """
+
+            admin_info = execute_query(
+                admin_query,
+                (f"%{clean_username}%",),
+                fetch_one=True
+            )
+
+        # --------------------------------
+        # Strategy 4
+        # Superadmin fallback
+        # --------------------------------
+        if not admin_info:
+
+            if "super" in clean_username and "admin" in clean_username:
+
+                admin_query = """
+                    SELECT admin_id, username, area
+                    FROM admins
+                    WHERE LOWER(username) LIKE '%super%admin%'
+                    LIMIT 1
+                """
+
+                admin_info = execute_query(
+                    admin_query,
+                    fetch_one=True
+                )
+
+        # --------------------------------
+        # Strategy 5
+        # First active admin fallback
+        # --------------------------------
+        if not admin_info:
+
+            admin_query = """
+                SELECT admin_id, username, area
+                FROM admins
+                WHERE status = 'Active'
+                LIMIT 1
+            """
+
+            admin_info = execute_query(
+                admin_query,
+                fetch_one=True
+            )
+
+            if admin_info:
+                print(
+                    f"⚠️ Using fallback admin: "
+                    f"{admin_info.get('admin_id')}"
+                )
+
+        print(f"🔍 Admin query result: {admin_info}")
+
+        # ===============================
+        # ADMIN NOT FOUND
+        # ===============================
+        if not admin_info:
+
+            all_admins_query = """
+                SELECT admin_id, username
+                FROM admins
+                ORDER BY admin_id
+            """
+
+            all_admins = execute_query(
+                all_admins_query,
+                fetch=True
+            ) or []
+
+            admin_list = [
+                f"{a.get('username')} ({a.get('admin_id')})"
+                for a in all_admins
+            ]
+
             return jsonify({
                 "error": f"Admin not found for username: {username}",
                 "available_admins": admin_list,
                 "hint": "Try using your admin_id (e.g., ACV-0001) or your exact username"
             }), 404
-        
-        # Get the CORRECT admin_id (ACV-0001/ACV-0002 format)
-        admin_id = admin_info.get('admin_id')
-        admin_area = admin_info.get('area')
-        admin_username = admin_info.get('username')
-        
-        # Use admin_area as both area and city (since walang city column)
-        admin_city = admin_area  # Use area as city for notifications
-        
-        print(f"✅ Admin found - ID: {admin_id}, Username: {admin_username}, Area: {admin_area}")
 
-        # ========== GENERATE UNIQUE REQUEST ID ==========
+        # ===============================
+        # ADMIN DATA
+        # ===============================
+        admin_id = admin_info.get("admin_id")
+        admin_area = admin_info.get("area")
+        admin_username = admin_info.get("username")
+
+        # Since previous structure uses area as city
+        admin_city = admin_area
+
+        print(
+            f"✅ Admin found - "
+            f"ID: {admin_id}, "
+            f"Username: {admin_username}, "
+            f"Area: {admin_area}"
+        )
+
+        # ===============================
+        # GENERATE UNIQUE REQUEST ID
+        # ===============================
         import random
         import string
-        request_id = ''.join(random.choices(string.ascii_letters + string.digits, k=20))
-        
+
+        request_id = ''.join(
+            random.choices(
+                string.ascii_letters + string.digits,
+                k=20
+            )
+        )
+
+        # ===============================
+        # INSERT APPROVAL REQUEST
+        # ===============================
         insert_request_query = """
-            INSERT INTO approval_requests 
-            (request_id, app_id, requested_by, requested_status, status, date_requested,
-             admin_id, admin_area, admin_city, reason)
+            INSERT INTO approval_requests
+            (
+                request_id,
+                app_id,
+                requested_by,
+                requested_status,
+                status,
+                date_requested,
+                admin_id,
+                admin_area,
+                admin_city,
+                reason
+            )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        execute_query(insert_request_query, (
-            request_id,
-            app_id,
-            admin_username,
-            status,
-            "Pending",
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            admin_id,
-            admin_area,
-            admin_city,
-            reason
-        ))
 
-        update_app_query = "UPDATE applications SET status = 'Request Sent' WHERE application_number = %s"
-        execute_query(update_app_query, (app_id,))
+        request_result = execute_query(
+            insert_request_query,
+            (
+                request_id,
+                app_id,
+                admin_username,
+                status,
+                "Pending",
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                admin_id,
+                admin_area,
+                admin_city,
+                reason
+            )
+        )
 
-        notification_id = int(datetime.now().timestamp() * 1000)
-        applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
-        application_number = app_data.get('application_number', 'N/A')
-        
-        # ✅ MESSAGE WORDING
+        if request_result is None:
+            return jsonify({
+                "error": "Failed to create approval request"
+            }), 500
+
+        print(f"✅ Approval request created: {request_id}")
+
+        # ===============================
+        # CHANGE APPLICATION STATUS
+        # ===============================
+        update_app_query = """
+            UPDATE applications
+            SET status = 'Request Sent'
+            WHERE application_number = %s
+        """
+
+        update_result = execute_query(
+            update_app_query,
+            (app_id,)
+        )
+
+        if update_result is None:
+            return jsonify({
+                "error": "Failed to update application status"
+            }), 500
+
+        print(
+            f"✅ Application {app_id} "
+            f"status changed to Request Sent"
+        )
+
+        # ===============================
+        # CREATE NOTIFICATION
+        # ===============================
+        notification_id = int(
+            datetime.now().timestamp() * 1000
+        )
+
+        applicant_name = (
+            f"{app_data.get('first_name', '')} "
+            f"{app_data.get('last_name', '')}"
+        ).strip()
+
+        application_number = (
+            app_data.get(
+                "application_number",
+                "N/A"
+            )
+        )
+
+        # ===============================
+        # NOTIFICATION MESSAGE
+        # ===============================
         if status == "Pending":
-            message = f"{admin_username} ({admin_id}) has requested to RESTORE {applicant_name}'s application ({application_number}) back to Pending status"
+
+            message = (
+                f"{admin_username} ({admin_id}) "
+                f"has requested to RESTORE "
+                f"{applicant_name}'s application "
+                f"({application_number}) "
+                f"back to Pending status"
+            )
+
             notif_title = "Admin Restore Request"
+
         elif status == "Reapply":
-            message = f"{admin_username} ({admin_id}) has requested to RE-APPLY {applicant_name}'s application ({application_number})\nMessage: {reason}"
+
+            message = (
+                f"{admin_username} ({admin_id}) "
+                f"has requested to RE-APPLY "
+                f"{applicant_name}'s application "
+                f"({application_number})"
+            )
+
+            if reason:
+                message += f"\nMessage: {reason}"
+
             notif_title = "Admin Reapply Request"
+
         elif status == "Rejected" and reason:
-            message = f"{admin_username} ({admin_id}) has requested to {status.lower()} {applicant_name}'s application ({application_number})\nReason: {reason}"
+
+            message = (
+                f"{admin_username} ({admin_id}) "
+                f"has requested to "
+                f"{status.lower()} "
+                f"{applicant_name}'s application "
+                f"({application_number})"
+                f"\nReason: {reason}"
+            )
+
             notif_title = f"Admin {status} Request"
+
         else:
-            message = f"{admin_username} ({admin_id}) has requested to {status.lower()} {applicant_name}'s application ({application_number})"
+
+            message = (
+                f"{admin_username} ({admin_id}) "
+                f"has requested to "
+                f"{status.lower()} "
+                f"{applicant_name}'s application "
+                f"({application_number})"
+            )
+
             notif_title = f"Admin {status} Request"
-        
+
+        # ===============================
+        # INSERT NOTIFICATION
+        # ===============================
         insert_notif_query = """
-            INSERT INTO notifications 
-            (id, title, message, type, relatedId, timestamp, read_status)
+            INSERT INTO notifications
+            (
+                id,
+                title,
+                message,
+                type,
+                relatedId,
+                timestamp,
+                read_status
+            )
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
-        execute_query(insert_notif_query, (
-            notification_id,
-            notif_title,
-            message,
-            "admin_request",
-            app_id,
-            datetime.now().isoformat(),
-            0
-        ))
+
+        notif_result = execute_query(
+            insert_notif_query,
+            (
+                notification_id,
+                notif_title,
+                message,
+                "admin_request",
+                app_id,
+                datetime.now().isoformat(),
+                0
+            )
+        )
+
+        if notif_result is None:
+            print(
+                "⚠️ Notification insertion failed"
+            )
+        else:
+            print(
+                f"🔔 Notification created: "
+                f"{notification_id}"
+            )
+
+        # ===============================
+        # SUCCESS
+        # ===============================
+        print("=" * 60)
+        print("✅ ADMIN REQUEST COMPLETED")
+        print("=" * 60)
 
         return jsonify({
-            "message": "Request sent to superadmin.", 
+            "message": "Request sent to superadmin.",
             "request_id": request_id,
             "admin_id": admin_id,
             "admin_username": admin_username
-        })
+        }), 200
 
     except Exception as e:
-        print(f"❌ Admin request error: {e}")
+
+        print("=" * 60)
+        print("❌ ADMIN REQUEST ERROR")
+        print(str(e))
+        print("=" * 60)
+
         import traceback
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+    finally:
+
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
 
 
             
 # ===============================
-# GET ADMIN NOTIFICATIONS (XAMPP/MYSQL)
+# GET ADMIN NOTIFICATIONS
+# MYSQL / RAILWAY READY
 # ===============================
 @app.route("/api/admin/notifications", methods=["GET"])
 def get_admin_notifications():
     try:
-        admin_id = request.args.get("admin_id") or request.args.get("username")
-        tab_id = request.args.get("tab_id", "")
-        
-        print(f"🔍 GET ADMIN NOTIFICATIONS - admin_id: {admin_id}, tab_id: {tab_id}")
-        
-        if not admin_id:
-            return jsonify({"error": "Admin ID required"}), 400
-        
-        # 👇 KUNG MAY TAB ID, I-VERIFY NA TAMA ANG SESSION
-        if tab_id:
-            user_session = session.get(f"admin_{tab_id}")
-            if user_session:
-                session_admin = user_session.get("admin_username") or user_session.get("user_name")
-                if session_admin and session_admin != admin_id:
-                    print(f"⚠️ Session mismatch: {session_admin} vs {admin_id}")
-                    admin_id = session_admin
-        
-        # Get admin's area and city
-        admin_city = request.args.get("city", "")
-        admin_area = request.args.get("area", "")
-        
-        if not admin_city and not admin_area:
-            import mysql.connector
-            conn = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="",
-                database="cablevision_db"
-            )
-            cursor = conn.cursor(dictionary=True)
-            
-            # Get admin details
-            admin_query = """
-                SELECT area, city FROM admins 
-                WHERE admin_id = %s OR id = %s
-            """
-            cursor.execute(admin_query, (admin_id, admin_id))
-            admin_data = cursor.fetchone()
-            if admin_data:
-                admin_city = admin_data.get('city') or ''
-                admin_area = admin_data.get('area') or ''
-            cursor.close()
-            conn.close()
-        
-        import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="cablevision_db"
+        admin_id = (
+            request.args.get("admin_id")
+            or request.args.get("username")
         )
-        cursor = conn.cursor(dictionary=True)
-        
-        # ✅ FIXED: Isama ang city at area-based notifications
-        query = """
-            SELECT id, title, message, type, relatedId, request_id, timestamp,
-                read_status, admin_id, requested_by, contract_number, billing_date,
-                application_city, admin_city, admin_area
-            FROM admin_notifications 
-            WHERE (
-                admin_id = %s 
-                OR requested_by = %s
-                OR (application_city = %s AND application_city != '' AND application_city IS NOT NULL)
-                OR (admin_city = %s AND admin_city != '' AND admin_city IS NOT NULL)
-                OR (admin_area = %s AND admin_area != '' AND admin_area IS NOT NULL)
+
+        tab_id = request.args.get("tab_id", "")
+
+        print(
+            f"🔍 GET ADMIN NOTIFICATIONS - "
+            f"admin_id: {admin_id}, tab_id: {tab_id}"
+        )
+
+        # ===============================
+        # VALIDATE ADMIN ID
+        # ===============================
+        if not admin_id:
+            return jsonify({
+                "error": "Admin ID required"
+            }), 400
+
+        # ===============================
+        # VERIFY SESSION IF TAB ID EXISTS
+        # ===============================
+        if tab_id:
+            user_session = session.get(
+                f"admin_{tab_id}"
             )
+
+            if user_session:
+                session_admin = (
+                    user_session.get("admin_username")
+                    or user_session.get("user_name")
+                )
+
+                if (
+                    session_admin
+                    and session_admin != admin_id
+                ):
+                    print(
+                        f"⚠️ Session mismatch: "
+                        f"{session_admin} vs {admin_id}"
+                    )
+
+                    admin_id = session_admin
+
+        # ===============================
+        # GET CITY / AREA FROM REQUEST
+        # ===============================
+        admin_city = request.args.get(
+            "city",
+            ""
+        )
+
+        admin_area = request.args.get(
+            "area",
+            ""
+        )
+
+        # ===============================
+        # GET ADMIN DETAILS FROM DATABASE
+        # IF CITY AND AREA WERE NOT PROVIDED
+        # ===============================
+        if not admin_city and not admin_area:
+
+            admin_query = """
+                SELECT area, city
+                FROM admins
+                WHERE admin_id = %s
+                   OR id = %s
+                LIMIT 1
+            """
+
+            admin_data = execute_query(
+                admin_query,
+                (admin_id, admin_id),
+                fetch_one=True
+            )
+
+            if admin_data:
+                admin_city = (
+                    admin_data.get("city")
+                    or ""
+                )
+
+                admin_area = (
+                    admin_data.get("area")
+                    or ""
+                )
+
+                print(
+                    f"📍 Admin location - "
+                    f"City: {admin_city}, "
+                    f"Area: {admin_area}"
+                )
+
+        # ===============================
+        # GET ADMIN NOTIFICATIONS
+        # ===============================
+        query = """
+            SELECT
+                id,
+                title,
+                message,
+                type,
+                relatedId,
+                request_id,
+                timestamp,
+                read_status,
+                admin_id,
+                requested_by,
+                contract_number,
+                billing_date,
+                application_city,
+                admin_city,
+                admin_area
+            FROM admin_notifications
+            WHERE
+                (
+                    admin_id = %s
+
+                    OR requested_by = %s
+
+                    OR (
+                        application_city = %s
+                        AND application_city != ''
+                        AND application_city IS NOT NULL
+                    )
+
+                    OR (
+                        admin_city = %s
+                        AND admin_city != ''
+                        AND admin_city IS NOT NULL
+                    )
+
+                    OR (
+                        admin_area = %s
+                        AND admin_area != ''
+                        AND admin_area IS NOT NULL
+                    )
+                )
             ORDER BY id DESC
             LIMIT 50
         """
-        cursor.execute(query, (admin_id, admin_id, admin_city, admin_city, admin_area))
-        notifications = cursor.fetchall()
-        
-        cursor.close()
-        conn.close()
-        
-        print(f"📊 Found {len(notifications)} notifications for {admin_id}")
-        
+
+        notifications = execute_query(
+            query,
+            (
+                admin_id,
+                admin_id,
+                admin_city,
+                admin_city,
+                admin_area
+            ),
+            fetch=True
+        )
+
+        # ===============================
+        # HANDLE QUERY FAILURE
+        # ===============================
+        if notifications is None:
+            print(
+                "❌ Failed to retrieve admin notifications"
+            )
+
+            return jsonify([]), 500
+
+        print(
+            f"📊 Found {len(notifications)} "
+            f"notifications for {admin_id}"
+        )
+
+        # ===============================
+        # FORMAT RESPONSE
+        # ===============================
         result = []
+
         for n in notifications:
+
             result.append({
                 "id": n.get("id"),
-                "title": n.get("title", "Notification"),
-                "message": n.get("message", ""),
-                "type": n.get("type", "info"),
-                "relatedId": n.get("relatedId"),
-                "request_id": n.get("request_id"),
-                "timestamp": str(n.get("timestamp")),
-                "read": n.get("read_status") == 1,
-                "contract_number": n.get("contract_number"),
-                "billing_date": n.get("billing_date")
+
+                "title": n.get(
+                    "title",
+                    "Notification"
+                ),
+
+                "message": n.get(
+                    "message",
+                    ""
+                ),
+
+                "type": n.get(
+                    "type",
+                    "info"
+                ),
+
+                "relatedId": n.get(
+                    "relatedId"
+                ),
+
+                "request_id": n.get(
+                    "request_id"
+                ),
+
+                "timestamp": str(
+                    n.get("timestamp")
+                ),
+
+                "read": (
+                    n.get("read_status") == 1
+                ),
+
+                "contract_number": n.get(
+                    "contract_number"
+                ),
+
+                "billing_date": n.get(
+                    "billing_date"
+                )
             })
-        
-        return jsonify(result)
-        
+
+        # ===============================
+        # RETURN NOTIFICATIONS
+        # ===============================
+        return jsonify(result), 200
+
     except Exception as e:
-        print(f"❌ Error in get_admin_notifications: {e}")
+
+        print("=" * 60)
+        print("❌ ERROR IN GET ADMIN NOTIFICATIONS")
+        print(str(e))
+        print("=" * 60)
+
         import traceback
         traceback.print_exc()
+
         return jsonify([]), 500
 
 

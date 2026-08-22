@@ -2,26 +2,40 @@ import os
 import mysql.connector
 from mysql.connector import Error
 
-# ===============================
-# DATABASE CONFIG
-# ===============================
+# ============================================================
+# DATABASE CONFIGURATION
+# Railway MySQL + Local XAMPP fallback
+# ============================================================
+
 DB_CONFIG = {
-    'host': os.getenv('MYSQLHOST', 'localhost'),
-    'database': os.getenv('MYSQLDATABASE', 'cablevision_db'),
-    'user': os.getenv('MYSQLUSER', 'root'),
-    'password': os.getenv('MYSQLPASSWORD', ''),
-    'port': int(os.getenv('MYSQLPORT', 3306))
+    "host": os.getenv("MYSQLHOST", "localhost"),
+    "port": int(os.getenv("MYSQLPORT", "3306")),
+    "database": os.getenv("MYSQLDATABASE", "cablevision_db"),
+    "user": os.getenv("MYSQLUSER", "root"),
+    "password": os.getenv("MYSQLPASSWORD", "")
 }
 
-# ===============================
-# CONNECTION
-# ===============================
+
+# ============================================================
+# DATABASE CONNECTION
+# ============================================================
+
 def get_db_connection():
     try:
-        connection = mysql.connector.connect(**DB_CONFIG)
+        connection = mysql.connector.connect(
+            host=DB_CONFIG["host"],
+            port=DB_CONFIG["port"],
+            database=DB_CONFIG["database"],
+            user=DB_CONFIG["user"],
+            password=DB_CONFIG["password"],
+            connection_timeout=10
+        )
 
         if connection.is_connected():
-            print("[DB] Connected successfully")
+            print(
+                f"[DB] Connected successfully "
+                f"→ {DB_CONFIG['host']}:{DB_CONFIG['port']}"
+            )
             return connection
 
     except Error as e:
@@ -30,9 +44,10 @@ def get_db_connection():
     return None
 
 
-# ===============================
+# ============================================================
 # UNIVERSAL QUERY EXECUTOR
-# ===============================
+# ============================================================
+
 def execute_query(query, params=None, fetch=False, fetch_one=False):
     connection = get_db_connection()
 
@@ -45,38 +60,56 @@ def execute_query(query, params=None, fetch=False, fetch_one=False):
     try:
         cursor = connection.cursor(dictionary=True)
 
-        print(f"[QUERY] {query}")
-        print(f"[PARAMS] {params}")
+        print("=" * 60)
+        print("[QUERY]")
+        print(query)
+        print("[PARAMS]")
+        print(params)
 
         if isinstance(params, list):
             params = tuple(params)
 
         cursor.execute(query, params or ())
 
-        result = None
-
+        # ----------------------------------------------------
+        # FETCH MANY
+        # ----------------------------------------------------
         if fetch:
             result = cursor.fetchall()
             print(f"[FETCH] Found {len(result)} rows")
+            return result
 
-        elif fetch_one:
+        # ----------------------------------------------------
+        # FETCH ONE
+        # ----------------------------------------------------
+        if fetch_one:
             result = cursor.fetchone()
-            print(f"[FETCH_ONE] Found {'Yes' if result else 'No'}")
+            print(
+                f"[FETCH_ONE] Found "
+                f"{'Yes' if result else 'No'}"
+            )
+            return result
 
-        else:
-            connection.commit()
-            result = cursor.rowcount
-            print(f"[AFFECTED] {result} rows affected")
+        # ----------------------------------------------------
+        # INSERT / UPDATE / DELETE
+        # ----------------------------------------------------
+        connection.commit()
 
-        return result
+        affected = cursor.rowcount
+
+        print(f"[AFFECTED] {affected} rows affected")
+
+        return affected
 
     except Error as e:
         print(f"[QUERY ERROR] {e}")
         print(f"[QUERY] {query}")
         print(f"[PARAMS] {params}")
 
-        if connection:
+        try:
             connection.rollback()
+        except Exception:
+            pass
 
         return None
 
