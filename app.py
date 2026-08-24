@@ -5791,7 +5791,14 @@ def update_internet_application_status(app_id):
 import requests  # ✅ I-ADD SA PINAKA-ITAAS NG FILE
 
 def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
-    # ✅ USE BREVO API (hindi SMTP)
+    print("=" * 60)
+    print(f"📧 SEND_APPLICATION_STATUS_EMAIL CALLED")
+    print(f"📧 to_email: {to_email}")
+    print(f"📧 status: {status}")
+    print(f"📧 app_id: {app_id}")
+    print("=" * 60)
+    
+    # ✅ USE BREVO API
     api_key = os.getenv('BREVO_API_KEY', '')
     
     if not api_key:
@@ -5953,7 +5960,7 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     </html>
     """
 
-    # ✅ SEND VIA BREVO API
+     # ✅ SEND VIA BREVO API
     try:
         url = "https://api.brevo.com/v3/smtp/email"
         headers = {
@@ -5979,12 +5986,14 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         
         # ✅ Add PDF attachment if approved
         if status == "Approved":
+            print("📎 Adding PDF attachment...")
             try:
                 pdf_app_key = application_id if application_id else app_id
                 if pdf_app_key:
                     query = "SELECT * FROM applications WHERE application_number = %s"
                     app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
                     if app_data:
+                        print(f"📎 Generating PDF for {pdf_app_key}...")
                         pdf_buffer = generate_application_pdf(pdf_app_key, app_data, contract_number)
                         if pdf_buffer:
                             import base64
@@ -5993,10 +6002,21 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                                 "content": pdf_content,
                                 "name": f"Application_{app_id}.pdf"
                             }]
+                            print(f"✅ PDF attached successfully!")
+                        else:
+                            print("❌ PDF buffer is empty!")
+                    else:
+                        print(f"❌ No app data found for {pdf_app_key}")
             except Exception as pdf_err:
-                print(f"PDF attachment error: {pdf_err}")
+                print(f"❌ PDF attachment error: {pdf_err}")
+                import traceback
+                traceback.print_exc()
+                # Huwag i-fail ang email kung nag-fail ang PDF
 
+        print(f"📧 Sending email via Brevo API to {to_email}...")
         response = requests.post(url, json=data, headers=headers, timeout=30)
+        
+        print(f"📧 Response status: {response.status_code}")
         
         if response.status_code in [200, 201]:
             print(f"✅ Email sent successfully to {to_email}")
@@ -7913,9 +7933,8 @@ def request_reapply(app_id):
     conn = None
     cursor = None
     try:
-        print(f"🔍 REAPPLY REQUEST STARTED for app_id: {app_id}")
-        
         conn = get_db_connection()
+
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
 
@@ -7930,6 +7949,7 @@ def request_reapply(app_id):
         if app_data.get("status") != "Rejected":
             return jsonify({"error": "Only rejected applications can request a re-application."}), 400
 
+        # ✅ ONCE-ONLY CHECK
         if app_data.get("reapply_requested"):
             return jsonify({"error": "A reapply request has already been sent for this application."}), 400
 
@@ -7944,16 +7964,9 @@ def request_reapply(app_id):
         rejection_reason = app_data.get("rejection_reason") or "Not specified"
         reapplied_count = app_data.get("reapplied_count") or 0
 
-        print(f"📧 Customer email: {customer_email}")
-        print(f"📧 First name: {first_name}")
-        print(f"📧 Rejection reason: {rejection_reason}")
-        print(f"📧 Reapplied count: {reapplied_count}")
-
         if not customer_email:
             return jsonify({"error": "Customer email not found for this application."}), 400
 
-        print("📧 Calling send_reapply_request_email...")
-        
         sent = send_reapply_request_email(
             to_email=customer_email,
             first_name=first_name,
@@ -7964,11 +7977,10 @@ def request_reapply(app_id):
             reapplied_count=reapplied_count
         )
 
-        print(f"📧 Email send result: {sent}")
-
         if not sent:
             return jsonify({"error": "Failed to send email"}), 500
 
+        # ✅ SET THE FLAG + SAVE MESSAGE + TIMESTAMP
         update_query = """
             UPDATE applications
             SET reapply_requested = 1,
@@ -7982,7 +7994,7 @@ def request_reapply(app_id):
         return jsonify({
             "success": True,
             "message": "Reapply request email sent successfully",
-            "reapply_requested_at": app_data.get("reapply_requested_at")
+            "reapply_requested_at": app_data.get("reapply_requested_at")  # optional, front-end may reload anyway
         })
 
     except mysql.connector.Error as db_err:
@@ -8007,31 +8019,14 @@ def request_reapply(app_id):
 def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, admin_message,
                                  application_id, reapplied_count=0):
     import html as html_lib
-    import requests
 
-    print("=" * 60)
-    print("📧 SEND_REAPPLY_REQUEST_EMAIL CALLED")
-    print(f"📧 to_email: {to_email}")
-    print(f"📧 first_name: {first_name}")
-    print(f"📧 app_id: {app_id}")
-    print("=" * 60)
-
-    # ✅ USE BREVO API
-    api_key = os.getenv('BREVO_API_KEY', '')
-    
-    print(f"📧 BREVO_API_KEY: {'SET' if api_key else 'NOT SET'}")
-
-    if not api_key:
-        print("❌ Brevo API key not configured!")
-        return False
-
+    sender_email = "cablevision.cableinternet@gmail.com"
+    sender_app_password = "svql qzea vmjt xndx"
     subject = "Cablevision - Re-application Requested"
-    
-    # ✅ USE PRODUCTION URL
-    BASE_URL = os.getenv('BASE_URL', 'https://cablevision-user-version1.up.railway.app')
+    BASE_URL = "http://127.0.0.1:5001"
 
-    safe_reason = html_lib.escape(rejection_reason) if rejection_reason else "Not specified"
-    safe_message = html_lib.escape(admin_message) if admin_message else "Please review and re-apply."
+    safe_reason = html_lib.escape(rejection_reason)
+    safe_message = html_lib.escape(admin_message)
 
     if reapplied_count < 2:
         remaining = 2 - reapplied_count
@@ -8106,46 +8101,22 @@ def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, a
     </html>
     """
 
-    # ✅ SEND VIA BREVO API
-    try:
-        url = "https://api.brevo.com/v3/smtp/email"
-        headers = {
-            "accept": "application/json",
-            "api-key": api_key,
-            "content-type": "application/json"
-        }
-        
-        data = {
-            "sender": {
-                "name": "Cablevision Systems Corp.",
-                "email": "cablevision.cableinternet@gmail.com"
-            },
-            "to": [
-                {
-                    "email": to_email,
-                    "name": first_name
-                }
-            ],
-            "subject": subject,
-            "htmlContent": html_body
-        }
+    msg = MIMEMultipart("mixed")
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(html_body, "html"))
 
-        print(f"📧 Sending reapply email to {to_email}...")
-        response = requests.post(url, json=data, headers=headers, timeout=30)
-        
-        print(f"📧 Response status: {response.status_code}")
-        
-        if response.status_code in [200, 201]:
-            print(f"✅ Reapply request email sent to {to_email}")
-            return True
-        else:
-            print(f"❌ API error: {response.status_code} - {response.text}")
-            return False
-            
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_app_password)
+        server.send_message(msg)
+        server.quit()
+        print(f"✅ Reapply request email sent to {to_email}")
+        return True
     except Exception as e:
         print(f"❌ Reapply request email failed: {e}")
-        import traceback
-        traceback.print_exc()
         return False
 
 # ===============================
