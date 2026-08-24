@@ -5423,7 +5423,7 @@ def download_pdf(application_number):
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
 
 
-    
+
 
 # ==================== UPDATE APPLICATION STATUS - CONVERTED TO MYSQL ====================
 # ==================== UPDATE APPLICATION STATUS - FIXED ====================
@@ -9388,6 +9388,13 @@ def get_single_customer(customer_id):
         else:
             result = customer_data
         
+        # ✅ Convert image paths to Cloudinary URLs
+        image_fields = ['profile_photo', 'id_front', 'id_back', 'proof_billing', 'signature']
+        for field in image_fields:
+            if result.get(field):
+                result[field] = get_cloudinary_url(result[field])
+                print(f"✅ Converted {field}: {result[field][:50]}...")
+        
         # Parse JSON fields in customer data if any
         if result.get('tv_qty') and isinstance(result.get('tv_qty'), str):
             try:
@@ -9411,6 +9418,8 @@ def get_single_customer(customer_id):
         
     except Exception as e:
         print(f"Error getting single customer: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
