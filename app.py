@@ -5723,7 +5723,7 @@ def update_internet_application_status(app_id):
                 traceback.print_exc()
                 # Don't rollback here, we want to keep the application update
 
-        # ========== SEND EMAIL NOTIFICATION ==========
+                # ========== SEND EMAIL NOTIFICATION (Background Thread) ==========
         try:
             customer_email = app_data.get("email")
             first_name = app_data.get("first_name")
@@ -5731,23 +5731,35 @@ def update_internet_application_status(app_id):
             reapplied_count = app_data.get("reapplied_count", 0)
 
             if customer_email:
-                send_application_status_email(
-                    to_email=customer_email,
-                    first_name=first_name,
-                    status=status,
-                    app_id=application_number,
-                    reason=reason if status == "Rejected" else None,
-                    contract_number=contract_number if status == "Approved" else None,
-                    billing_date=billing_date if status == "Approved" else None,
-                    application_id=app_id,
-                    reapplied_count=reapplied_count
+                # ✅ GAMITIN ANG THREAD PARA HINDI MAG-TIMEOUT ANG WORKER
+                import threading
+                email_thread = threading.Thread(
+                    target=send_application_status_email,
+                    args=(
+                        customer_email,
+                        first_name,
+                        status,
+                        application_number,
+                    ),
+                    kwargs={
+                        'reason': reason if status == "Rejected" else None,
+                        'contract_number': contract_number if status == "Approved" else None,
+                        'billing_date': billing_date if status == "Approved" else None,
+                        'application_id': app_id,
+                        'reapplied_count': reapplied_count
+                    }
                 )
-                print(f"✅ Email sent to {customer_email}")
+                email_thread.start()
+                print(f"📧 Email thread started for {customer_email}")
+                # Huwag hintayin ang thread, hayaan itong tumakbo sa background.
+                # Ibalik agad ang response sa frontend para hindi mag-timeout.
             else:
                 print(f"⚠️ No email address for {app_id}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
-            # Don't fail the request if email fails
+            print(f"❌ Email thread error: {email_err}")
+            import traceback
+            traceback.print_exc()
+            # Huwag i-fail ang request kung mag-fail ang email
 
         # ✅ ALWAYS RETURN JSON
         return jsonify({
