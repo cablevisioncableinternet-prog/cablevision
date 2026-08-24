@@ -7913,8 +7913,9 @@ def request_reapply(app_id):
     conn = None
     cursor = None
     try:
+        print(f"🔍 REAPPLY REQUEST STARTED for app_id: {app_id}")
+        
         conn = get_db_connection()
-
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
 
@@ -7929,7 +7930,6 @@ def request_reapply(app_id):
         if app_data.get("status") != "Rejected":
             return jsonify({"error": "Only rejected applications can request a re-application."}), 400
 
-        # ✅ ONCE-ONLY CHECK
         if app_data.get("reapply_requested"):
             return jsonify({"error": "A reapply request has already been sent for this application."}), 400
 
@@ -7944,9 +7944,16 @@ def request_reapply(app_id):
         rejection_reason = app_data.get("rejection_reason") or "Not specified"
         reapplied_count = app_data.get("reapplied_count") or 0
 
+        print(f"📧 Customer email: {customer_email}")
+        print(f"📧 First name: {first_name}")
+        print(f"📧 Rejection reason: {rejection_reason}")
+        print(f"📧 Reapplied count: {reapplied_count}")
+
         if not customer_email:
             return jsonify({"error": "Customer email not found for this application."}), 400
 
+        print("📧 Calling send_reapply_request_email...")
+        
         sent = send_reapply_request_email(
             to_email=customer_email,
             first_name=first_name,
@@ -7957,10 +7964,11 @@ def request_reapply(app_id):
             reapplied_count=reapplied_count
         )
 
+        print(f"📧 Email send result: {sent}")
+
         if not sent:
             return jsonify({"error": "Failed to send email"}), 500
 
-        # ✅ SET THE FLAG + SAVE MESSAGE + TIMESTAMP
         update_query = """
             UPDATE applications
             SET reapply_requested = 1,
@@ -7974,7 +7982,7 @@ def request_reapply(app_id):
         return jsonify({
             "success": True,
             "message": "Reapply request email sent successfully",
-            "reapply_requested_at": app_data.get("reapply_requested_at")  # optional, front-end may reload anyway
+            "reapply_requested_at": app_data.get("reapply_requested_at")
         })
 
     except mysql.connector.Error as db_err:
@@ -8001,9 +8009,18 @@ def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, a
     import html as html_lib
     import requests
 
+    print("=" * 60)
+    print("📧 SEND_REAPPLY_REQUEST_EMAIL CALLED")
+    print(f"📧 to_email: {to_email}")
+    print(f"📧 first_name: {first_name}")
+    print(f"📧 app_id: {app_id}")
+    print("=" * 60)
+
     # ✅ USE BREVO API
     api_key = os.getenv('BREVO_API_KEY', '')
     
+    print(f"📧 BREVO_API_KEY: {'SET' if api_key else 'NOT SET'}")
+
     if not api_key:
         print("❌ Brevo API key not configured!")
         return False
@@ -8011,10 +8028,10 @@ def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, a
     subject = "Cablevision - Re-application Requested"
     
     # ✅ USE PRODUCTION URL
-    BASE_URL = "https://cablevision-user-version1.up.railway.app"  # or your actual URL
+    BASE_URL = os.getenv('BASE_URL', 'https://cablevision-user-version1.up.railway.app')
 
-    safe_reason = html_lib.escape(rejection_reason)
-    safe_message = html_lib.escape(admin_message)
+    safe_reason = html_lib.escape(rejection_reason) if rejection_reason else "Not specified"
+    safe_message = html_lib.escape(admin_message) if admin_message else "Please review and re-apply."
 
     if reapplied_count < 2:
         remaining = 2 - reapplied_count
@@ -8113,7 +8130,10 @@ def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, a
             "htmlContent": html_body
         }
 
+        print(f"📧 Sending reapply email to {to_email}...")
         response = requests.post(url, json=data, headers=headers, timeout=30)
+        
+        print(f"📧 Response status: {response.status_code}")
         
         if response.status_code in [200, 201]:
             print(f"✅ Reapply request email sent to {to_email}")
