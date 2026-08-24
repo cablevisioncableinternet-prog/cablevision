@@ -5780,8 +5780,16 @@ def update_internet_application_status(app_id):
 # SEND EMAIL STATUS
 # ===============================
 def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
+    # ✅ USE BREVO SMTP (hindi Gmail)
+    smtp_host = os.getenv('SMTP_HOST', 'smtp-relay.brevo.com')
+    smtp_port = int(os.getenv('SMTP_PORT', 587))
+    smtp_user = os.getenv('SMTP_USER', '')
+    smtp_password = os.getenv('SMTP_PASSWORD', '')
+    smtp_from = os.getenv('SMTP_FROM', 'cablevision.cableinternet@gmail.com')
+
+    if not smtp_user or not smtp_password:
+        print("❌ SMTP credentials not configured!")
+        return False
 
     subject = "Cablevision Application Status Update"
 
@@ -5789,9 +5797,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
     status_icon = "✓" if status == "Approved" else "✗"
 
-    # Base URL
-    BASE_URL = "http://127.0.0.1:5001"
-    
     if status == "Approved":
         message = f"Congratulations, {first_name}!"
         message_sub = "Your application has been approved successfully."
@@ -5844,7 +5849,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         </div>
         """
 
-    # Contract number display section
     contract_section = ""
     if status == "Approved" and contract_number:
         contract_section = f"""
@@ -5856,7 +5860,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         </div>
         """
     
-    # Billing date display section
     billing_section = ""
     if status == "Approved" and billing_date:
         billing_section = f"""
@@ -5942,7 +5945,7 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     """
 
     msg = MIMEMultipart("mixed")
-    msg['From'] = sender_email
+    msg['From'] = smtp_from
     msg['To'] = to_email
     msg['Subject'] = subject
 
@@ -5955,7 +5958,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
             
             if pdf_app_key:
                 print(f" Generating PDF for application: {pdf_app_key}")
-                # Fetch application data from MySQL
                 query = "SELECT * FROM applications WHERE application_number = %s"
                 app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
                 
@@ -5983,19 +5985,21 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
             import traceback
             traceback.print_exc()
 
-    # ================= SEND EMAIL =================
+    # ================= SEND EMAIL VIA BREVO =================
     try:
-        print("🔹 Sending email with PDF attachment...")
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        print(f"📧 Sending email via Brevo to {to_email}...")
+        server = smtplib.SMTP(smtp_host, smtp_port, timeout=30)
         server.starttls()
-        server.login(sender_email, sender_app_password)
+        server.login(smtp_user, smtp_password)
         server.send_message(msg)
         server.quit()
-        print(f" Email sent to {to_email} with PDF attachment")
+        print(f"✅ Email sent to {to_email} with PDF attachment")
         return True
 
     except Exception as e:
-        print(f" Email failed: {e}")
+        print(f"❌ Email failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
