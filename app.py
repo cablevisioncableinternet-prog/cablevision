@@ -4824,8 +4824,7 @@ def download_pdf(application_number):
         return "Application not found", 404
     
     # ================= GET APPLICATION NUMBER AS FOLDER NAME =================
-    # Ang application_number mismo ang ginagamit bilang folder name
-    app_folder = str(application_number)  # "3482179683"
+    app_folder = str(application_number)
     
     # Parse JSON fields
     if data.get('tv_qty'):
@@ -4850,9 +4849,6 @@ def download_pdf(application_number):
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # ================= CONFIGURATION =================
-    SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
-
     # ================= DEBUG: Print image info =================
     print("=" * 80)
     print("🔍 IMAGE DATA FROM DATABASE:")
@@ -4863,97 +4859,81 @@ def download_pdf(application_number):
     print(f"proof_billing: {data.get('proof_billing', 'None')}")
     print("=" * 80)
 
-    # ================= FIXED: Get image path using application_number =================
-    def get_image_path(image_filename):
-        """Get the full path of an image from database path"""
-        if not image_filename:
+    # ================= FIXED: Get image from Cloudinary =================
+    def get_image_from_cloudinary(image_path):
+        """Get image from Cloudinary URL or local path"""
+        if not image_path:
             return None
         
-        if not isinstance(image_filename, str):
-            image_filename = str(image_filename)
+        # ✅ Convert to Cloudinary URL
+        cloudinary_url = get_cloudinary_url(image_path)
         
-        print(f"🔍 Looking for: {image_filename}")
+        if cloudinary_url and cloudinary_url.startswith('http'):
+            try:
+                print(f"📤 Downloading from Cloudinary: {cloudinary_url}")
+                response = requests.get(cloudinary_url, timeout=30)
+                if response.status_code == 200:
+                    print(f"✅ Downloaded {len(response.content)} bytes")
+                    return response.content
+                else:
+                    print(f"❌ Cloudinary download failed: {response.status_code}")
+            except Exception as e:
+                print(f"❌ Error downloading from Cloudinary: {e}")
         
-        # Extract the filename from the path
-        # Example: /shared-uploads/application_uploads/3482179683/id_front_1783904528.jpg
-        # Extract: id_front_1783904528.jpg
-        filename = os.path.basename(image_filename)
+        # ✅ Fallback: Try local path (for development)
+        SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
         
-        # ================= FIX: Use app_folder (application_number) instead of application_id =================
-        # Build the correct path: SHARED_UPLOADS_BASE/application_uploads/{app_folder}/{filename}
+        # Extract filename from path
+        filename = os.path.basename(image_path)
+        
+        # Try to find in application_uploads folder
         full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
-        print(f"📂 Trying: {full_path}")
-        
         if os.path.exists(full_path):
-            file_size = os.path.getsize(full_path)
-            print(f"✅ Found: {full_path} ({file_size} bytes)")
-            return full_path
+            print(f"✅ Found locally: {full_path}")
+            with open(full_path, 'rb') as f:
+                return f.read()
         
-        # Try alternative: extract app_folder from path if available
-        match = re.search(r'/application_uploads/(\d+)/', image_filename)
-        if match:
-            extracted_folder = match.group(1)
-            alt_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', extracted_folder, filename)
-            print(f"📂 Trying extracted: {alt_path}")
+        # Try alternative paths
+        alt_paths = [
+            os.path.join(SHARED_UPLOADS_BASE, filename),
+            os.path.join(SHARED_UPLOADS_BASE, image_path.lstrip('/'))
+        ]
+        
+        for alt_path in alt_paths:
             if os.path.exists(alt_path):
-                file_size = os.path.getsize(alt_path)
-                print(f"✅ Found: {alt_path} ({file_size} bytes)")
-                return alt_path
+                print(f"✅ Found locally: {alt_path}")
+                with open(alt_path, 'rb') as f:
+                    return f.read()
         
-        # Try just in the base uploads folder
-        alt_path = os.path.join(SHARED_UPLOADS_BASE, filename)
-        print(f"📂 Trying alternative: {alt_path}")
-        if os.path.exists(alt_path):
-            file_size = os.path.getsize(alt_path)
-            print(f"✅ Found: {alt_path} ({file_size} bytes)")
-            return alt_path
-        
-        # Try with the full path
-        alt_path = os.path.join(SHARED_UPLOADS_BASE, image_filename.lstrip('/'))
-        print(f"📂 Trying alternative: {alt_path}")
-        if os.path.exists(alt_path):
-            file_size = os.path.getsize(alt_path)
-            print(f"✅ Found: {alt_path} ({file_size} bytes)")
-            return alt_path
-        
-        print(f"❌ NOT FOUND: {image_filename}")
+        print(f"❌ Image not found: {image_path}")
         return None
 
     # ================= HELPER: Load and convert image =================
-    def load_and_convert_image(image_data_or_filename):
+    def load_and_convert_image(image_data):
         """Load image and convert to RGB format for PDF"""
-        if not image_data_or_filename:
+        if not image_data:
             print(f"❌ No image data provided")
             return None
         
         img_bytes = None
         
-        # Try to load from file
-        if isinstance(image_data_or_filename, str):
-            image_path = get_image_path(image_data_or_filename)
-            if image_path and os.path.exists(image_path):
-                try:
-                    with open(image_path, 'rb') as f:
-                        img_bytes = f.read()
-                    print(f"✅ Loaded image from file: {image_path} ({len(img_bytes)} bytes)")
-                except Exception as e:
-                    print(f"❌ Error reading image file: {e}")
-            else:
-                print(f"❌ Image path not found: {image_data_or_filename}")
+        # Try to get from Cloudinary
+        if isinstance(image_data, str):
+            img_bytes = get_image_from_cloudinary(image_data)
         
         # Try base64 decoding if file loading failed
-        if not img_bytes and isinstance(image_data_or_filename, str):
-            if 'base64,' in image_data_or_filename or 'data:image' in image_data_or_filename:
+        if not img_bytes and isinstance(image_data, str):
+            if 'base64,' in image_data or 'data:image' in image_data:
                 try:
-                    if 'base64,' in image_data_or_filename:
-                        image_data_or_filename = image_data_or_filename.split('base64,')[1]
-                    elif 'data:image' in image_data_or_filename:
-                        match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_data_or_filename)
+                    if 'base64,' in image_data:
+                        image_data = image_data.split('base64,')[1]
+                    elif 'data:image' in image_data:
+                        match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_data)
                         if match:
-                            image_data_or_filename = match.group(2)
+                            image_data = match.group(2)
                     
-                    image_data_or_filename = image_data_or_filename.strip()
-                    img_bytes = base64.b64decode(image_data_or_filename)
+                    image_data = image_data.strip()
+                    img_bytes = base64.b64decode(image_data)
                     print(f"✅ Decoded base64 image ({len(img_bytes)} bytes)")
                 except Exception as e:
                     print(f"❌ Error decoding base64: {e}")
@@ -4967,12 +4947,10 @@ def download_pdf(application_number):
             img = Image.open(io.BytesIO(img_bytes))
             print(f"✅ Image opened: {img.format}, {img.size}, {img.mode}")
             
-            # Convert to RGB if not already
             if img.mode != 'RGB':
                 img = img.convert('RGB')
                 print(f"✅ Converted to RGB")
             
-            # Save to BytesIO in JPEG format
             output = io.BytesIO()
             img.save(output, format='JPEG', quality=90)
             output.seek(0)
@@ -4982,7 +4960,6 @@ def download_pdf(application_number):
             
         except Exception as e:
             print(f"❌ Error converting image: {e}")
-            # If conversion fails, return original bytes
             return img_bytes
 
     # ================= HELPER: Draw image safely =================
@@ -4992,7 +4969,6 @@ def download_pdf(application_number):
             print(f"🖼️ Drawing {label}...")
             img_bytes = load_and_convert_image(image_data)
             if img_bytes:
-                # Write to temp file for ReportLab
                 with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
                     tmp_file.write(img_bytes)
                     tmp_path = tmp_file.name
@@ -5117,11 +5093,9 @@ def download_pdf(application_number):
             y -= 18
         y -= 5
 
-    # ================= FIXED: Draw images from files =================
     def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
         nonlocal y
         
-        # Front ID
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width / 2, y, label1)
@@ -5136,7 +5110,6 @@ def download_pdf(application_number):
             p.setFillColorRGB(0, 0, 0)
             y -= 25
         
-        # Back ID
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width / 2, y, label2)
@@ -5151,7 +5124,6 @@ def download_pdf(application_number):
             p.setFillColorRGB(0, 0, 0)
             y -= 25
 
-    # ================= FIXED: Signature section =================
     def draw_signature_section(signature_img, full_name):
         nonlocal y
         
@@ -5449,6 +5421,9 @@ def download_pdf(application_number):
     p.save()
     buffer.seek(0)
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
+
+
+    
 
 # ==================== UPDATE APPLICATION STATUS - CONVERTED TO MYSQL ====================
 # ==================== UPDATE APPLICATION STATUS - FIXED ====================
