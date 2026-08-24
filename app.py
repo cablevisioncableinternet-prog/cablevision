@@ -4731,13 +4731,6 @@ def superadmin_get_single_application(app_id):
         if not application:
             return jsonify({"error": "Application not found"}), 404
         
-        # ✅ Convert image paths to Cloudinary URLs
-        image_fields = ['profile_photo', 'id_front', 'id_back', 'proof_billing', 'signature']
-        for field in image_fields:
-            if application.get(field):
-                application[field] = get_cloudinary_url(application[field])
-                print(f"✅ Converted {field}: {application[field]}")
-        
         # Parse JSON fields (tv_qty, tv_brand, tv_type are stored as JSON strings)
         if application.get('tv_qty'):
             try:
@@ -4766,8 +4759,6 @@ def superadmin_get_single_application(app_id):
         
     except Exception as e:
         print("Get single application error:", e)
-        import traceback
-        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
     
