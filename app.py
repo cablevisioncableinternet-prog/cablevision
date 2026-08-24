@@ -7999,11 +7999,19 @@ def request_reapply(app_id):
 def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, admin_message,
                                  application_id, reapplied_count=0):
     import html as html_lib
+    import requests
 
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
+    # ✅ USE BREVO API
+    api_key = os.getenv('BREVO_API_KEY', '')
+    
+    if not api_key:
+        print("❌ Brevo API key not configured!")
+        return False
+
     subject = "Cablevision - Re-application Requested"
-    BASE_URL = "http://127.0.0.1:5001"
+    
+    # ✅ USE PRODUCTION URL
+    BASE_URL = "https://cablevision-user-version1.up.railway.app"  # or your actual URL
 
     safe_reason = html_lib.escape(rejection_reason)
     safe_message = html_lib.escape(admin_message)
@@ -8081,22 +8089,43 @@ def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, a
     </html>
     """
 
-    msg = MIMEMultipart("mixed")
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(html_body, "html"))
-
+    # ✅ SEND VIA BREVO API
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_app_password)
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ Reapply request email sent to {to_email}")
-        return True
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json"
+        }
+        
+        data = {
+            "sender": {
+                "name": "Cablevision Systems Corp.",
+                "email": "cablevision.cableinternet@gmail.com"
+            },
+            "to": [
+                {
+                    "email": to_email,
+                    "name": first_name
+                }
+            ],
+            "subject": subject,
+            "htmlContent": html_body
+        }
+
+        response = requests.post(url, json=data, headers=headers, timeout=30)
+        
+        if response.status_code in [200, 201]:
+            print(f"✅ Reapply request email sent to {to_email}")
+            return True
+        else:
+            print(f"❌ API error: {response.status_code} - {response.text}")
+            return False
+            
     except Exception as e:
         print(f"❌ Reapply request email failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # ===============================
