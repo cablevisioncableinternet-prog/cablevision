@@ -5796,6 +5796,8 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     print(f"📧 to_email: {to_email}")
     print(f"📧 status: {status}")
     print(f"📧 app_id: {app_id}")
+    print(f"📧 contract_number: {contract_number}")
+    print(f"📧 billing_date: {billing_date}")
     print("=" * 60)
     
     # ✅ USE BREVO API
@@ -5804,8 +5806,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     if not api_key:
         print("❌ Brevo API key not configured!")
         return False
-
-    print(f"📧 Sending email via Brevo API to {to_email}...")
 
     subject = "Cablevision Application Status Update"
 
@@ -5816,78 +5816,11 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     if status == "Approved":
         message = f"Congratulations, {first_name}!"
         message_sub = "Your application has been approved successfully."
-        reapply_section = ""
     else:
         message = f"Application Update, {first_name}"
         message_sub = "We regret to inform you about your application status."
-        reapply_section = ""
 
-    extra_message = ""
-    if status == "Approved":
-        if contract_number:
-            extra_message = f"""
-            <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-                <p style="margin: 0 0 8px 0; color: #166534;">
-                    <strong>What's Next?</strong>
-                </p>
-                <p style="margin: 0; color: #14532d; font-size: 14px;">
-                    Please find attached your application PDF with contract details.<br>
-                    Our team will contact you soon for installation scheduling.<br>
-                    For inquiries, please contact our support team.
-                </p>
-            </div>
-            """
-        else:
-            extra_message = f"""
-            <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-                <p style="margin: 0 0 8px 0; color: #166534;">
-                    <strong>What's Next?</strong>
-                </p>
-                <p style="margin: 0; color: #14532d; font-size: 14px;">
-                    Please find attached your application PDF.<br>
-                    Our team will contact you soon for installation scheduling.<br>
-                    For inquiries, please contact our support team.
-                </p>
-            </div>
-            """
-    else:
-        extra_message = f"""
-        <div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;">
-            <p style="margin: 0 0 8px 0; color: #991b1b;">
-                <strong>Reason for Rejection</strong>
-            </p>
-            <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
-                {reason}
-            </p>
-            <p style="margin-top: 12px; color: #7f1d1d; font-size: 13px;">
-                Our team will reach out via email with instructions if a re-application is possible.
-            </p>
-        </div>
-        """
-
-    contract_section = ""
-    if status == "Approved" and contract_number:
-        contract_section = f"""
-        <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; text-align: center;">
-            <div style="font-size: 14px; color: #047857; margin-bottom: 8px; letter-spacing: 1px;">CONTRACT NUMBER</div>
-            <div style="font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 2px; font-family: monospace;">{contract_number}</div>
-            <div style="font-size: 11px; color: #059669; margin-top: 8px;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-            <div style="font-size: 11px; color: #047857; margin-top: 6px;">Please keep this number for future reference</div>
-        </div>
-        """
-    
-    billing_section = ""
-    if status == "Approved" and billing_date:
-        billing_section = f"""
-        <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
-            <div>
-                <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">BILLING INFORMATION</div>
-                <div style="font-size: 16px; font-weight: 600; color: #1e3a8a;">Every {billing_date} of the month</div>
-                <div style="font-size: 11px; color: #3b82f6; margin-top: 4px;">Your monthly bill will be generated on this date</div>
-            </div>
-        </div>
-        """
-
+    # Build email content
     html_body = f"""
     <!DOCTYPE html>
     <html>
@@ -5903,9 +5836,6 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                 
                 <!-- HEADER SECTION -->
                 <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                    <div style="position: absolute; top: 20px; right: 25px;">
-                        <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 600; color: #a5f3fc;">STATUS UPDATE</span>
-                    </div>
                     <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
                     <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
                 </div>
@@ -5936,10 +5866,11 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                         </div>
                     </div>
 
-                    {contract_section}
-                    {billing_section}
-                    {reapply_section}
-                    {extra_message}
+                    {f'<div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; text-align: center;"><div style="font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 2px; font-family: monospace;">{contract_number}</div><div style="font-size: 11px; color: #047857; margin-top: 6px;">Contract Number</div></div>' if contract_number else ''}
+
+                    {f'<div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px; text-align: center;"><div style="font-size: 16px; font-weight: 600; color: #1e3a8a;">Billing Date: Every {billing_date} of the month</div></div>' if billing_date else ''}
+
+                    {f'<div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;"><p style="margin: 0; color: #991b1b;"><strong>Reason:</strong> {reason}</p></div>' if reason else ''}
 
                     <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
                         <p style="margin: 0; font-size: 12px; color: #94a3b8;">
@@ -5960,7 +5891,7 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     </html>
     """
 
-     # ✅ SEND VIA BREVO API
+    # ✅ SEND VIA BREVO API
     try:
         url = "https://api.brevo.com/v3/smtp/email"
         headers = {
@@ -6004,14 +5935,14 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
                             }]
                             print(f"✅ PDF attached successfully!")
                         else:
-                            print("❌ PDF buffer is empty!")
+                            print("❌ PDF buffer is empty! Sending email without PDF.")
                     else:
                         print(f"❌ No app data found for {pdf_app_key}")
             except Exception as pdf_err:
                 print(f"❌ PDF attachment error: {pdf_err}")
                 import traceback
                 traceback.print_exc()
-                # Huwag i-fail ang email kung nag-fail ang PDF
+                # ✅ HUWAG I-FAIL ANG EMAIL KUNG NAG-FAIL ANG PDF
 
         print(f"📧 Sending email via Brevo API to {to_email}...")
         response = requests.post(url, json=data, headers=headers, timeout=30)
@@ -6815,8 +6746,6 @@ def generate_application_pdf(application_number, application_data=None, contract
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.utils import ImageReader
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
     import requests
     import json
     from PIL import Image as PILImage
@@ -6834,7 +6763,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         print(f"❌ Application not found for: {application_number}")
         return None
     
-    # Parse JSON fields (tv_qty, tv_brand, tv_type)
+    # Parse JSON fields
     if application_data.get('tv_qty'):
         try:
             application_data['tv_qty'] = json.loads(application_data['tv_qty'])
@@ -6853,7 +6782,6 @@ def generate_application_pdf(application_number, application_data=None, contract
         except:
             application_data['tv_type'] = []
     
-    # Add contract number to data if provided
     if contract_number:
         application_data["contract_number"] = contract_number
 
@@ -6861,135 +6789,101 @@ def generate_application_pdf(application_number, application_data=None, contract
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # ================= SHARED UPLOADS CONFIG =================
-    SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
-    
-    # ================= HELPER: Get image bytes from file path =================
-    def get_image_bytes(image_path_or_data, app_id=None):
-        """Get image bytes from file path or base64 data"""
-        if not image_path_or_data:
+    # ================= ✅ FIX: GET IMAGE FROM CLOUDINARY =================
+    def get_image_from_cloudinary(image_url):
+        """Download image from Cloudinary URL"""
+        if not image_url:
             return None
         
-        # If app_id not provided, use application_number
-        if app_id is None:
-            app_id = application_number
-        
-        # Check if it's a file path
-        if isinstance(image_path_or_data, str):
-            # Extract filename
-            filename = os.path.basename(image_path_or_data)
-            
-            # Build path using application_number as folder
-            full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', str(app_id), filename)
-            
-            print(f"🔍 Looking for image: {full_path}")
-            
-            if os.path.exists(full_path):
-                try:
-                    with open(full_path, 'rb') as f:
-                        img_bytes = f.read()
-                    print(f"✅ Found image: {full_path} ({len(img_bytes)} bytes)")
-                    return img_bytes
-                except Exception as e:
-                    print(f"❌ Error reading image: {e}")
-                    return None
-            
-            # Try extracting app_id from path
-            match = re.search(r'/application_uploads/(\d+)/', image_path_or_data)
-            if match:
-                extracted_folder = match.group(1)
-                alt_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', extracted_folder, filename)
-                print(f"📂 Trying extracted: {alt_path}")
-                if os.path.exists(alt_path):
-                    try:
-                        with open(alt_path, 'rb') as f:
-                            img_bytes = f.read()
-                        print(f"✅ Found image: {alt_path} ({len(img_bytes)} bytes)")
-                        return img_bytes
-                    except Exception as e:
-                        print(f"❌ Error reading image: {e}")
-                        return None
-            
-            # Try base64 decoding
-            if 'base64,' in image_path_or_data or 'data:image' in image_path_or_data:
-                try:
-                    if 'base64,' in image_path_or_data:
-                        image_path_or_data = image_path_or_data.split('base64,')[1]
-                    elif 'data:image' in image_path_or_data:
-                        match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_path_or_data)
-                        if match:
-                            image_path_or_data = match.group(2)
-                    image_path_or_data = image_path_or_data.strip()
-                    img_bytes = base64.b64decode(image_path_or_data)
-                    print(f"✅ Decoded base64 image ({len(img_bytes)} bytes)")
-                    return img_bytes
-                except Exception as e:
-                    print(f"❌ Error decoding base64: {e}")
-                    return None
-        
-        return None
-
-    # ================= HELPER: Convert image for ReportLab =================
-    def convert_image_for_reportlab(img_bytes, max_width=None, max_height=None):
-        """Convert image to format compatible with ReportLab"""
-        if not img_bytes:
+        # Skip if it's not a Cloudinary URL
+        if not image_url.startswith('http'):
             return None
+        
+        print(f"📤 Downloading image from Cloudinary: {image_url[:80]}...")
         
         try:
-            # Open with PIL
-            img = PILImage.open(io.BytesIO(img_bytes))
-            print(f"✅ Image opened: {img.format}, {img.size}, {img.mode}")
-            
-            # Convert to RGB if needed
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            
-            # Resize if dimensions provided
-            if max_width and max_height:
-                img.thumbnail((max_width, max_height), PILImage.Resampling.LANCZOS)
-                print(f"✅ Image resized to: {img.size}")
-            
-            # Save to BytesIO as JPEG
-            output = io.BytesIO()
-            img.save(output, format='JPEG', quality=85)
-            output.seek(0)
-            
-            return output.getvalue()
-            
+            response = requests.get(image_url, timeout=30)
+            if response.status_code == 200:
+                print(f"✅ Downloaded {len(response.content)} bytes")
+                return response.content
+            else:
+                print(f"❌ Failed to download: {response.status_code}")
+                return None
         except Exception as e:
-            print(f"❌ Error converting image: {e}")
+            print(f"❌ Error downloading image: {e}")
             return None
 
-    # ================= HELPER: Draw image safely =================
-    def draw_image_safe(p, image_data, x, y, width, height, label="Image", app_id=None):
-        """Safely draw an image on the PDF"""
+    # ================= ✅ FIX: DRAW IMAGE FROM CLOUDINARY =================
+    def draw_image_from_cloudinary(p, image_url, x, y, width, height, label="Image"):
+        """Draw image from Cloudinary URL on PDF"""
         try:
             print(f"🖼️ Drawing {label}...")
-            img_bytes = get_image_bytes(image_data, app_id)
-            if img_bytes:
-                converted = convert_image_for_reportlab(img_bytes, max_width=width, max_height=height)
-                if converted:
-                    # Use temp file for ReportLab
-                    with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
-                        tmp_file.write(converted)
-                        tmp_path = tmp_file.name
-                    
-                    try:
-                        img = ImageReader(tmp_path)
-                        p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
-                        print(f"✅ Drew {label} successfully")
-                        return True
-                    except Exception as e:
-                        print(f"❌ Error in drawImage for {label}: {e}")
-                        return False
-                    finally:
-                        try:
-                            os.unlink(tmp_path)
-                        except:
-                            pass
-            else:
-                print(f"❌ No image data for {label}")
+            
+            if not image_url:
+                print(f"❌ No URL for {label}")
                 return False
+            
+            # If it's a Cloudinary URL, download it
+            if image_url.startswith('http'):
+                img_bytes = get_image_from_cloudinary(image_url)
+                if not img_bytes:
+                    print(f"❌ Failed to download {label}")
+                    return False
+                
+                # Create temporary file
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
+                    tmp_file.write(img_bytes)
+                    tmp_path = tmp_file.name
+                
+                try:
+                    img = ImageReader(tmp_path)
+                    p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
+                    print(f"✅ Drew {label} successfully")
+                    return True
+                except Exception as e:
+                    print(f"❌ Error in drawImage for {label}: {e}")
+                    return False
+                finally:
+                    try:
+                        os.unlink(tmp_path)
+                    except:
+                        pass
+            
+            # If it's a base64 string
+            elif 'base64' in image_url or 'data:image' in image_url:
+                try:
+                    if 'base64,' in image_url:
+                        image_url = image_url.split('base64,')[1]
+                    elif 'data:image' in image_url:
+                        match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_url)
+                        if match:
+                            image_url = match.group(2)
+                    
+                    img_bytes = base64.b64decode(image_url)
+                    if img_bytes:
+                        with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
+                            tmp_file.write(img_bytes)
+                            tmp_path = tmp_file.name
+                        
+                        try:
+                            img = ImageReader(tmp_path)
+                            p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
+                            return True
+                        except Exception as e:
+                            print(f"❌ Error in drawImage for {label}: {e}")
+                            return False
+                        finally:
+                            try:
+                                os.unlink(tmp_path)
+                            except:
+                                pass
+                except Exception as e:
+                    print(f"❌ Error decoding base64: {e}")
+                    return False
+            
+            print(f"❌ No image data for {label}")
+            return False
+            
         except Exception as e:
             print(f"❌ Error drawing {label}: {e}")
             return False
@@ -7061,7 +6955,6 @@ def generate_application_pdf(application_number, application_data=None, contract
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
-    # Two-column field drawer
     def draw_two_columns(fields):
         nonlocal y
         col1_x = 50
@@ -7071,7 +6964,6 @@ def generate_application_pdf(application_number, application_data=None, contract
         
         for i in range(0, len(fields), 2):
             ensure_space(20)
-            # Left column
             label1, value1 = fields[i]
             p.setFont("Helvetica-Bold", 9)
             p.drawString(col1_x, y, f"{label1}:")
@@ -7081,7 +6973,6 @@ def generate_application_pdf(application_number, application_data=None, contract
                 val1_str = val1_str[:32] + "..."
             p.drawString(value_x, y, val1_str)
             
-            # Right column
             if i + 1 < len(fields):
                 label2, value2 = fields[i + 1]
                 p.setFont("Helvetica-Bold", 9)
@@ -7095,17 +6986,16 @@ def generate_application_pdf(application_number, application_data=None, contract
             y -= 18
         y -= 5
 
-    # ================= FIXED: Draw images from files =================
-    def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
+    # ================= DRAW IMAGES (UPDATED) =================
+    def draw_images_top_bottom(label1, img1_url, label2, img2_url, img_width=280, img_height=190):
         nonlocal y
         
-        # Front ID
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width / 2, y, label1)
         y -= 22
         
-        if draw_image_safe(p, img1_data, (width - img_width) / 2, y - img_height, img_width, img_height, label1, application_number):
+        if draw_image_from_cloudinary(p, img1_url, (width - img_width) / 2, y - img_height, img_width, img_height, label1):
             y -= img_height + 35
         else:
             p.setFont("Helvetica", 9)
@@ -7114,13 +7004,12 @@ def generate_application_pdf(application_number, application_data=None, contract
             p.setFillColorRGB(0, 0, 0)
             y -= 25
         
-        # Back ID
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width / 2, y, label2)
         y -= 22
         
-        if draw_image_safe(p, img2_data, (width - img_width) / 2, y - img_height, img_width, img_height, label2, application_number):
+        if draw_image_from_cloudinary(p, img2_url, (width - img_width) / 2, y - img_height, img_width, img_height, label2):
             y -= img_height + 35
         else:
             p.setFont("Helvetica", 9)
@@ -7129,8 +7018,7 @@ def generate_application_pdf(application_number, application_data=None, contract
             p.setFillColorRGB(0, 0, 0)
             y -= 25
 
-    # ================= FIXED: Signature section =================
-    def draw_signature_section(signature_img, full_name):
+    def draw_signature_section(signature_url, full_name):
         nonlocal y
         
         y -= 15
@@ -7138,7 +7026,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         sig_width = 250
         sig_height = 85
         
-        if draw_image_safe(p, signature_img, (width - sig_width) / 2, y - sig_height, sig_width, sig_height, "Signature", application_number):
+        if draw_image_from_cloudinary(p, signature_url, (width - sig_width) / 2, y - sig_height, sig_width, sig_height, "Signature"):
             y -= sig_height + 20
         else:
             p.setFont("Helvetica", 9)
@@ -7415,7 +7303,7 @@ def generate_application_pdf(application_number, application_data=None, contract
     draw_section_title_centered("PROOF OF BILLING")
     
     proof = application_data.get("proof_billing")
-    if draw_image_safe(p, proof, (width - 500) / 2, y - 580, 500, 580, "Proof of Billing", application_number):
+    if draw_image_from_cloudinary(p, proof, (width - 500) / 2, y - 580, 500, 580, "Proof of Billing"):
         y -= 580 + 30
     else:
         p.setFont("Helvetica", 9)
