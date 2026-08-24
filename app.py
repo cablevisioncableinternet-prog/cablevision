@@ -81,8 +81,10 @@ def upload_to_cloudinary(file, folder="plans"):
     try:
         print(f"📤 Uploading to Cloudinary: {file.filename}")
         
-        # ✅ I-remove ang file extension sa public_id
-        filename_without_ext = file.filename.rsplit('.', 1)[0] if hasattr(file, 'filename') else None
+        # ✅ I-reset ang file pointer bago mag-upload
+        file.stream.seek(0)  # 👈 ITO ANG SUSI!
+        
+        filename_without_ext = file.filename.rsplit('.', 1)[0]
         
         result = cloudinary.uploader.upload(
             file,
@@ -4489,53 +4491,41 @@ def get_plans():
 # ===============================
 @app.route("/api/superadmin/plans", methods=["POST"])
 def create_plan():
-    print("=" * 60)
-    print("🚀 CREATE PLAN ROUTE TRIGGERED!")
-    print("=" * 60)
-    
     try:
-        print("📋 Request form data:")
-        print(f"   name: {request.form.get('name')}")
-        print(f"   speed: {request.form.get('speed')}")
-        print(f"   price: {request.form.get('price')}")
-        print(f"   image: {request.files.get('image')}")
-        
         name = request.form.get("name")
         speed = request.form.get("speed")
         price = request.form.get("price")
         image_file = request.files.get("image")
         
         if not name or not speed or not price:
-            print("❌ Missing required fields")
             return jsonify({"error": "Name, speed, and price are required"}), 400
         
         if not image_file or not allowed_plan_file(image_file.filename):
-            print("❌ Invalid or missing image file")
             return jsonify({"error": "Valid image file is required"}), 400
 
+        # ✅ I-reset ang file pointer bago mag-validation
+        image_file.stream.seek(0)
+        
+        # Validate orientation
         is_valid, error_message = validate_plan_image_orientation(image_file)
         if not is_valid:
-            print(f"❌ Orientation validation failed: {error_message}")
             return jsonify({"error": error_message}), 400
         
-        print("✅ Validation passed, uploading to Cloudinary...")
+        # ✅ I-reset ang file pointer BAGO mag-upload sa Cloudinary!
+        image_file.stream.seek(0)  # 👈 ITO ANG SUSI!
         
-        # ✅ Upload to Cloudinary
+        # Upload to Cloudinary
         image_url = upload_to_cloudinary(image_file)
         
         if not image_url:
-            print("❌ Cloudinary upload failed!")
             return jsonify({"error": "Failed to upload image to Cloudinary"}), 500
         
-        print(f"✅ Cloudinary upload successful: {image_url}")
-        
+        # Save to database
         insert_query = """
             INSERT INTO plans (name, speed, price, image_path, created_at)
             VALUES (%s, %s, %s, %s, NOW())
         """
         plan_id = execute_query(insert_query, (name, speed, float(price), image_url))
-        
-        print(f"✅ Plan created with ID: {plan_id}")
         
         return jsonify({
             "message": "Plan created successfully", 
@@ -4544,9 +4534,7 @@ def create_plan():
         })
         
     except Exception as e:
-        print(f"❌ Create plan error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Create plan error: {e}")
         return jsonify({"error": str(e)}), 500
 
 # ===============================
