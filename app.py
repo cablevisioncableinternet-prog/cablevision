@@ -6791,12 +6791,19 @@ def generate_application_pdf(application_number, application_data=None, contract
 
     # ================= ✅ FIX: GET IMAGE FROM CLOUDINARY =================
     def get_image_from_cloudinary(image_url):
-        """Download image from Cloudinary URL"""
+        """Download image from Cloudinary URL or convert relative path"""
         if not image_url:
             return None
         
-        # Skip if it's not a Cloudinary URL
+        # ✅ If it's a relative path (starts with cablevision/)
+        if image_url.startswith('cablevision/'):
+            # Convert to full Cloudinary URL
+            image_url = f"https://res.cloudinary.com/oa3fcr2b/image/upload/{image_url}"
+            print(f"🔄 Converted to Cloudinary URL: {image_url[:80]}...")
+        
+        # Skip if it's not a full URL
         if not image_url.startswith('http'):
+            print(f"❌ Not a valid URL: {image_url[:50]}...")
             return None
         
         print(f"📤 Downloading image from Cloudinary: {image_url[:80]}...")
@@ -6823,67 +6830,38 @@ def generate_application_pdf(application_number, application_data=None, contract
                 print(f"❌ No URL for {label}")
                 return False
             
-            # If it's a Cloudinary URL, download it
-            if image_url.startswith('http'):
-                img_bytes = get_image_from_cloudinary(image_url)
-                if not img_bytes:
-                    print(f"❌ Failed to download {label}")
-                    return False
-                
-                # Create temporary file
-                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
-                    tmp_file.write(img_bytes)
-                    tmp_path = tmp_file.name
-                
+            # ✅ If it's a relative path, convert to full URL
+            if image_url.startswith('cablevision/'):
+                full_url = f"https://res.cloudinary.com/oa3fcr2b/image/upload/{image_url}"
+                print(f"🔄 Converted to: {full_url[:80]}...")
+            else:
+                full_url = image_url
+            
+            # Download the image
+            img_bytes = get_image_from_cloudinary(full_url)
+            if not img_bytes:
+                print(f"❌ Failed to download {label}")
+                return False
+            
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
+                tmp_file.write(img_bytes)
+                tmp_path = tmp_file.name
+            
+            try:
+                img = ImageReader(tmp_path)
+                p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
+                print(f"✅ Drew {label} successfully")
+                return True
+            except Exception as e:
+                print(f"❌ Error in drawImage for {label}: {e}")
+                return False
+            finally:
                 try:
-                    img = ImageReader(tmp_path)
-                    p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
-                    print(f"✅ Drew {label} successfully")
-                    return True
-                except Exception as e:
-                    print(f"❌ Error in drawImage for {label}: {e}")
-                    return False
-                finally:
-                    try:
-                        os.unlink(tmp_path)
-                    except:
-                        pass
-            
-            # If it's a base64 string
-            elif 'base64' in image_url or 'data:image' in image_url:
-                try:
-                    if 'base64,' in image_url:
-                        image_url = image_url.split('base64,')[1]
-                    elif 'data:image' in image_url:
-                        match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_url)
-                        if match:
-                            image_url = match.group(2)
-                    
-                    img_bytes = base64.b64decode(image_url)
-                    if img_bytes:
-                        with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
-                            tmp_file.write(img_bytes)
-                            tmp_path = tmp_file.name
-                        
-                        try:
-                            img = ImageReader(tmp_path)
-                            p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
-                            return True
-                        except Exception as e:
-                            print(f"❌ Error in drawImage for {label}: {e}")
-                            return False
-                        finally:
-                            try:
-                                os.unlink(tmp_path)
-                            except:
-                                pass
-                except Exception as e:
-                    print(f"❌ Error decoding base64: {e}")
-                    return False
-            
-            print(f"❌ No image data for {label}")
-            return False
-            
+                    os.unlink(tmp_path)
+                except:
+                    pass
+                
         except Exception as e:
             print(f"❌ Error drawing {label}: {e}")
             return False
