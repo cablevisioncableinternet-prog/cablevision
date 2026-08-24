@@ -9715,35 +9715,83 @@ os.makedirs(UPLOAD_FOLDER_ANNOUNCEMENTS, exist_ok=True)
 # NOTE: Ang /shared-uploads route ay nasa channel logos na
 # HUWAG nang i-duplicate dito!
 
-def allowed_announcement_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS_ANNOUNCEMENTS
+# ============================================================
+# CLOUDINARY HELPER FUNCTIONS FOR ANNOUNCEMENTS
+# ============================================================
 
-def save_announcement_image(image_file):
-    """Save announcement image to shared folder and return URL path"""
-    if not image_file or not allowed_announcement_file(image_file.filename):
+def upload_to_cloudinary_announcement(file):
+    """Upload announcement image to Cloudinary and return URL"""
+    try:
+        print(f"📤 Uploading announcement to Cloudinary: {file.filename}")
+        
+        # ✅ I-reset ang file pointer
+        file.stream.seek(0)
+        
+        filename_without_ext = file.filename.rsplit('.', 1)[0] if hasattr(file, 'filename') else None
+        
+        result = cloudinary.uploader.upload(
+            file,
+            folder="cablevision/announcements",
+            resource_type="image",
+            public_id=filename_without_ext,
+            overwrite=True
+        )
+        
+        print(f"✅ Announcement uploaded: {result['secure_url']}")
+        return result['secure_url']
+        
+    except Exception as e:
+        print(f"❌ Cloudinary upload error: {e}")
+        import traceback
+        traceback.print_exc()
         return None
-    
-    filename = secure_filename(f"announcement_{int(datetime.now().timestamp())}_{image_file.filename}")
-    # Store relative path from shared uploads base
-    relative_path = os.path.join('announcements', filename)
-    full_path = os.path.join(SHARED_UPLOADS_BASE, relative_path)
-    
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-    image_file.save(full_path)
-    
-    # Return URL path (for HTML access via shared-uploads route)
-    return f"/shared-uploads/{relative_path.replace(os.sep, '/')}"
 
-def delete_announcement_image(image_url):
-    """Delete announcement image file from shared folder if exists"""
-    if image_url and image_url.startswith('/shared-uploads/'):
-        # Extract relative path from URL
-        relative_path = image_url.replace('/shared-uploads/', '')
-        full_path = os.path.join(SHARED_UPLOADS_BASE, relative_path.replace('/', os.sep))
-        if os.path.exists(full_path):
-            os.remove(full_path)
-            print(f"Deleted announcement image: {full_path}")
+def delete_from_cloudinary_announcement(image_url):
+    """Delete announcement image from Cloudinary"""
+    if not image_url:
+        return
+    
+    try:
+        if 'cloudinary.com' in image_url:
+            parts = image_url.split('/upload/')
+            if len(parts) > 1:
+                public_id_with_ext = parts[1]
+                print(f"🔍 Public ID with extension: {public_id_with_ext}")
+                
+                # Remove version number if present
+                if '/' in public_id_with_ext and public_id_with_ext.split('/')[0].startswith('v'):
+                    public_id_with_ext = '/'.join(public_id_with_ext.split('/')[1:])
+                    print(f"🔍 After removing version: {public_id_with_ext}")
+                
+                # Remove file extension
+                public_id = public_id_with_ext.rsplit('.', 1)[0]
+                print(f"✅ Final public_id: {public_id}")
+                
+                result = cloudinary.uploader.destroy(public_id, resource_type="image")
+                print(f"🗑️ Delete result: {result}")
+                
+                if result.get('result') == 'ok':
+                    print(f"✅ Successfully deleted announcement: {public_id}")
+                    return True
+                else:
+                    print(f"⚠️ Delete result: {result}")
+                    return False
+                    
+    except Exception as e:
+        print(f"❌ Cloudinary delete error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    return False
+
+# ===============================
+# ALLOWED FILE CHECK
+# ===============================
+def allowed_announcement_file(filename):
+    """Check if file extension is allowed for announcements"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ===============================
 # SUPERADMIN ANNOUNCEMENTS PAGE
@@ -9753,7 +9801,7 @@ def superadmin_announcements():
     return render_template("superadmin-announcements.html")
 
 # ===============================
-# CREATE ANNOUNCEMENT - SHARED UPLOADS
+# CREATE ANNOUNCEMENT - CLOUDINARY
 # ===============================
 @app.route("/api/superadmin/announcements", methods=["POST"])
 def create_announcement():
@@ -9767,14 +9815,16 @@ def create_announcement():
         image_url = None
         
         if image_file and allowed_announcement_file(image_file.filename):
-            image_url = save_announcement_image(image_file)
+            # ✅ Upload to Cloudinary
+            image_url = upload_to_cloudinary_announcement(image_file)
+            print(f"📸 Image URL: {image_url}")
         
         if not title and not message and not image_url:
             return jsonify({"error": "Title, message, or image required"}), 400
         
         now = datetime.now()
         
-        # Insert into MySQL
+        # Insert into MySQL with Cloudinary URL
         insert_query = """
             INSERT INTO announcements (title, message, image_path, date, timestamp, expirationDate, created_at)
             VALUES (%s, %s, %s, %s, %s, %s, NOW())
@@ -9782,7 +9832,7 @@ def create_announcement():
         announcement_id = execute_query(insert_query, (
             title,
             message,
-            image_url,
+            image_url,  # ✅ Cloudinary URL
             now.strftime("%B %d, %Y"),
             now.timestamp(),
             expiration_date
@@ -9794,9 +9844,8 @@ def create_announcement():
         print(f"Error creating announcement: {e}")
         return jsonify({"error": str(e)}), 500
 
-
 # ===============================
-# GET ANNOUNCEMENTS
+# GET ANNOUNCEMENTS (with Cloudinary URLs)
 # ===============================
 @app.route("/api/superadmin/announcements", methods=["GET"])
 def get_announcements():
@@ -9806,24 +9855,36 @@ def get_announcements():
             FROM announcements 
             ORDER BY timestamp DESC
         """
-        # FIXED: Use 'fetch=True' instead of 'fetch_all=True'
         announcements = execute_query(query, fetch=True) or []
         
-        print(f"DEBUG: Found {len(announcements)} announcements")  # Debug
+        print(f"DEBUG: Found {len(announcements)} announcements")
         
         result = []
         for ann in announcements:
+            image_path = ann.get('image_path', '')
+            
+            # ✅ If image_path exists, convert to Cloudinary URL if needed
+            if image_path:
+                # If it's a local path (starts with /shared-uploads/)
+                if image_path.startswith('/shared-uploads/') or image_path.startswith('shared-uploads/'):
+                    image_path = get_cloudinary_url(image_path)
+                # If it's a cablevision/ path
+                elif image_path.startswith('cablevision/'):
+                    image_path = get_cloudinary_url(image_path)
+                # If it's already a Cloudinary URL, keep it
+                # If it's empty or None, keep as is
+            
             result.append({
                 "id": ann['id'],
                 "title": ann.get('title', ''),
                 "message": ann.get('message', ''),
-                "imagePath": ann.get('image_path', ''),
+                "imagePath": image_path,
                 "date": ann.get('date', ''),
                 "timestamp": ann.get('timestamp', 0),
                 "expirationDate": ann.get('expirationDate', '')
             })
         
-        print(f"DEBUG: Returning {len(result)} announcements")  # Debug
+        print(f"DEBUG: Returning {len(result)} announcements")
         return jsonify(result)
         
     except Exception as e:
@@ -9831,7 +9892,7 @@ def get_announcements():
         return jsonify([]), 500
 
 # ===============================
-# UPDATE ANNOUNCEMENT
+# UPDATE ANNOUNCEMENT - CLOUDINARY
 # ===============================
 @app.route("/api/superadmin/announcements/<int:announcement_id>", methods=["PUT"])
 def update_announcement(announcement_id):
@@ -9852,11 +9913,11 @@ def update_announcement(announcement_id):
         image_url = existing.get('image_path')
         
         if image_file and allowed_announcement_file(image_file.filename):
-            # Delete old image if exists
-            if image_url:
-                delete_announcement_image(image_url)
-            # Save new image
-            image_url = save_announcement_image(image_file)
+            # ✅ Delete old image from Cloudinary
+            if image_url and 'cloudinary.com' in image_url:
+                delete_from_cloudinary_announcement(image_url)
+            # ✅ Upload new image to Cloudinary
+            image_url = upload_to_cloudinary_announcement(image_file)
         
         # Build update query dynamically
         update_fields = []
@@ -9889,7 +9950,7 @@ def update_announcement(announcement_id):
         return jsonify({"error": str(e)}), 500
 
 # ===============================
-# DELETE ANNOUNCEMENT
+# DELETE ANNOUNCEMENT - CLOUDINARY
 # ===============================
 @app.route("/api/superadmin/announcements/<int:announcement_id>", methods=["DELETE"])
 def delete_announcement(announcement_id):
@@ -9901,10 +9962,10 @@ def delete_announcement(announcement_id):
         if not announcement:
             return jsonify({"error": "Announcement not found"}), 404
         
-        # Delete image file if exists
+        # ✅ Delete image from Cloudinary
         image_url = announcement.get('image_path')
-        if image_url:
-            delete_announcement_image(image_url)
+        if image_url and 'cloudinary.com' in image_url:
+            delete_from_cloudinary_announcement(image_url)
         
         # Delete from MySQL
         delete_query = "DELETE FROM announcements WHERE id = %s"
@@ -9917,7 +9978,7 @@ def delete_announcement(announcement_id):
         return jsonify({"error": str(e)}), 500
 
 # ===============================
-# DELETE EXPIRED ANNOUNCEMENTS
+# DELETE EXPIRED ANNOUNCEMENTS - CLOUDINARY
 # ===============================
 @app.route("/api/superadmin/announcements/expired", methods=["DELETE"])
 def delete_expired_announcements():
@@ -9936,9 +9997,10 @@ def delete_expired_announcements():
         
         deleted_count = 0
         for ann in expired_announcements:
-            # Delete image file
-            if ann.get('image_path'):
-                delete_announcement_image(ann.get('image_path'))
+            # ✅ Delete image from Cloudinary
+            image_url = ann.get('image_path')
+            if image_url and 'cloudinary.com' in image_url:
+                delete_from_cloudinary_announcement(image_url)
             
             # Delete from database
             delete_query = "DELETE FROM announcements WHERE id = %s"
