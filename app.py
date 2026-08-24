@@ -22,6 +22,7 @@ import base64
 from werkzeug.security import generate_password_hash, check_password_hash
 from db_config import execute_query, get_db_connection
 import mysql.connector
+import os
 
 # ========== ITO LANG ANG IDINAGDAG ==========
 from db_config import execute_query
