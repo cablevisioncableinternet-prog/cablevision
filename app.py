@@ -5776,20 +5776,17 @@ def update_internet_application_status(app_id):
             print("🔒 Database connection closed")
 
 
-# ===============================
-# SEND EMAIL STATUS
-# ===============================
-def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
-    # ✅ USE BREVO SMTP (hindi Gmail)
-    smtp_host = os.getenv('SMTP_HOST', 'smtp-relay.brevo.com')
-    smtp_port = int(os.getenv('SMTP_PORT', 587))
-    smtp_user = os.getenv('SMTP_USER', '')
-    smtp_password = os.getenv('SMTP_PASSWORD', '')
-    smtp_from = os.getenv('SMTP_FROM', 'cablevision.cableinternet@gmail.com')
+import requests  # ✅ I-ADD SA PINAKA-ITAAS NG FILE
 
-    if not smtp_user or not smtp_password:
-        print("❌ SMTP credentials not configured!")
+def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
+    # ✅ USE BREVO API (hindi SMTP)
+    api_key = os.getenv('BREVO_API_KEY', '')
+    
+    if not api_key:
+        print("❌ Brevo API key not configured!")
         return False
+
+    print(f"📧 Sending email via Brevo API to {to_email}...")
 
     subject = "Cablevision Application Status Update"
 
@@ -5944,60 +5941,60 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     </html>
     """
 
-    msg = MIMEMultipart("mixed")
-    msg['From'] = smtp_from
-    msg['To'] = to_email
-    msg['Subject'] = subject
-
-    msg.attach(MIMEText(html_body, "html"))
-
-    # ================= PDF ATTACHMENT =================
-    if status == "Approved":
-        try:
-            pdf_app_key = application_id if application_id else app_id
-            
-            if pdf_app_key:
-                print(f" Generating PDF for application: {pdf_app_key}")
-                query = "SELECT * FROM applications WHERE application_number = %s"
-                app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
-                
-                if app_data:
-                    pdf_buffer = generate_application_pdf(pdf_app_key, app_data, contract_number)
-                    
-                    if pdf_buffer:
-                        part = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
-                        part.add_header(
-                            'Content-Disposition',
-                            'attachment',
-                            filename=f"Application_{app_id}_Contract_{contract_number}.pdf" if contract_number else f"Application_{app_id}.pdf"
-                        )
-                        msg.attach(part)
-                        print(f" PDF attached successfully for application {pdf_app_key}")
-                    else:
-                        print(" PDF buffer is empty")
-                else:
-                    print(f" Could not find application data for: {pdf_app_key}")
-            else:
-                print(f" Could not find application key for app_id: {app_id}")
-
-        except Exception as e:
-            print(" PDF attachment failed:", e)
-            import traceback
-            traceback.print_exc()
-
-    # ================= SEND EMAIL VIA BREVO =================
+    # ✅ SEND VIA BREVO API
     try:
-        print(f"📧 Sending email via Brevo to {to_email}...")
-        server = smtplib.SMTP(smtp_host, smtp_port, timeout=30)
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ Email sent to {to_email} with PDF attachment")
-        return True
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json"
+        }
+        
+        data = {
+            "sender": {
+                "name": "Cablevision Systems Corp.",
+                "email": "cablevision.cableinternet@gmail.com"
+            },
+            "to": [
+                {
+                    "email": to_email,
+                    "name": first_name
+                }
+            ],
+            "subject": subject,
+            "htmlContent": html_body
+        }
+        
+        # ✅ Add PDF attachment if approved
+        if status == "Approved":
+            try:
+                pdf_app_key = application_id if application_id else app_id
+                if pdf_app_key:
+                    query = "SELECT * FROM applications WHERE application_number = %s"
+                    app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
+                    if app_data:
+                        pdf_buffer = generate_application_pdf(pdf_app_key, app_data, contract_number)
+                        if pdf_buffer:
+                            import base64
+                            pdf_content = base64.b64encode(pdf_buffer.read()).decode('utf-8')
+                            data["attachment"] = [{
+                                "content": pdf_content,
+                                "name": f"Application_{app_id}.pdf"
+                            }]
+            except Exception as pdf_err:
+                print(f"PDF attachment error: {pdf_err}")
 
+        response = requests.post(url, json=data, headers=headers, timeout=30)
+        
+        if response.status_code in [200, 201]:
+            print(f"✅ Email sent successfully to {to_email}")
+            return True
+        else:
+            print(f"❌ API error: {response.status_code} - {response.text}")
+            return False
+            
     except Exception as e:
-        print(f"❌ Email failed: {e}")
+        print(f"❌ Email API error: {e}")
         import traceback
         traceback.print_exc()
         return False
