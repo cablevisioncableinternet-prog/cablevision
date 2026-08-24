@@ -106,22 +106,48 @@ def upload_to_cloudinary(file, folder="plans"):
 def delete_from_cloudinary(image_url):
     """Delete file from Cloudinary using URL"""
     if not image_url:
+        print("ℹ️ No image URL to delete")
         return
     
     try:
         if 'cloudinary.com' in image_url:
+            # ✅ Extract public_id from URL
+            # Example: https://res.cloudinary.com/oa3fcr2b/image/upload/cablevision/plans/plan_xxx.png
+            # Public ID: cablevision/plans/plan_xxx
+            
+            # Get everything after /upload/
             parts = image_url.split('/upload/')
             if len(parts) > 1:
-                # ✅ I-remove ang version number at extension
-                public_id = parts[1].split('.')[0]
-                # ✅ I-remove ang version prefix (v1234567890/)
-                if '/' in public_id and public_id.split('/')[0].startswith('v'):
-                    public_id = '/'.join(public_id.split('/')[1:])
+                public_id_with_ext = parts[1]
+                print(f"🔍 Public ID with extension: {public_id_with_ext}")
                 
-                cloudinary.uploader.destroy(public_id, resource_type="image")
-                print(f"Deleted from Cloudinary: {public_id}")
+                # ✅ Remove version number if present (v1234567890/)
+                if '/' in public_id_with_ext and public_id_with_ext.split('/')[0].startswith('v'):
+                    public_id_with_ext = '/'.join(public_id_with_ext.split('/')[1:])
+                    print(f"🔍 After removing version: {public_id_with_ext}")
+                
+                # ✅ Remove file extension (.png, .jpg, etc.)
+                public_id = public_id_with_ext.rsplit('.', 1)[0]
+                print(f"✅ Final public_id: {public_id}")
+                
+                # ✅ Delete from Cloudinary
+                result = cloudinary.uploader.destroy(public_id, resource_type="image")
+                print(f"🗑️ Cloudinary delete result: {result}")
+                
+                if result.get('result') == 'ok':
+                    print(f"✅ Successfully deleted: {public_id}")
+                    return True
+                else:
+                    print(f"⚠️ Delete result: {result}")
+                    return False
+                    
     except Exception as e:
-        print(f"Cloudinary delete error: {e}")
+        print(f"❌ Cloudinary delete error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    return False
 
 
 
