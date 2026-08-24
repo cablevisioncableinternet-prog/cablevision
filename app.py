@@ -30,48 +30,56 @@ from db_config import execute_query
 app = Flask(__name__)
 
 
-
 import cloudinary
 import cloudinary.uploader
-import os
-from flask import Flask, request, jsonify
+import cloudinary.api
 
-app = Flask(__name__)
-
-# Configure Cloudinary (gagamitin nito ang environment variables na na-set mo sa Railway)
+# ============================================================
+# CLOUDINARY CONFIGURATION
+# ============================================================
 cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
     api_key=os.getenv('CLOUDINARY_API_KEY'),
     api_secret=os.getenv('CLOUDINARY_API_SECRET')
 )
 
-# ✅ I-ADD ITO: Ang /api/upload route
-@app.route('/api/upload', methods=['POST'])
-def upload_image():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-
-    folder = request.form.get('folder', 'general') 
-
+# ============================================================
+# CLOUDINARY HELPER FUNCTIONS
+# ============================================================
+def upload_to_cloudinary(file, folder="plans"):
+    """Upload file to Cloudinary and return URL"""
     try:
-        upload_result = cloudinary.uploader.upload(
-            file, 
-            folder=f"cablevision/{folder}"
+        result = cloudinary.uploader.upload(
+            file,
+            folder=f"cablevision/{folder}",
+            resource_type="image",
+            public_id=file.filename.split('.')[0] if hasattr(file, 'filename') else None
         )
-        image_url = upload_result['secure_url']
-        
-        return jsonify({
-            'message': 'Upload successful!',
-            'url': image_url,
-            'public_id': upload_result['public_id']
-        }), 200
-
+        return result['secure_url']
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Cloudinary upload error: {e}")
+        return None
+
+def delete_from_cloudinary(image_url):
+    """Delete file from Cloudinary using URL"""
+    if not image_url:
+        return
+    
+    try:
+        # Extract public_id from URL
+        # URL: https://res.cloudinary.com/oa3fcr2b/image/upload/cablevision/plans/filename.png
+        # public_id: cablevision/plans/filename
+        if 'cloudinary.com' in image_url:
+            # Get the part after /upload/
+            parts = image_url.split('/upload/')
+            if len(parts) > 1:
+                public_id = parts[1].split('.')[0]  # Remove extension
+                cloudinary.uploader.destroy(public_id, resource_type="image")
+                print(f"Deleted from Cloudinary: {public_id}")
+    except Exception as e:
+        print(f"Cloudinary delete error: {e}")
+
+
 
 
 @app.after_request
@@ -4413,12 +4421,19 @@ def get_plans():
         
         plan_list = []
         for plan in plans:
+            image_path = plan.get('image_path', '')
+            
+            # ✅ If already Cloudinary URL, keep it
+            # If local path, convert to Cloudinary URL
+            if image_path and not image_path.startswith('http'):
+                image_path = get_cloudinary_url(image_path)
+            
             plan_list.append({
                 "id": plan['id'],
                 "name": plan['name'],
                 "speed": plan['speed'],
                 "price": float(plan['price']) if plan['price'] else 0,
-                "image": plan.get('image_path', '')
+                "image": image_path
             })
         
         return jsonify(plan_list)
@@ -4436,27 +4451,25 @@ def create_plan():
         name = request.form.get("name")
         speed = request.form.get("speed")
         price = request.form.get("price")
-        
-        # Handle image upload
         image_file = request.files.get("image")
         
         if not name or not speed or not price:
             return jsonify({"error": "Name, speed, and price are required"}), 400
         
         if not image_file or not allowed_plan_file(image_file.filename):
-            return jsonify({"error": "Valid image file is required (png, jpg, jpeg, gif, webp)"}), 400
+            return jsonify({"error": "Valid image file is required"}), 400
 
         is_valid, error_message = validate_plan_image_orientation(image_file)
         if not is_valid:
             return jsonify({"error": error_message}), 400
         
-        # Save image to shared folder
-        image_url = save_plan_image(image_file)
+        # ✅ Upload to Cloudinary
+        image_url = upload_to_cloudinary(image_file)
         
         if not image_url:
-            return jsonify({"error": "Failed to save image"}), 500
+            return jsonify({"error": "Failed to upload image to Cloudinary"}), 500
         
-        # Insert into MySQL
+        # ✅ Store Cloudinary URL in database
         insert_query = """
             INSERT INTO plans (name, speed, price, image_path, created_at)
             VALUES (%s, %s, %s, %s, NOW())
@@ -4486,14 +4499,12 @@ def update_plan(plan_id):
         if not name or not speed or not price:
             return jsonify({"error": "Name, speed, and price are required"}), 400
         
-        # Check if plan exists
         check_query = "SELECT id, image_path FROM plans WHERE id = %s"
         existing = execute_query(check_query, (plan_id,), fetch_one=True)
         
         if not existing:
             return jsonify({"error": "Plan not found"}), 404
         
-        # Handle image upload (optional)
         image_file = request.files.get("image")
         image_url = existing.get('image_path')
         
@@ -4502,11 +4513,12 @@ def update_plan(plan_id):
             if not is_valid:
                 return jsonify({"error": error_message}), 400
 
-            # Delete old image if exists
-            if image_url:
-                delete_plan_image(image_url)
-            # Save new image
-            image_url = save_plan_image(image_file)
+            # ✅ Delete old image from Cloudinary
+            if image_url and 'cloudinary.com' in image_url:
+                delete_from_cloudinary(image_url)
+            
+            # ✅ Upload new image to Cloudinary
+            image_url = upload_to_cloudinary(image_file)
         
         # Update plan
         if image_url and image_url != existing.get('image_path'):
@@ -4536,19 +4548,18 @@ def update_plan(plan_id):
 @app.route("/api/superadmin/plans/<int:plan_id>", methods=["DELETE"])
 def delete_plan(plan_id):
     try:
-        # Get plan info first
         check_query = "SELECT id, image_path FROM plans WHERE id = %s"
         plan = execute_query(check_query, (plan_id,), fetch_one=True)
         
         if not plan:
             return jsonify({"error": "Plan not found"}), 404
         
-        # Delete image file if exists
         image_url = plan.get('image_path')
-        if image_url:
-            delete_plan_image(image_url)
         
-        # Delete from MySQL
+        # ✅ Delete from Cloudinary
+        if image_url and 'cloudinary.com' in image_url:
+            delete_from_cloudinary(image_url)
+        
         delete_query = "DELETE FROM plans WHERE id = %s"
         execute_query(delete_query, (plan_id,))
         
