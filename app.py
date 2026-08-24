@@ -44,6 +44,35 @@ cloudinary.config(
     api_secret=os.getenv('CLOUDINARY_API_SECRET')
 )
 
+
+# ============================================================
+# CLOUDINARY URL HELPER FUNCTION
+# ============================================================
+def get_cloudinary_url(image_path, resource_type="image"):
+    """Convert image path to Cloudinary URL"""
+    if not image_path:
+        return ''
+    
+    # If already a full URL
+    if image_path.startswith('http'):
+        return image_path
+    
+    # Determine resource type (image or video)
+    is_video = resource_type == "video" or image_path.endswith(('.mp4', '.avi', '.mov', '.mkv'))
+    upload_type = "video" if is_video else "image"
+    
+    # If path starts with 'cablevision/'
+    if image_path.startswith('cablevision/'):
+        return f"https://res.cloudinary.com/oa3fcr2b/{upload_type}/upload/{image_path}"
+    
+    # If path still has /shared-uploads/ (legacy)
+    if image_path.startswith('/shared-uploads/'):
+        cloudinary_path = image_path.replace('/shared-uploads/', 'cablevision/')
+        return f"https://res.cloudinary.com/oa3fcr2b/{upload_type}/upload/{cloudinary_path}"
+    
+    # Default: return as is
+    return image_path
+
 # ============================================================
 # CLOUDINARY HELPER FUNCTIONS
 # ============================================================
