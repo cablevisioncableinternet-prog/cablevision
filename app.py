@@ -13661,8 +13661,89 @@ def get_file_type(filename):
     return 'image' if ext == 'png' else 'video'
 
 
+# ============================================================
+# CLOUDINARY HELPER FUNCTIONS FOR ADVERTISEMENTS
+# ============================================================
+
+def upload_to_cloudinary_ad(file, file_type="image"):
+    """Upload advertisement to Cloudinary and return URL"""
+    try:
+        print(f"📤 Uploading advertisement to Cloudinary: {file.filename}")
+        
+        # ✅ I-reset ang file pointer
+        file.stream.seek(0)
+        
+        filename_without_ext = file.filename.rsplit('.', 1)[0] if hasattr(file, 'filename') else None
+        
+        # Determine resource type
+        resource_type = "video" if file_type == "video" else "image"
+        folder = "cablevision/advertisements"
+        
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type=resource_type,
+            public_id=filename_without_ext,
+            overwrite=True
+        )
+        
+        print(f"✅ Advertisement uploaded: {result['secure_url']}")
+        return result['secure_url']
+        
+    except Exception as e:
+        print(f"❌ Cloudinary upload error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def delete_from_cloudinary_ad(image_url):
+    """Delete advertisement from Cloudinary"""
+    if not image_url:
+        return
+    
+    try:
+        if 'cloudinary.com' in image_url:
+            parts = image_url.split('/upload/')
+            if len(parts) > 1:
+                public_id_with_ext = parts[1]
+                print(f"🔍 Public ID with extension: {public_id_with_ext}")
+                
+                # Remove version number if present
+                if '/' in public_id_with_ext and public_id_with_ext.split('/')[0].startswith('v'):
+                    public_id_with_ext = '/'.join(public_id_with_ext.split('/')[1:])
+                    print(f"🔍 After removing version: {public_id_with_ext}")
+                
+                # Remove file extension
+                public_id = public_id_with_ext.rsplit('.', 1)[0]
+                print(f"✅ Final public_id: {public_id}")
+                
+                # Determine resource type based on URL
+                resource_type = "video" if "/video/upload/" in image_url else "image"
+                
+                result = cloudinary.uploader.destroy(public_id, resource_type=resource_type)
+                print(f"🗑️ Delete result: {result}")
+                
+                if result.get('result') == 'ok':
+                    print(f"✅ Successfully deleted advertisement: {public_id}")
+                    return True
+                else:
+                    print(f"⚠️ Delete result: {result}")
+                    return False
+                    
+    except Exception as e:
+        print(f"❌ Cloudinary delete error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    
+    return False
+
+# ============================================================
+# END OF CLOUDINARY HELPER FUNCTIONS
+# ============================================================
+
 def save_ad_file(file):
-    """Save advertisement file (PNG or MP4) to shared folder and return info"""
+    """Save advertisement file to Cloudinary and return info"""
     if not file or not allowed_file(file.filename):
         return None, None, None
     
@@ -13680,7 +13761,7 @@ def save_ad_file(file):
         print(f"MP4 too large: {file_size} bytes (max {MAX_VIDEO_SIZE})")
         return None, None, None
     
-    # For videos, check portrait orientation
+    # For videos, check portrait orientation (using local file)
     if file_type == 'video':
         # Save temporarily to check orientation
         temp_filename = secure_filename(f"temp_{int(datetime.now().timestamp())}_{file.filename}")
@@ -13694,24 +13775,31 @@ def save_ad_file(file):
             print("MP4 video is not portrait orientation (height must be greater than width)")
             return None, None, None
         
-        # If portrait, use the saved file
-        final_filename = temp_filename
-        final_path = temp_path
-    else:
-        # For images, generate filename
-        filename = secure_filename(f"ad_{int(datetime.now().timestamp())}_{file.filename}")
-        relative_path = os.path.join('advertisements', filename)
-        final_path = os.path.join(SHARED_UPLOADS_BASE, relative_path)
-        final_filename = filename
+        # If portrait, upload to Cloudinary
+        # ✅ Reset file pointer
+        file.seek(0)
+        file_url = upload_to_cloudinary_ad(file, file_type="video")
         
-        os.makedirs(os.path.dirname(final_path), exist_ok=True)
-        file.save(final_path)
-    
-    # Generate URL
-    relative_path = os.path.join('advertisements', final_filename)
-    url = f"/shared-uploads/{relative_path.replace(os.sep, '/')}"
-    
-    return url, file_type, file_size
+        # Delete temp file
+        try:
+            os.remove(temp_path)
+        except:
+            pass
+        
+        if not file_url:
+            return None, None, None
+            
+        return file_url, file_type, file_size
+    else:
+        # For images, upload directly to Cloudinary
+        # ✅ Reset file pointer
+        file.seek(0)
+        file_url = upload_to_cloudinary_ad(file, file_type="image")
+        
+        if not file_url:
+            return None, None, None
+            
+        return file_url, file_type, file_size
 
 
 def is_portrait_video(video_path):
@@ -13731,22 +13819,17 @@ def is_portrait_video(video_path):
             if streams:
                 width = streams[0].get('width', 0)
                 height = streams[0].get('height', 0)
-                # Portrait means height > width
                 return height > width
     except Exception as e:
         print(f"Error getting video dimensions: {e}")
-    # If can't determine, assume it's okay
     return True
 
 
 def delete_ad_file(file_url):
-    """Delete advertisement file from shared folder if exists"""
-    if file_url and file_url.startswith('/shared-uploads/'):
-        relative_path = file_url.replace('/shared-uploads/', '')
-        full_path = os.path.join(SHARED_UPLOADS_BASE, relative_path.replace('/', os.sep))
-        if os.path.exists(full_path):
-            os.remove(full_path)
-            print(f"Deleted ad file: {full_path}")
+    """Delete advertisement file from Cloudinary"""
+    if file_url and 'cloudinary.com' in file_url:
+        return delete_from_cloudinary_ad(file_url)
+    return False
 
 
 # ==================== ADVERTISEMENT MANAGEMENT PAGE ====================
@@ -13758,33 +13841,28 @@ def superadmin_advertisement():
 # ==================== GET ALL ADVERTISEMENTS ====================
 @app.route("/api/superadmin/advertisements", methods=["GET"])
 def get_advertisements():
-    """Get all advertisements (both PNG and MP4)"""
-    import mysql.connector
-    conn = None
-    cursor = None
+    """Get all advertisements (both PNG and MP4) with Cloudinary URLs"""
     try:
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="cablevision_db"
-        )
-        cursor = conn.cursor(dictionary=True)
-        
         query = """
             SELECT id, file_path, file_type, file_size, date, timestamp, created_at
             FROM advertisements 
             ORDER BY timestamp DESC
         """
-        cursor.execute(query)
-        ads = cursor.fetchall()
+        ads = execute_query(query, fetch=True) or []
         
         ad_list = []
         for ad in ads:
+            file_path = ad.get('file_path', '')
+            
+            # ✅ If it's a local path, convert to Cloudinary URL
+            if file_path and file_path.startswith('/shared-uploads/'):
+                file_type = ad.get('file_type', 'image')
+                file_path = get_cloudinary_url(file_path, resource_type=file_type)
+            
             ad_list.append({
                 "id": ad['id'],
-                "filePath": ad.get('file_path', ''),
-                "file_type": ad.get('file_type', 'image'),  # ✅ PALITAN: fileType -> file_type
+                "filePath": file_path,
+                "file_type": ad.get('file_type', 'image'),
                 "fileSize": ad.get('file_size', 0),
                 "date": ad.get('date', ''),
                 "timestamp": ad.get('timestamp', 0)
@@ -13795,17 +13873,11 @@ def get_advertisements():
     except Exception as e:
         print(f"Error getting advertisements: {e}")
         return jsonify([])
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
 
 # ==================== CREATE ADVERTISEMENT ====================
 @app.route("/api/superadmin/advertisements", methods=["POST"])
 def create_advertisement():
-    """Create a new advertisement (PNG image or MP4 video)"""
+    """Create a new advertisement (PNG image or MP4 video) - Cloudinary"""
     try:
         ad_file = request.files.get("file")
         
@@ -13814,7 +13886,7 @@ def create_advertisement():
         
         file_type = get_file_type(ad_file.filename)
         
-        # Save file to shared folder (includes orientation check for videos)
+        # ✅ Save file to Cloudinary (includes orientation check for videos)
         file_url, saved_type, file_size = save_ad_file(ad_file)
         
         if not file_url:
@@ -13825,16 +13897,13 @@ def create_advertisement():
         
         now = datetime.now()
         
-        # Create table if not exists
-        init_advertisements_table()
-        
-        # Insert into MySQL
+        # Insert into MySQL with Cloudinary URL
         insert_query = """
             INSERT INTO advertisements (file_path, file_type, file_size, date, timestamp, created_at)
             VALUES (%s, %s, %s, %s, %s, NOW())
         """
         ad_id = execute_query(insert_query, (
-            file_url,
+            file_url,  # ✅ Cloudinary URL
             saved_type,
             file_size,
             now.strftime("%B %d, %Y"),
@@ -13857,18 +13926,21 @@ def create_advertisement():
 # ==================== DELETE ADVERTISEMENT ====================
 @app.route("/api/superadmin/advertisements/<int:ad_id>", methods=["DELETE"])
 def delete_advertisement(ad_id):
-    """Delete an advertisement"""
+    """Delete an advertisement from Cloudinary"""
     try:
         check_query = "SELECT id, file_path FROM advertisements WHERE id = %s"
-        ad = execute_query(check_query, (ad_id,), fetch=True)
+        ad = execute_query(check_query, (ad_id,), fetch_one=True)
         
         if not ad:
             return jsonify({"error": "Advertisement not found"}), 404
         
-        file_path = ad[0].get('file_path')
-        if file_path:
-            delete_ad_file(file_path)
+        file_path = ad.get('file_path')
         
+        # ✅ Delete from Cloudinary if exists
+        if file_path and 'cloudinary.com' in file_path:
+            delete_from_cloudinary_ad(file_path)
+        
+        # Delete from MySQL
         delete_query = "DELETE FROM advertisements WHERE id = %s"
         execute_query(delete_query, (ad_id,))
         
@@ -13899,13 +13971,6 @@ def init_advertisements_table():
         execute_query(create_table_query)
         print("✅ advertisements table ready")
         
-        # Optional: Drop old tables if you want to clean up
-        try:
-            execute_query("DROP TABLE IF EXISTS channel_logos")
-            print("✅ Dropped old channel_logos table")
-        except:
-            pass
-            
     except Exception as e:
         print(f"Error creating advertisements table: {e}")
 
