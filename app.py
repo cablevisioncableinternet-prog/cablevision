@@ -79,15 +79,26 @@ def get_cloudinary_url(image_path, resource_type="image"):
 def upload_to_cloudinary(file, folder="plans"):
     """Upload file to Cloudinary and return URL"""
     try:
+        print(f"📤 Uploading to Cloudinary: {file.filename}")
+        
+        # ✅ I-remove ang file extension sa public_id
+        filename_without_ext = file.filename.rsplit('.', 1)[0] if hasattr(file, 'filename') else None
+        
         result = cloudinary.uploader.upload(
             file,
             folder=f"cablevision/{folder}",
             resource_type="image",
-            public_id=file.filename.split('.')[0] if hasattr(file, 'filename') else None
+            public_id=filename_without_ext,
+            overwrite=True
         )
+        
+        print(f"✅ Upload successful: {result['secure_url']}")
         return result['secure_url']
+        
     except Exception as e:
-        print(f"Cloudinary upload error: {e}")
+        print(f"❌ Cloudinary upload error: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def delete_from_cloudinary(image_url):
@@ -96,14 +107,15 @@ def delete_from_cloudinary(image_url):
         return
     
     try:
-        # Extract public_id from URL
-        # URL: https://res.cloudinary.com/oa3fcr2b/image/upload/cablevision/plans/filename.png
-        # public_id: cablevision/plans/filename
         if 'cloudinary.com' in image_url:
-            # Get the part after /upload/
             parts = image_url.split('/upload/')
             if len(parts) > 1:
-                public_id = parts[1].split('.')[0]  # Remove extension
+                # ✅ I-remove ang version number at extension
+                public_id = parts[1].split('.')[0]
+                # ✅ I-remove ang version prefix (v1234567890/)
+                if '/' in public_id and public_id.split('/')[0].startswith('v'):
+                    public_id = '/'.join(public_id.split('/')[1:])
+                
                 cloudinary.uploader.destroy(public_id, resource_type="image")
                 print(f"Deleted from Cloudinary: {public_id}")
     except Exception as e:
