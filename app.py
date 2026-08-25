@@ -6269,20 +6269,48 @@ def download_contract_pdf(app_id, contract_number):
         
         # ========== SHARED UPLOADS CONFIG ==========
         SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
+
+        def get_image_bytes_from_cloudinary(image_path):
+            """Get image bytes from Cloudinary URL"""
+            if not image_path:
+                return None
+            
+            # ✅ Convert to Cloudinary URL
+            cloudinary_url = get_cloudinary_url(image_path)
+            
+            if cloudinary_url and cloudinary_url.startswith('http'):
+                try:
+                    print(f"📤 Downloading from Cloudinary: {cloudinary_url}")
+                    response = requests.get(cloudinary_url, timeout=30)
+                    if response.status_code == 200:
+                        print(f"✅ Downloaded {len(response.content)} bytes")
+                        return response.content
+                    else:
+                        print(f"❌ Cloudinary download failed: {response.status_code}")
+                        return None
+                except Exception as e:
+                    print(f"❌ Error downloading from Cloudinary: {e}")
+                    return None
+            
+            return None
         
         # ========== HELPER: Get image bytes from file path ==========
         def get_image_bytes(image_path_or_data):
-            """Get image bytes from file path or base64 data"""
+            """Get image bytes from file path or base64 data or Cloudinary"""
             if not image_path_or_data:
                 return None
+            
+            # ✅ TRY CLOUDINARY FIRST
+            img_bytes = get_image_bytes_from_cloudinary(image_path_or_data)
+            if img_bytes:
+                return img_bytes
             
             # Check if it's a file path
             if isinstance(image_path_or_data, str):
                 # Pattern: /shared-uploads/application_uploads/3482179683/signature_1783904528.jpg
-                # Extract filename
                 filename = os.path.basename(image_path_or_data)
                 
-                # Build path using app_id (application_number)
+                # Build path using app_id
                 app_folder = str(app_id)
                 full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
                 
@@ -6340,25 +6368,20 @@ def download_contract_pdf(app_id, contract_number):
                 return None
             
             try:
-                # Open with PIL
                 img = PILImage.open(io.BytesIO(img_bytes))
                 print(f"✅ Signature opened: {img.format}, {img.size}, {img.mode}")
                 
-                # Convert to RGB if needed
                 if img.mode != 'RGB':
                     img = img.convert('RGB')
                 
-                # Resize if too large
                 if img.width > max_width or img.height > max_height:
                     img.thumbnail((max_width, max_height), PILImage.Resampling.LANCZOS)
                     print(f"✅ Signature resized to: {img.size}")
                 
-                # Save to BytesIO as JPEG
                 output = io.BytesIO()
                 img.save(output, format='JPEG', quality=85)
                 output.seek(0)
                 
-                # Create ReportLab Image
                 img_reportlab = Image(output)
                 img_reportlab.drawWidth = min(img.width, max_width)
                 img_reportlab.drawHeight = min(img.height, max_height)
