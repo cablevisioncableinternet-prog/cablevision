@@ -13170,7 +13170,6 @@ def admin_view_application(app_id):
 @app.route("/api/admin/application/<app_id>", methods=["GET"])
 def admin_get_single_application(app_id):
     try:
-        # ✅ IDAGDAG ANG reapply_requested AT reapply_requested_at
         query = """
             SELECT application_number, first_name, last_name, middle_name, suffix,
                    email, mobile, secondary_mobile, phone, birthdate, place_of_birth,
@@ -13192,6 +13191,16 @@ def admin_get_single_application(app_id):
         
         if not data:
             return jsonify({"error": "Application not found"}), 404
+        
+        # ========== ✅ CONVERT IMAGE FIELDS TO CLOUDINARY ==========
+        image_fields = ['signature', 'id_front', 'id_back', 'proof_billing', 'profile_photo']
+        for field in image_fields:
+            if data.get(field):
+                value = data.get(field)
+                if value and value != 'none' and value != '':
+                    if not value.startswith('http'):
+                        data[field] = get_cloudinary_url(value)
+                        print(f"✅ Converted {field} to Cloudinary: {data[field][:80]}...")
         
         # Parse JSON fields (tv_qty, tv_brand, tv_type are stored as JSON strings)
         if data.get('tv_qty'):
@@ -13219,6 +13228,8 @@ def admin_get_single_application(app_id):
         
     except Exception as e:
         print(f"Error getting single application: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
@@ -13377,7 +13388,7 @@ def admin_get_single_customer_application(app_id):
             FROM applications 
             WHERE application_number = %s OR id = %s
         """
-        data = execute_query(query, (app_id, app_id), fetch=True)
+        data = execute_query(query, (app_id, app_id), fetch_one=True)
         
         if not data:
             return jsonify({"error": "Customer application not found"}), 404
@@ -13385,6 +13396,16 @@ def admin_get_single_customer_application(app_id):
         # Only allow approved applications
         if data.get("status") != "Approved":
             return jsonify({"error": "Customer application is not approved"}), 403
+
+        # ========== ✅ CONVERT IMAGE FIELDS TO CLOUDINARY ==========
+        image_fields = ['signature', 'id_front', 'id_back', 'proof_billing', 'profile_photo']
+        for field in image_fields:
+            if data.get(field):
+                value = data.get(field)
+                if value and value != 'none' and value != '':
+                    if not value.startswith('http'):
+                        data[field] = get_cloudinary_url(value)
+                        print(f"✅ Converted {field} to Cloudinary: {data[field][:80]}...")
 
         # Convert datetime objects to string for JSON serialization
         if data.get('birthdate'):
