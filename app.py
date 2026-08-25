@@ -14647,16 +14647,14 @@ def get_technician_napbox():
 def get_areas_by_city(city):
     """Get barangays by city name from areas table"""
     try:
-        import mysql.connector
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="cablevision_db"
-        )
+        # ✅ GAMITIN ANG get_db_connection() (hindi localhost)
+        conn = get_db_connection()
+        if not conn:
+            print("❌ Database connection failed")
+            return jsonify([]), 500
+            
         cursor = conn.cursor(dictionary=True)
         
-        # Query for barangays in the specified city
         query = """
             SELECT DISTINCT barangay, zip 
             FROM areas 
@@ -14681,11 +14679,12 @@ def get_areas_by_city(city):
         
     except Exception as e:
         print(f"Error getting areas by city: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify([]), 500    
 
 @app.route("/api/technician/napbox", methods=["POST"])
 def add_or_update_napbox():
-    """Add or update a NAP box"""
     try:
         data = request.get_json()
         napbox_id = data.get("id")
@@ -14731,16 +14730,11 @@ def add_or_update_napbox():
             message = "NAP box location updated"
             print(f"✅ Updated NAP box ID: {napbox_id}")
         else:
-            # ================================================================
-            # 🔥 BAGO: Insert new NAP box and slots with proper error handling
-            # ================================================================
-            import mysql.connector
-            conn = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="",
-                database="cablevision_db"
-            )
+            # ✅ GAMITIN ANG get_db_connection() (hindi localhost)
+            conn = get_db_connection()
+            if not conn:
+                return jsonify({"error": "Database connection failed"}), 500
+                
             cursor = conn.cursor(dictionary=True)
             
             try:
@@ -14753,7 +14747,7 @@ def add_or_update_napbox():
                 napbox_id = cursor.lastrowid
                 print(f"✅ Inserted NAP box ID: {napbox_id}, Area: '{area}'")
                 
-                # 2. CREATE SLOTS - ✅ I-COMMIT AGAD PER SLOT
+                # 2. CREATE SLOTS
                 for slot_num in range(1, num_slots + 1):
                     slot_query = """
                         INSERT INTO napbox_slots (slot_number, status, napbox_id, barangay)
@@ -14766,11 +14760,6 @@ def add_or_update_napbox():
                 conn.commit()
                 print(f"✅ COMMITTED {num_slots} slots to napbox_slots table")
                 
-                # 4. VERIFY NA NAG-INSERT
-                cursor.execute("SELECT COUNT(*) as count FROM napbox_slots WHERE napbox_id = %s", (napbox_id,))
-                verify_result = cursor.fetchone()
-                print(f"🔍 VERIFIED: {verify_result.get('count', 0)} slots inserted")
-                
             except Exception as db_error:
                 print(f"❌ Database error: {db_error}")
                 conn.rollback()
@@ -14779,7 +14768,7 @@ def add_or_update_napbox():
                 cursor.close()
                 conn.close()
             
-            # ========== UPDATE area_mapping napbox_count ==========
+            # Update area_mapping
             count_query = "SELECT COUNT(*) as count FROM napboxes WHERE LOWER(area) = LOWER(%s)"
             count_result = execute_query(count_query, (area,), fetch_one=True)
             new_count = count_result.get('count', 0) if count_result else 0
@@ -14815,6 +14804,8 @@ def add_or_update_napbox():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+        
     
 @app.route('/api/technician/update-slot-status', methods=['POST'])
 def update_slot_status():
