@@ -12281,294 +12281,93 @@ def reject_termination_request():
 
 
 # ===============================
-# SEND TERMINATION STATUS EMAIL
-# APPROVED / REJECTED
-# BREVO API
+# SEND TERMINATION STATUS EMAIL WITH BALANCE AND DATE
 # ===============================
-
-def send_termination_email(
-    to_email,
-    first_name,
-    status,
-    request_id,
-    plan,
-    termination_reason=None,
-    rejection_reason=None,
-    balance=0,
-    termination_date=None
-):
-    """Send termination approval/rejection email via Brevo."""
-
-    import requests
+def send_termination_email(to_email, first_name, status, request_id, plan, termination_reason=None, rejection_reason=None, balance=0, termination_date=None):
+    """Send email notification for termination approval/rejection with balance and termination date"""
+    
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
     import html
+    
+    sender_email = "cablevision.cableinternet@gmail.com"
+    sender_app_password = "svql qzea vmjt xndx"
 
-    # ===============================
-    # BREVO CONFIGURATION
-    # ===============================
+    subject = "Cablevision - Termination Request Update"
 
-    brevo_api_key = os.getenv("BREVO_API_KEY")
-    sender_email = os.getenv(
-        "SMTP_FROM",
-        "noreply@cablevisioncableinternet.com"
-    )
-    sender_name = "Cablevision Systems Corporation"
+    def escape_html(text):
+        if not text:
+            return ''
+        return html.escape(str(text))
 
-    # ===============================
-    # CHECK CONFIGURATION
-    # ===============================
-
-    if not brevo_api_key:
-        print("❌ BREVO_API_KEY is not configured!")
-        return False
-
-    if not to_email:
-        print("❌ Cannot send termination email: recipient email is empty.")
-        return False
-
-    # ===============================
-    # NORMALIZE STATUS
-    # ===============================
-
-    status = str(status or "").strip().capitalize()
-
-    if status not in ["Approved", "Rejected"]:
-        print(f"❌ Invalid termination status: {status}")
-        return False
-
-    # ===============================
-    # HTML ESCAPE
-    # ===============================
-
-    def escape_html(value):
-        if value is None:
-            return ""
-        return html.escape(str(value))
-
-    # ===============================
-    # CUSTOMER NAME
-    # ===============================
-
-    first_name = str(first_name or "Customer").strip()
-
-    # ===============================
-    # STATUS SETTINGS
-    # ===============================
-
-    if status == "Approved":
-        status_color = "#16a34a"
-        status_bg = "#dcfce7"
-        status_icon = "✓"
-        action_text = "APPROVED"
-        message = f"Hello, {first_name}!"
-        message_sub = "Your termination request has been approved by Cablevision."
-    else:
-        status_color = "#dc2626"
-        status_bg = "#fee2e2"
-        status_icon = "✕"
-        action_text = "REJECTED"
-        message = f"Hello, {first_name}!"
-        message_sub = "We have an update regarding your termination request."
-
-    # ===============================
-    # FORMAT BALANCE
-    # ===============================
-
-    try:
-        balance_value = float(balance or 0)
-    except (ValueError, TypeError):
-        balance_value = 0
-
-    # ===============================
-    # BALANCE SECTION
-    # ===============================
-
+    status_color = "#10b981" if status == "Approved" else "#ef4444"
+    status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
+    status_icon = "✓" if status == "Approved" else "✗"
+    
+    # 🔥 BALANCE SECTION
     balance_html = ""
-
-    if balance_value > 0:
+    if float(balance) > 0:
         balance_html = f"""
-        <div style="
-            margin-top:16px;
-            padding:16px 20px;
-            background:#fef3c7;
-            border-radius:12px;
-            border-left:4px solid #f59e0b;
-        ">
-            <div style="
-                font-size:13px;
-                font-weight:700;
-                color:#92400e;
-                margin-bottom:5px;
-            ">
-                💰 Outstanding Balance
+        <div style="margin-top: 16px; padding: 16px 20px; background: #fef3c7; border-radius: 12px; border-left: 4px solid #f59e0b;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 13px; font-weight: 600; color: #92400e;">💰 Outstanding Balance</span>
             </div>
-            <div style="
-                font-size:24px;
-                font-weight:700;
-                color:#dc2626;
-            ">
-                ₱{balance_value:,.2f}
-            </div>
-            <div style="
-                font-size:12px;
-                color:#78350f;
-                margin-top:4px;
-            ">
-                Please settle this balance with our office.
+            <div style="font-size: 24px; font-weight: 700; color: #dc2626;">₱{float(balance):,.2f}</div>
+            <div style="font-size: 12px; color: #78350f; margin-top: 4px;">
+                Please settle this balance with our office to proceed.
             </div>
         </div>
         """
-
-    # ===============================
-    # TERMINATION DATE
-    # ===============================
-
+    
+    # 🔥 TERMINATION DATE SECTION
     termination_date_html = ""
-
     if termination_date and status == "Approved":
         termination_date_html = f"""
-        <div style="
-            margin-top:12px;
-            padding:12px 16px;
-            background:#e0f2fe;
-            border-radius:10px;
-            border-left:4px solid #0284c7;
-        ">
-            <div style="
-                font-size:13px;
-                font-weight:700;
-                color:#0369a1;
-                margin-bottom:4px;
-            ">
-                📅 Date Terminated
+        <div style="margin-top: 12px; padding: 12px 16px; background: #e0f2fe; border-radius: 10px; border-left: 4px solid #0284c7;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #0369a1;">📅 Date Terminated</span>
             </div>
-            <div style="
-                font-size:16px;
-                font-weight:600;
-                color:#0c4a6e;
-            ">
+            <div style="font-size: 16px; font-weight: 600; color: #0c4a6e; margin-top: 2px;">
                 {escape_html(termination_date)}
             </div>
         </div>
         """
-
-    # ===============================
-    # SAFE VALUES
-    # ===============================
-
-    safe_request_id = escape_html(request_id or "N/A")
-    safe_plan = escape_html(plan or "N/A")
-    safe_termination_reason = escape_html(termination_reason or "N/A")
-    safe_rejection_reason = escape_html(
-        rejection_reason or "No specific reason was provided."
-    )
-
-    # ===============================
-    # STATUS MESSAGE
-    # ===============================
-
+    
     if status == "Approved":
+        message = f"Hello, {first_name}!"
+        message_sub = "Your termination request has been approved."
+        action_text = "APPROVED"
         extra_message = f"""
-        <div style="
-            margin-top:20px;
-            padding:18px;
-            background:#f0fdf4;
-            border:1px solid #bbf7d0;
-            border-radius:14px;
-        ">
-            <div style="
-                font-size:15px;
-                font-weight:700;
-                color:#166534;
-                margin-bottom:8px;
-            ">
-                Termination Request Approved
-            </div>
-            <div style="
-                font-size:14px;
-                line-height:1.6;
-                color:#14532d;
-            ">
-                Your Cablevision subscription has been terminated
-                {f"on <strong>{escape_html(termination_date)}</strong>" if termination_date else "successfully"}.
-                Your account has been deactivated.
-
-                We appreciate your trust in Cablevision and hope
-                to serve you again in the future.
-            </div>
+        <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
+            <p style="margin: 0 0 8px 0; color: #166534;">
+                <strong>What's Next?</strong>
+            </p>
+            <p style="margin: 0; color: #14532d; font-size: 14px;">
+                Your Cablevision subscription has been terminated on <strong>{termination_date if termination_date else 'today'}</strong>. 
+                Your account has been deactivated. 
+                We appreciate your trust in Cablevision and hope to serve you again in the future.
+            </p>
         </div>
         """
     else:
+        message = f"Hello, {first_name}!"
+        message_sub = "We have an update regarding your termination request."
+        action_text = "REJECTED"
         extra_message = f"""
-        <div style="
-            margin-top:20px;
-            padding:18px;
-            background:#fef2f2;
-            border:1px solid #fecaca;
-            border-radius:14px;
-        ">
-            <div style="
-                font-size:15px;
-                font-weight:700;
-                color:#991b1b;
-                margin-bottom:8px;
-            ">
-                Reason for Rejection
-            </div>
-            <div style="
-                font-size:14px;
-                line-height:1.6;
-                color:#7f1d1d;
-            ">
-                {safe_rejection_reason}
-            </div>
-            <div style="
-                margin-top:12px;
-                font-size:13px;
-                line-height:1.5;
-                color:#7f1d1d;
-            ">
-                Your subscription remains active.
-
-                If you still wish to terminate your subscription,
+        <div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;">
+            <p style="margin: 0 0 8px 0; color: #991b1b;">
+                <strong>Reason for Rejection</strong>
+            </p>
+            <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
+                {escape_html(rejection_reason) if rejection_reason else 'No specific reason provided.'}
+            </p>
+            <p style="margin-top: 12px; color: #7f1d1d; font-size: 13px;">
+                Your subscription remains active. If you still wish to terminate, 
                 please contact our support team for assistance.
-            </div>
+            </p>
         </div>
         """
-
-    # ===============================
-    # TERMINATION REASON SECTION
-    # ===============================
-
-    termination_reason_html = ""
-
-    if termination_reason:
-        termination_reason_html = f"""
-        <div style="
-            margin-top:12px;
-            padding-top:12px;
-            border-top:1px solid #e2e8f0;
-        ">
-            <div style="
-                font-size:11px;
-                font-weight:700;
-                color:#64748b;
-                margin-bottom:4px;
-            ">
-                REASON FOR TERMINATION
-            </div>
-            <div style="
-                font-size:14px;
-                line-height:1.5;
-                color:#0f172a;
-            ">
-                {safe_termination_reason}
-            </div>
-        </div>
-        """
-
-    # ===============================
-    # COMPLETE HTML EMAIL
-    # ===============================
 
     html_body = f"""
     <!DOCTYPE html>
@@ -12576,183 +12375,63 @@ def send_termination_email(
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cablevision Termination Request</title>
+        <title>Cablevision Email</title>
     </head>
-    <body style="
-        margin:0;
-        padding:0;
-        background:#eef2ff;
-        font-family:Arial, Helvetica, sans-serif;
-    ">
-        <div style="
-            width:100%;
-            padding:30px 0;
-        ">
-            <div style="
-                max-width:580px;
-                margin:0 auto;
-                background:#ffffff;
-                border-radius:24px;
-                overflow:hidden;
-                box-shadow:0 10px 30px rgba(0,0,0,0.10);
-            ">
-                <!-- HEADER -->
-                <div style="
-                    background:#001f3f;
-                    padding:30px 25px;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:28px;
-                        font-weight:700;
-                        color:#ffffff;
-                    ">
-                        Cablevision
-                    </div>
-                    <div style="
-                        margin-top:6px;
-                        font-size:13px;
-                        color:#93c5fd;
-                    ">
-                        Internet Service Provider
-                    </div>
-                    <div style="
-                        margin-top:16px;
-                        display:inline-block;
-                        background:rgba(255,255,255,0.12);
-                        color:#dbeafe;
-                        padding:6px 14px;
-                        border-radius:20px;
-                        font-size:11px;
-                        font-weight:700;
-                    ">
-                        TERMINATION REQUEST
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
+        
+        <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
+            <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
+                
+                <!-- HEADER SECTION -->
+                <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
+                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
+                </div>
+
+                <!-- STATUS BADGE -->
+                <div style="padding: 20px 28px 0 28px; text-align: center;">
+                    <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
+                        <span style="font-size: 14px; font-weight: 600; color: {status_color};">
+                            {status_icon} REQUEST {action_text}
+                        </span>
                     </div>
                 </div>
 
-                <!-- STATUS -->
-                <div style="
-                    text-align:center;
-                    padding:22px 20px 5px 20px;
-                ">
-                    <span style="
-                        display:inline-block;
-                        background:{status_bg};
-                        color:{status_color};
-                        padding:9px 22px;
-                        border-radius:30px;
-                        font-size:13px;
-                        font-weight:700;
-                    ">
-                        {status_icon} REQUEST {action_text}
-                    </span>
-                </div>
+                <!-- CONTENT SECTION -->
+                <div style="padding: 20px 28px 32px 28px;">
+                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">{escape_html(message)}</h2>
+                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">{escape_html(message_sub)}</p>
 
-                <!-- CONTENT -->
-                <div style="
-                    padding:20px 28px 30px 28px;
-                ">
-                    <h2 style="
-                        margin:0 0 8px 0;
-                        font-size:22px;
-                        color:#0f172a;
-                    ">
-                        {escape_html(message)}
-                    </h2>
-                    <p style="
-                        margin:0 0 20px 0;
-                        font-size:15px;
-                        line-height:1.5;
-                        color:#475569;
-                    ">
-                        {escape_html(message_sub)}
-                    </p>
-
-                    <!-- REQUEST DETAILS -->
-                    <div style="
-                        background:#f8fafc;
-                        border-radius:16px;
-                        padding:18px;
-                        margin-bottom:18px;
-                    ">
-                        <div style="
-                            font-size:11px;
-                            font-weight:700;
-                            color:#64748b;
-                            margin-bottom:5px;
-                        ">
-                            REQUEST ID
+                    <!-- Request Details -->
+                    <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
+                        <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Request ID</div>
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{escape_html(request_id)}</div>
                         </div>
-                        <div style="
-                            font-size:18px;
-                            font-weight:700;
-                            color:#0f172a;
-                            font-family:monospace;
-                            margin-bottom:16px;
-                        ">
-                            {safe_request_id}
+                        <div>
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Current Plan</div>
+                            <div style="font-size: 16px; font-weight: 700; color: #0f172a;">{escape_html(plan or 'N/A')}</div>
                         </div>
-                        <div style="
-                            border-top:1px solid #e2e8f0;
-                            padding-top:12px;
-                        ">
-                            <div style="
-                                font-size:11px;
-                                font-weight:700;
-                                color:#64748b;
-                                margin-bottom:4px;
-                            ">
-                                CURRENT PLAN
-                            </div>
-                            <div style="
-                                font-size:16px;
-                                font-weight:700;
-                                color:#0f172a;
-                            ">
-                                {safe_plan}
-                            </div>
-                        </div>
-                        {termination_reason_html}
+                        {f'<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;"><div style="font-size: 11px; font-weight: 600; color: #64748b;">Reason for Termination</div><div style="font-size: 14px; color: #0f172a;">{escape_html(termination_reason or "N/A")}</div></div>' if termination_reason else ''}
                     </div>
 
-                    <!-- TERMINATION DATE -->
                     {termination_date_html}
-
-                    <!-- BALANCE -->
+                    
                     {balance_html}
 
-                    <!-- STATUS MESSAGE -->
                     {extra_message}
 
-                    <!-- FOOTER MESSAGE -->
-                    <div style="
-                        margin-top:28px;
-                        padding-top:20px;
-                        border-top:1px solid #e2e8f0;
-                        text-align:center;
-                    ">
-                        <div style="
-                            font-size:13px;
-                            color:#64748b;
-                            line-height:1.5;
-                        ">
-                            Thank you for choosing Cablevision!
-                        </div>
+                    <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                            Thank you for being with Cablevision!
+                        </p>
                     </div>
                 </div>
 
                 <!-- FOOTER -->
-                <div style="
-                    background:#f1f5f9;
-                    padding:16px 20px;
-                    text-align:center;
-                ">
-                    <div style="
-                        font-size:11px;
-                        color:#64748b;
-                    ">
-                        © 2026 Cablevision Internet Service Provider.
-                        All rights reserved.
+                <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
+                    <div style="font-size: 11px; color: #64748b;">
+                        © 2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
             </div>
@@ -12761,126 +12440,31 @@ def send_termination_email(
     </html>
     """
 
-    # ===============================
-    # PLAIN TEXT EMAIL
-    # ===============================
-
-    plain_body = (
-        f"Cablevision Internet Service Provider\n\n"
-        f"TERMINATION REQUEST {action_text}\n\n"
-        f"Hello {first_name},\n\n"
-        f"{message_sub}\n\n"
-        f"Request ID: {request_id}\n"
-        f"Current Plan: {plan or 'N/A'}\n"
-    )
-
-    if termination_reason:
-        plain_body += f"Reason for Termination: {termination_reason}\n"
-
-    if termination_date and status == "Approved":
-        plain_body += f"Date Terminated: {termination_date}\n"
-
-    if balance_value > 0:
-        plain_body += f"Outstanding Balance: ₱{balance_value:,.2f}\n"
-
-    if status == "Rejected":
-        plain_body += (
-            f"\nReason for Rejection:\n"
-            f"{rejection_reason or 'No specific reason was provided.'}\n"
-        )
-
-    plain_body += (
-        "\nThank you for choosing Cablevision!\n\n"
-        "Cablevision Systems Corporation"
-    )
-
-    # ===============================
-    # BREVO PAYLOAD
-    # ===============================
-
-    payload = {
-        "sender": {
-            "name": sender_name,
-            "email": sender_email
-        },
-        "to": [
-            {
-                "email": to_email
-            }
-        ],
-        "subject": f"Cablevision - Termination Request {action_text}",
-        "htmlContent": html_body,
-        "textContent": plain_body
-    }
-
-    # ===============================
-    # BREVO HEADERS
-    # ===============================
-
-    headers = {
-        "accept": "application/json",
-        "api-key": brevo_api_key,
-        "content-type": "application/json"
-    }
-
-    # ===============================
-    # SEND EMAIL
-    # ===============================
-
     try:
-        print("========================================")
-        print("📧 TERMINATION EMAIL")
-        print("========================================")
-        print(f"📧 From: {sender_email}")
-        print(f"📧 To: {to_email}")
-        print(f"📧 Status: {status}")
-        print(f"📧 Request ID: {request_id}")
-        print("========================================")
+        print(f"📧 Creating email for {to_email}...")
+        msg = MIMEMultipart("alternative")
+        msg['From'] = sender_email
+        msg['To'] = to_email
+        msg['Subject'] = subject
 
-        response = requests.post(
-            "https://api.brevo.com/v3/smtp/email",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
+        msg.attach(MIMEText(html_body, "html"))
 
-        # ===============================
-        # CHECK BREVO RESPONSE
-        # ===============================
-
-        if response.status_code not in (200, 201):
-            print(f"❌ Brevo API error ({response.status_code}): {response.text}")
-            return False
-
-        # ===============================
-        # GET MESSAGE ID
-        # ===============================
-
-        try:
-            brevo_response = response.json()
-            message_id = brevo_response.get("messageId")
-            if message_id:
-                print(f"📨 Brevo Message ID: {message_id}")
-        except Exception:
-            pass
-
-        print(f"✅ Termination email successfully sent to {to_email}")
+        print(f"📧 Connecting to SMTP server...")
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        
+        print(f"📧 Logging in...")
+        server.login(sender_email, sender_app_password)
+        
+        print(f"📧 Sending message...")
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"✅ Termination email sent to {to_email}")
         return True
 
-    # ===============================
-    # ERROR HANDLING
-    # ===============================
-
-    except requests.exceptions.Timeout:
-        print("❌ Brevo API request timed out.")
-        return False
-
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Brevo API request error: {e}")
-        return False
-
     except Exception as e:
-        print(f"❌ Error sending termination email: {e}")
+        print(f"❌ Termination email failed: {e}")
         import traceback
         traceback.print_exc()
         return False
