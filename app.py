@@ -9709,84 +9709,299 @@ def request_reapply(app_id):
             conn.close()
 
 
-def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, admin_message,
-                                 application_id, reapplied_count=0):
+def send_reapply_request_email(
+    to_email,
+    first_name,
+    app_id,
+    rejection_reason,
+    admin_message,
+    application_id,
+    reapplied_count=0
+):
+    import requests
     import html as html_lib
 
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
-    subject = "Cablevision - Re-application Requested"
-    BASE_URL = "http://127.0.0.1:5001"
+    # ==========================================
+    # BREVO CONFIGURATION
+    # ==========================================
 
-    safe_reason = html_lib.escape(rejection_reason)
-    safe_message = html_lib.escape(admin_message)
+    api_key = os.getenv("BREVO_API_KEY", "")
+
+    if not api_key:
+        print("❌ Brevo API key not configured!")
+        return False
+
+    print(f"📧 Sending reapply request email via Brevo to {to_email}...")
+
+    # ==========================================
+    # PRODUCTION USER WEBSITE
+    # ==========================================
+
+    BASE_URL = "https://cablevisioncableinternet.com"
+
+    # ==========================================
+    # ESCAPE USER/ADMIN INPUT
+    # ==========================================
+
+    safe_reason = html_lib.escape(rejection_reason or "Not specified")
+    safe_message = html_lib.escape(admin_message or "")
+    safe_first_name = html_lib.escape(first_name or "")
+    safe_app_id = html_lib.escape(app_id or "")
+
+    # ==========================================
+    # RE-APPLICATION LIMIT
+    # ==========================================
 
     if reapplied_count < 2:
         remaining = 2 - reapplied_count
+        reapply_url = f"{BASE_URL}/reapply/{application_id}"
+
         reapply_section = f"""
-        <div style="margin: 20px 0; text-align: center;">
-            <a href="{BASE_URL}/reapply/{application_id}"
-               style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                      color: white; text-decoration: none; padding: 14px 32px; border-radius: 50px;
-                      font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+        <div style="margin: 28px 0; text-align: center;">
+            <a href="{reapply_url}"
+               style="
+                    display: inline-block;
+                    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                    color: #ffffff;
+                    text-decoration: none;
+                    padding: 15px 36px;
+                    border-radius: 50px;
+                    font-weight: 600;
+                    font-size: 15px;
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.30);
+               ">
                 Re-apply Now
             </a>
-            <p style="font-size: 12px; color: #6b7280; margin-top: 12px;">
-                You have {remaining} re-application(s) left.
+            <p style="
+                font-size: 12px;
+                color: #6b7280;
+                margin-top: 12px;
+            ">
+                You have <strong>{remaining}</strong> re-application(s) left.
             </p>
         </div>
         """
     else:
         reapply_section = """
-        <div style="margin: 20px 0; padding: 12px; background: #fef2f2; border-radius: 12px; text-align: center;">
-            <p style="margin: 0; color: #991b1b; font-size: 14px;">
-                ⚠️ You have reached the maximum number of re-applications (2). Further re-applications are not allowed.
+        <div style="
+            margin: 20px 0;
+            padding: 14px;
+            background: #fef2f2;
+            border-radius: 12px;
+            text-align: center;
+        ">
+            <p style="
+                margin: 0;
+                color: #991b1b;
+                font-size: 14px;
+                font-weight: 600;
+            ">
+                ⚠️ You have reached the maximum number of re-applications (2).
+                Further re-applications are not allowed.
             </p>
         </div>
         """
 
+    # ==========================================
+    # EMAIL HTML
+    # ==========================================
+
     html_body = f"""
     <!DOCTYPE html>
     <html>
-    <head><meta charset="UTF-8"><title>Cablevision Email</title></head>
-    <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',-apple-system,BlinkMacSystemFont,Arial,sans-serif;background-color:#eef2ff;">
-        <div style="max-width:580px;margin:0 auto;padding:30px 20px;">
-            <div style="background:#ffffff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,0.15);">
-                <div style="background:linear-gradient(135deg,#001f3f 0%,#002b5c 100%);padding:32px 28px;text-align:center;">
-                    <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;">Cablevision</h1>
-                    <p style="margin:6px 0 0 0;color:#93c5fd;font-size:13px;">Internet Service Provider</p>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cablevision - Re-application Request</title>
+    </head>
+    <body style="
+        margin:0;
+        padding:0;
+        font-family:'Segoe UI','Inter',-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+        background-color:#eef2ff;
+    ">
+        <div style="
+            max-width:580px;
+            margin:0 auto;
+            padding:30px 20px;
+        ">
+            <div style="
+                background:#ffffff;
+                border-radius:32px;
+                overflow:hidden;
+                box-shadow:0 20px 35px -12px rgba(0,0,0,0.15);
+            ">
+                <!-- HEADER -->
+                <div style="
+                    background:linear-gradient(135deg, #001f3f 0%, #002b5c 100%);
+                    padding:32px 28px;
+                    text-align:center;
+                ">
+                    <h1 style="
+                        margin:0;
+                        font-size:26px;
+                        font-weight:700;
+                        color:#ffffff;
+                    ">
+                        Cablevision
+                    </h1>
+                    <p style="
+                        margin:6px 0 0 0;
+                        color:#93c5fd;
+                        font-size:13px;
+                    ">
+                        Internet Service Provider
+                    </p>
                 </div>
-                <div style="padding:20px 28px 0 28px;text-align:center;">
-                    <div style="display:inline-block;background:#dbeafe;padding:8px 24px;border-radius:60px;">
-                        <span style="font-size:14px;font-weight:600;color:#1d4ed8;">WE'D LIKE YOU TO RE-APPLY</span>
+
+                <!-- STATUS BADGE -->
+                <div style="
+                    padding:20px 28px 0 28px;
+                    text-align:center;
+                ">
+                    <div style="
+                        display:inline-block;
+                        background:#dbeafe;
+                        padding:8px 24px;
+                        border-radius:60px;
+                    ">
+                        <span style="
+                            font-size:14px;
+                            font-weight:600;
+                            color:#1d4ed8;
+                        ">
+                            WE'D LIKE YOU TO RE-APPLY
+                        </span>
                     </div>
                 </div>
+
+                <!-- CONTENT -->
                 <div style="padding:20px 28px 32px 28px;">
-                    <h2 style="margin:0 0 8px 0;font-size:22px;font-weight:700;color:#0f172a;">Hello, {first_name}!</h2>
-                    <p style="margin:0 0 20px 0;font-size:15px;color:#475569;">
-                        Our team reviewed your rejected application and would like to invite you to re-apply with corrected information.
+                    <h2 style="
+                        margin:0 0 8px 0;
+                        font-size:22px;
+                        font-weight:700;
+                        color:#0f172a;
+                    ">
+                        Hello, {safe_first_name}!
+                    </h2>
+                    <p style="
+                        margin:0 0 20px 0;
+                        font-size:15px;
+                        color:#475569;
+                        line-height:1.6;
+                    ">
+                        Our team reviewed your rejected application
+                        and would like to invite you to re-apply
+                        with corrected information.
                     </p>
-                    <div style="background:#f8fafc;border-radius:20px;padding:18px;margin-bottom:16px;">
-                        <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-                            <div style="font-size:11px;font-weight:600;color:#64748b;">Application Number</div>
-                            <div style="font-size:18px;font-weight:700;color:#0f172a;font-family:monospace;">{app_id}</div>
+
+                    <!-- APPLICATION DETAILS -->
+                    <div style="
+                        background:#f8fafc;
+                        border-radius:20px;
+                        padding:18px;
+                        margin-bottom:16px;
+                    ">
+                        <div style="
+                            margin-bottom:16px;
+                            padding-bottom:12px;
+                            border-bottom:1px solid #e2e8f0;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                font-weight:600;
+                                color:#64748b;
+                            ">
+                                Application Number
+                            </div>
+                            <div style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#0f172a;
+                                font-family:monospace;
+                                margin-top:4px;
+                            ">
+                                {safe_app_id}
+                            </div>
                         </div>
                         <div>
-                            <div style="font-size:11px;font-weight:600;color:#64748b;">Original Rejection Reason</div>
-                            <div style="font-size:14px;font-weight:500;color:#991b1b;">{safe_reason}</div>
+                            <div style="
+                                font-size:11px;
+                                font-weight:600;
+                                color:#64748b;
+                                margin-bottom:5px;
+                            ">
+                                Original Rejection Reason
+                            </div>
+                            <div style="
+                                font-size:14px;
+                                font-weight:500;
+                                color:#991b1b;
+                                line-height:1.5;
+                            ">
+                                {safe_reason}
+                            </div>
                         </div>
                     </div>
-                    <div style="margin:20px 0;padding:16px;background:#eff6ff;border-radius:12px;border-left:4px solid #2563eb;">
-                        <p style="margin:0 0 8px 0;color:#1e3a8a;"><strong>Message from our team</strong></p>
-                        <p style="margin:0;color:#1e293b;font-size:14px;line-height:1.6;white-space:pre-wrap;">{safe_message}</p>
+
+                    <!-- ADMIN MESSAGE -->
+                    <div style="
+                        margin:20px 0;
+                        padding:16px;
+                        background:#eff6ff;
+                        border-radius:12px;
+                        border-left:4px solid #2563eb;
+                    ">
+                        <p style="
+                            margin:0 0 8px 0;
+                            color:#1e3a8a;
+                        ">
+                            <strong>Message from our team</strong>
+                        </p>
+                        <p style="
+                            margin:0;
+                            color:#1e293b;
+                            font-size:14px;
+                            line-height:1.6;
+                            white-space:pre-wrap;
+                        ">
+                            {safe_message}
+                        </p>
                     </div>
+
+                    <!-- RE-APPLY BUTTON -->
                     {reapply_section}
-                    <div style="margin-top:28px;padding-top:20px;text-align:center;border-top:1px solid #e2e8f0;">
-                        <p style="margin:0;font-size:12px;color:#94a3b8;">Thank you for choosing Cablevision!</p>
+
+                    <!-- FOOTER MESSAGE -->
+                    <div style="
+                        margin-top:28px;
+                        padding-top:20px;
+                        text-align:center;
+                        border-top:1px solid #e2e8f0;
+                    ">
+                        <p style="
+                            margin:0;
+                            font-size:12px;
+                            color:#94a3b8;
+                        ">
+                            Thank you for choosing Cablevision!
+                        </p>
                     </div>
                 </div>
-                <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
-                    <div style="font-size:11px;color:#64748b;">© 2026 Cablevision Internet Service Provider. All rights reserved.</div>
+
+                <!-- FOOTER -->
+                <div style="
+                    background:#f1f5f9;
+                    padding:16px 28px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:11px;
+                        color:#64748b;
+                    ">
+                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                    </div>
                 </div>
             </div>
         </div>
@@ -9794,22 +10009,48 @@ def send_reapply_request_email(to_email, first_name, app_id, rejection_reason, a
     </html>
     """
 
-    msg = MIMEMultipart("mixed")
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(html_body, "html"))
+    # ==========================================
+    # BREVO API
+    # ==========================================
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_app_password)
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ Reapply request email sent to {to_email}")
-        return True
+        url = "https://api.brevo.com/v3/smtp/email"
+
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json"
+        }
+
+        email_data = {
+            "sender": {
+                "name": "Cablevision Systems Corp.",
+                "email": "cablevision.cableinternet@gmail.com"
+            },
+            "to": [
+                {
+                    "email": to_email,
+                    "name": first_name
+                }
+            ],
+            "subject": "Cablevision - Re-application Requested",
+            "htmlContent": html_body
+        }
+
+        response = requests.post(url, json=email_data, headers=headers, timeout=30)
+
+        if response.status_code in [200, 201, 202]:
+            print(f"✅ Reapply request email sent successfully to {to_email}")
+            print(f"🔗 Reapply URL: {BASE_URL}/reapply/{application_id}")
+            return True
+        else:
+            print(f"❌ Brevo API error: {response.status_code} - {response.text}")
+            return False
+
     except Exception as e:
-        print(f"❌ Reapply request email failed: {e}")
+        print(f"❌ Reapply email API error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # ===============================
