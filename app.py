@@ -10978,106 +10978,346 @@ def approve_plan_request():
 
 
 # ===============================
-# SEND PLAN CHANGE STATUS EMAIL (FIXED - WITH CORRECT PLAN VALUES)
+# SEND PLAN CHANGE STATUS EMAIL
+# APPROVED / REJECTED
+# BREVO API
 # ===============================
-def send_plan_change_email(to_email, first_name, status, request_id, current_plan, requested_plan, requested_speed, requested_price, reason=None, current_speed=None, current_price=None):
-    """Send email notification for plan change approval/rejection"""
-    
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
+
+def send_plan_change_email(
+    to_email,
+    first_name,
+    status,
+    request_id,
+    current_plan,
+    requested_plan,
+    requested_speed,
+    requested_price,
+    reason=None,
+    current_speed=None,
+    current_price=None
+):
+    """
+    Sends plan change status email using Brevo HTTP API.
+
+    Status:
+        - Approved
+        - Rejected
+
+    Returns:
+        True  = email sent successfully
+        False = email sending failed
+    """
+
+    import requests
     import html
-    
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
 
-    subject = "Cablevision - Plan Change Request Update"
+    # ===============================
+    # BREVO CONFIGURATION
+    # ===============================
 
-    # Helper function for HTML escaping
-    def escape_html(text):
-        if not text:
-            return ''
-        return html.escape(str(text))
+    brevo_api_key = os.getenv("BREVO_API_KEY")
 
-    status_color = "#10b981" if status == "Approved" else "#ef4444"
-    status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
-    status_icon = "✓" if status == "Approved" else "✗"
-    
+    sender_email = os.getenv(
+        "SMTP_FROM",
+        "noreply@cablevisioncableinternet.com"
+    )
+
+    sender_name = "Cablevision Systems Corporation"
+
+    # ===============================
+    # CHECK CONFIGURATION
+    # ===============================
+
+    if not brevo_api_key:
+        print("❌ BREVO_API_KEY is not configured!")
+        return False
+
+    if not to_email:
+        print("❌ Customer email is empty!")
+        return False
+
+    # ===============================
+    # NORMALIZE STATUS
+    # ===============================
+
+    status = str(status or "").strip().capitalize()
+
+    if status not in ("Approved", "Rejected"):
+        print(f"❌ Invalid plan change status: {status}")
+        return False
+
+    # ===============================
+    # HTML ESCAPE
+    # ===============================
+
+    def escape_html(value):
+        if value is None:
+            return ""
+        return html.escape(str(value))
+
+    # ===============================
+    # FORMAT PRICE
+    # ===============================
+
+    def format_price(value):
+        try:
+            return f"₱{float(value or 0):,.2f}"
+        except (ValueError, TypeError):
+            return f"₱{escape_html(value or 0)}"
+
+    # ===============================
+    # CUSTOMER / PLAN VALUES
+    # ===============================
+
+    first_name = str(first_name or "Customer").strip()
+
+    safe_request_id = escape_html(request_id or "N/A")
+    safe_current_plan = escape_html(current_plan or "N/A")
+    safe_current_speed = escape_html(current_speed or "N/A")
+    safe_requested_plan = escape_html(requested_plan or "N/A")
+    safe_requested_speed = escape_html(requested_speed or "N/A")
+
+    formatted_current_price = format_price(current_price)
+    formatted_requested_price = format_price(requested_price)
+
+    # ===============================
+    # STATUS SETTINGS
+    # ===============================
+
     if status == "Approved":
-        message = f"Congratulations, {first_name}!"
-        message_sub = "Your plan change request has been approved."
+        status_color = "#16a34a"
+        status_bg = "#dcfce7"
+        status_icon = "✓"
         action_text = "APPROVED"
+
+        message = f"Congratulations, {first_name}!"
+        message_sub = "Your plan change request has been approved by Cablevision."
+
     else:
-        message = f"Plan Change Update, {first_name}"
-        message_sub = "We regret to inform you about your plan change request."
+        status_color = "#dc2626"
+        status_bg = "#fee2e2"
+        status_icon = "✕"
         action_text = "REJECTED"
 
-    # Format current price (from customer's current plan)
-    try:
-        current_price_val = float(current_price or 0)
-        formatted_current_price = f"₱{current_price_val:,.2f}"
-    except:
-        formatted_current_price = f"₱{current_price or 0}"
-    
-    # Format requested price (from plan change request)
-    try:
-        requested_price_val = float(requested_price or 0)
-        formatted_requested_price = f"₱{requested_price_val:,.2f}"
-    except:
-        formatted_requested_price = f"₱{requested_price or 0}"
+        message = f"Plan Change Update, {first_name}"
+        message_sub = "Your plan change request has been reviewed by Cablevision."
 
-    # Plan comparison section - DAPAT MAGKAIBA ANG CURRENT AT REQUESTED
-    plan_comparison_html = f"""
-    <div style="background: #f8fafc; border-radius: 20px; padding: 20px; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
-            <div style="flex: 1; text-align: center; padding: 12px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <div style="font-size: 11px; color: #ef4444; font-weight: 600; margin-bottom: 8px;">CURRENT PLAN</div>
-                <div style="font-size: 16px; font-weight: 700; color: #1e293b;">{escape_html(current_plan or 'N/A')}</div>
-                <div style="font-size: 20px; font-weight: 800; color: #ef4444; margin-top: 5px;">{escape_html(current_speed or 'N/A')}</div>
-                <div style="font-size: 14px; color: #ef4444;">{formatted_current_price}</div>
+    # ===============================
+    # REJECTION REASON
+    # ===============================
+
+    rejection_reason = escape_html(
+        reason.strip() if isinstance(reason, str) else reason
+    )
+
+    if not rejection_reason:
+        rejection_reason = "No specific reason was provided."
+
+    # ===============================
+    # STATUS MESSAGE
+    # ===============================
+
+    if status == "Approved":
+        extra_message = f"""
+        <div style="
+            margin-top:20px;
+            padding:18px;
+            background:#f0fdf4;
+            border:1px solid #bbf7d0;
+            border-radius:14px;
+        ">
+            <div style="
+                font-size:15px;
+                font-weight:700;
+                color:#166534;
+                margin-bottom:8px;
+            ">
+                Your new plan is now active
             </div>
-            <div style="font-size: 24px; color: #94a3b8;">
-                <i class="fas fa-arrow-right"></i>
-            </div>
-            <div style="flex: 1; text-align: center; padding: 12px; background: white; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <div style="font-size: 11px; color: #22c55e; font-weight: 600; margin-bottom: 8px;">REQUESTED PLAN</div>
-                <div style="font-size: 16px; font-weight: 700; color: #1e293b;">{escape_html(requested_plan or 'N/A')}</div>
-                <div style="font-size: 20px; font-weight: 800; color: #22c55e; margin-top: 5px;">{escape_html(requested_speed or 'N/A')}</div>
-                <div style="font-size: 14px; color: #22c55e;">{formatted_requested_price}</div>
+
+            <div style="
+                font-size:14px;
+                line-height:1.6;
+                color:#14532d;
+            ">
+                Your request to change from
+                <strong>{safe_current_plan}</strong>
+                to
+                <strong>{safe_requested_plan}</strong>
+                has been approved.
+                Your new plan will be reflected according to your
+                Cablevision billing and service schedule.
             </div>
         </div>
+        """
+
+    else:
+        extra_message = f"""
+        <div style="
+            margin-top:20px;
+            padding:18px;
+            background:#fef2f2;
+            border:1px solid #fecaca;
+            border-radius:14px;
+        ">
+            <div style="
+                font-size:15px;
+                font-weight:700;
+                color:#991b1b;
+                margin-bottom:8px;
+            ">
+                Reason for Rejection
+            </div>
+
+            <div style="
+                font-size:14px;
+                line-height:1.6;
+                color:#7f1d1d;
+            ">
+                {rejection_reason}
+            </div>
+
+            <div style="
+                margin-top:12px;
+                font-size:13px;
+                line-height:1.5;
+                color:#7f1d1d;
+            ">
+                You may submit another plan change request if applicable.
+                Please contact Cablevision support if you need assistance.
+            </div>
+        </div>
+        """
+
+    # ===============================
+    # PLAN COMPARISON
+    # ===============================
+
+    plan_comparison_html = f"""
+    <div style="
+        background:#f8fafc;
+        border-radius:18px;
+        padding:18px;
+        margin-bottom:20px;
+    ">
+        <div style="
+            text-align:center;
+            margin-bottom:16px;
+        ">
+            <span style="
+                display:inline-block;
+                background:#e2e8f0;
+                color:#475569;
+                padding:5px 14px;
+                border-radius:20px;
+                font-size:11px;
+                font-weight:700;
+            ">
+                PLAN COMPARISON
+            </span>
+        </div>
+
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td width="45%" valign="top" style="
+                    background:#ffffff;
+                    border:1px solid #e2e8f0;
+                    border-radius:14px;
+                    padding:15px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:11px;
+                        font-weight:700;
+                        color:#dc2626;
+                        margin-bottom:8px;
+                    ">
+                        CURRENT PLAN
+                    </div>
+
+                    <div style="
+                        font-size:17px;
+                        font-weight:700;
+                        color:#0f172a;
+                        margin-bottom:5px;
+                    ">
+                        {safe_current_plan}
+                    </div>
+
+                    <div style="
+                        font-size:20px;
+                        font-weight:800;
+                        color:#dc2626;
+                    ">
+                        {safe_current_speed}
+                    </div>
+
+                    <div style="
+                        font-size:14px;
+                        color:#dc2626;
+                        font-weight:600;
+                    ">
+                        {formatted_current_price}
+                    </div>
+                </td>
+
+                <td width="10%" valign="middle" style="
+                    text-align:center;
+                    font-size:24px;
+                    color:#94a3b8;
+                ">
+                    →
+                </td>
+
+                <td width="45%" valign="top" style="
+                    background:#ffffff;
+                    border:1px solid #e2e8f0;
+                    border-radius:14px;
+                    padding:15px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:11px;
+                        font-weight:700;
+                        color:#16a34a;
+                        margin-bottom:8px;
+                    ">
+                        REQUESTED PLAN
+                    </div>
+
+                    <div style="
+                        font-size:17px;
+                        font-weight:700;
+                        color:#0f172a;
+                        margin-bottom:5px;
+                    ">
+                        {safe_requested_plan}
+                    </div>
+
+                    <div style="
+                        font-size:20px;
+                        font-weight:800;
+                        color:#16a34a;
+                    ">
+                        {safe_requested_speed}
+                    </div>
+
+                    <div style="
+                        font-size:14px;
+                        color:#16a34a;
+                        font-weight:600;
+                    ">
+                        {formatted_requested_price}
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
     """
 
-    # Extra message based on status
-    if status == "Approved":
-        extra_message = f"""
-        <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-            <p style="margin: 0 0 8px 0; color: #166534;">
-                <strong>What's Next?</strong>
-            </p>
-            <p style="margin: 0; color: #14532d; font-size: 14px;">
-                Your new plan is now active! You can now enjoy faster internet speed.
-                The changes will reflect on your next billing cycle.
-                For inquiries, please contact our support team.
-            </p>
-        </div>
-        """
-    else:
-        extra_message = f"""
-        <div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;">
-            <p style="margin: 0 0 8px 0; color: #991b1b;">
-                <strong>Reason for Rejection</strong>
-            </p>
-            <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
-                {escape_html(reason) if reason else 'No specific reason provided.'}
-            </p>
-            <p style="margin-top: 12px; color: #7f1d1d; font-size: 13px;">
-                You may submit a new plan change request with corrected information.
-                Please contact our support team for assistance.
-            </p>
-        </div>
-        """
+    # ===============================
+    # HTML EMAIL
+    # ===============================
 
     html_body = f"""
     <!DOCTYPE html>
@@ -11085,104 +11325,314 @@ def send_plan_change_email(to_email, first_name, status, request_id, current_pla
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cablevision Email</title>
+        <title>CableVision Plan Change</title>
     </head>
-    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
-        
-        <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
-            <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
-                
-                <!-- HEADER SECTION -->
-                <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                    <div style="position: absolute; top: 20px; right: 25px;">
-                        <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 600; color: #a5f3fc;">PLAN CHANGE</span>
+
+    <body style="
+        margin:0;
+        padding:0;
+        background:#eef2ff;
+        font-family:Arial, Helvetica, sans-serif;
+    ">
+
+        <div style="
+            width:100%;
+            padding:30px 0;
+        ">
+            <div style="
+                max-width:580px;
+                margin:0 auto;
+                background:#ffffff;
+                border-radius:24px;
+                overflow:hidden;
+                box-shadow:0 10px 30px rgba(0,0,0,0.10);
+            ">
+
+                <!-- HEADER -->
+                <div style="
+                    background:#001f3f;
+                    padding:30px 25px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:28px;
+                        font-weight:700;
+                        color:#ffffff;
+                    ">
+                        Cablevision
                     </div>
-                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
-                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
+
+                    <div style="
+                        margin-top:6px;
+                        font-size:13px;
+                        color:#93c5fd;
+                    ">
+                        Internet Service Provider
+                    </div>
+
+                    <div style="
+                        margin-top:16px;
+                        display:inline-block;
+                        background:rgba(255,255,255,0.12);
+                        color:#dbeafe;
+                        padding:6px 14px;
+                        border-radius:20px;
+                        font-size:11px;
+                        font-weight:700;
+                    ">
+                        PLAN CHANGE
+                    </div>
                 </div>
 
-                <!-- STATUS BADGE -->
-                <div style="padding: 20px 28px 0 28px; text-align: center;">
-                    <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
-                        <span style="font-size: 14px; font-weight: 600; color: {status_color};">
-                            {status_icon} REQUEST {action_text}
-                        </span>
-                    </div>
+                <!-- STATUS -->
+                <div style="
+                    text-align:center;
+                    padding:22px 20px 5px;
+                ">
+                    <span style="
+                        display:inline-block;
+                        background:{status_bg};
+                        color:{status_color};
+                        padding:9px 22px;
+                        border-radius:30px;
+                        font-size:13px;
+                        font-weight:700;
+                    ">
+                        {status_icon} REQUEST {action_text}
+                    </span>
                 </div>
 
-                <!-- CONTENT SECTION -->
-                <div style="padding: 20px 28px 32px 28px;">
-                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">{escape_html(message)}</h2>
-                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">{escape_html(message_sub)}</p>
+                <!-- CONTENT -->
+                <div style="
+                    padding:20px 28px 30px;
+                ">
+                    <h2 style="
+                        margin:0 0 8px;
+                        font-size:22px;
+                        color:#0f172a;
+                    ">
+                        {escape_html(message)}
+                    </h2>
 
-                    <!-- Request Details -->
-                    <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
-                        <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Request ID</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{escape_html(request_id)}</div>
+                    <p style="
+                        margin:0 0 20px;
+                        font-size:15px;
+                        line-height:1.5;
+                        color:#475569;
+                    ">
+                        {escape_html(message_sub)}
+                    </p>
+
+                    <!-- REQUEST DETAILS -->
+                    <div style="
+                        background:#f8fafc;
+                        border-radius:16px;
+                        padding:18px;
+                        margin-bottom:18px;
+                    ">
+                        <div style="
+                            font-size:11px;
+                            font-weight:700;
+                            color:#64748b;
+                            margin-bottom:5px;
+                        ">
+                            REQUEST ID
                         </div>
-                        <div>
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Status</div>
-                            <div style="font-size: 16px; font-weight: 700; color: {status_color};">{action_text}</div>
+
+                        <div style="
+                            font-size:18px;
+                            font-weight:700;
+                            color:#0f172a;
+                            font-family:monospace;
+                            margin-bottom:16px;
+                        ">
+                            {safe_request_id}
+                        </div>
+
+                        <div style="
+                            border-top:1px solid #e2e8f0;
+                            padding-top:12px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                            ">
+                                STATUS
+                            </div>
+
+                            <div style="
+                                margin-top:4px;
+                                font-size:16px;
+                                font-weight:700;
+                                color:{status_color};
+                            ">
+                                {action_text}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Plan Comparison -->
-                    <div style="margin: 20px 0;">
-                        <div style="text-align: center; margin-bottom: 16px;">
-                            <span style="background: #e2e8f0; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #475569;">PLAN COMPARISON</span>
-                        </div>
-                        {plan_comparison_html}
-                    </div>
+                    <!-- PLAN COMPARISON -->
+                    {plan_comparison_html}
 
+                    <!-- STATUS MESSAGE -->
                     {extra_message}
 
-                    <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    <div style="
+                        margin-top:28px;
+                        padding-top:20px;
+                        border-top:1px solid #e2e8f0;
+                        text-align:center;
+                    ">
+                        <div style="
+                            font-size:13px;
+                            color:#64748b;
+                        ">
                             Thank you for choosing Cablevision!
-                        </p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- FOOTER -->
-                <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
-                    <div style="font-size: 11px; color: #64748b;">
-                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                <div style="
+                    background:#f1f5f9;
+                    padding:16px 20px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:11px;
+                        color:#64748b;
+                    ">
+                        © 2026 Cablevision Internet Service Provider.
+                        All rights reserved.
                     </div>
                 </div>
+
             </div>
         </div>
+
     </body>
     </html>
     """
 
+    # ===============================
+    # PLAIN TEXT EMAIL
+    # ===============================
+
+    plain_body = (
+        f"CableVision Plan Change Request {action_text}\n\n"
+        f"Hello {first_name},\n\n"
+        f"Your plan change request has been {status.lower()}.\n\n"
+        f"Request ID: {request_id}\n\n"
+        f"Current Plan:\n"
+        f"{current_plan or 'N/A'}\n"
+        f"Speed: {current_speed or 'N/A'}\n"
+        f"Price: {formatted_current_price}\n\n"
+        f"Requested Plan:\n"
+        f"{requested_plan or 'N/A'}\n"
+        f"Speed: {requested_speed or 'N/A'}\n"
+        f"Price: {formatted_requested_price}\n"
+    )
+
+    if status == "Rejected":
+        plain_body += (
+            f"\nReason for Rejection:\n"
+            f"{reason or 'No specific reason was provided.'}\n"
+        )
+
+    plain_body += (
+        "\nThank you for choosing Cablevision!\n\n"
+        "Cablevision Systems Corporation"
+    )
+
+    # ===============================
+    # BREVO API PAYLOAD
+    # ===============================
+
+    payload = {
+        "sender": {
+            "name": sender_name,
+            "email": sender_email
+        },
+        "to": [
+            {
+                "email": to_email,
+                "name": first_name
+            }
+        ],
+        "subject": (
+            f"CableVision - Plan Change Request {action_text}"
+        ),
+        "htmlContent": html_body,
+        "textContent": plain_body
+    }
+
+    # ===============================
+    # BREVO API HEADERS
+    # ===============================
+
+    headers = {
+        "accept": "application/json",
+        "api-key": brevo_api_key,
+        "content-type": "application/json"
+    }
+
+    # ===============================
+    # SEND EMAIL
+    # ===============================
+
     try:
-        print(f"📧 Creating email for {to_email}...")
-        msg = MIMEMultipart("alternative")
-        msg['From'] = sender_email
-        msg['To'] = to_email
-        msg['Subject'] = subject
+        print(
+            f"📧 Sending plan change {status.lower()} "
+            f"email via Brevo to {to_email}..."
+        )
 
-        msg.attach(MIMEText(html_body, "html"))
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
 
-        print(f"📧 Connecting to SMTP server...")
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        
-        print(f"📧 Logging in...")
-        server.login(sender_email, sender_app_password)
-        
-        print(f"📧 Sending message...")
-        server.send_message(msg)
-        server.quit()
-        
-        print(f"✅ Plan change email sent to {to_email}")
+        if response.status_code not in (200, 201):
+            print(
+                f"❌ Brevo API error "
+                f"({response.status_code}): "
+                f"{response.text}"
+            )
+            return False
+
+        try:
+            brevo_response = response.json()
+            message_id = brevo_response.get("messageId")
+
+            if message_id:
+                print(f"📨 Brevo Message ID: {message_id}")
+
+        except Exception:
+            pass
+
+        print(
+            f"✅ Plan change {status.lower()} email "
+            f"sent successfully to {to_email}"
+        )
+
         return True
 
+    except requests.exceptions.Timeout:
+        print("❌ Brevo API request timed out")
+        return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Brevo API request error: {e}")
+        return False
+
     except Exception as e:
-        print(f"❌ Plan change email failed: {e}")
+        print(f"❌ Error sending plan change email: {e}")
+
         import traceback
         traceback.print_exc()
+
         return False
 
 
