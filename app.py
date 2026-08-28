@@ -2294,68 +2294,412 @@ def create_admin():
         return jsonify({"error": str(e)}), 500
 
 # ===============================
-# SEND ADMIN EMAIL (NO CHANGES NEEDED)
+# SEND ADMIN ACCOUNT EMAIL
+# BREVO API
 # ===============================
-def send_admin_email(to_email, admin_id, username, password):
-    import smtplib
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
 
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
+def send_admin_email(to_email, admin_id, username, password):
+    """
+    Sends newly created Admin account credentials via Brevo.
+
+    Includes:
+        - Admin ID
+        - Username
+        - Temporary Password
+
+    Returns:
+        True  = email sent successfully
+        False = email sending failed
+    """
+
+    import requests
+    import html
+
+    # ===============================
+    # BREVO CONFIGURATION
+    # ===============================
+
+    brevo_api_key = os.getenv("BREVO_API_KEY")
+    sender_email = os.getenv(
+        "SMTP_FROM",
+        "noreply@cablevisioncableinternet.com"
+    )
+    sender_name = "Cablevision Systems Corporation"
+
+    # ===============================
+    # CHECK CONFIGURATION
+    # ===============================
+
+    if not brevo_api_key:
+        print("❌ BREVO_API_KEY is not configured!")
+        return False
+
+    if not to_email:
+        print("❌ Cannot send admin email: recipient email is empty.")
+        return False
+
+    # ===============================
+    # HTML ESCAPE
+    # ===============================
+
+    safe_admin_id = html.escape(str(admin_id or "N/A"))
+    safe_username = html.escape(str(username or "N/A"))
+    safe_password = html.escape(str(password or "N/A"))
+
+    # ===============================
+    # EMAIL SUBJECT
+    # ===============================
+
     subject = "Your Admin Account - CableVision"
 
+    # ===============================
+    # HTML EMAIL
+    # ===============================
+
     html_body = f"""
+    <!DOCTYPE html>
     <html>
-        <body style="font-family: Arial, sans-serif; background-color: #f0f4f8; padding: 20px;">
-            <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <h2 style="color: #003d73;">CableVision Admin Account</h2>
-                <p>Hello,</p>
-                <p>Your administrator account has been successfully created.</p>
-                <div style="background-color: #f9fafb; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb;">
-                    <p><strong>Admin ID:</strong> {admin_id}</p>
-                    <p><strong>Username:</strong> {username}</p>
-                    <p><strong>Password:</strong> {password}</p>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CableVision Admin Account</title>
+    </head>
+    <body style="
+        margin:0;
+        padding:0;
+        background:#eef2f6;
+        font-family:Arial, Helvetica, sans-serif;
+    ">
+        <div style="
+            width:100%;
+            padding:30px 0;
+        ">
+            <div style="
+                max-width:580px;
+                margin:0 auto;
+                background:#ffffff;
+                border-radius:24px;
+                overflow:hidden;
+                box-shadow:0 10px 30px rgba(0,0,0,0.10);
+            ">
+                <!-- HEADER -->
+                <div style="
+                    background:#001f3f;
+                    padding:30px 25px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:28px;
+                        font-weight:700;
+                        color:#ffffff;
+                    ">
+                        Cablevision
+                    </div>
+                    <div style="
+                        margin-top:6px;
+                        font-size:13px;
+                        color:#93c5fd;
+                    ">
+                        Internet Service Provider
+                    </div>
+                    <div style="
+                        margin-top:16px;
+                        display:inline-block;
+                        background:rgba(255,255,255,0.12);
+                        color:#dbeafe;
+                        padding:6px 14px;
+                        border-radius:20px;
+                        font-size:11px;
+                        font-weight:700;
+                    ">
+                        ADMIN ACCOUNT
+                    </div>
                 </div>
-                <p style="color:#c0392b; font-weight: bold;">⚠️ Please change your password after your first login.</p>
-                <hr>
-                <p style="font-size: 12px; color: #666;">&copy; 2026 CableVision Systems Corp. All rights reserved.</p>
+
+                <!-- CONTENT -->
+                <div style="padding:28px;">
+                    <h2 style="
+                        margin:0 0 8px 0;
+                        font-size:22px;
+                        color:#0f172a;
+                    ">
+                        Welcome to Cablevision!
+                    </h2>
+                    <p style="
+                        margin:0 0 20px 0;
+                        font-size:15px;
+                        line-height:1.6;
+                        color:#475569;
+                    ">
+                        Your administrator account has been successfully created.
+                    </p>
+
+                    <!-- ACCOUNT DETAILS -->
+                    <div style="
+                        background:#f8fafc;
+                        border-radius:16px;
+                        padding:20px;
+                        border:1px solid #e2e8f0;
+                    ">
+                        <div style="
+                            font-size:11px;
+                            font-weight:700;
+                            color:#64748b;
+                            margin-bottom:5px;
+                        ">
+                            ADMIN ID
+                        </div>
+                        <div style="
+                            font-size:18px;
+                            font-weight:700;
+                            color:#0f172a;
+                            margin-bottom:16px;
+                        ">
+                            {safe_admin_id}
+                        </div>
+
+                        <div style="
+                            border-top:1px solid #e2e8f0;
+                            padding-top:14px;
+                            margin-bottom:16px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                margin-bottom:5px;
+                            ">
+                                USERNAME
+                            </div>
+                            <div style="
+                                font-size:17px;
+                                font-weight:700;
+                                color:#0f172a;
+                            ">
+                                {safe_username}
+                            </div>
+                        </div>
+
+                        <div style="
+                            border-top:1px solid #e2e8f0;
+                            padding-top:14px;
+                        ">
+                            <div style="
+                                font-size:11px;
+                                font-weight:700;
+                                color:#64748b;
+                                margin-bottom:5px;
+                            ">
+                                TEMPORARY PASSWORD
+                            </div>
+                            <div style="
+                                display:inline-block;
+                                background:#eff6ff;
+                                color:#001f3f;
+                                padding:10px 14px;
+                                border-radius:8px;
+                                font-family:monospace;
+                                font-size:18px;
+                                font-weight:700;
+                                letter-spacing:1px;
+                            ">
+                                {safe_password}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECURITY NOTICE -->
+                    <div style="
+                        margin-top:20px;
+                        padding:16px;
+                        background:#fff7ed;
+                        border:1px solid #fed7aa;
+                        border-radius:14px;
+                    ">
+                        <div style="
+                            font-size:14px;
+                            font-weight:700;
+                            color:#9a3412;
+                            margin-bottom:6px;
+                        ">
+                            ⚠️ Security Notice
+                        </div>
+                        <div style="
+                            font-size:13px;
+                            line-height:1.6;
+                            color:#7c2d12;
+                        ">
+                            This is your temporary password.
+                            Please change your password after your
+                            first login and do not share your
+                            account credentials with anyone.
+                        </div>
+                    </div>
+
+                    <!-- FOOTER MESSAGE -->
+                    <div style="
+                        margin-top:28px;
+                        padding-top:20px;
+                        border-top:1px solid #e2e8f0;
+                        text-align:center;
+                    ">
+                        <div style="
+                            font-size:13px;
+                            color:#64748b;
+                            line-height:1.5;
+                        ">
+                            Welcome to the Cablevision team!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div style="
+                    background:#f1f5f9;
+                    padding:16px 20px;
+                    text-align:center;
+                ">
+                    <div style="
+                        font-size:11px;
+                        color:#64748b;
+                    ">
+                        © 2026 Cablevision Systems Corporation. All rights reserved.
+                    </div>
+                    <div style="
+                        margin-top:4px;
+                        font-size:11px;
+                        color:#94a3b8;
+                    ">
+                        Sta. Cruz, Laguna, Philippines
+                    </div>
+                </div>
             </div>
-        </body>
+        </div>
+    </body>
     </html>
     """
 
+    # ===============================
+    # PLAIN TEXT EMAIL
+    # ===============================
+
     plain_body = f"""
-    CableVision Admin Account
+Cablevision Systems Corporation
 
-    Your admin account has been created.
+ADMIN ACCOUNT CREATED
 
-    Admin ID: {admin_id}
-    Username: {username}
-    Password: {password}
+Welcome to Cablevision!
 
-    Please change your password after login.
-    """
+Your administrator account has been successfully created.
 
-    msg = MIMEMultipart('alternative')
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(plain_body, 'plain'))
-    msg.attach(MIMEText(html_body, 'html'))
+Admin ID:
+{admin_id}
+
+Username:
+{username}
+
+Temporary Password:
+{password}
+
+Please change your password after your first login.
+
+Do not share your account credentials with anyone.
+
+Welcome to the Cablevision team!
+
+Cablevision Systems Corporation
+Sta. Cruz, Laguna, Philippines
+"""
+
+    # ===============================
+    # BREVO API PAYLOAD
+    # ===============================
+
+    payload = {
+        "sender": {
+            "name": sender_name,
+            "email": sender_email
+        },
+        "to": [
+            {
+                "email": to_email
+            }
+        ],
+        "subject": subject,
+        "htmlContent": html_body,
+        "textContent": plain_body
+    }
+
+    # ===============================
+    # BREVO API HEADERS
+    # ===============================
+
+    headers = {
+        "accept": "application/json",
+        "api-key": brevo_api_key,
+        "content-type": "application/json"
+    }
+
+    # ===============================
+    # SEND EMAIL
+    # ===============================
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(sender_email, sender_app_password)
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ Email sent to {to_email}")
+        print("========================================")
+        print("📧 ADMIN ACCOUNT EMAIL")
+        print("========================================")
+        print(f"📧 From: {sender_email}")
+        print(f"📧 To: {to_email}")
+        print(f"📧 Admin ID: {admin_id}")
+        print(f"📧 Username: {username}")
+        print("========================================")
+
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+
+        # ===============================
+        # CHECK BREVO RESPONSE
+        # ===============================
+
+        if response.status_code not in (200, 201):
+            print(f"❌ Brevo API error ({response.status_code}): {response.text}")
+            return False
+
+        # ===============================
+        # GET BREVO MESSAGE ID
+        # ===============================
+
+        try:
+            brevo_response = response.json()
+            message_id = brevo_response.get("messageId")
+            if message_id:
+                print(f"📨 Brevo Message ID: {message_id}")
+        except Exception:
+            pass
+
+        print(f"✅ Admin account email sent successfully to {to_email}")
         return True
+
+    # ===============================
+    # ERROR HANDLING
+    # ===============================
+
+    except requests.exceptions.Timeout:
+        print("❌ Brevo API request timed out.")
+        return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Brevo API request error: {e}")
+        return False
+
     except Exception as e:
-        print(f"❌ Email error: {e}")
+        print(f"❌ Error sending admin account email: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # ===============================
