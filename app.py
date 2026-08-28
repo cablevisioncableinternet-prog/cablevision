@@ -7218,96 +7218,177 @@ def update_internet_application_status(app_id):
 
 import requests  # ✅ I-ADD SA PINAKA-ITAAS NG FILE
 
-def send_application_status_email(to_email, first_name, status, app_id, reason=None, contract_number=None, billing_date=None, application_id=None, reapplied_count=0):
-    # ✅ USE BREVO API (hindi SMTP)
-    api_key = os.getenv('BREVO_API_KEY', '')
-    
+# ===============================
+# SEND APPLICATION STATUS EMAIL
+# ===============================
+
+def send_application_status_email(
+    to_email,
+    first_name,
+    status,
+    app_id,
+    reason=None,
+    contract_number=None,
+    billing_date=None,
+    application_id=None,
+    reapplied_count=0
+):
+    """Send application approval/rejection email via Brevo API."""
+
+    import base64
+    import html
+    import requests
+
+    # ===============================
+    # BREVO CONFIGURATION
+    # ===============================
+
+    api_key = os.getenv("BREVO_API_KEY", "")
+
     if not api_key:
         print("❌ Brevo API key not configured!")
         return False
 
-    print(f"📧 Sending email via Brevo API to {to_email}...")
+    print(f"📧 Sending application status email via Brevo to {to_email}...")
 
-    subject = "Cablevision Application Status Update"
+    subject = "Cablevision - Application Status Update"
 
-    status_color = "#10b981" if status == "Approved" else "#ef4444"
-    status_bg = "#ecfdf5" if status == "Approved" else "#fef2f2"
-    status_icon = "✓" if status == "Approved" else "✗"
+    # ===============================
+    # HELPER
+    # ===============================
 
-    if status == "Approved":
-        message = f"Congratulations, {first_name}!"
+    def escape_html(text):
+        if text is None:
+            return ""
+        return html.escape(str(text))
+
+    # ===============================
+    # STATUS SETTINGS
+    # ===============================
+
+    is_approved = status == "Approved"
+    status_color = "#10b981" if is_approved else "#ef4444"
+    status_bg = "#ecfdf5" if is_approved else "#fef2f2"
+    status_icon = "✓" if is_approved else "✗"
+
+    # ===============================
+    # MAIN MESSAGE
+    # ===============================
+
+    if is_approved:
+        message = f"Congratulations, {escape_html(first_name)}!"
         message_sub = "Your application has been approved successfully."
-        reapply_section = ""
     else:
-        message = f"Application Update, {first_name}"
+        message = f"Application Update, {escape_html(first_name)}"
         message_sub = "We regret to inform you about your application status."
-        reapply_section = ""
 
-    extra_message = ""
-    if status == "Approved":
-        if contract_number:
-            extra_message = f"""
-            <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-                <p style="margin: 0 0 8px 0; color: #166534;">
-                    <strong>What's Next?</strong>
-                </p>
-                <p style="margin: 0; color: #14532d; font-size: 14px;">
-                    Please find attached your application PDF with contract details.<br>
-                    Our team will contact you soon for installation scheduling.<br>
-                    For inquiries, please contact our support team.
-                </p>
+    # ===============================
+    # CONTRACT SECTION
+    # ===============================
+
+    contract_section = ""
+
+    if is_approved and contract_number:
+        contract_section = f"""
+        <div style="margin: 20px 0; padding: 20px;
+                    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+                    border-radius: 16px; text-align: center;">
+            <div style="font-size: 14px; color: #047857;
+                        margin-bottom: 8px; letter-spacing: 1px;">
+                CONTRACT NUMBER
             </div>
+            <div style="font-size: 28px; font-weight: 700;
+                        color: #065f46; letter-spacing: 2px;
+                        font-family: monospace;">
+                {escape_html(contract_number)}
+            </div>
+            <div style="font-size: 11px; color: #059669;
+                        margin-top: 8px;">
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            </div>
+            <div style="font-size: 11px; color: #047857;
+                        margin-top: 6px;">
+                Please keep this number for future reference
+            </div>
+        </div>
+        """
+
+    # ===============================
+    # BILLING SECTION
+    # ===============================
+
+    billing_section = ""
+
+    if is_approved and billing_date:
+        billing_section = f"""
+        <div style="margin: 20px 0; padding: 16px;
+                    background: #eff6ff; border-radius: 12px;">
+            <div style="font-size: 12px; font-weight: 600;
+                        color: #1e40af; margin-bottom: 4px;">
+                BILLING INFORMATION
+            </div>
+            <div style="font-size: 16px; font-weight: 600;
+                        color: #1e3a8a;">
+                Every {escape_html(billing_date)} of the month
+            </div>
+            <div style="font-size: 11px; color: #3b82f6;
+                        margin-top: 4px;">
+                Your monthly bill will be generated on this date
+            </div>
+        </div>
+        """
+
+    # ===============================
+    # EXTRA MESSAGE
+    # ===============================
+
+    if is_approved:
+        if contract_number:
+            next_message = """
+            Please find attached your application PDF with contract details.<br>
+            Our team will contact you soon for installation scheduling.<br>
+            For inquiries, please contact our support team.
             """
         else:
-            extra_message = f"""
-            <div style="margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 12px;">
-                <p style="margin: 0 0 8px 0; color: #166534;">
-                    <strong>What's Next?</strong>
-                </p>
-                <p style="margin: 0; color: #14532d; font-size: 14px;">
-                    Please find attached your application PDF.<br>
-                    Our team will contact you soon for installation scheduling.<br>
-                    For inquiries, please contact our support team.
-                </p>
-            </div>
+            next_message = """
+            Please find attached your application PDF.<br>
+            Our team will contact you soon for installation scheduling.<br>
+            For inquiries, please contact our support team.
             """
-    else:
+
         extra_message = f"""
-        <div style="margin-top: 20px; padding: 16px; background: #fef2f2; border-radius: 12px;">
+        <div style="margin-top: 20px; padding: 16px;
+                    background: #f0fdf4; border-radius: 12px;">
+            <p style="margin: 0 0 8px 0; color: #166534;">
+                <strong>What's Next?</strong>
+            </p>
+            <p style="margin: 0; color: #14532d; font-size: 14px;">
+                {next_message}
+            </p>
+        </div>
+        """
+    else:
+        rejection_reason = escape_html(reason) if reason else "No specific reason provided."
+
+        extra_message = f"""
+        <div style="margin-top: 20px; padding: 16px;
+                    background: #fef2f2; border-radius: 12px;">
             <p style="margin: 0 0 8px 0; color: #991b1b;">
                 <strong>Reason for Rejection</strong>
             </p>
             <p style="margin: 0; color: #7f1d1d; font-size: 14px;">
-                {reason}
+                {rejection_reason}
             </p>
             <p style="margin-top: 12px; color: #7f1d1d; font-size: 13px;">
-                Our team will reach out via email with instructions if a re-application is possible.
+                Our team will reach out via email with instructions
+                if a re-application is possible.
             </p>
         </div>
         """
 
-    contract_section = ""
-    if status == "Approved" and contract_number:
-        contract_section = f"""
-        <div style="margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; text-align: center;">
-            <div style="font-size: 14px; color: #047857; margin-bottom: 8px; letter-spacing: 1px;">CONTRACT NUMBER</div>
-            <div style="font-size: 28px; font-weight: 700; color: #065f46; letter-spacing: 2px; font-family: monospace;">{contract_number}</div>
-            <div style="font-size: 11px; color: #059669; margin-top: 8px;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━</div>
-            <div style="font-size: 11px; color: #047857; margin-top: 6px;">Please keep this number for future reference</div>
-        </div>
-        """
-    
-    billing_section = ""
-    if status == "Approved" and billing_date:
-        billing_section = f"""
-        <div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
-            <div>
-                <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">BILLING INFORMATION</div>
-                <div style="font-size: 16px; font-weight: 600; color: #1e3a8a;">Every {billing_date} of the month</div>
-                <div style="font-size: 11px; color: #3b82f6; margin-top: 4px;">Your monthly bill will be generated on this date</div>
-            </div>
-        </div>
-        """
+    # ===============================
+    # HTML EMAIL BODY
+    # ===============================
 
     html_body = f"""
     <!DOCTYPE html>
@@ -7317,61 +7398,178 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Cablevision Email</title>
     </head>
-    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
-        
-        <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
-            <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
-                
+    <body style="
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+        background-color: #eef2ff;
+    ">
+        <div style="
+            max-width: 580px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        ">
+            <div style="
+                background: #ffffff;
+                border-radius: 32px;
+                overflow: hidden;
+                box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            ">
                 <!-- HEADER SECTION -->
-                <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                    <div style="position: absolute; top: 20px; right: 25px;">
-                        <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 600; color: #a5f3fc;">STATUS UPDATE</span>
+                <div style="
+                    background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%);
+                    padding: 32px 28px;
+                    text-align: center;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 20px;
+                        right: 25px;
+                    ">
+                        <span style="
+                            background: rgba(255,255,255,0.15);
+                            padding: 6px 14px;
+                            border-radius: 50px;
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: #a5f3fc;
+                        ">
+                            STATUS UPDATE
+                        </span>
                     </div>
-                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
-                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
+                    <h1 style="
+                        margin: 0;
+                        font-size: 26px;
+                        font-weight: 700;
+                        color: #ffffff;
+                    ">
+                        Cablevision
+                    </h1>
+                    <p style="
+                        margin: 6px 0 0 0;
+                        color: #93c5fd;
+                        font-size: 13px;
+                    ">
+                        Internet Service Provider
+                    </p>
                 </div>
 
                 <!-- STATUS BADGE -->
-                <div style="padding: 20px 28px 0 28px; text-align: center;">
-                    <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
-                        <span style="font-size: 14px; font-weight: 600; color: {status_color};">
-                            {status_icon} APPLICATION {status.upper()}
+                <div style="
+                    padding: 20px 28px 0 28px;
+                    text-align: center;
+                ">
+                    <div style="
+                        display: inline-block;
+                        background: {status_bg};
+                        padding: 8px 24px;
+                        border-radius: 60px;
+                    ">
+                        <span style="
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: {status_color};
+                        ">
+                            {status_icon} APPLICATION {escape_html(status).upper()}
                         </span>
                     </div>
                 </div>
 
                 <!-- CONTENT SECTION -->
                 <div style="padding: 20px 28px 32px 28px;">
-                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">{message}</h2>
-                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">{message_sub}</p>
+                    <h2 style="
+                        margin: 0 0 8px 0;
+                        font-size: 22px;
+                        font-weight: 700;
+                        color: #0f172a;
+                    ">
+                        {message}
+                    </h2>
+                    <p style="
+                        margin: 0 0 20px 0;
+                        font-size: 15px;
+                        color: #475569;
+                    ">
+                        {message_sub}
+                    </p>
 
-                    <!-- Application Details -->
-                    <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
-                        <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Application Number</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{app_id}</div>
+                    <!-- APPLICATION DETAILS -->
+                    <div style="
+                        background: #f8fafc;
+                        border-radius: 20px;
+                        padding: 18px;
+                        margin-bottom: 16px;
+                    ">
+                        <div style="
+                            margin-bottom: 16px;
+                            padding-bottom: 12px;
+                            border-bottom: 1px solid #e2e8f0;
+                        ">
+                            <div style="
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: #64748b;
+                            ">
+                                Application Number
+                            </div>
+                            <div style="
+                                font-size: 18px;
+                                font-weight: 700;
+                                color: #0f172a;
+                                font-family: monospace;
+                            ">
+                                {escape_html(app_id)}
+                            </div>
                         </div>
                         <div>
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Status</div>
-                            <div style="font-size: 16px; font-weight: 700; color: {status_color};">{status}</div>
+                            <div style="
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: #64748b;
+                            ">
+                                Status
+                            </div>
+                            <div style="
+                                font-size: 16px;
+                                font-weight: 700;
+                                color: {status_color};
+                            ">
+                                {escape_html(status)}
+                            </div>
                         </div>
                     </div>
 
                     {contract_section}
                     {billing_section}
-                    {reapply_section}
                     {extra_message}
 
-                    <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    <!-- THANK YOU -->
+                    <div style="
+                        margin-top: 28px;
+                        padding-top: 20px;
+                        text-align: center;
+                        border-top: 1px solid #e2e8f0;
+                    ">
+                        <p style="
+                            margin: 0;
+                            font-size: 12px;
+                            color: #94a3b8;
+                        ">
                             Thank you for choosing Cablevision!
                         </p>
                     </div>
                 </div>
 
                 <!-- FOOTER -->
-                <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
-                    <div style="font-size: 11px; color: #64748b;">
+                <div style="
+                    background: #f1f5f9;
+                    padding: 16px 28px;
+                    text-align: center;
+                ">
+                    <div style="
+                        font-size: 11px;
+                        color: #64748b;
+                    ">
                         © 2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
@@ -7381,15 +7579,19 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
     </html>
     """
 
-    # ✅ SEND VIA BREVO API
+    # ===============================
+    # SEND VIA BREVO API
+    # ===============================
+
     try:
         url = "https://api.brevo.com/v3/smtp/email"
+
         headers = {
             "accept": "application/json",
             "api-key": api_key,
             "content-type": "application/json"
         }
-        
+
         data = {
             "sender": {
                 "name": "Cablevision Systems Corp.",
@@ -7404,35 +7606,64 @@ def send_application_status_email(to_email, first_name, status, app_id, reason=N
             "subject": subject,
             "htmlContent": html_body
         }
-        
-        # ✅ Add PDF attachment if approved
-        if status == "Approved":
+
+        # ===============================
+        # ADD PDF ATTACHMENT IF APPROVED
+        # ===============================
+
+        if is_approved:
             try:
                 pdf_app_key = application_id if application_id else app_id
+
                 if pdf_app_key:
-                    query = "SELECT * FROM applications WHERE application_number = %s"
-                    app_data = execute_query(query, (pdf_app_key,), fetch_one=True)
+                    query = """
+                        SELECT *
+                        FROM applications
+                        WHERE application_number = %s
+                    """
+
+                    app_data = execute_query(
+                        query,
+                        (pdf_app_key,),
+                        fetch_one=True
+                    )
+
                     if app_data:
-                        pdf_buffer = generate_application_pdf(pdf_app_key, app_data, contract_number)
+                        pdf_buffer = generate_application_pdf(
+                            pdf_app_key,
+                            app_data,
+                            contract_number
+                        )
+
                         if pdf_buffer:
-                            import base64
-                            pdf_content = base64.b64encode(pdf_buffer.read()).decode('utf-8')
-                            data["attachment"] = [{
-                                "content": pdf_content,
-                                "name": f"Application_{app_id}.pdf"
-                            }]
+                            pdf_content = base64.b64encode(
+                                pdf_buffer.read()
+                            ).decode("utf-8")
+
+                            data["attachment"] = [
+                                {
+                                    "content": pdf_content,
+                                    "name": f"Application_{app_id}.pdf"
+                                }
+                            ]
+
+                            print(f"📎 PDF attached for application {app_id}")
             except Exception as pdf_err:
-                print(f"PDF attachment error: {pdf_err}")
+                print(f"⚠️ PDF attachment error: {pdf_err}")
+
+        # ===============================
+        # SEND REQUEST
+        # ===============================
 
         response = requests.post(url, json=data, headers=headers, timeout=30)
-        
+
         if response.status_code in [200, 201]:
-            print(f"✅ Email sent successfully to {to_email}")
+            print(f"✅ Application status email sent to {to_email}")
             return True
-        else:
-            print(f"❌ API error: {response.status_code} - {response.text}")
-            return False
-            
+
+        print(f"❌ Brevo API error: {response.status_code} - {response.text}")
+        return False
+
     except Exception as e:
         print(f"❌ Email API error: {e}")
         import traceback
