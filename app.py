@@ -8472,7 +8472,7 @@ def calculate_age(birthdate):
     
     
 def generate_application_pdf(application_number, application_data=None, contract_number=None):
-    """Generate PDF for an application using MySQL data"""
+    """Generate PDF for an application using MySQL data with Cloudinary images"""
     import io, base64, os, re
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
@@ -8523,14 +8523,44 @@ def generate_application_pdf(application_number, application_data=None, contract
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # ================= SHARED UPLOADS CONFIG =================
-    SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
-    
-    # ================= HELPER: Get image bytes from file path =================
+    # ================= ✅ CLOUDINARY HELPER =================
+    def get_image_from_cloudinary(image_path):
+        """Get image from Cloudinary URL or convert relative path"""
+        if not image_path:
+            return None
+        
+        # ✅ Convert to Cloudinary URL if not already
+        if not image_path.startswith('http'):
+            cloudinary_url = get_cloudinary_url(image_path)
+        else:
+            cloudinary_url = image_path
+        
+        if cloudinary_url and cloudinary_url.startswith('http'):
+            try:
+                print(f"📤 Downloading from Cloudinary: {cloudinary_url[:80]}...")
+                response = requests.get(cloudinary_url, timeout=30)
+                if response.status_code == 200:
+                    print(f"✅ Downloaded {len(response.content)} bytes")
+                    return response.content
+                else:
+                    print(f"❌ Cloudinary download failed: {response.status_code}")
+                    return None
+            except Exception as e:
+                print(f"❌ Error downloading from Cloudinary: {e}")
+                return None
+        
+        return None
+
+    # ================= HELPER: Get image bytes =================
     def get_image_bytes(image_path_or_data, app_id=None):
-        """Get image bytes from file path or base64 data"""
+        """Get image bytes from Cloudinary or local path"""
         if not image_path_or_data:
             return None
+        
+        # ✅ TRY CLOUDINARY FIRST
+        cloudinary_bytes = get_image_from_cloudinary(image_path_or_data)
+        if cloudinary_bytes:
+            return cloudinary_bytes
         
         # If app_id not provided, use application_number
         if app_id is None:
@@ -8541,16 +8571,17 @@ def generate_application_pdf(application_number, application_data=None, contract
             # Extract filename
             filename = os.path.basename(image_path_or_data)
             
-            # Build path using application_number as folder
+            # Try local path (fallback)
+            SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
             full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', str(app_id), filename)
             
-            print(f"🔍 Looking for image: {full_path}")
+            print(f"🔍 Looking for image locally: {full_path}")
             
             if os.path.exists(full_path):
                 try:
                     with open(full_path, 'rb') as f:
                         img_bytes = f.read()
-                    print(f"✅ Found image: {full_path} ({len(img_bytes)} bytes)")
+                    print(f"✅ Found image locally: {full_path} ({len(img_bytes)} bytes)")
                     return img_bytes
                 except Exception as e:
                     print(f"❌ Error reading image: {e}")
@@ -8757,7 +8788,7 @@ def generate_application_pdf(application_number, application_data=None, contract
             y -= 18
         y -= 5
 
-    # ================= FIXED: Draw images from files =================
+    # ================= Draw images from Cloudinary =================
     def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
         nonlocal y
         
@@ -8791,7 +8822,7 @@ def generate_application_pdf(application_number, application_data=None, contract
             p.setFillColorRGB(0, 0, 0)
             y -= 25
 
-    # ================= FIXED: Signature section =================
+    # ================= Signature section =================
     def draw_signature_section(signature_img, full_name):
         nonlocal y
         
