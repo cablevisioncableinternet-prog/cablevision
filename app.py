@@ -1100,7 +1100,9 @@ def forgot_password():
 # ===============================
 @app.route("/api/admin/reset-password", methods=["POST"])
 def reset_password():
+
     data = request.get_json(silent=True) or {}
+
     username = data.get("username")
     identifier = data.get("identifier")
     code = data.get("code")
@@ -1112,171 +1114,568 @@ def reset_password():
     print(f"Code: {code}")
     print("====================================")
 
+    # ===============================
+    # VALIDATION
+    # ===============================
     if not code or not new_password:
-        return jsonify({"error": "All fields are required"}), 400
+        return jsonify({
+            "error": "All fields are required"
+        }), 400
 
     if not username and not identifier:
-        return jsonify({"error": "Account identifier is missing"}), 400
+        return jsonify({
+            "error": "Account identifier is missing"
+        }), 400
 
     if len(new_password) < 8:
-        return jsonify({"error": "Password must be at least 8 characters"}), 400
+        return jsonify({
+            "error": "Password must be at least 8 characters"
+        }), 400
 
+    # ===============================
+    # FIND OTP
+    # ===============================
     temp_query = """
-        SELECT * FROM temp_reset
-        WHERE (username = %s OR email = %s) AND otp = %s
-        ORDER BY expiry DESC LIMIT 1
+        SELECT *
+        FROM temp_reset
+        WHERE (username = %s OR email = %s)
+        AND otp = %s
+        ORDER BY expiry DESC
+        LIMIT 1
     """
-    temp_data = execute_query(temp_query, (username, identifier, code), fetch_one=True)
+
+    temp_data = execute_query(
+        temp_query,
+        (
+            username,
+            identifier,
+            code
+        ),
+        fetch_one=True
+    )
 
     if not temp_data:
-        return jsonify({"error": "Invalid verification code"}), 400
+        return jsonify({
+            "error": "Invalid verification code"
+        }), 400
 
     print(f"✅ Found temp_data: {temp_data}")
 
+    # ===============================
+    # CHECK OTP EXPIRATION
+    # ===============================
     current_time = datetime.now().timestamp()
-    expiry_time = temp_data.get('expiry', 0)
+    expiry_time = temp_data.get("expiry", 0)
 
     if current_time > expiry_time:
-        execute_query("DELETE FROM temp_reset WHERE id = %s", (temp_data.get('id'),))
-        return jsonify({"error": "Verification code expired"}), 400
 
-    user_type = temp_data.get('user_type')
-    area = temp_data.get('area', '')
-    actual_username = temp_data.get('username')
+        execute_query(
+            "DELETE FROM temp_reset WHERE id = %s",
+            (temp_data.get("id"),)
+        )
 
+        return jsonify({
+            "error": "Verification code expired"
+        }), 400
+
+    # ===============================
+    # GET RESET INFORMATION
+    # ===============================
+    user_type = temp_data.get("user_type")
+    area = temp_data.get("area", "")
+    actual_username = temp_data.get("username")
+
+    if not actual_username:
+        return jsonify({
+            "error": "Account information not found"
+        }), 400
+
+    print(f"👤 User Type: {user_type}")
+    print(f"👤 Username/ID: {actual_username}")
+
+    # ===============================
+    # HASH NEW PASSWORD
+    # ===============================
     hashed_new_password = hash_password(new_password)
-    print(f"🔐 Hashed password: {hashed_new_password[:50]}...")
 
-    # ✅ STEP 1: I-SAVE ANG NEW_PASSWORD SA temp_reset
+    print(
+        f"🔐 Hashed password: "
+        f"{hashed_new_password[:50]}..."
+    )
+
+    # ===============================
+    # STEP 1
+    # SAVE NEW PASSWORD TO temp_reset
+    # ===============================
     update_temp_query = """
-        UPDATE temp_reset 
-        SET new_password = %s 
+        UPDATE temp_reset
+        SET new_password = %s
         WHERE id = %s
     """
-    update_temp_result = execute_query(update_temp_query, (hashed_new_password, temp_data.get('id')))
-    print(f"📝 Update temp_reset result: {update_temp_result}")
 
-    # 🔍 I-VERIFY KUNG NA-SAVE
-    verify_temp = execute_query("SELECT new_password FROM temp_reset WHERE id = %s", (temp_data.get('id'),), fetch_one=True)
-    print(f"🔍 Verified new_password: {verify_temp.get('new_password') if verify_temp else 'NULL'}")
+    update_temp_result = execute_query(
+        update_temp_query,
+        (
+            hashed_new_password,
+            temp_data.get("id")
+        )
+    )
 
-    # ✅ STEP 2: I-UPDATE ANG USER'S PASSWORD
+    print(
+        f"📝 Update temp_reset result: "
+        f"{update_temp_result}"
+    )
+
+    # ===============================
+    # VERIFY temp_reset
+    # ===============================
+    verify_temp = execute_query(
+        """
+        SELECT new_password
+        FROM temp_reset
+        WHERE id = %s
+        """,
+        (temp_data.get("id"),),
+        fetch_one=True
+    )
+
+    print(
+        f"🔍 Verified new_password: "
+        f"{'SAVED' if verify_temp and verify_temp.get('new_password') else 'NULL'}"
+    )
+
+    # ===============================
+    # STEP 2
+    # UPDATE ACTUAL USER PASSWORD
+    # ===============================
     update_rows = 0
 
     if user_type == "superadmin":
-        update_query = "UPDATE superadmins SET password = %s WHERE username = %s"
-        update_rows = execute_query(update_query, (hashed_new_password, actual_username))
-        print(f"✅ Superadmin password updated: {update_rows} rows affected")
-    elif user_type == "admin":
-        update_query = "UPDATE admins SET password = %s WHERE username = %s"
-        update_rows = execute_query(update_query, (hashed_new_password, actual_username))
-        print(f"✅ Admin password updated: {update_rows} rows affected")
-    else:  # technician
-        update_query = "UPDATE technicians SET password = %s WHERE technician_id = %s"
-        update_rows = execute_query(update_query, (hashed_new_password, actual_username))
-        print(f"✅ Technician password updated: {update_rows} rows affected")
 
+        update_query = """
+            UPDATE superadmins
+            SET password = %s
+            WHERE username = %s
+        """
+
+        update_rows = execute_query(
+            update_query,
+            (
+                hashed_new_password,
+                actual_username
+            )
+        )
+
+        print(
+            f"✅ Superadmin password updated: "
+            f"{update_rows} rows affected"
+        )
+
+    elif user_type == "admin":
+
+        update_query = """
+            UPDATE admins
+            SET password = %s
+            WHERE username = %s
+        """
+
+        update_rows = execute_query(
+            update_query,
+            (
+                hashed_new_password,
+                actual_username
+            )
+        )
+
+        print(
+            f"✅ Admin password updated: "
+            f"{update_rows} rows affected"
+        )
+
+    elif user_type == "technician":
+
+        update_query = """
+            UPDATE technicians
+            SET password = %s
+            WHERE technician_id = %s
+        """
+
+        update_rows = execute_query(
+            update_query,
+            (
+                hashed_new_password,
+                actual_username
+            )
+        )
+
+        print(
+            f"✅ Technician password updated: "
+            f"{update_rows} rows affected"
+        )
+
+    else:
+
+        return jsonify({
+            "error": "Invalid user type"
+        }), 400
+
+    # ===============================
+    # CHECK PASSWORD UPDATE
+    # ===============================
     if update_rows is None or update_rows == 0:
-        return jsonify({"error": "Failed to update password. Please try again."}), 400
 
-    # ❌ HUWAG MUNA I-DELETE - para makita ang new_password sa database
-    # execute_query("DELETE FROM temp_reset WHERE id = %s", (temp_data.get('id'),))
-    # print("🗑️ OTP deleted from temp_reset")
+        return jsonify({
+            "error": "Failed to update password. Please try again."
+        }), 400
 
-    # ✅ AUTO-LOGIN AFTER RESET
-    tab_id = data.get("tab_id", "") or session.get("active_tab", "")
+    # ===============================
+    # AUTO-LOGIN AFTER RESET
+    # ===============================
+
+    tab_id = (
+        data.get("tab_id", "")
+        or session.get("active_tab", "")
+    )
+
+    # Generate tab_id if none exists
     if not tab_id:
+
         import time
-        tab_id = f"tab_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
-    
-    print(f"🔐 Auto-login after reset for {actual_username} (type: {user_type})")
-    
-    # Set session based on user type
+
+        tab_id = (
+            f"tab_{int(time.time() * 1000)}_"
+            f"{random.randint(1000, 9999)}"
+        )
+
+    print(
+        f"🔐 Auto-login after reset for "
+        f"{actual_username} "
+        f"(type: {user_type})"
+    )
+
+    user_data = None
+    user_id = actual_username
+    redirect_url = ""
+
+    # ===============================
+    # SUPERADMIN AUTO-LOGIN
+    # ===============================
     if user_type == "superadmin":
-        user_query = "SELECT * FROM superadmins WHERE username = %s"
-        user_data = execute_query(user_query, (actual_username,), fetch_one=True)
-        user_id = user_data.get('username') if user_data else actual_username
-        
-        if user_data:
-            session[f"admin_{tab_id}"] = {
-                'user_id': user_data.get('username'),
-                'user_type': 'superadmin',
-                'user_name': user_data.get('name', 'Super Admin'),
-                'user_area': user_data.get('area', 'All Areas'),
-                'username': user_data.get('username')
-            }
-            session["active_tab"] = tab_id
-            session['user_id'] = user_data.get('username')
-            session['user_type'] = 'superadmin'
-            session['user_name'] = user_data.get('name', 'Super Admin')
-            session['user_area'] = user_data.get('area', 'All Areas')
-            session['username'] = user_data.get('username')
-            
-            redirect_url = f"/superadmin?tab_id={tab_id}"
-            
+
+        user_query = """
+            SELECT *
+            FROM superadmins
+            WHERE username = %s
+            LIMIT 1
+        """
+
+        user_data = execute_query(
+            user_query,
+            (actual_username,),
+            fetch_one=True
+        )
+
+        if not user_data:
+            return jsonify({
+                "error": "Superadmin account not found"
+            }), 404
+
+        user_id = user_data.get("username")
+
+        # TAB SESSION
+        session[f"admin_{tab_id}"] = {
+            "user_id": user_data.get("username"),
+            "user_type": "superadmin",
+            "user_name": user_data.get(
+                "name",
+                "Super Admin"
+            ),
+            "user_area": user_data.get(
+                "area",
+                "All Areas"
+            ),
+            "username": user_data.get("username")
+        }
+
+        # NORMAL SESSION
+        session["active_tab"] = tab_id
+
+        session["user_id"] = user_data.get("username")
+        session["user_type"] = "superadmin"
+        session["user_name"] = user_data.get(
+            "name",
+            "Super Admin"
+        )
+        session["user_area"] = user_data.get(
+            "area",
+            "All Areas"
+        )
+        session["username"] = user_data.get("username")
+
+        redirect_url = (
+            f"/superadmin?tab_id={tab_id}"
+        )
+
+        # IMPORTANT:
+        # Create active login history just like
+        # normal login.
+        record_login_history(
+            user_id,
+            "superadmin",
+            tab_id,
+            lat=data.get("lat"),
+            lng=data.get("lng")
+        )
+
+        print(
+            f"✅ Superadmin session created "
+            f"for tab: {tab_id}"
+        )
+
+    # ===============================
+    # ADMIN AUTO-LOGIN
+    # ===============================
     elif user_type == "admin":
-        user_query = "SELECT * FROM admins WHERE username = %s"
-        user_data = execute_query(user_query, (actual_username,), fetch_one=True)
-        user_id = user_data.get('admin_id') if user_data else actual_username
-        
-        if user_data:
-            session[f"admin_{tab_id}"] = {
-                'user_id': user_data.get('admin_id'),
-                'user_type': 'admin',
-                'user_name': user_data.get('username'),
-                'user_area': user_data.get('area', ''),
-                'admin_username': user_data.get('username'),
-                'admin_id': user_data.get('admin_id')
-            }
-            session["active_tab"] = tab_id
-            session['user_id'] = user_data.get('admin_id')
-            session['user_type'] = 'admin'
-            session['user_name'] = user_data.get('username')
-            session['user_area'] = user_data.get('area', '')
-            session['admin_username'] = user_data.get('username')
-            session['admin_id'] = user_data.get('admin_id')
-            session['username'] = user_data.get('username')
-            
-            redirect_url = f"/admin?tab_id={tab_id}"
-            
-    else:  # technician
-        user_query = "SELECT * FROM technicians WHERE technician_id = %s"
-        user_data = execute_query(user_query, (actual_username,), fetch_one=True)
-        user_id = user_data.get('technician_id') if user_data else actual_username
-        
-        if user_data:
-            session[f"admin_{tab_id}"] = {
-                'user_id': user_data.get('technician_id'),
-                'user_type': 'technician',
-                'user_name': user_data.get('name'),
-                'user_area': user_data.get('area', ''),
-                'technician_id': user_data.get('technician_id'),
-                'technician_name': user_data.get('name')
-            }
-            session["active_tab"] = tab_id
-            session['user_id'] = user_data.get('technician_id')
-            session['user_type'] = 'technician'
-            session['user_name'] = user_data.get('name')
-            session['user_area'] = user_data.get('area', '')
-            session['technician_id'] = user_data.get('technician_id')
-            session['technician_name'] = user_data.get('name')
-            session['username'] = user_data.get('technician_id')
-            
-            redirect_url = f"/technician/dashboard?tab_id={tab_id}"
 
+        user_query = """
+            SELECT *
+            FROM admins
+            WHERE username = %s
+            LIMIT 1
+        """
 
+        user_data = execute_query(
+            user_query,
+            (actual_username,),
+            fetch_one=True
+        )
+
+        if not user_data:
+            return jsonify({
+                "error": "Admin account not found"
+            }), 404
+
+        user_id = user_data.get("admin_id")
+
+        # TAB SESSION
+        session[f"admin_{tab_id}"] = {
+            "user_id": user_data.get("admin_id"),
+            "user_type": "admin",
+            "user_name": user_data.get(
+                "username"
+            ),
+            "user_area": user_data.get(
+                "area",
+                ""
+            ),
+            "admin_username": user_data.get(
+                "username"
+            ),
+            "admin_id": user_data.get(
+                "admin_id"
+            )
+        }
+
+        # NORMAL SESSION
+        session["active_tab"] = tab_id
+
+        session["user_id"] = user_data.get(
+            "admin_id"
+        )
+        session["user_type"] = "admin"
+        session["user_name"] = user_data.get(
+            "username"
+        )
+        session["user_area"] = user_data.get(
+            "area",
+            ""
+        )
+        session["admin_username"] = user_data.get(
+            "username"
+        )
+        session["admin_id"] = user_data.get(
+            "admin_id"
+        )
+        session["username"] = user_data.get(
+            "username"
+        )
+
+        redirect_url = (
+            f"/admin?tab_id={tab_id}"
+        )
+
+        # IMPORTANT:
+        # Create active login history just like
+        # normal login.
+        record_login_history(
+            user_id,
+            "admin",
+            tab_id,
+            lat=data.get("lat"),
+            lng=data.get("lng")
+        )
+
+        print(
+            f"✅ Admin session created "
+            f"for tab: {tab_id}"
+        )
+
+    # ===============================
+    # TECHNICIAN AUTO-LOGIN
+    # ===============================
+    elif user_type == "technician":
+
+        user_query = """
+            SELECT *
+            FROM technicians
+            WHERE technician_id = %s
+            LIMIT 1
+        """
+
+        user_data = execute_query(
+            user_query,
+            (actual_username,),
+            fetch_one=True
+        )
+
+        if not user_data:
+            return jsonify({
+                "error": "Technician account not found"
+            }), 404
+
+        user_id = user_data.get(
+            "technician_id"
+        )
+
+        # TAB SESSION
+        session[f"admin_{tab_id}"] = {
+            "user_id": user_data.get(
+                "technician_id"
+            ),
+            "user_type": "technician",
+            "user_name": user_data.get(
+                "name"
+            ),
+            "user_area": user_data.get(
+                "area",
+                ""
+            ),
+            "technician_id": user_data.get(
+                "technician_id"
+            ),
+            "technician_name": user_data.get(
+                "name"
+            )
+        }
+
+        # NORMAL SESSION
+        session["active_tab"] = tab_id
+
+        session["user_id"] = user_data.get(
+            "technician_id"
+        )
+        session["user_type"] = "technician"
+        session["user_name"] = user_data.get(
+            "name"
+        )
+        session["user_area"] = user_data.get(
+            "area",
+            ""
+        )
+        session["technician_id"] = user_data.get(
+            "technician_id"
+        )
+        session["technician_name"] = user_data.get(
+            "name"
+        )
+        session["username"] = user_data.get(
+            "technician_id"
+        )
+
+        redirect_url = (
+            f"/technician/dashboard?tab_id={tab_id}"
+        )
+
+        # IMPORTANT:
+        # Create active login history just like
+        # normal login.
+        record_login_history(
+            user_id,
+            "technician",
+            tab_id,
+            lat=data.get("lat"),
+            lng=data.get("lng")
+        )
+
+        print(
+            f"✅ Technician session created "
+            f"for tab: {tab_id}"
+        )
+
+    # ===============================
+    # UNKNOWN USER TYPE
+    # ===============================
+    else:
+
+        return jsonify({
+            "error": "Unable to determine account type"
+        }), 400
+
+    # ===============================
+    # FORCE SESSION SAVE
+    # ===============================
+    session.modified = True
+
+    # ===============================
+    # DEBUG SESSION
+    # ===============================
+    print("=========================================")
+    print("✅ PASSWORD RESET SUCCESSFUL")
+    print("✅ AUTO-LOGIN SESSION CREATED")
+    print(f"✅ User ID: {user_id}")
+    print(f"✅ Username: {actual_username}")
+    print(f"✅ User Type: {user_type}")
+    print(f"✅ Tab ID: {tab_id}")
+    print(f"✅ Active Tab: {session.get('active_tab')}")
+    print(
+        f"✅ Tab Session Exists: "
+        f"{bool(session.get(f'admin_{tab_id}'))}"
+    )
+    print(
+        f"✅ Session User Type: "
+        f"{session.get('user_type')}"
+    )
+    print("=========================================")
+
+    # ===============================
+    # RETURN SUCCESS
+    # ===============================
     return jsonify({
+        "success": True,
         "message": "Password updated successfully",
         "username": actual_username,
-        "type": user_type,  # ✅ ITO ANG IMPORTANTE - dapat 'superadmin', 'admin', o 'technician'
+        "type": user_type,
         "area": area,
         "redirect": redirect_url,
         "tab_id": tab_id,
-        "user_id": user_id,  # ✅ IDAGDAG ITO
-        "name": user_data.get('name') if user_data else actual_username,
-        "admin_id": user_data.get('admin_id') if user_data else None,
-        "technician_id": user_data.get('technician_id') if user_data else None
+        "user_id": user_id,
+        "name": (
+            user_data.get("name")
+            if user_data
+            else actual_username
+        ),
+        "admin_id": (
+            user_data.get("admin_id")
+            if user_data
+            else None
+        ),
+        "technician_id": (
+            user_data.get("technician_id")
+            if user_data
+            else None
+        )
     }), 200
+
 
 
 # ===============================
