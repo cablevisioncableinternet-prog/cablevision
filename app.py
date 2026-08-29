@@ -11723,9 +11723,9 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
 
         response = requests.post(url, json=data, headers=headers, timeout=30)
 
-        # ==========================================
+        # ==============================================
         # CHECK BREVO RESPONSE
-        # ==========================================
+        # ==============================================
 
         if response.status_code in [200, 201, 202]:
             print(f"✅ Account creation email sent successfully to {to_email}")
