@@ -11544,11 +11544,25 @@ def superadmin_create_user_account():
 
 
 def send_account_creation_email(to_email, user_id, password, first_name, contract_number, customer_data):
-    """Send account creation email to customer"""
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
+    """Send account creation email to customer using Brevo API"""
+
+    # ==========================================
+    # BREVO API CONFIGURATION
+    # ==========================================
+
+    api_key = os.getenv("BREVO_API_KEY", "")
+
+    if not api_key:
+        print("❌ Brevo API key not configured!")
+        return False
+
+    print(f"📧 Sending account creation email via Brevo API to {to_email}...")
 
     subject = "Cablevision - Your Account Has Been Created"
+
+    # ==========================================
+    # HTML EMAIL
+    # ==========================================
 
     html_body = f"""
     <!DOCTYPE html>
@@ -11559,73 +11573,107 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
         <title>Cablevision Account Created</title>
     </head>
     <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
-        
         <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
-            
             <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
-                
                 <!-- HEADER -->
                 <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
                     <div style="font-size: 44px; margin-bottom: 8px;">🎉</div>
-                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
-                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Account Created Successfully</p>
+                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">
+                        Cablevision
+                    </h1>
+                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">
+                        Account Created Successfully
+                    </p>
                 </div>
 
                 <!-- CONTENT -->
                 <div style="padding: 28px;">
-                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">Welcome, {first_name}!</h2>
+                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">
+                        Welcome, {first_name}!
+                    </h2>
                     <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">
-                        Your Cablevision account has been successfully created. You can now log in to access your account details.
+                        Your Cablevision account has been successfully created.
+                        You can now log in to access your account details.
                     </p>
 
-                    <!-- Account Details Card -->
+                    <!-- LOGIN CREDENTIALS -->
                     <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 20px;">
                         <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; text-align: center;">
-                             🔑 LOGIN CREDENTIALS
+                            🔑 LOGIN CREDENTIALS
                         </div>
                         <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px;">User ID</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{user_id}</div>
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px;">
+                                User ID
+                            </div>
+                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">
+                                {user_id}
+                            </div>
                         </div>
                         <div>
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Temporary Password</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #f59e0b; font-family: monospace;">{password}</div>
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px;">
+                                Temporary Password
+                            </div>
+                            <div style="font-size: 18px; font-weight: 700; color: #f59e0b; font-family: monospace;">
+                                {password}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Customer Details -->
+                    <!-- CUSTOMER DETAILS -->
                     <div style="background: #eff6ff; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
                         <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 12px;">
                             📋 ACCOUNT INFORMATION
                         </div>
                         <div style="margin-bottom: 10px;">
-                            <span style="font-size: 12px; color: #64748b;">Application #:</span>
-                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">{customer_data.get('application_number', 'N/A')}</span>
+                            <span style="font-size: 12px; color: #64748b;">
+                                Application #:
+                            </span>
+                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">
+                                {customer_data.get('application_number', 'N/A')}
+                            </span>
                         </div>
                         <div style="margin-bottom: 10px;">
-                            <span style="font-size: 12px; color: #64748b;">Contract #:</span>
-                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">{contract_number or 'N/A'}</span>
+                            <span style="font-size: 12px; color: #64748b;">
+                                Contract #:
+                            </span>
+                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">
+                                {contract_number or 'N/A'}
+                            </span>
                         </div>
                         <div style="margin-bottom: 10px;">
-                            <span style="font-size: 12px; color: #64748b;">Plan:</span>
-                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">{customer_data.get('plan', 'N/A')}</span>
+                            <span style="font-size: 12px; color: #64748b;">
+                                Plan:
+                            </span>
+                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">
+                                {customer_data.get('plan', 'N/A')}
+                            </span>
                         </div>
                         <div style="margin-bottom: 10px;">
-                            <span style="font-size: 12px; color: #64748b;">Billing Date:</span>
-                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">{customer_data.get('billing_date', 'N/A')}</span>
+                            <span style="font-size: 12px; color: #64748b;">
+                                Billing Date:
+                            </span>
+                            <span style="font-size: 13px; font-weight: 500; color: #1e293b; margin-left: 8px;">
+                                {customer_data.get('billing_date', 'N/A')}
+                            </span>
                         </div>
                     </div>
 
+                    <!-- PASSWORD WARNING -->
                     <div style="margin: 20px 0; padding: 16px; background: #fef3c7; border-radius: 12px; border-left: 4px solid #f59e0b;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="font-size: 20px;">⚠️</span>
                             <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 4px;">Password Change Required</div>
-                                <div style="font-size: 12px; color: #92400e;">For security, please change your password after your first login.</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 4px;">
+                                    Password Change Required
+                                </div>
+                                <div style="font-size: 12px; color: #92400e;">
+                                    For security, please change your password after your first login.
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- THANK YOU -->
                     <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                         <p style="margin: 0; font-size: 12px; color: #94a3b8;">
                             Thank you for choosing Cablevision!
@@ -11633,8 +11681,11 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
                     </div>
                 </div>
 
+                <!-- FOOTER -->
                 <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
-                    <div style="font-size: 11px; color: #64748b;">© 2026 Cablevision Internet Service Provider. All rights reserved.</div>
+                    <div style="font-size: 11px; color: #64748b;">
+                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                    </div>
                 </div>
             </div>
         </div>
@@ -11642,22 +11693,65 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
     </html>
     """
 
-    msg = MIMEMultipart("alternative")
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(html_body, "html"))
+    # ==========================================
+    # SEND VIA BREVO API
+    # ==========================================
 
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(sender_email, sender_app_password)
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ Account creation email sent to {to_email}")
-        return True
+        url = "https://api.brevo.com/v3/smtp/email"
+
+        headers = {
+            "accept": "application/json",
+            "api-key": api_key,
+            "content-type": "application/json"
+        }
+
+        data = {
+            "sender": {
+                "name": "Cablevision Systems Corp.",
+                "email": "cablevision.cableinternet@gmail.com"
+            },
+            "to": [
+                {
+                    "email": to_email,
+                    "name": first_name
+                }
+            ],
+            "subject": subject,
+            "htmlContent": html_body
+        }
+
+        response = requests.post(url, json=data, headers=headers, timeout=30)
+
+        # ==========================================
+        # CHECK BREVO RESPONSE
+        # ==========================================
+
+        if response.status_code in [200, 201, 202]:
+            print(f"✅ Account creation email sent successfully to {to_email}")
+
+            try:
+                print(f"📨 Brevo response: {response.json()}")
+            except Exception:
+                pass
+
+            return True
+        else:
+            print(f"❌ Brevo API error: {response.status_code} - {response.text}")
+            return False
+
+    except requests.exceptions.Timeout:
+        print("❌ Brevo API request timed out.")
+        return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Brevo API request error: {e}")
+        return False
+
     except Exception as e:
-        print(f"❌ Email sending failed: {e}")
+        print(f"❌ Account creation email error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
