@@ -9431,83 +9431,37 @@ def restore_application(app_id):
             print("🔒 Database connection closed")
 
 
+
 # ===============================
-# SEND RESTORE EMAIL
+# SEND RESTORE EMAIL - CANCELLED → APPROVED
 # ===============================
-def send_restore_email(to_email, first_name, app_id, application_data=None, target_status="Pending", is_cancelled=False, assigned_team_id=None, installation_date=None):
+def send_restore_email(to_email, first_name, app_id, application_data=None, target_status="Approved", is_cancelled=True, assigned_team_id=None, installation_date=None):
+    import os, smtplib, html
+    from datetime import datetime
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
     sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = "svql qzea vmjt xndx"
+    sender_app_password = os.getenv("GMAIL_APP_PASSWORD")
 
-    status_display = "Approved" if is_cancelled else "Pending (Restored)"
-    status_color = "#059669" if is_cancelled else "#d97706"
-    status_bg = "#d1fae5" if is_cancelled else "#fef3c7"
-    emoji = "✅" if is_cancelled else "↻"
-    subject = f"Cablevision Application {status_display}" if is_cancelled else "Cablevision Application Restored"
+    status_display = "Approved"
+    status_color = "#059669"
+    status_bg = "#d1fae5"
+    subject = "Cablevision Application Approved"
 
-    # ✅ FIX: Get team name using the passed assigned_team_id
-    team_name = "Not assigned"
-    if is_cancelled and assigned_team_id:
-        try:
-            conn = get_db_connection()
+    def escape_html(text):
+        return html.escape(str(text)) if text is not None else ""
 
-            if conn:
-                cursor = conn.cursor(dictionary=True)
-                cursor.execute(
-                    "SELECT team_name FROM teams WHERE team_id = %s",
-                    (assigned_team_id,)
-                )
-                team_data = cursor.fetchone()
-
-                if team_data:
-                    team_name = team_data.get('team_name')
-
-                cursor.close()
-                conn.close()
-        except Exception as e:
-            print(f"Error fetching team name: {e}")
-    else:
-        # ✅ FIX: If no assigned_team_id was passed, try to get it from the application data
-        if is_cancelled and application_data:
-            try:
-                # Try to get the assigned_team_id from the application data
-                app_team_id = application_data.get('assigned_team_id')
-                if app_team_id:
-                    conn = get_db_connection()
-
-                    if conn:
-                        cursor = conn.cursor(dictionary=True)
-                        cursor.execute(
-                            "SELECT team_name FROM teams WHERE team_id = %s",
-                            (app_team_id,)
-                        )
-                    team_data = cursor.fetchone()
-                    if team_data:
-                        team_name = team_data.get('team_name')
-                    cursor.close()
-                    conn.close()
-            except Exception as e:
-                print(f"Error fetching team name from app data: {e}")
-
-    # ✅ FIX: Format installation date if provided
     formatted_date = "Not set"
-    if is_cancelled and installation_date:
+    if installation_date:
         try:
-            # Handle date string format
             if isinstance(installation_date, str):
-                # Try different date formats
-                try:
-                    date_obj = datetime.strptime(installation_date, '%Y-%m-%d')
-                except:
-                    try:
-                        date_obj = datetime.strptime(installation_date, '%Y-%m-%d %H:%M:%S')
-                    except:
-                        date_obj = datetime.strptime(installation_date.split(' ')[0], '%Y-%m-%d')
-                formatted_date = date_obj.strftime('%B %d, %Y')
+                date_obj = datetime.strptime(installation_date.split(" ")[0], "%Y-%m-%d")
+                formatted_date = date_obj.strftime("%B %d, %Y")
             else:
-                formatted_date = str(installation_date)
-        except Exception as e:
-            print(f"Error formatting date: {e}")
-            formatted_date = installation_date
+                formatted_date = installation_date.strftime("%B %d, %Y")
+        except Exception:
+            formatted_date = str(installation_date)
 
     html_body = f"""
     <!DOCTYPE html>
@@ -9515,79 +9469,85 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cablevision Email</title>
+        <title>Cablevision Application Approved</title>
     </head>
-    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, Arial, sans-serif; background-color: #eef2ff;">
-        
-        <div style="max-width: 580px; margin: 0 auto; padding: 30px 20px;">
-            <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
-                
-                <!-- HEADER SECTION -->
-                <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                    <div style="position: absolute; top: 20px; right: 25px;">
-                        <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 600; color: #a5f3fc;">{status_display}</span>
-                    </div>
-                    <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">Cablevision</h1>
-                    <p style="margin: 6px 0 0 0; color: #93c5fd; font-size: 13px;">Internet Service Provider</p>
+    <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',Arial,sans-serif;background-color:#eef2ff;">
+        <div style="max-width:580px;margin:0 auto;padding:30px 20px;">
+            <div style="background:#ffffff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,.15);">
+
+                <!-- HEADER -->
+                <div style="background:linear-gradient(135deg,#001f3f 0%,#002b5c 100%);padding:32px 28px;text-align:center;">
+                    <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;">Cablevision</h1>
+                    <p style="margin:6px 0 0;color:#93c5fd;font-size:13px;">Internet Service Provider</p>
                 </div>
 
-                <!-- STATUS BADGE -->
-                <div style="padding: 20px 28px 0 28px; text-align: center;">
-                    <div style="display: inline-block; background: {status_bg}; padding: 8px 24px; border-radius: 60px;">
-                        <span style="font-size: 14px; font-weight: 600; color: {status_color};">
-                            {emoji} APPLICATION {status_display.upper()}
-                        </span>
+                <!-- STATUS -->
+                <div style="padding:20px 28px 0;text-align:center;">
+                    <div style="display:inline-block;background:{status_bg};padding:8px 24px;border-radius:60px;">
+                        <span style="font-size:14px;font-weight:600;color:{status_color};">✓ APPLICATION APPROVED</span>
                     </div>
                 </div>
 
-                <!-- CONTENT SECTION -->
-                <div style="padding: 20px 28px 32px 28px;">
-                    <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: #0f172a;">Hello, {first_name}!</h2>
-                    <p style="margin: 0 0 20px 0; font-size: 15px; color: #475569;">
-                        Your application has been <strong>restored</strong> and is now <strong>{status_display}</strong>.
+                <!-- CONTENT -->
+                <div style="padding:20px 28px 32px;">
+                    <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;">
+                        Hello, {escape_html(first_name)}!
+                    </h2>
+
+                    <p style="margin:0 0 20px;font-size:15px;color:#475569;">
+                        Your cancelled application has been <strong>restored</strong> and is now <strong>Approved</strong>.
                     </p>
 
-                    <!-- Application Details -->
-                    <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
-                        <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Application Number</div>
-                            <div style="font-size: 18px; font-weight: 700; color: #0f172a; font-family: monospace;">{app_id}</div>
+                    <!-- APPLICATION DETAILS -->
+                    <div style="background:#f8fafc;border-radius:20px;padding:18px;margin-bottom:16px;">
+                        <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
+                            <div style="font-size:11px;font-weight:600;color:#64748b;">Application Number</div>
+                            <div style="font-size:18px;font-weight:700;color:#0f172a;font-family:monospace;">
+                                {escape_html(app_id)}
+                            </div>
                         </div>
+
                         <div>
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Status</div>
-                            <div style="font-size: 16px; font-weight: 700; color: {status_color};">{status_display}</div>
+                            <div style="font-size:11px;font-weight:600;color:#64748b;">Status</div>
+                            <div style="font-size:16px;font-weight:700;color:{status_color};">
+                                Approved
+                            </div>
                         </div>
-                        {f'''
-                        
-                        <div style="margin-top: 8px;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748b;">Installation Date</div>
-                            <div style="font-size: 14px; font-weight: 500; color: #0f172a;">{formatted_date}</div>
+
+                        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;">
+                            <div style="font-size:11px;font-weight:600;color:#64748b;">Installation Date</div>
+                            <div style="font-size:14px;font-weight:500;color:#0f172a;">
+                                {escape_html(formatted_date)}
+                            </div>
                         </div>
-                        ''' if is_cancelled else ''}
                     </div>
 
-                    <div style="margin: 20px 0; padding: 16px; background: {status_bg}; border-radius: 12px; border-left: 4px solid {status_color};">
-                        <p style="margin: 0 0 8px 0; color: #0f172a;">
+                    <!-- WHAT HAPPENS NEXT -->
+                    <div style="margin:20px 0;padding:16px;background:{status_bg};border-radius:12px;border-left:4px solid {status_color};">
+                        <p style="margin:0 0 8px;color:#0f172a;">
                             <strong>📌 What happens next?</strong>
                         </p>
-                        <ul style="margin: 0; padding-left: 20px; color: #1e293b; font-size: 14px; line-height: 1.6;">
-                            {f'<li>Your application has been approved and is now active!</li><li>Check your email for the contract details</li><li>Installation date: <strong>{formatted_date}</strong></li><li>Please prepare your location for the scheduled installation</li>' if is_cancelled else '<li>Your application is now back in the review queue</li><li>Our team will review your application again</li><li>You will receive another status update via email</li><li>No action is required from you at this time</li>'}
+                        <ul style="margin:0;padding-left:20px;color:#1e293b;font-size:14px;line-height:1.6;">
+                            <li>Your application has been approved and restored.</li>
+                            <li>Your installation is scheduled for <strong>{escape_html(formatted_date)}</strong>.</li>
+                            <li>Please prepare your location for the scheduled installation.</li>
+                            <li>You will receive further updates from Cablevision.</li>
                         </ul>
                     </div>
 
-                    <div style="margin-top: 28px; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    <div style="margin-top:28px;padding-top:20px;text-align:center;border-top:1px solid #e2e8f0;">
+                        <p style="margin:0;font-size:12px;color:#94a3b8;">
                             Thank you for choosing Cablevision!
                         </p>
-                        <p style="margin: 4px 0 0 0; font-size: 11px; color: #94a3b8;">
+                        <p style="margin:4px 0 0;font-size:11px;color:#94a3b8;">
                             If you have any questions, please contact our support team.
                         </p>
                     </div>
                 </div>
 
                 <!-- FOOTER -->
-                <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
-                    <div style="font-size: 11px; color: #64748b;">
+                <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
+                    <div style="font-size:11px;color:#64748b;">
                         © 2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
@@ -9597,28 +9557,29 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
     </html>
     """
 
-    msg = MIMEMultipart("mixed")
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
-
-    msg.attach(MIMEText(html_body, "html"))
-
     try:
-        print("🔹 Sending restore email...")
-        print(f"🔹 Team name: {team_name}")
-        print(f"🔹 Installation date: {formatted_date}")
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        print(f"📧 Sending restore email to {to_email}...")
+        msg = MIMEMultipart("alternative")
+        msg["From"] = sender_email
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(html_body, "html"))
+
+        server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(sender_email, sender_app_password)
         server.send_message(msg)
         server.quit()
+
         print(f"✅ Restore email sent to {to_email}")
         return True
 
     except Exception as e:
         print(f"❌ Restore email failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
+
     
 
 @app.route("/api/superadmin/application/<string:app_id>/request-reapply", methods=["POST"])
