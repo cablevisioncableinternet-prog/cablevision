@@ -9431,26 +9431,27 @@ def restore_application(app_id):
             print("🔒 Database connection closed")
 
 
-
 # ===============================
 # SEND RESTORE EMAIL - CANCELLED → APPROVED
 # ===============================
 def send_restore_email(to_email, first_name, app_id, application_data=None, target_status="Approved", is_cancelled=True, assigned_team_id=None, installation_date=None):
-    import os, smtplib, html
+    import os, html, requests
     from datetime import datetime
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
 
-    sender_email = "cablevision.cableinternet@gmail.com"
-    sender_app_password = os.getenv("GMAIL_APP_PASSWORD")
+    api_key = os.getenv("BREVO_API_KEY")
+    sender_email = os.getenv("BREVO_SENDER_EMAIL", "cablevision.cableinternet@gmail.com")
+    sender_name = os.getenv("BREVO_SENDER_NAME", "Cablevision")
 
-    status_display = "Approved"
-    status_color = "#059669"
-    status_bg = "#d1fae5"
-    subject = "Cablevision Application Approved"
+    if not api_key:
+        print("❌ BREVO_API_KEY is not configured.")
+        return False
 
     def escape_html(text):
         return html.escape(str(text)) if text is not None else ""
+
+    status_color = "#059669"
+    status_bg = "#d1fae5"
+    subject = "Cablevision Application Approved"
 
     formatted_date = "Not set"
     if installation_date:
@@ -9471,24 +9472,21 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Cablevision Application Approved</title>
     </head>
-    <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',Arial,sans-serif;background-color:#eef2ff;">
+    <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',Arial,sans-serif;background:#eef2ff;">
         <div style="max-width:580px;margin:0 auto;padding:30px 20px;">
-            <div style="background:#ffffff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,.15);">
+            <div style="background:#fff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,.15);">
 
-                <!-- HEADER -->
                 <div style="background:linear-gradient(135deg,#001f3f 0%,#002b5c 100%);padding:32px 28px;text-align:center;">
-                    <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;">Cablevision</h1>
+                    <h1 style="margin:0;font-size:26px;font-weight:700;color:#fff;">Cablevision</h1>
                     <p style="margin:6px 0 0;color:#93c5fd;font-size:13px;">Internet Service Provider</p>
                 </div>
 
-                <!-- STATUS -->
                 <div style="padding:20px 28px 0;text-align:center;">
                     <div style="display:inline-block;background:{status_bg};padding:8px 24px;border-radius:60px;">
                         <span style="font-size:14px;font-weight:600;color:{status_color};">✓ APPLICATION APPROVED</span>
                     </div>
                 </div>
 
-                <!-- CONTENT -->
                 <div style="padding:20px 28px 32px;">
                     <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;">
                         Hello, {escape_html(first_name)}!
@@ -9498,7 +9496,6 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
                         Your cancelled application has been <strong>restored</strong> and is now <strong>Approved</strong>.
                     </p>
 
-                    <!-- APPLICATION DETAILS -->
                     <div style="background:#f8fafc;border-radius:20px;padding:18px;margin-bottom:16px;">
                         <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
                             <div style="font-size:11px;font-weight:600;color:#64748b;">Application Number</div>
@@ -9509,9 +9506,7 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
 
                         <div>
                             <div style="font-size:11px;font-weight:600;color:#64748b;">Status</div>
-                            <div style="font-size:16px;font-weight:700;color:{status_color};">
-                                Approved
-                            </div>
+                            <div style="font-size:16px;font-weight:700;color:{status_color};">Approved</div>
                         </div>
 
                         <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;">
@@ -9522,7 +9517,6 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
                         </div>
                     </div>
 
-                    <!-- WHAT HAPPENS NEXT -->
                     <div style="margin:20px 0;padding:16px;background:{status_bg};border-radius:12px;border-left:4px solid {status_color};">
                         <p style="margin:0 0 8px;color:#0f172a;">
                             <strong>📌 What happens next?</strong>
@@ -9536,50 +9530,63 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
                     </div>
 
                     <div style="margin-top:28px;padding-top:20px;text-align:center;border-top:1px solid #e2e8f0;">
-                        <p style="margin:0;font-size:12px;color:#94a3b8;">
-                            Thank you for choosing Cablevision!
-                        </p>
+                        <p style="margin:0;font-size:12px;color:#94a3b8;">Thank you for choosing Cablevision!</p>
                         <p style="margin:4px 0 0;font-size:11px;color:#94a3b8;">
                             If you have any questions, please contact our support team.
                         </p>
                     </div>
                 </div>
 
-                <!-- FOOTER -->
                 <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
                     <div style="font-size:11px;color:#64748b;">
                         © 2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
+
             </div>
         </div>
     </body>
     </html>
     """
 
+    payload = {
+        "sender": {"name": sender_name, "email": sender_email},
+        "to": [{"email": to_email, "name": first_name or "Customer"}],
+        "subject": subject,
+        "htmlContent": html_body
+    }
+
     try:
-        print(f"📧 Sending restore email to {to_email}...")
-        msg = MIMEMultipart("alternative")
-        msg["From"] = sender_email
-        msg["To"] = to_email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(html_body, "html"))
+        print(f"📧 Sending restore email to {to_email} via Brevo API...")
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(sender_email, sender_app_password)
-        server.send_message(msg)
-        server.quit()
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "accept": "application/json",
+                "api-key": api_key,
+                "content-type": "application/json"
+            },
+            json=payload,
+            timeout=30
+        )
 
-        print(f"✅ Restore email sent to {to_email}")
-        return True
+        if response.ok:
+            result = response.json()
+            print(f"✅ Restore email sent to {to_email}")
+            print(f"📨 Brevo Message ID: {result.get('messageId')}")
+            return True
 
+        print(f"❌ Brevo restore email failed: {response.status_code} - {response.text}")
+        return False
+
+    except requests.RequestException as e:
+        print(f"❌ Brevo connection error: {e}")
+        return False
     except Exception as e:
         print(f"❌ Restore email failed: {e}")
         import traceback
         traceback.print_exc()
         return False
-
     
 
 @app.route("/api/superadmin/application/<string:app_id>/request-reapply", methods=["POST"])
