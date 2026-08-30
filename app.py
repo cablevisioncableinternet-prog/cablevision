@@ -10113,17 +10113,17 @@ def approve_request(req_id):
         print("=" * 60)
         print("🚀 APPROVE REQUEST STARTED")
         print(f"📝 Request ID: {req_id}")
-        
+
         request_data = request.get_json() or {}
         print(f"📝 Request data: {request_data}")
-        
+
         contract_number = request_data.get("contract_number", None)
         billing_date = request_data.get("billing_date", None)
         first_installment_date = request_data.get("first_installment_date", None)
         last_installment_date = request_data.get("last_installment_date", None)
         assigned_team_id = request_data.get("assigned_team_id", None)
         installation_date = request_data.get("installation_date", None)
-        
+
         import mysql.connector
         conn = get_db_connection()
 
@@ -10132,12 +10132,12 @@ def approve_request(req_id):
 
         cursor = conn.cursor(dictionary=True)
         print("✅ Database connected")
-        
+
         # Get the approval request
         req_query = """
             SELECT id, request_id, app_id, requested_by, requested_status, status,
                 admin_id, admin_area, admin_city, reason
-            FROM approval_requests 
+            FROM approval_requests
             WHERE request_id = %s
             LIMIT 1
         """
@@ -10155,9 +10155,9 @@ def approve_request(req_id):
         admin_id = req.get("admin_id")
         admin_area = req.get("admin_area")
         admin_city = req.get("admin_city")
-        
+
         print(f"📝 App ID: {app_id}, Requested Status: {requested_status}")
-        
+
         # Check if request is already processed
         if req.get("status") == "Done":
             return jsonify({"error": "This request has already been processed"}), 400
@@ -10177,34 +10177,32 @@ def approve_request(req_id):
         # ========== HANDLE REAPPLY REQUEST ==========
         if requested_status == "Reapply":
             print("🔄 Processing REAPPLY request from admin")
-            
-            # Check if reapply already requested directly
+
             if app_data.get("reapply_requested"):
                 return jsonify({"error": "A reapply request has already been sent to the customer"}), 400
-            
-            # Get application data
+
             customer_email = app_data.get("email")
             first_name = app_data.get("first_name")
             rejection_reason = app_data.get("rejection_reason") or "Not specified"
             reapplied_count = app_data.get("reapplied_count") or 0
-            
+
             if not customer_email:
                 return jsonify({"error": "Customer email not found"}), 400
-            
+
             # ✅ SEND REAPPLY EMAIL
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
             import smtplib
             import html as html_lib
-            
+
             sender_email = "cablevision.cableinternet@gmail.com"
             sender_app_password = "svql qzea vmjt xndx"
             subject = "Cablevision - Re-application Requested"
             BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5001").rstrip("/")
-            
+
             safe_reason = html_lib.escape(rejection_reason)
             safe_message = html_lib.escape(reason)  # Admin's message
-            
+
             if reapplied_count < 2:
                 remaining = 2 - reapplied_count
                 reapply_section = f"""
@@ -10228,7 +10226,7 @@ def approve_request(req_id):
                     </p>
                 </div>
                 """
-            
+
             html_body = f"""
             <!DOCTYPE html>
             <html>
@@ -10277,13 +10275,13 @@ def approve_request(req_id):
             </body>
             </html>
             """
-            
+
             msg = MIMEMultipart("mixed")
             msg['From'] = sender_email
             msg['To'] = customer_email
             msg['Subject'] = subject
             msg.attach(MIMEText(html_body, "html"))
-            
+
             try:
                 server = smtplib.SMTP('smtp.gmail.com', 587)
                 server.starttls()
@@ -10294,7 +10292,7 @@ def approve_request(req_id):
             except Exception as email_err:
                 print(f"❌ Email failed: {email_err}")
                 return jsonify({"error": "Failed to send email"}), 500
-            
+
             # ✅ UPDATE APPLICATION - SET REAPPLY FLAGS
             update_query = """
                 UPDATE applications
@@ -10305,14 +10303,14 @@ def approve_request(req_id):
                 WHERE application_number = %s
             """
             cursor.execute(update_query, (reason, app_id))
-            
+
             # ✅ CREATE ADMIN NOTIFICATION
             admin_notification_id = int(datetime.now().timestamp() * 1000)
             admin_notif_title = "Admin Reapply Request - Approved"
             admin_notif_message = f"Your request to send a reapply invitation to {app_data.get('first_name', '')} {app_data.get('last_name', '')}'s application ({app_id}) has been APPROVED by superadmin. The customer has been notified."
-            
+
             cursor.execute("""
-                INSERT INTO admin_notifications 
+                INSERT INTO admin_notifications
                 (id, title, message, type, relatedId, request_id, timestamp, read_status,
                  admin_id, admin_area, admin_city, requested_by, requested_status, application_city, action_taken_by, action_status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -10325,24 +10323,23 @@ def approve_request(req_id):
                 admin_id, admin_area, admin_city, requested_by, requested_status,
                 app_data.get('city', ''), "superadmin", "Approved"
             ))
-            
+
             # ✅ MARK REQUEST AS DONE
             cursor.execute("""
-                UPDATE approval_requests 
+                UPDATE approval_requests
                 SET status = 'Done', processed_at = %s
                 WHERE request_id = %s OR id = %s
             """, (datetime.now().isoformat(), req_id, req_id))
-            
+
             conn.commit()
-            
+
             return jsonify({
                 "message": "Reapply request approved and email sent to customer",
                 "status": "Done",
                 "reapply_requested": True
             })
-        
+
         # ========== HANDLE OTHER STATUSES (Approved, Rejected, Pending) ==========
-        # Generate contract number if needed
         if requested_status == "Approved":
             if not contract_number or contract_number.strip() == "":
                 import random
@@ -10351,7 +10348,7 @@ def approve_request(req_id):
                 random_part = ''.join(random.choices(string.digits, k=4))
                 contract_number = f"CV-{date_part}-{random_part}"
                 print(f"🔑 Auto-generated contract number: {contract_number}")
-            
+
             if not billing_date or billing_date.strip() == "":
                 billing_date = "15th"
                 print(f"📅 Default billing date set to: {billing_date}")
@@ -10359,7 +10356,7 @@ def approve_request(req_id):
         # ========== 1. UPDATE APPLICATIONS TABLE ==========
         update_fields = ["status = %s"]
         params = [requested_status]
-        
+
         if requested_status == "Approved":
             update_fields.append("contract_number = %s")
             params.append(contract_number)
@@ -10373,9 +10370,10 @@ def approve_request(req_id):
             params.append(assigned_team_id)
             update_fields.append("installation_date = %s")
             params.append(installation_date)
-        elif requested_status == "Rejected" and reason:
+        elif requested_status == "Rejected":
+            # ✅ FIX: laging i-set ang rejection_reason (kahit walang binigay na reason)
             update_fields.append("rejection_reason = %s")
-            params.append(reason)
+            params.append(reason if reason else "Not specified")
         elif requested_status == "Pending":
             # ✅ RESTORE: i-clear ang rejection reason
             update_fields.append("rejection_reason = %s")
@@ -10388,7 +10386,7 @@ def approve_request(req_id):
         # ========== 2. INSERT/UPDATE CUSTOMERS TABLE ==========
         if requested_status == "Approved":
             current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             customer_data = {
                 "application_number": app_data.get("application_number"),
                 "first_name": app_data.get("first_name"),
@@ -10416,15 +10414,15 @@ def approve_request(req_id):
                 "latitude": app_data.get("latitude"),
                 "longitude": app_data.get("longitude")
             }
-            
+
             customer_data = {k: v for k, v in customer_data.items() if v is not None and v != 'none'}
-            
+
             print("📝 CUSTOMER DATA:", customer_data)
-            
+
             app_number = app_data.get("application_number")
             cursor.execute("SELECT application_number FROM customers WHERE application_number = %s", (app_number,))
             existing_customer = cursor.fetchone()
-            
+
             if not existing_customer:
                 columns = ', '.join(customer_data.keys())
                 placeholders = ', '.join(['%s'] * len(customer_data))
@@ -10450,7 +10448,7 @@ def approve_request(req_id):
                 app_data.get('last_name', ''),
                 app_data.get('suffix', '')
             ])).strip()
-            
+
             date_submitted_val = app_data.get('date_submitted')
             if date_submitted_val:
                 if hasattr(date_submitted_val, 'strftime'):
@@ -10459,7 +10457,7 @@ def approve_request(req_id):
                     date_submitted_str = str(date_submitted_val)
             else:
                 date_submitted_str = datetime.now().strftime("%Y-%m-%d")
-            
+
             contract_data = {
                 "contract_number": contract_number,
                 "application_id": app_id,
@@ -10484,18 +10482,18 @@ def approve_request(req_id):
                 "installation_fee": app_data.get('installation_fee'),
                 "application_data": json.dumps(app_data, default=str)
             }
-            
+
             contract_data = {k: v for k, v in contract_data.items() if v is not None and v != ''}
-            
+
             for key, value in contract_data.items():
                 if hasattr(value, 'isoformat'):
                     contract_data[key] = value.isoformat()
                 elif hasattr(value, 'strftime'):
                     contract_data[key] = value.strftime("%Y-%m-%d %H:%M:%S")
-            
+
             cursor.execute("SELECT contract_number FROM contracts WHERE contract_number = %s", (contract_number,))
             existing_contract = cursor.fetchone()
-            
+
             if not existing_contract:
                 columns = ', '.join(contract_data.keys())
                 placeholders = ', '.join(['%s'] * len(contract_data))
@@ -10518,24 +10516,24 @@ def approve_request(req_id):
         applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
         application_number = app_data.get('application_number', 'N/A')
         action_status = requested_status
-        
+
         admin_notification_id = int(datetime.now().timestamp() * 1000)
-        
+
         if requested_status == "Pending":
             admin_notif_title = "Request Accepted - Application Restored"
             admin_notif_message = f"Your request to restore {applicant_name}'s application ({application_number}) to Pending status has been ACCEPTED by superadmin."
         else:
             admin_notif_title = f"Request {requested_status} - Application {application_number}"
             admin_notif_message = f"Your request to {requested_status.lower()} {applicant_name}'s application ({application_number}) has been {requested_status.upper()} by superadmin."
-        
+
         admin_notif_query = """
-            INSERT INTO admin_notifications 
+            INSERT INTO admin_notifications
             (id, title, message, type, relatedId, request_id, timestamp, read_status,
-             admin_id, admin_area, admin_city, requested_by, requested_status, 
+             admin_id, admin_area, admin_city, requested_by, requested_status,
              application_city, action_taken_by, action_status, contract_number, billing_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        
+
         admin_notif_params = (
             admin_notification_id,
             admin_notif_title,
@@ -10547,7 +10545,7 @@ def approve_request(req_id):
             contract_number if requested_status == "Approved" else None,
             billing_date if requested_status == "Approved" else None
         )
-        
+
         cursor.execute(admin_notif_query, admin_notif_params)
 
         # ========== 5. CREATE NOTIFICATION FOR TECHNICIANS (if approved) ==========
@@ -10555,26 +10553,26 @@ def approve_request(req_id):
             try:
                 application_city = app_data.get("city", "")
                 print(f"🔍 Creating technician notification for area: {application_city}")
-                
+
                 tech_query = "SELECT technician_id FROM technicians WHERE UPPER(area) = UPPER(%s) AND status = 'Active'"
                 cursor.execute(tech_query, (application_city,))
                 technicians = cursor.fetchall()
-                
+
                 print(f"🔍 Found {len(technicians)} technicians in area: {application_city}")
-                
+
                 if technicians:
                     import time
                     success_count = 0
                     base_id = int(time.time() * 1000)
-                    
+
                     for idx, tech in enumerate(technicians):
                         technician_id = tech.get('technician_id')
                         if technician_id:
                             notification_id = base_id + idx + 1
-                            
+
                             tech_notif_query = """
-                                INSERT INTO technician_notifications 
-                                (id, technician_id, technician_area, title, message, type, relatedId, 
+                                INSERT INTO technician_notifications
+                                (id, technician_id, technician_area, title, message, type, relatedId,
                                  application_number, customer_name, timestamp, read_status, created_at)
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, NOW())
                             """
@@ -10591,11 +10589,11 @@ def approve_request(req_id):
                                 datetime.now().isoformat()
                             ))
                             success_count += 1
-                    
+
                     print(f"🔔 Created {success_count} technician notifications in area: {application_city}")
                 else:
                     print(f"⚠️ No active technicians found in area: {application_city}")
-                    
+
             except Exception as tech_err:
                 print(f"⚠️ Technician notification error: {tech_err}")
                 import traceback
@@ -10604,11 +10602,11 @@ def approve_request(req_id):
         # ========== 6. MARK REQUEST AS DONE ==========
         processed_at_str = datetime.now().isoformat()
         cursor.execute("""
-            UPDATE approval_requests  
-            SET status = 'Done',  
-                contract_number = %s,  
-                billing_date = %s,  
-                processed_at = %s 
+            UPDATE approval_requests
+            SET status = 'Done',
+                contract_number = %s,
+                billing_date = %s,
+                processed_at = %s
             WHERE request_id = %s
         """, (
             contract_number if requested_status == "Approved" else None,
@@ -10621,7 +10619,7 @@ def approve_request(req_id):
         # ========== 7. CREATE GENERAL NOTIFICATION ==========
         general_notification_id = int(datetime.now().timestamp() * 1000) + 1
         general_notif_query = """
-            INSERT INTO notifications 
+            INSERT INTO notifications
             (id, title, message, type, relatedId, timestamp, read_status)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
@@ -10639,22 +10637,25 @@ def approve_request(req_id):
         # ========== 8. COMMIT ALL CHANGES ==========
         conn.commit()
         print("✅ All changes COMMITTED to database")
-        
+
         # ========== 9. VERIFY UPDATES ==========
         cursor.execute("SELECT status, contract_number FROM applications WHERE application_number = %s", (app_id,))
         app_verified = cursor.fetchone()
         print(f"🔍 APPLICATION VERIFIED - Status: {app_verified.get('status') if app_verified else 'Not found'}")
-        
+
         if requested_status == "Approved":
             cursor.execute("SELECT application_number FROM customers WHERE application_number = %s", (app_id,))
             customer_verified = cursor.fetchone()
             print(f"🔍 CUSTOMER VERIFIED - Exists: {customer_verified is not None}")
-            
+
             cursor.execute("SELECT contract_number FROM contracts WHERE contract_number = %s", (contract_number,))
             contract_verified = cursor.fetchone()
             print(f"🔍 CONTRACT VERIFIED - Exists: {contract_verified is not None}")
 
-        # ========== 10. SEND EMAIL ==========
+        # ========== 10. SEND EMAIL TO CUSTOMER ==========
+        # ✅ Ito ang email na napupunta sa customer kapag inapprove/rejected/restored
+        # ng superadmin ang request ng admin (Approved/Rejected via Brevo API,
+        # Pending/restore via send_restore_email).
         try:
             applicant_email = app_data.get("email")
             if applicant_email:
@@ -10704,7 +10705,7 @@ def approve_request(req_id):
         if conn:
             conn.rollback()
         return jsonify({"error": str(e)}), 500
-    
+
     finally:
         if cursor:
             cursor.close()
