@@ -10833,32 +10833,8 @@ def reject_request(req_id):
         
         conn.commit()
         
-        # ✅ NO EMAIL TO CUSTOMER FOR REAPPLY REJECT
-        # Only send email for non-reapply requests
-        if requested_status != "Reapply":
-            try:
-                applicant_email = app_data.get("email")
-                if applicant_email:
-                    if requested_status == "Pending":
-                        email_reason = f"The admin's request to restore your application was rejected by superadmin.\nReason: {reason}"
-                        email_status = "Restore Request Rejected"
-                    else:
-                        email_reason = f"The admin's request to {requested_status.lower()} your application was rejected by superadmin.\nReason: {reason}"
-                        email_status = "Request Rejected"
-                    
-                    send_application_status_email(
-                        to_email=applicant_email,
-                        first_name=applicant_name,
-                        status=email_status,
-                        app_id=application_number,
-                        reason=email_reason,
-                        contract_number=None,
-                        billing_date=None,
-                        application_id=app_id,
-                        reapplied_count=0
-                    )
-            except Exception as email_err:
-                print(f"⚠️ Error sending email: {email_err}")
+        # ✅ NO EMAIL SENT TO CUSTOMER WHEN SUPERADMIN REJECTS ADMIN REQUEST
+        # (in-app notification lang ang gagawin, walang email)
         
         return jsonify({
             "message": f"Request rejected, application reverted to {revert_status}"
