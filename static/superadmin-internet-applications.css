@@ -29,7 +29,6 @@ body {
   background: linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%);
   color: var(--text-dark);
   flex-direction: column;
-  zoom: 80%
 }
 
 /* ================= SCROLLBAR STYLING ================= */
