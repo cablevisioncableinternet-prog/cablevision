@@ -10238,8 +10238,8 @@ def approve_request(req_id):
             cursor.execute("""
                 UPDATE approval_requests
                 SET status = 'Done', processed_at = %s
-                WHERE request_id = %s OR id = %s
-            """, (datetime.now().isoformat(), req_id, req_id))
+                WHERE request_id = %s
+            """, (datetime.now().isoformat(), req_id))
 
             conn.commit()
 
