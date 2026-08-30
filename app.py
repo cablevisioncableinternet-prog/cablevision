@@ -10105,6 +10105,10 @@ def get_approval_request(request_id):
         return jsonify({"error": str(e)}), 500
 
 
+# ===============================
+# SUPERADMIN APPROVE REQUEST
+# Handles: Approved / Rejected / Reapply
+# ===============================
 @app.route("/api/superadmin/approval-request/<string:req_id>", methods=["PUT"])
 def approve_request(req_id):
     conn = None
@@ -10113,40 +10117,43 @@ def approve_request(req_id):
         print("=" * 60)
         print("🚀 APPROVE REQUEST STARTED")
         print(f"📝 Request ID: {req_id}")
-        
+
         request_data = request.get_json() or {}
         print(f"📝 Request data: {request_data}")
-        
-        contract_number = request_data.get("contract_number", None)
-        billing_date = request_data.get("billing_date", None)
-        first_installment_date = request_data.get("first_installment_date", None)
-        last_installment_date = request_data.get("last_installment_date", None)
-        assigned_team_id = request_data.get("assigned_team_id", None)
-        installation_date = request_data.get("installation_date", None)
-        
-        import mysql.connector
-        conn = get_db_connection()
 
+        contract_number = request_data.get("contract_number")
+        billing_date = request_data.get("billing_date")
+        first_installment_date = request_data.get("first_installment_date")
+        last_installment_date = request_data.get("last_installment_date")
+        assigned_team_id = request_data.get("assigned_team_id")
+        installation_date = request_data.get("installation_date")
+
+        conn = get_db_connection()
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
 
         cursor = conn.cursor(dictionary=True)
         print("✅ Database connected")
-        
-        # Get the approval request
-        req_query = """
+
+        # ===============================
+        # 1. GET APPROVAL REQUEST
+        # ===============================
+        cursor.execute("""
             SELECT id, request_id, app_id, requested_by, requested_status, status,
-                admin_id, admin_area, admin_city, reason
-            FROM approval_requests 
+                   admin_id, admin_area, admin_city, reason
+            FROM approval_requests
             WHERE request_id = %s
             LIMIT 1
-        """
-        cursor.execute(req_query, (req_id,))
+        """, (req_id,))
         req = cursor.fetchone()
+
         print(f"📝 Approval request found: {req}")
 
         if not req:
             return jsonify({"error": "Request not found"}), 404
+
+        if req.get("status") == "Done":
+            return jsonify({"error": "This request has already been processed"}), 400
 
         app_id = req.get("app_id")
         requested_status = req.get("requested_status")
@@ -10155,240 +10162,359 @@ def approve_request(req_id):
         admin_id = req.get("admin_id")
         admin_area = req.get("admin_area")
         admin_city = req.get("admin_city")
-        
-        print(f"📝 App ID: {app_id}, Requested Status: {requested_status}")
-        
-        # Check if request is already processed
-        if req.get("status") == "Done":
-            return jsonify({"error": "This request has already been processed"}), 400
 
-        # Get application data
-        app_query = "SELECT * FROM applications WHERE application_number = %s"
-        cursor.execute(app_query, (app_id,))
+        print(f"📝 App ID: {app_id}")
+        print(f"📝 Requested Status: {requested_status}")
+
+        # ===============================
+        # 2. GET APPLICATION
+        # ===============================
+        cursor.execute(
+            "SELECT * FROM applications WHERE application_number = %s",
+            (app_id,)
+        )
         app_data = cursor.fetchone()
-        print(f"📝 Application data status: {app_data.get('status') if app_data else 'Not found'}")
 
         if not app_data:
             return jsonify({"error": "Application not found"}), 404
 
-        if app_data.get("status") != "Request Sent":
-            return jsonify({"error": f"Application status is '{app_data.get('status')}', cannot process this request"}), 400
+        print(f"📝 Application status: {app_data.get('status')}")
 
-        # ========== HANDLE REAPPLY REQUEST ==========
+        if app_data.get("status") != "Request Sent":
+            return jsonify({
+                "error": f"Application status is '{app_data.get('status')}', cannot process this request"
+            }), 400
+
+        applicant_email = app_data.get("email")
+        applicant_first_name = app_data.get("first_name", "")
+        applicant_last_name = app_data.get("last_name", "")
+        applicant_name = f"{applicant_first_name} {applicant_last_name}".strip()
+        application_number = app_data.get("application_number", "N/A")
+
+        # ============================================================
+        # 3. HANDLE REAPPLY REQUEST
+        # ============================================================
         if requested_status == "Reapply":
-            print("🔄 Processing REAPPLY request from admin")
-            
-            # Check if reapply already requested directly
+            print("🔄 Processing REAPPLY request")
+
             if app_data.get("reapply_requested"):
-                return jsonify({"error": "A reapply request has already been sent to the customer"}), 400
-            
-            # Get application data
-            customer_email = app_data.get("email")
-            first_name = app_data.get("first_name")
+                return jsonify({
+                    "error": "A reapply request has already been sent to the customer"
+                }), 400
+
+            if not applicant_email:
+                return jsonify({"error": "Customer email not found"}), 400
+
             rejection_reason = app_data.get("rejection_reason") or "Not specified"
             reapplied_count = app_data.get("reapplied_count") or 0
-            
-            if not customer_email:
-                return jsonify({"error": "Customer email not found"}), 400
-            
-            # ✅ SEND REAPPLY EMAIL
+
+            # ===============================
+            # REAPPLY EMAIL
+            # ===============================
+            import os
+            import html as html_lib
+            import smtplib
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
-            import smtplib
-            import html as html_lib
-            
-            sender_email = "cablevision.cableinternet@gmail.com"
-            sender_app_password = "svql qzea vmjt xndx"
-            subject = "Cablevision - Re-application Requested"
-            BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5001").rstrip("/")
-            
-            safe_reason = html_lib.escape(rejection_reason)
-            safe_message = html_lib.escape(reason)  # Admin's message
-            
+
+            sender_email = os.getenv(
+                "BREVO_SENDER_EMAIL",
+                "cablevision.cableinternet@gmail.com"
+            )
+            sender_app_password = os.getenv("GMAIL_APP_PASSWORD")
+            sender_name = os.getenv("BREVO_SENDER_NAME", "Cablevision")
+            BASE_URL = os.getenv(
+                "APP_BASE_URL",
+                "http://127.0.0.1:5001"
+            ).rstrip("/")
+
+            if not sender_app_password:
+                print("❌ GMAIL_APP_PASSWORD is not configured.")
+                return jsonify({"error": "Email configuration is missing"}), 500
+
+            safe_first_name = html_lib.escape(str(applicant_first_name or "Customer"))
+            safe_app_id = html_lib.escape(str(application_number))
+            safe_reason = html_lib.escape(str(rejection_reason))
+            safe_message = html_lib.escape(str(reason or "Please review your application and submit corrected information."))
+
             if reapplied_count < 2:
                 remaining = 2 - reapplied_count
                 reapply_section = f"""
-                <div style="margin: 20px 0; text-align: center;">
+                <div style="margin:20px 0;text-align:center;">
                     <a href="{BASE_URL}/reapply/{app_id}"
-                       style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                              color: white; text-decoration: none; padding: 14px 32px; border-radius: 50px;
-                              font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+                       style="display:inline-block;background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);
+                       color:white;text-decoration:none;padding:14px 32px;border-radius:50px;
+                       font-weight:600;font-size:15px;box-shadow:0 4px 12px rgba(37,99,235,.3);">
                         Re-apply Now
                     </a>
-                    <p style="font-size: 12px; color: #6b7280; margin-top: 12px;">
+                    <p style="font-size:12px;color:#6b7280;margin-top:12px;">
                         You have {remaining} re-application(s) left.
                     </p>
                 </div>
                 """
             else:
                 reapply_section = """
-                <div style="margin: 20px 0; padding: 12px; background: #fef2f2; border-radius: 12px; text-align: center;">
-                    <p style="margin: 0; color: #991b1b; font-size: 14px;">
-                        ⚠️ You have reached the maximum number of re-applications (2). Further re-applications are not allowed.
+                <div style="margin:20px 0;padding:12px;background:#fef2f2;border-radius:12px;text-align:center;">
+                    <p style="margin:0;color:#991b1b;font-size:14px;">
+                        ⚠️ You have reached the maximum number of re-applications (2).
+                        Further re-applications are not allowed.
                     </p>
                 </div>
                 """
-            
+
             html_body = f"""
             <!DOCTYPE html>
             <html>
-            <head><meta charset="UTF-8"><title>Cablevision Email</title></head>
-            <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',-apple-system,BlinkMacSystemFont,Arial,sans-serif;background-color:#eef2ff;">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1.0">
+                <title>Cablevision - Re-application Requested</title>
+            </head>
+            <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',Arial,sans-serif;background:#eef2ff;">
                 <div style="max-width:580px;margin:0 auto;padding:30px 20px;">
-                    <div style="background:#ffffff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,0.15);">
+                    <div style="background:#fff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,.15);">
                         <div style="background:linear-gradient(135deg,#001f3f 0%,#002b5c 100%);padding:32px 28px;text-align:center;">
-                            <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;">Cablevision</h1>
-                            <p style="margin:6px 0 0 0;color:#93c5fd;font-size:13px;">Internet Service Provider</p>
+                            <h1 style="margin:0;font-size:26px;font-weight:700;color:#fff;">Cablevision</h1>
+                            <p style="margin:6px 0 0;color:#93c5fd;font-size:13px;">Internet Service Provider</p>
                         </div>
-                        <div style="padding:20px 28px 0 28px;text-align:center;">
+
+                        <div style="padding:20px 28px 0;text-align:center;">
                             <div style="display:inline-block;background:#dbeafe;padding:8px 24px;border-radius:60px;">
-                                <span style="font-size:14px;font-weight:600;color:#1d4ed8;">WE'D LIKE YOU TO RE-APPLY</span>
+                                <span style="font-size:14px;font-weight:600;color:#1d4ed8;">
+                                    WE'D LIKE YOU TO RE-APPLY
+                                </span>
                             </div>
                         </div>
-                        <div style="padding:20px 28px 32px 28px;">
-                            <h2 style="margin:0 0 8px 0;font-size:22px;font-weight:700;color:#0f172a;">Hello, {first_name}!</h2>
-                            <p style="margin:0 0 20px 0;font-size:15px;color:#475569;">
-                                Our team reviewed your rejected application and would like to invite you to re-apply with corrected information.
+
+                        <div style="padding:20px 28px 32px;">
+                            <h2 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;">
+                                Hello, {safe_first_name}!
+                            </h2>
+
+                            <p style="margin:0 0 20px;font-size:15px;color:#475569;">
+                                Our team reviewed your rejected application and would like
+                                to invite you to re-apply with corrected information.
                             </p>
+
                             <div style="background:#f8fafc;border-radius:20px;padding:18px;margin-bottom:16px;">
                                 <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-                                    <div style="font-size:11px;font-weight:600;color:#64748b;">Application Number</div>
-                                    <div style="font-size:18px;font-weight:700;color:#0f172a;font-family:monospace;">{app_id}</div>
+                                    <div style="font-size:11px;font-weight:600;color:#64748b;">
+                                        Application Number
+                                    </div>
+                                    <div style="font-size:18px;font-weight:700;color:#0f172a;font-family:monospace;">
+                                        {safe_app_id}
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <div style="font-size:11px;font-weight:600;color:#64748b;">Original Rejection Reason</div>
-                                    <div style="font-size:14px;font-weight:500;color:#991b1b;">{safe_reason}</div>
+                                    <div style="font-size:11px;font-weight:600;color:#64748b;">
+                                        Original Rejection Reason
+                                    </div>
+                                    <div style="font-size:14px;font-weight:500;color:#991b1b;">
+                                        {safe_reason}
+                                    </div>
                                 </div>
                             </div>
+
                             <div style="margin:20px 0;padding:16px;background:#eff6ff;border-radius:12px;border-left:4px solid #2563eb;">
-                                <p style="margin:0 0 8px 0;color:#1e3a8a;"><strong>Message from our team</strong></p>
-                                <p style="margin:0;color:#1e293b;font-size:14px;line-height:1.6;white-space:pre-wrap;">{safe_message}</p>
+                                <p style="margin:0 0 8px;color:#1e3a8a;">
+                                    <strong>Message from our team</strong>
+                                </p>
+                                <p style="margin:0;color:#1e293b;font-size:14px;line-height:1.6;white-space:pre-wrap;">
+                                    {safe_message}
+                                </p>
                             </div>
+
                             {reapply_section}
+
                             <div style="margin-top:28px;padding-top:20px;text-align:center;border-top:1px solid #e2e8f0;">
-                                <p style="margin:0;font-size:12px;color:#94a3b8;">Thank you for choosing Cablevision!</p>
+                                <p style="margin:0;font-size:12px;color:#94a3b8;">
+                                    Thank you for choosing Cablevision!
+                                </p>
                             </div>
                         </div>
+
                         <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
-                            <div style="font-size:11px;color:#64748b;">© 2026 Cablevision Internet Service Provider. All rights reserved.</div>
+                            <div style="font-size:11px;color:#64748b;">
+                                © 2026 Cablevision Internet Service Provider. All rights reserved.
+                            </div>
                         </div>
                     </div>
                 </div>
             </body>
             </html>
             """
-            
-            msg = MIMEMultipart("mixed")
-            msg['From'] = sender_email
-            msg['To'] = customer_email
-            msg['Subject'] = subject
-            msg.attach(MIMEText(html_body, "html"))
-            
+
             try:
-                server = smtplib.SMTP('smtp.gmail.com', 587)
+                print(f"📧 Sending REAPPLY email to {applicant_email}...")
+
+                msg = MIMEMultipart("alternative")
+                msg["From"] = f"{sender_name} <{sender_email}>"
+                msg["To"] = applicant_email
+                msg["Subject"] = "Cablevision - Re-application Requested"
+                msg.attach(MIMEText(html_body, "html"))
+
+                server = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
                 server.starttls()
                 server.login(sender_email, sender_app_password)
                 server.send_message(msg)
                 server.quit()
-                print(f"✅ Reapply email sent to {customer_email}")
+
+                print(f"✅ Reapply email sent to {applicant_email}")
+
             except Exception as email_err:
-                print(f"❌ Email failed: {email_err}")
-                return jsonify({"error": "Failed to send email"}), 500
-            
-            # ✅ UPDATE APPLICATION - SET REAPPLY FLAGS
-            update_query = """
+                print(f"❌ Reapply email failed: {email_err}")
+                import traceback
+                traceback.print_exc()
+                return jsonify({"error": "Failed to send reapply email"}), 500
+
+            # ===============================
+            # UPDATE APPLICATION
+            # ===============================
+            cursor.execute("""
                 UPDATE applications
                 SET reapply_requested = 1,
                     reapply_requested_at = NOW(),
                     reapply_message = %s,
                     status = 'Rejected'
                 WHERE application_number = %s
-            """
-            cursor.execute(update_query, (reason, app_id))
-            
-            # ✅ CREATE ADMIN NOTIFICATION
+            """, (reason, app_id))
+
+            # ===============================
+            # ADMIN NOTIFICATION
+            # ===============================
             admin_notification_id = int(datetime.now().timestamp() * 1000)
+
             admin_notif_title = "Admin Reapply Request - Approved"
-            admin_notif_message = f"Your request to send a reapply invitation to {app_data.get('first_name', '')} {app_data.get('last_name', '')}'s application ({app_id}) has been APPROVED by superadmin. The customer has been notified."
-            
+            admin_notif_message = (
+                f"Your request to send a reapply invitation to "
+                f"{applicant_name}'s application ({app_id}) has been APPROVED "
+                f"by superadmin. The customer has been notified."
+            )
+
             cursor.execute("""
-                INSERT INTO admin_notifications 
-                (id, title, message, type, relatedId, request_id, timestamp, read_status,
-                 admin_id, admin_area, admin_city, requested_by, requested_status, application_city, action_taken_by, action_status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO admin_notifications
+                (id, title, message, type, relatedId, request_id, timestamp,
+                 read_status, admin_id, admin_area, admin_city, requested_by,
+                 requested_status, application_city, action_taken_by, action_status)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """, (
                 admin_notification_id,
                 admin_notif_title,
                 admin_notif_message,
                 "request_approved",
-                app_id, req_id, datetime.now().isoformat(), 0,
-                admin_id, admin_area, admin_city, requested_by, requested_status,
-                app_data.get('city', ''), "superadmin", "Approved"
+                app_id,
+                req_id,
+                datetime.now().isoformat(),
+                0,
+                admin_id,
+                admin_area,
+                admin_city,
+                requested_by,
+                requested_status,
+                app_data.get("city", ""),
+                "superadmin",
+                "Approved"
             ))
-            
-            # ✅ MARK REQUEST AS DONE
+
+            # ===============================
+            # MARK REQUEST DONE
+            # ===============================
             cursor.execute("""
-                UPDATE approval_requests 
-                SET status = 'Done', processed_at = %s
-                WHERE request_id = %s OR id = %s
-            """, (datetime.now().isoformat(), req_id, req_id))
-            
+                UPDATE approval_requests
+                SET status = 'Done',
+                    processed_at = %s
+                WHERE request_id = %s
+            """, (datetime.now().isoformat(), req_id))
+
+            # ===============================
+            # GENERAL NOTIFICATION
+            # ===============================
+            general_notification_id = int(datetime.now().timestamp() * 1000) + 1
+
+            cursor.execute("""
+                INSERT INTO notifications
+                (id, title, message, type, relatedId, timestamp, read_status)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                general_notification_id,
+                "Admin Request Reapply Approved",
+                f"Superadmin APPROVED {requested_by}'s request to send a reapply invitation to {applicant_name}'s application ({application_number})",
+                "superadmin_action",
+                app_id,
+                datetime.now().isoformat(),
+                0
+            ))
+
             conn.commit()
-            
+
             return jsonify({
                 "message": "Reapply request approved and email sent to customer",
                 "status": "Done",
                 "reapply_requested": True
-            })
-        
-        # ========== HANDLE OTHER STATUSES (Approved, Rejected, Pending) ==========
-        # Generate contract number if needed
+            }), 200
+
+        # ============================================================
+        # 4. HANDLE APPROVED / REJECTED
+        # ============================================================
         if requested_status == "Approved":
-            if not contract_number or contract_number.strip() == "":
+            if not contract_number or str(contract_number).strip() == "":
                 import random
                 import string
                 date_part = datetime.now().strftime("%Y%m%d")
-                random_part = ''.join(random.choices(string.digits, k=4))
+                random_part = "".join(random.choices(string.digits, k=4))
                 contract_number = f"CV-{date_part}-{random_part}"
                 print(f"🔑 Auto-generated contract number: {contract_number}")
-            
-            if not billing_date or billing_date.strip() == "":
-                billing_date = "15th"
-                print(f"📅 Default billing date set to: {billing_date}")
 
-        # ========== 1. UPDATE APPLICATIONS TABLE ==========
+            if not billing_date or str(billing_date).strip() == "":
+                billing_date = "15th"
+                print(f"📅 Default billing date: {billing_date}")
+
+        # ===============================
+        # UPDATE APPLICATION
+        # ===============================
         update_fields = ["status = %s"]
         params = [requested_status]
-        
+
         if requested_status == "Approved":
-            update_fields.append("contract_number = %s")
-            params.append(contract_number)
-            update_fields.append("billing_date = %s")
-            params.append(billing_date)
-            update_fields.append("approval_date = %s")
-            params.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            update_fields.append("installation_status = %s")
-            params.append("Pending")
-            update_fields.append("assigned_team_id = %s")
-            params.append(assigned_team_id)
-            update_fields.append("installation_date = %s")
-            params.append(installation_date)
-        elif requested_status == "Rejected" and reason:
+            update_fields.extend([
+                "contract_number = %s",
+                "billing_date = %s",
+                "approval_date = %s",
+                "installation_status = %s",
+                "assigned_team_id = %s",
+                "installation_date = %s"
+            ])
+            params.extend([
+                contract_number,
+                billing_date,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Pending",
+                assigned_team_id,
+                installation_date
+            ])
+
+        elif requested_status == "Rejected":
             update_fields.append("rejection_reason = %s")
             params.append(reason)
+
         elif requested_status == "Pending":
-            # ✅ RESTORE: i-clear ang rejection reason
             update_fields.append("rejection_reason = %s")
             params.append(None)
 
         params.append(app_id)
-        update_query = f"UPDATE applications SET {', '.join(update_fields)} WHERE application_number = %s"
-        cursor.execute(update_query, params)
 
-        # ========== 2. INSERT/UPDATE CUSTOMERS TABLE ==========
+        cursor.execute(
+            f"UPDATE applications SET {', '.join(update_fields)} WHERE application_number = %s",
+            params
+        )
+
+        # ============================================================
+        # 5. CUSTOMERS TABLE - APPROVED
+        # ============================================================
         if requested_status == "Approved":
             current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             customer_data = {
                 "application_number": app_data.get("application_number"),
                 "first_name": app_data.get("first_name"),
@@ -10416,64 +10542,84 @@ def approve_request(req_id):
                 "latitude": app_data.get("latitude"),
                 "longitude": app_data.get("longitude")
             }
-            
-            customer_data = {k: v for k, v in customer_data.items() if v is not None and v != 'none'}
-            
-            print("📝 CUSTOMER DATA:", customer_data)
-            
+
+            customer_data = {
+                k: v for k, v in customer_data.items()
+                if v is not None and v != "none"
+            }
+
             app_number = app_data.get("application_number")
-            cursor.execute("SELECT application_number FROM customers WHERE application_number = %s", (app_number,))
+
+            cursor.execute(
+                "SELECT application_number FROM customers WHERE application_number = %s",
+                (app_number,)
+            )
             existing_customer = cursor.fetchone()
-            
+
             if not existing_customer:
-                columns = ', '.join(customer_data.keys())
-                placeholders = ', '.join(['%s'] * len(customer_data))
-                insert_query = f"INSERT INTO customers ({columns}) VALUES ({placeholders})"
-                cursor.execute(insert_query, list(customer_data.values()))
+                columns = ", ".join(customer_data.keys())
+                placeholders = ", ".join(["%s"] * len(customer_data))
+
+                cursor.execute(
+                    f"INSERT INTO customers ({columns}) VALUES ({placeholders})",
+                    list(customer_data.values())
+                )
                 print(f"✅ Customer record INSERTED for {app_number}")
             else:
-                update_customer_fields = []
-                update_params = []
+                update_fields_customer = []
+                update_params_customer = []
+
                 for key, value in customer_data.items():
-                    update_customer_fields.append(f"{key} = %s")
-                    update_params.append(value)
-                update_params.append(app_number)
-                update_customer_query = f"UPDATE customers SET {', '.join(update_customer_fields)} WHERE application_number = %s"
-                cursor.execute(update_customer_query, update_params)
+                    update_fields_customer.append(f"{key} = %s")
+                    update_params_customer.append(value)
+
+                update_params_customer.append(app_number)
+
+                cursor.execute(
+                    f"""
+                    UPDATE customers
+                    SET {', '.join(update_fields_customer)}
+                    WHERE application_number = %s
+                    """,
+                    update_params_customer
+                )
                 print(f"✅ Customer record UPDATED for {app_number}")
 
-        # ========== 3. SAVE TO CONTRACTS TABLE (if approved) ==========
+        # ============================================================
+        # 6. CONTRACTS TABLE - APPROVED
+        # ============================================================
         if requested_status == "Approved":
-            fullName = ' '.join(filter(None, [
-                app_data.get('first_name', ''),
-                app_data.get('middle_name', ''),
-                app_data.get('last_name', ''),
-                app_data.get('suffix', '')
+            full_name = " ".join(filter(None, [
+                app_data.get("first_name", ""),
+                app_data.get("middle_name", ""),
+                app_data.get("last_name", ""),
+                app_data.get("suffix", "")
             ])).strip()
-            
-            date_submitted_val = app_data.get('date_submitted')
+
+            date_submitted_val = app_data.get("date_submitted")
+
             if date_submitted_val:
-                if hasattr(date_submitted_val, 'strftime'):
+                if hasattr(date_submitted_val, "strftime"):
                     date_submitted_str = date_submitted_val.strftime("%Y-%m-%d")
                 else:
                     date_submitted_str = str(date_submitted_val)
             else:
                 date_submitted_str = datetime.now().strftime("%Y-%m-%d")
-            
+
             contract_data = {
                 "contract_number": contract_number,
                 "application_id": app_id,
-                "first_name": app_data.get('first_name'),
-                "middle_name": app_data.get('middle_name'),
-                "last_name": app_data.get('last_name'),
-                "suffix": app_data.get('suffix'),
-                "full_name": fullName,
-                "age": calculate_age(app_data.get('birthdate', '')),
-                "civil_status": app_data.get('civil_status'),
-                "address": f"{app_data.get('barangay', '')}, {app_data.get('city', '')}, {app_data.get('province', '')}".strip(', '),
-                "barangay": app_data.get('barangay'),
-                "city": app_data.get('city'),
-                "province": app_data.get('province'),
+                "first_name": app_data.get("first_name"),
+                "middle_name": app_data.get("middle_name"),
+                "last_name": app_data.get("last_name"),
+                "suffix": app_data.get("suffix"),
+                "full_name": full_name,
+                "age": calculate_age(app_data.get("birthdate", "")),
+                "civil_status": app_data.get("civil_status"),
+                "address": f"{app_data.get('barangay', '')}, {app_data.get('city', '')}, {app_data.get('province', '')}".strip(", "),
+                "barangay": app_data.get("barangay"),
+                "city": app_data.get("city"),
+                "province": app_data.get("province"),
                 "billing_date": billing_date,
                 "date_submitted": date_submitted_str,
                 "status": "Active",
@@ -10481,401 +10627,600 @@ def approve_request(req_id):
                 "is_installment_plan": 1 if first_installment_date else 0,
                 "first_installment_date": first_installment_date,
                 "last_installment_date": last_installment_date,
-                "installation_fee": app_data.get('installation_fee'),
+                "installation_fee": app_data.get("installation_fee"),
                 "application_data": json.dumps(app_data, default=str)
             }
-            
-            contract_data = {k: v for k, v in contract_data.items() if v is not None and v != ''}
-            
+
+            contract_data = {
+                k: v for k, v in contract_data.items()
+                if v is not None and v != ""
+            }
+
             for key, value in contract_data.items():
-                if hasattr(value, 'isoformat'):
+                if hasattr(value, "isoformat"):
                     contract_data[key] = value.isoformat()
-                elif hasattr(value, 'strftime'):
+                elif hasattr(value, "strftime"):
                     contract_data[key] = value.strftime("%Y-%m-%d %H:%M:%S")
-            
-            cursor.execute("SELECT contract_number FROM contracts WHERE contract_number = %s", (contract_number,))
+
+            cursor.execute(
+                "SELECT contract_number FROM contracts WHERE contract_number = %s",
+                (contract_number,)
+            )
             existing_contract = cursor.fetchone()
-            
+
             if not existing_contract:
-                columns = ', '.join(contract_data.keys())
-                placeholders = ', '.join(['%s'] * len(contract_data))
-                insert_query = f"INSERT INTO contracts ({columns}) VALUES ({placeholders})"
-                cursor.execute(insert_query, list(contract_data.values()))
+                columns = ", ".join(contract_data.keys())
+                placeholders = ", ".join(["%s"] * len(contract_data))
+
+                cursor.execute(
+                    f"INSERT INTO contracts ({columns}) VALUES ({placeholders})",
+                    list(contract_data.values())
+                )
                 print(f"✅ Contract {contract_number} INSERTED")
             else:
-                update_contract_fields = []
-                update_params = []
+                contract_update_fields = []
+                contract_update_params = []
+
                 for key, value in contract_data.items():
-                    if key != 'contract_number':
-                        update_contract_fields.append(f"{key} = %s")
-                        update_params.append(value)
-                update_params.append(contract_number)
-                update_contract_query = f"UPDATE contracts SET {', '.join(update_contract_fields)} WHERE contract_number = %s"
-                cursor.execute(update_contract_query, update_params)
+                    if key != "contract_number":
+                        contract_update_fields.append(f"{key} = %s")
+                        contract_update_params.append(value)
+
+                contract_update_params.append(contract_number)
+
+                cursor.execute(
+                    f"""
+                    UPDATE contracts
+                    SET {', '.join(contract_update_fields)}
+                    WHERE contract_number = %s
+                    """,
+                    contract_update_params
+                )
                 print(f"✅ Contract {contract_number} UPDATED")
 
-        # ========== 4. CREATE NOTIFICATION FOR ADMIN ==========
-        applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
-        application_number = app_data.get('application_number', 'N/A')
-        action_status = requested_status
-        
+        # ============================================================
+        # 7. ADMIN NOTIFICATION
+        # ============================================================
         admin_notification_id = int(datetime.now().timestamp() * 1000)
-        
+
         if requested_status == "Pending":
             admin_notif_title = "Request Accepted - Application Restored"
-            admin_notif_message = f"Your request to restore {applicant_name}'s application ({application_number}) to Pending status has been ACCEPTED by superadmin."
+            admin_notif_message = (
+                f"Your request to restore {applicant_name}'s application "
+                f"({application_number}) to Pending status has been ACCEPTED by superadmin."
+            )
         else:
             admin_notif_title = f"Request {requested_status} - Application {application_number}"
-            admin_notif_message = f"Your request to {requested_status.lower()} {applicant_name}'s application ({application_number}) has been {requested_status.upper()} by superadmin."
-        
-        admin_notif_query = """
-            INSERT INTO admin_notifications 
-            (id, title, message, type, relatedId, request_id, timestamp, read_status,
-             admin_id, admin_area, admin_city, requested_by, requested_status, 
-             application_city, action_taken_by, action_status, contract_number, billing_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        
-        admin_notif_params = (
+            admin_notif_message = (
+                f"Your request to {requested_status.lower()} {applicant_name}'s "
+                f"application ({application_number}) has been "
+                f"{requested_status.upper()} by superadmin."
+            )
+
+        cursor.execute("""
+            INSERT INTO admin_notifications
+            (id, title, message, type, relatedId, request_id, timestamp,
+             read_status, admin_id, admin_area, admin_city, requested_by,
+             requested_status, application_city, action_taken_by, action_status,
+             contract_number, billing_date)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
             admin_notification_id,
             admin_notif_title,
             admin_notif_message,
             "request_approved" if requested_status in ("Approved", "Pending") else "request_rejected",
-            app_id, req_id, datetime.now().isoformat(), 0,
-            admin_id, admin_area, admin_city, requested_by, requested_status,
-            app_data.get('city', ''), "superadmin", action_status,
+            app_id,
+            req_id,
+            datetime.now().isoformat(),
+            0,
+            admin_id,
+            admin_area,
+            admin_city,
+            requested_by,
+            requested_status,
+            app_data.get("city", ""),
+            "superadmin",
+            requested_status,
             contract_number if requested_status == "Approved" else None,
             billing_date if requested_status == "Approved" else None
-        )
-        
-        cursor.execute(admin_notif_query, admin_notif_params)
+        ))
 
-        # ========== 5. CREATE NOTIFICATION FOR TECHNICIANS (if approved) ==========
+        # ============================================================
+        # 8. TECHNICIAN NOTIFICATION - APPROVED
+        # ============================================================
         if requested_status == "Approved":
             try:
                 application_city = app_data.get("city", "")
                 print(f"🔍 Creating technician notification for area: {application_city}")
-                
-                tech_query = "SELECT technician_id FROM technicians WHERE UPPER(area) = UPPER(%s) AND status = 'Active'"
-                cursor.execute(tech_query, (application_city,))
+
+                cursor.execute("""
+                    SELECT technician_id
+                    FROM technicians
+                    WHERE UPPER(area) = UPPER(%s)
+                    AND status = 'Active'
+                """, (application_city,))
+
                 technicians = cursor.fetchall()
-                
-                print(f"🔍 Found {len(technicians)} technicians in area: {application_city}")
-                
+
+                print(f"🔍 Found {len(technicians)} technicians")
+
                 if technicians:
                     import time
-                    success_count = 0
                     base_id = int(time.time() * 1000)
-                    
+
                     for idx, tech in enumerate(technicians):
-                        technician_id = tech.get('technician_id')
+                        technician_id = tech.get("technician_id")
+
                         if technician_id:
                             notification_id = base_id + idx + 1
-                            
-                            tech_notif_query = """
-                                INSERT INTO technician_notifications 
-                                (id, technician_id, technician_area, title, message, type, relatedId, 
-                                 application_number, customer_name, timestamp, read_status, created_at)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, NOW())
-                            """
-                            cursor.execute(tech_notif_query, (
+
+                            cursor.execute("""
+                                INSERT INTO technician_notifications
+                                (id, technician_id, technician_area, title, message,
+                                 type, relatedId, application_number, customer_name,
+                                 timestamp, read_status, created_at)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,NOW())
+                            """, (
                                 notification_id,
                                 technician_id,
                                 application_city,
                                 "New Application Approved (via Admin Request)",
-                                f"New application from {applicant_name} (Application: {app_id}) has been APPROVED and is ready for slot assignment.",
+                                f"New application from {applicant_name} "
+                                f"(Application: {app_id}) has been APPROVED "
+                                f"and is ready for slot assignment.",
                                 "new_approved_application",
                                 app_id,
                                 app_id,
                                 applicant_name,
                                 datetime.now().isoformat()
                             ))
-                            success_count += 1
-                    
-                    print(f"🔔 Created {success_count} technician notifications in area: {application_city}")
+
+                    print(f"🔔 Technician notifications created: {len(technicians)}")
                 else:
                     print(f"⚠️ No active technicians found in area: {application_city}")
-                    
+
             except Exception as tech_err:
                 print(f"⚠️ Technician notification error: {tech_err}")
                 import traceback
                 traceback.print_exc()
 
-        # ========== 6. MARK REQUEST AS DONE ==========
-        processed_at_str = datetime.now().isoformat()
+        # ============================================================
+        # 9. MARK APPROVAL REQUEST AS DONE
+        # ============================================================
         cursor.execute("""
-            UPDATE approval_requests  
-            SET status = 'Done',  
-                contract_number = %s,  
-                billing_date = %s,  
-                processed_at = %s 
+            UPDATE approval_requests
+            SET status = 'Done',
+                contract_number = %s,
+                billing_date = %s,
+                processed_at = %s
             WHERE request_id = %s
         """, (
             contract_number if requested_status == "Approved" else None,
             billing_date if requested_status == "Approved" else None,
-            processed_at_str,
+            datetime.now().isoformat(),
             req_id
         ))
+
         print(f"✅ Request {req_id} marked as Done")
 
-        # ========== 7. CREATE GENERAL NOTIFICATION ==========
+        # ============================================================
+        # 10. GENERAL NOTIFICATION
+        # ============================================================
         general_notification_id = int(datetime.now().timestamp() * 1000) + 1
-        general_notif_query = """
-            INSERT INTO notifications 
+
+        cursor.execute("""
+            INSERT INTO notifications
             (id, title, message, type, relatedId, timestamp, read_status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(general_notif_query, (
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+        """, (
             general_notification_id,
             f"Admin Request {requested_status}",
-            f"Superadmin {requested_status.upper()} {requested_by}'s request to {requested_status.lower()} {applicant_name}'s application ({application_number})",
+            f"Superadmin {requested_status.upper()} {requested_by}'s request "
+            f"to {requested_status.lower()} {applicant_name}'s application "
+            f"({application_number})",
             "superadmin_action",
             app_id,
             datetime.now().isoformat(),
             0
         ))
-        print(f"✅ General notification created")
 
-        # ========== 8. COMMIT ALL CHANGES ==========
+        # ============================================================
+        # 11. COMMIT DATABASE FIRST
+        # ============================================================
         conn.commit()
-        print("✅ All changes COMMITTED to database")
-        
-        # ========== 9. VERIFY UPDATES ==========
-        cursor.execute("SELECT status, contract_number FROM applications WHERE application_number = %s", (app_id,))
-        app_verified = cursor.fetchone()
-        print(f"🔍 APPLICATION VERIFIED - Status: {app_verified.get('status') if app_verified else 'Not found'}")
-        
-        if requested_status == "Approved":
-            cursor.execute("SELECT application_number FROM customers WHERE application_number = %s", (app_id,))
-            customer_verified = cursor.fetchone()
-            print(f"🔍 CUSTOMER VERIFIED - Exists: {customer_verified is not None}")
-            
-            cursor.execute("SELECT contract_number FROM contracts WHERE contract_number = %s", (contract_number,))
-            contract_verified = cursor.fetchone()
-            print(f"🔍 CONTRACT VERIFIED - Exists: {contract_verified is not None}")
+        print("✅ All database changes COMMITTED")
 
-        # ========== 10. SEND EMAIL ==========
-        try:
-            applicant_email = app_data.get("email")
-            if applicant_email:
-                if requested_status == "Pending":
-                    send_restore_email(
+        # ============================================================
+        # 12. SEND EMAIL ONLY AFTER APPROVAL
+        # ============================================================
+        if applicant_email:
+            try:
+                if requested_status == "Approved":
+                    print(f"📧 Sending APPROVED email to {applicant_email}")
+
+                    email_result = send_application_status_email(
                         to_email=applicant_email,
                         first_name=applicant_name,
-                        app_id=application_number
-                    )
-                    print(f"✅ Restore email sent to {applicant_email}")
-                else:
-                    send_application_status_email(
-                        to_email=applicant_email,
-                        first_name=applicant_name,
-                        status=requested_status,
+                        status="Approved",
                         app_id=application_number,
-                        reason=reason if requested_status == "Rejected" else None,
-                        contract_number=contract_number if requested_status == "Approved" else None,
-                        billing_date=billing_date if requested_status == "Approved" else None,
+                        reason=None,
+                        contract_number=contract_number,
+                        billing_date=billing_date,
                         application_id=app_id,
                         reapplied_count=app_data.get("reapplied_count", 0)
                     )
-                    print(f"✅ Email sent to {applicant_email}")
-        except Exception as email_err:
-            print(f"⚠️ Error sending email: {email_err}")
 
-        # ========== 11. RETURN SUCCESS RESPONSE ==========
+                    print(f"📧 Approved email result: {email_result}")
+
+                elif requested_status == "Rejected":
+                    print(f"📧 Sending REJECTED email to {applicant_email}")
+
+                    email_result = send_application_status_email(
+                        to_email=applicant_email,
+                        first_name=applicant_name,
+                        status="Rejected",
+                        app_id=application_number,
+                        reason=reason or "No specific reason provided.",
+                        contract_number=None,
+                        billing_date=None,
+                        application_id=app_id,
+                        reapplied_count=app_data.get("reapplied_count", 0)
+                    )
+
+                    print(f"📧 Rejected email result: {email_result}")
+
+                elif requested_status == "Pending":
+                    print(f"📧 Sending RESTORE email to {applicant_email}")
+
+                    email_result = send_restore_email(
+                        to_email=applicant_email,
+                        first_name=applicant_name,
+                        app_id=application_number,
+                        application_data=app_data,
+                        target_status="Approved",
+                        is_cancelled=True,
+                        assigned_team_id=assigned_team_id,
+                        installation_date=installation_date
+                    )
+
+                    print(f"📧 Restore email result: {email_result}")
+
+            except Exception as email_err:
+                print(f"⚠️ Email sending error: {email_err}")
+                import traceback
+                traceback.print_exc()
+
+        else:
+            print("⚠️ No applicant email found")
+
+        # ============================================================
+        # 13. VERIFY
+        # ============================================================
+        cursor.execute("""
+            SELECT status, contract_number
+            FROM applications
+            WHERE application_number = %s
+        """, (app_id,))
+
+        app_verified = cursor.fetchone()
+
+        print(
+            f"🔍 APPLICATION VERIFIED - "
+            f"Status: {app_verified.get('status') if app_verified else 'Not found'}"
+        )
+
+        if requested_status == "Approved":
+            cursor.execute("""
+                SELECT application_number
+                FROM customers
+                WHERE application_number = %s
+            """, (application_number,))
+
+            customer_verified = cursor.fetchone()
+            print(f"🔍 CUSTOMER VERIFIED - Exists: {customer_verified is not None}")
+
+            cursor.execute("""
+                SELECT contract_number
+                FROM contracts
+                WHERE contract_number = %s
+            """, (contract_number,))
+
+            contract_verified = cursor.fetchone()
+            print(f"🔍 CONTRACT VERIFIED - Exists: {contract_verified is not None}")
+
+        # ============================================================
+        # 14. RESPONSE
+        # ============================================================
         response_data = {
-            "message": "Application restored to Pending status successfully" if requested_status == "Pending" else f"Request {requested_status} successfully",
+            "message": (
+                "Application restored to Pending status successfully"
+                if requested_status == "Pending"
+                else f"Request {requested_status} successfully"
+            ),
             "contract_number": contract_number if requested_status == "Approved" else None,
             "billing_date": billing_date if requested_status == "Approved" else None,
             "status": requested_status,
             "request_status": "Done"
         }
-        response_data = {k: v for k, v in response_data.items() if v is not None}
-        return jsonify(response_data)
+
+        response_data = {
+            k: v for k, v in response_data.items()
+            if v is not None
+        }
+
+        return jsonify(response_data), 200
 
     except mysql.connector.Error as db_err:
         print(f"❌ Database error: {db_err}")
+
         if conn:
             conn.rollback()
+
         return jsonify({"error": str(db_err)}), 500
+
     except Exception as e:
         print(f"❌ Error in approve_request: {e}")
         import traceback
         traceback.print_exc()
+
         if conn:
             conn.rollback()
+
         return jsonify({"error": str(e)}), 500
-    
+
     finally:
         if cursor:
             cursor.close()
+
         if conn:
             conn.close()
             print("🔒 Database connection closed")
 
 
-
 # ===============================
-# SUPERADMIN REJECTS REQUEST (PATCH) - USING DIRECT CONNECTION
+# SUPERADMIN REJECT REQUEST
+# NO CUSTOMER EMAIL
 # ===============================
 @app.route("/api/superadmin/approval-request/<string:req_id>/reject", methods=["PATCH"])
 def reject_request(req_id):
     conn = None
     cursor = None
+
     try:
+        print("=" * 60)
+        print("🚫 SUPERADMIN REJECT REQUEST STARTED")
+        print(f"📝 Request ID: {req_id}")
+
         conn = get_db_connection()
 
         if not conn:
             return jsonify({"error": "Database connection failed"}), 500
 
         cursor = conn.cursor(dictionary=True)
-        
-        req_query = """
-            SELECT id, request_id, app_id, requested_by, requested_status, status, 
-                admin_id, admin_area, admin_city, reason 
-            FROM approval_requests  
+
+        # ===============================
+        # 1. GET APPROVAL REQUEST
+        # ===============================
+        cursor.execute("""
+            SELECT id, request_id, app_id, requested_by, requested_status,
+                   status, admin_id, admin_area, admin_city, reason
+            FROM approval_requests
             WHERE request_id = %s
             LIMIT 1
-        """
-        cursor.execute(req_query, (req_id,))
+        """, (req_id,))
+
         req_data = cursor.fetchone()
-        
+
         if not req_data:
             return jsonify({"error": "Request not found"}), 404
 
         if req_data.get("status") == "Done":
-            return jsonify({"error": "This request has already been processed"}), 400
+            return jsonify({
+                "error": "This request has already been processed"
+            }), 400
 
         app_id = req_data.get("app_id")
         requested_status = req_data.get("requested_status", "Rejected")
         requested_by = req_data.get("requested_by", "Unknown Admin")
-        reason = req_data.get("reason", "No specific reason provided")
+        reason = req_data.get("reason") or "No specific reason provided."
         admin_id = req_data.get("admin_id")
         admin_area = req_data.get("admin_area")
         admin_city = req_data.get("admin_city")
-        
-        cursor.execute("SELECT * FROM applications WHERE application_number = %s", (app_id,))
+
+        # ===============================
+        # 2. GET APPLICATION
+        # ===============================
+        cursor.execute(
+            "SELECT * FROM applications WHERE application_number = %s",
+            (app_id,)
+        )
+
         app_data = cursor.fetchone()
-        
+
         if not app_data:
             return jsonify({"error": "Application not found"}), 404
-        
+
+        applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
+        application_number = app_data.get("application_number", "N/A")
+        application_city = app_data.get("city", "")
+
+        # ===============================
+        # 3. MARK REQUEST AS REJECTED
+        # ===============================
         cursor.execute("""
-            UPDATE approval_requests  
-            SET status = 'Rejected', 
-                processed_at = %s 
+            UPDATE approval_requests
+            SET status = 'Rejected',
+                processed_at = %s
             WHERE request_id = %s
         """, (
             datetime.now().isoformat(),
             req_id
         ))
-        
-        # ✅ DETERMINE REVERT STATUS BASED ON REQUESTED STATUS
+
+        # ===============================
+        # 4. DETERMINE APPLICATION STATUS
+        # ===============================
         if requested_status == "Pending":
             revert_status = "Rejected"
         elif requested_status == "Reapply":
-            revert_status = "Rejected"  # ✅ Stay Rejected
+            revert_status = "Rejected"
         else:
             revert_status = "Pending"
-        
-        cursor.execute("UPDATE applications SET status = %s WHERE application_number = %s", (revert_status, app_id))
-        print(f"✅ Application {app_id} reverted to {revert_status} status")
-        
-        applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
-        application_number = app_data.get('application_number', 'N/A')
-        application_city = app_data.get('city', '') if app_data else ''
-        
-        admin_notification_id = int(datetime.now().timestamp() * 1000)
-        
-        # ✅ MESSAGE WORDING
-        if requested_status == "Pending":
-            admin_notif_message = f"Your request to restore {applicant_name}'s application ({application_number}) has been REJECTED by superadmin. The application remains Rejected.\nReason: {reason}"
-        elif requested_status == "Reapply":
-            admin_notif_message = f"Your request to send a reapply invitation to {applicant_name}'s application ({application_number}) has been REJECTED by superadmin. The application remains Rejected.\nReason: {reason}"
-        else:
-            admin_notif_message = f"Your request to {requested_status.lower()} {applicant_name}'s application ({application_number}) has been REJECTED by superadmin. The application remains in Pending status.\nReason: {reason}"
-        
+
         cursor.execute("""
-            INSERT INTO admin_notifications 
-            (id, title, message, type, relatedId, request_id, timestamp, read_status,
-             admin_id, admin_area, admin_city, requested_by, requested_status, application_city)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            UPDATE applications
+            SET status = %s
+            WHERE application_number = %s
+        """, (
+            revert_status,
+            app_id
+        ))
+
+        print(
+            f"✅ Application {app_id} reverted to {revert_status}"
+        )
+
+        # ===============================
+        # 5. ADMIN NOTIFICATION
+        # ===============================
+        admin_notification_id = int(datetime.now().timestamp() * 1000)
+
+        if requested_status == "Pending":
+            admin_notif_title = "Restore Request Rejected"
+            admin_notif_message = (
+                f"Your request to restore {applicant_name}'s application "
+                f"({application_number}) has been REJECTED by superadmin. "
+                f"The application remains Rejected.\n"
+                f"Reason: {reason}"
+            )
+
+        elif requested_status == "Reapply":
+            admin_notif_title = "Reapply Request Rejected"
+            admin_notif_message = (
+                f"Your request to send a reapply invitation to "
+                f"{applicant_name}'s application ({application_number}) "
+                f"has been REJECTED by superadmin. "
+                f"The application remains Rejected.\n"
+                f"Reason: {reason}"
+            )
+
+        else:
+            admin_notif_title = f"Request {requested_status} Rejected"
+            admin_notif_message = (
+                f"Your request to {requested_status.lower()} "
+                f"{applicant_name}'s application ({application_number}) "
+                f"has been REJECTED by superadmin. "
+                f"The application remains in Pending status.\n"
+                f"Reason: {reason}"
+            )
+
+        cursor.execute("""
+            INSERT INTO admin_notifications
+            (id, title, message, type, relatedId, request_id, timestamp,
+             read_status, admin_id, admin_area, admin_city, requested_by,
+             requested_status, application_city)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             admin_notification_id,
-            f"Request {requested_status if requested_status != 'Pending' else 'Restore'} Rejected",
+            admin_notif_title,
             admin_notif_message,
             "request_rejected",
-            app_id, req_id, datetime.now().isoformat(), 0,
-            admin_id, admin_area, admin_city, requested_by, requested_status,
+            app_id,
+            req_id,
+            datetime.now().isoformat(),
+            0,
+            admin_id,
+            admin_area,
+            admin_city,
+            requested_by,
+            requested_status,
             application_city
         ))
-        
+
+        # ===============================
+        # 6. GENERAL NOTIFICATION
+        # ===============================
         general_notification_id = int(datetime.now().timestamp() * 1000) + 1
+
+        if requested_status == "Pending":
+            action_label = "restore"
+        elif requested_status == "Reapply":
+            action_label = "send reapply invitation"
+        else:
+            action_label = requested_status.lower()
+
         try:
-            if requested_status == "Pending":
-                action_label = "restore"
-            elif requested_status == "Reapply":
-                action_label = "send reapply invitation"
-            else:
-                action_label = requested_status.lower()
-            
             cursor.execute("""
-                INSERT INTO notifications 
+                INSERT INTO notifications
                 (id, title, message, type, relatedId, timestamp, read_status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
             """, (
                 general_notification_id,
-                f"Admin Request Rejected",
-                f"Superadmin REJECTED {requested_by}'s request to {action_label} {applicant_name}'s application ({application_number})",
-                "superadmin_action", app_id, datetime.now().isoformat(), 0
+                "Admin Request Rejected",
+                f"Superadmin REJECTED {requested_by}'s request "
+                f"to {action_label} {applicant_name}'s application "
+                f"({application_number})",
+                "superadmin_action",
+                app_id,
+                datetime.now().isoformat(),
+                0
             ))
+
         except Exception as gen_err:
-            print(f"⚠️ General notification note: {gen_err}")
-        
+            print(f"⚠️ General notification error: {gen_err}")
+
+        # ===============================
+        # 7. COMMIT
+        # ===============================
         conn.commit()
-        
-        # ✅ NO EMAIL TO CUSTOMER FOR REAPPLY REJECT
-        # Only send email for non-reapply requests
-        if requested_status != "Reapply":
-            try:
-                applicant_email = app_data.get("email")
-                if applicant_email:
-                    if requested_status == "Pending":
-                        email_reason = f"The admin's request to restore your application was rejected by superadmin.\nReason: {reason}"
-                        email_status = "Restore Request Rejected"
-                    else:
-                        email_reason = f"The admin's request to {requested_status.lower()} your application was rejected by superadmin.\nReason: {reason}"
-                        email_status = "Request Rejected"
-                    
-                    send_application_status_email(
-                        to_email=applicant_email,
-                        first_name=applicant_name,
-                        status=email_status,
-                        app_id=application_number,
-                        reason=email_reason,
-                        contract_number=None,
-                        billing_date=None,
-                        application_id=app_id,
-                        reapplied_count=0
-                    )
-            except Exception as email_err:
-                print(f"⚠️ Error sending email: {email_err}")
-        
+
+        print("✅ Rejection changes COMMITTED")
+        print("🚫 NO CUSTOMER EMAIL WILL BE SENT")
+
+        # ============================================================
+        # IMPORTANT:
+        # WALANG EMAIL DITO.
+        #
+        # Kahit:
+        # requested_status = Approved
+        # requested_status = Rejected
+        # requested_status = Reapply
+        #
+        # Superadmin REJECT = NO CUSTOMER EMAIL.
+        # ============================================================
+
         return jsonify({
-            "message": f"Request rejected, application reverted to {revert_status}"
-        })
+            "message": f"Request rejected, application reverted to {revert_status}",
+            "status": "Rejected",
+            "request_status": "Rejected",
+            "email_sent": False
+        }), 200
+
+    except mysql.connector.Error as db_err:
+        print(f"❌ Database error: {db_err}")
+
+        if conn:
+            conn.rollback()
+
+        return jsonify({"error": str(db_err)}), 500
 
     except Exception as e:
         print(f"❌ Error in reject_request: {e}")
         import traceback
         traceback.print_exc()
+
         if conn:
             conn.rollback()
+
         return jsonify({"error": str(e)}), 500
+
     finally:
         if cursor:
             cursor.close()
+
         if conn:
             conn.close()
+            print("🔒 Database connection closed")
 
     
 @app.route("/api/admin/check-pending-request/<app_id>", methods=["GET"])
