@@ -2371,7 +2371,7 @@ body {
 .status-badge-header {
     margin-left: 12px;
     padding: 4px 12px;
-    border-radius: 40px;
+    border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
     display: inline-block;
