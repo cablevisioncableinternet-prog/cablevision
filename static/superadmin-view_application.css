@@ -4297,10 +4297,12 @@ body {
     flex-direction: column;
     align-items: flex-start;
     line-height: 1.3;
+    font-family: inherit;
 }
 
 .floating-actions .reapply-btn-text strong {
     font-size: 0.95rem;
+    font-weight: 600;   /* ✅ para tugma sa Approve/Reject/Delete buttons (parehong 600) */
 }
 
 .floating-actions .reapply-btn-text small {
