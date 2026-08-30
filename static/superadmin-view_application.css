@@ -4313,7 +4313,8 @@ body {
 
 @media (max-width: 576px) {
     .floating-actions .reapply-btn-text strong {
-        font-size: 0.78rem;
+        font-size: 0.75rem;   /* ✅ tugma na sa .floating-actions .btn-floating span */
+        font-weight: 600;
     }
     .floating-actions .reapply-btn-text small {
         font-size: 0.62rem;
