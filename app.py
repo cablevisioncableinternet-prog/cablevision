@@ -10189,108 +10189,18 @@ def approve_request(req_id):
             if not customer_email:
                 return jsonify({"error": "Customer email not found"}), 400
 
-            # ✅ SEND REAPPLY EMAIL
-            from email.mime.multipart import MIMEMultipart
-            from email.mime.text import MIMEText
-            import smtplib
-            import html as html_lib
+            # ✅ SEND REAPPLY EMAIL VIA BREVO (HTTP API — hindi naaapektuhan ng SMTP port blocking sa Railway)
+            email_sent = send_reapply_request_email(
+                to_email=customer_email,
+                first_name=first_name,
+                app_id=app_id,
+                rejection_reason=rejection_reason,
+                admin_message=reason,
+                application_id=app_id,
+                reapplied_count=reapplied_count
+            )
 
-            sender_email = "cablevision.cableinternet@gmail.com"
-            sender_app_password = "svql qzea vmjt xndx"
-            subject = "Cablevision - Re-application Requested"
-            BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5001").rstrip("/")
-
-            safe_reason = html_lib.escape(rejection_reason)
-            safe_message = html_lib.escape(reason)  # Admin's message
-
-            if reapplied_count < 2:
-                remaining = 2 - reapplied_count
-                reapply_section = f"""
-                <div style="margin: 20px 0; text-align: center;">
-                    <a href="{BASE_URL}/reapply/{app_id}"
-                       style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                              color: white; text-decoration: none; padding: 14px 32px; border-radius: 50px;
-                              font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
-                        Re-apply Now
-                    </a>
-                    <p style="font-size: 12px; color: #6b7280; margin-top: 12px;">
-                        You have {remaining} re-application(s) left.
-                    </p>
-                </div>
-                """
-            else:
-                reapply_section = """
-                <div style="margin: 20px 0; padding: 12px; background: #fef2f2; border-radius: 12px; text-align: center;">
-                    <p style="margin: 0; color: #991b1b; font-size: 14px;">
-                        ⚠️ You have reached the maximum number of re-applications (2). Further re-applications are not allowed.
-                    </p>
-                </div>
-                """
-
-            html_body = f"""
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="UTF-8"><title>Cablevision Email</title></head>
-            <body style="margin:0;padding:0;font-family:'Segoe UI','Inter',-apple-system,BlinkMacSystemFont,Arial,sans-serif;background-color:#eef2ff;">
-                <div style="max-width:580px;margin:0 auto;padding:30px 20px;">
-                    <div style="background:#ffffff;border-radius:32px;overflow:hidden;box-shadow:0 20px 35px -12px rgba(0,0,0,0.15);">
-                        <div style="background:linear-gradient(135deg,#001f3f 0%,#002b5c 100%);padding:32px 28px;text-align:center;">
-                            <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;">Cablevision</h1>
-                            <p style="margin:6px 0 0 0;color:#93c5fd;font-size:13px;">Internet Service Provider</p>
-                        </div>
-                        <div style="padding:20px 28px 0 28px;text-align:center;">
-                            <div style="display:inline-block;background:#dbeafe;padding:8px 24px;border-radius:60px;">
-                                <span style="font-size:14px;font-weight:600;color:#1d4ed8;">WE'D LIKE YOU TO RE-APPLY</span>
-                            </div>
-                        </div>
-                        <div style="padding:20px 28px 32px 28px;">
-                            <h2 style="margin:0 0 8px 0;font-size:22px;font-weight:700;color:#0f172a;">Hello, {first_name}!</h2>
-                            <p style="margin:0 0 20px 0;font-size:15px;color:#475569;">
-                                Our team reviewed your rejected application and would like to invite you to re-apply with corrected information.
-                            </p>
-                            <div style="background:#f8fafc;border-radius:20px;padding:18px;margin-bottom:16px;">
-                                <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-                                    <div style="font-size:11px;font-weight:600;color:#64748b;">Application Number</div>
-                                    <div style="font-size:18px;font-weight:700;color:#0f172a;font-family:monospace;">{app_id}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size:11px;font-weight:600;color:#64748b;">Original Rejection Reason</div>
-                                    <div style="font-size:14px;font-weight:500;color:#991b1b;">{safe_reason}</div>
-                                </div>
-                            </div>
-                            <div style="margin:20px 0;padding:16px;background:#eff6ff;border-radius:12px;border-left:4px solid #2563eb;">
-                                <p style="margin:0 0 8px 0;color:#1e3a8a;"><strong>Message from our team</strong></p>
-                                <p style="margin:0;color:#1e293b;font-size:14px;line-height:1.6;white-space:pre-wrap;">{safe_message}</p>
-                            </div>
-                            {reapply_section}
-                            <div style="margin-top:28px;padding-top:20px;text-align:center;border-top:1px solid #e2e8f0;">
-                                <p style="margin:0;font-size:12px;color:#94a3b8;">Thank you for choosing Cablevision!</p>
-                            </div>
-                        </div>
-                        <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
-                            <div style="font-size:11px;color:#64748b;">© 2026 Cablevision Internet Service Provider. All rights reserved.</div>
-                        </div>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-
-            msg = MIMEMultipart("mixed")
-            msg['From'] = sender_email
-            msg['To'] = customer_email
-            msg['Subject'] = subject
-            msg.attach(MIMEText(html_body, "html"))
-
-            try:
-                server = smtplib.SMTP('smtp.gmail.com', 587)
-                server.starttls()
-                server.login(sender_email, sender_app_password)
-                server.send_message(msg)
-                server.quit()
-                print(f"✅ Reapply email sent to {customer_email}")
-            except Exception as email_err:
-                print(f"❌ Email failed: {email_err}")
+            if not email_sent:
                 return jsonify({"error": "Failed to send email"}), 500
 
             # ✅ UPDATE APPLICATION - SET REAPPLY FLAGS
@@ -10371,11 +10281,9 @@ def approve_request(req_id):
             update_fields.append("installation_date = %s")
             params.append(installation_date)
         elif requested_status == "Rejected":
-            # ✅ FIX: laging i-set ang rejection_reason (kahit walang binigay na reason)
             update_fields.append("rejection_reason = %s")
             params.append(reason if reason else "Not specified")
         elif requested_status == "Pending":
-            # ✅ RESTORE: i-clear ang rejection reason
             update_fields.append("rejection_reason = %s")
             params.append(None)
 
@@ -10653,9 +10561,6 @@ def approve_request(req_id):
             print(f"🔍 CONTRACT VERIFIED - Exists: {contract_verified is not None}")
 
         # ========== 10. SEND EMAIL TO CUSTOMER ==========
-        # ✅ Ito ang email na napupunta sa customer kapag inapprove/rejected/restored
-        # ng superadmin ang request ng admin (Approved/Rejected via Brevo API,
-        # Pending/restore via send_restore_email).
         try:
             applicant_email = app_data.get("email")
             if applicant_email:
