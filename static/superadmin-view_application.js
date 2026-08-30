@@ -2665,7 +2665,6 @@ async function processRequest(requestId, requestedStatus, action) {
             let teamDisplay = '';
             
             if (requestedStatus === 'Reapply') {
-                successMessage = '✅ Reapply invitation has been sent to the customer. The reapply button is now disabled.';
             } else if (requestedStatus === 'Approved') {
                 let teamName = currentSelectedTeam || 'N/A';
                 try {
