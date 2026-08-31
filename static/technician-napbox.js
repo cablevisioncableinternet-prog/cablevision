@@ -348,7 +348,7 @@ async function initializeNapboxPage() {
     
     console.log('✅ Technician ID:', technicianId);
 
-        // ✅ I-HIDE ANG CUSTOMER LEGEND SA SIMULA (default)
+    // ✅ I-HIDE ANG CUSTOMER LEGEND SA SIMULA (default)
     const legendItem = document.getElementById('customerLegendItem');
     if (legendItem) {
         legendItem.style.display = 'none';
@@ -361,8 +361,7 @@ async function initializeNapboxPage() {
     setupEditSlotModalListenersTech();
     setupCoordinatePasteAutoFill();
 
-
-            // ✅ I-HIDE ANG CUSTOMER PIN BUTTON SA SIMULA (default)
+    // ✅ I-HIDE ANG CUSTOMER PIN BUTTON SA SIMULA (default)
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         customerPinBtn.style.display = 'none';
@@ -371,6 +370,29 @@ async function initializeNapboxPage() {
         customerPinBtn.dataset.lng = '';
         console.log('✅ Customer Pin button hidden by default');
     }
+
+    // ✅ MAGDAGDAG NG FORCED DISPLAY KUNG MAY CUSTOMER LOCATION
+    // Siguraduhin na lalabas ang customer pin button kung may marker
+    setTimeout(() => {
+        const showMarker = sessionStorage.getItem('showCustomerLocationMarker') === 'true';
+        if (showMarker) {
+            const btn = document.getElementById('customerPinBtn');
+            if (btn) {
+                btn.style.display = 'inline-flex';
+                btn.style.visibility = 'visible';
+                btn.style.opacity = '1';
+                const lat = sessionStorage.getItem('customerTargetLatitude');
+                const lng = sessionStorage.getItem('customerTargetLongitude');
+                if (lat && lng) {
+                    btn.dataset.lat = parseFloat(lat);
+                    btn.dataset.lng = parseFloat(lng);
+                }
+                console.log('✅ Customer Pin button forced to show');
+            } else {
+                console.warn('⚠️ Customer Pin button not found for forced display');
+            }
+        }
+    }, 1000);
 }
 
 async function loadTechnicianArea(technicianId) {
@@ -757,7 +779,7 @@ function initializeMap() {
     // ✅ I-CHECK KUNG MAY CUSTOMER LOCATION NA DAPAT IPAKITA
     const showCustomerMarker = sessionStorage.getItem('showCustomerLocationMarker') === 'true';
     
-        map.whenReady(() => {
+    map.whenReady(() => {
         setTimeout(() => {
             map.invalidateSize();
         }, 300);
@@ -766,9 +788,11 @@ function initializeMap() {
         setTimeout(() => {
             if (showCustomerMarker) {
                 // ✅ MAY CUSTOMER LOCATION - IPAKITA ANG MARKER
+                console.log('✅ Showing customer location marker...');
                 showCustomerLocationMarkerOnMap();
             } else {
                 // ✅ WALANG CUSTOMER LOCATION - NORMAL BEHAVIOR
+                console.log('ℹ️ No customer marker to show');
                 if (!focusCustomerTargetLocation()) {
                     showCurrentLocation(false);
                 }
@@ -3150,7 +3174,7 @@ if (currentLocationBtn) {
 }
 
 
-                // ================= CUSTOMER PIN BUTTON =================
+    // ================= CUSTOMER PIN BUTTON =================
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         // ✅ REMOVE OLD EVENT LISTENERS BY CLONING
@@ -3160,6 +3184,8 @@ if (currentLocationBtn) {
         newCustomerPinBtn.addEventListener('click', function() {
             const lat = parseFloat(this.dataset.lat);
             const lng = parseFloat(this.dataset.lng);
+            
+            console.log('📍 Customer Pin button clicked:', { lat, lng });
             
             if (isNaN(lat) || isNaN(lng)) {
                 showToast('No customer pin location available', 'warning');
@@ -4969,6 +4995,8 @@ function showCustomerLocationMarkerOnMap() {
     const lat = sessionStorage.getItem('customerTargetLatitude');
     const lng = sessionStorage.getItem('customerTargetLongitude');
     
+    console.log('📍 showCustomerLocationMarkerOnMap called with:', { lat, lng });
+    
     if (!lat || !lng || !map) {
         console.log('⚠️ No customer location or map not ready');
         return;
@@ -5000,22 +5028,36 @@ function showCustomerLocationMarkerOnMap() {
         legendItem.style.display = 'flex';
     }
 
-    // ✅ SHOW CUSTOMER PIN BUTTON
+    // ✅ SHOW CUSTOMER PIN BUTTON - ITO ANG PINAKAIMPORTANTE!
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         customerPinBtn.style.display = 'inline-flex';
         customerPinBtn.style.visibility = 'visible';
         customerPinBtn.style.opacity = '1';
-        // I-store ang coordinates para magamit ng button
         customerPinBtn.dataset.lat = latNum;
         customerPinBtn.dataset.lng = lngNum;
         console.log('✅ Customer Pin button shown with coords:', latNum, lngNum);
-        console.log('✅ Button display:', customerPinBtn.style.display);
+        console.log('✅ Button display style:', customerPinBtn.style.display);
+        console.log('✅ Button classes:', customerPinBtn.className);
     } else {
-        console.warn('⚠️ Customer Pin button not found when trying to show');
+        console.warn('⚠️ Customer Pin button NOT FOUND in DOM!');
+        // ✅ TRY TO FIND IT AGAIN
+        setTimeout(() => {
+            const btn = document.getElementById('customerPinBtn');
+            if (btn) {
+                btn.style.display = 'inline-flex';
+                btn.style.visibility = 'visible';
+                btn.style.opacity = '1';
+                btn.dataset.lat = latNum;
+                btn.dataset.lng = lngNum;
+                console.log('✅ Customer Pin button found and shown (delayed)');
+            } else {
+                console.error('❌ Customer Pin button still not found!');
+            }
+        }, 500);
     }
     
-        // ✅ CREATE CUSTOM DIV ICON FOR CUSTOMER LOCATION
+    // ✅ CREATE CUSTOM DIV ICON FOR CUSTOMER LOCATION
     const customerIcon = L.divIcon({
         className: 'customer-location-marker',
         html: `
@@ -5054,7 +5096,7 @@ function showCustomerLocationMarkerOnMap() {
         duration: 1.5
     });
     
-        // ✅ ADD POPUP WITH INFO - MAY COPY BUTTON
+    // ✅ ADD POPUP WITH INFO - MAY COPY BUTTON
     customerLocationMarker.bindPopup(`
         <div style="padding: 4px 0; min-width: 160px;">
             <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px;">
