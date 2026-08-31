@@ -216,6 +216,7 @@ function hideModalNotice() {
 // at walang na-detect na NAP box. Laging naka-render sa #preferredNapboxInfo.
 // ==================== UNIFIED NAP BOX INFO BANNER ====================
 // ==================== UNIFIED NAP BOX INFO BANNER ====================
+// ==================== UNIFIED NAP BOX INFO BANNER ====================
 function renderNapboxBanner(options) {
     const {
         type,
@@ -321,18 +322,10 @@ function renderNapboxBanner(options) {
         </div>
     `;
 
-    // ---- COORDINATES CARD (Ikalawang card - hiwalay sa baba) ----
-    let coordsCardHtml = '';
-    if (coordsHtml) {
-        coordsCardHtml = `
-            <div style="background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid #fde68a;">
-                ${coordsHtml}
-            </div>
-        `;
-    }
+    // ❌ TINANGGAL NA ANG COORDINATES CARD - hindi na ito kasama sa render
 
-    // ---- Pagsamahin ang dalawang card ----
-    preferredInfo.innerHTML = noticeCardHtml + coordsCardHtml;
+    // ✅ I-render lang ang notice card, wala nang coords card
+    preferredInfo.innerHTML = noticeCardHtml;
 }
 
 function savePendingAssignmentContext() {
