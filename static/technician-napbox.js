@@ -5029,7 +5029,7 @@ function showCustomerLocationMarkerOnMap() {
         legendItem.style.display = 'flex';
     }
 
-    // ✅ SHOW CUSTOMER PIN BUTTON - ITO ANG PINAKAIMPORTANTE!
+    // ✅ SHOW CUSTOMER PIN BUTTON
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         customerPinBtn.style.display = 'inline-flex';
@@ -5042,7 +5042,6 @@ function showCustomerLocationMarkerOnMap() {
         console.log('✅ Button classes:', customerPinBtn.className);
     } else {
         console.warn('⚠️ Customer Pin button NOT FOUND in DOM!');
-        // ✅ TRY TO FIND IT AGAIN
         setTimeout(() => {
             const btn = document.getElementById('customerPinBtn');
             if (btn) {
@@ -5097,28 +5096,16 @@ function showCustomerLocationMarkerOnMap() {
         duration: 1.5
     });
     
-    // ✅ ADD POPUP WITH INFO - MAY COPY BUTTON
+    // ✅ ADD POPUP WITH INFO - WALANG COORDINATES AT COPY BUTTON
     customerLocationMarker.bindPopup(`
         <div style="padding: 4px 0; min-width: 160px;">
-            <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px;">
+            <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px; text-align: center;">
                 <i class="fas fa-map-pin" style="color: #2563eb;"></i> 
                 Customer Location
             </div>
-            <div style="font-size: 12px; color: #475569; background: #f8fafc; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; font-family: 'Courier New', monospace;">
-                <b>Lat:</b> ${latNum.toFixed(6)}<br>
-                <b>Lng:</b> ${lngNum.toFixed(6)}
-            </div>
-            <button onclick="copyCustomerCoordinates(${latNum}, ${lngNum})" 
-                style="width: 100%; padding: 6px 12px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
-                       color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
-                       transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 6px;
-                       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);"
-                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 14px rgba(59, 130, 246, 0.4)';"
-                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(59, 130, 246, 0.3)';">
-                <i class="fas fa-copy" style="font-size: 12px;"></i> Copy Coordinates
-            </button>
-            <div style="font-size: 10px; color: #94a3b8; margin-top: 6px; text-align: center;">
-                <i class="fas fa-info-circle"></i> Click the button above to copy coordinates
+            <div style="font-size: 12px; color: #475569; text-align: center; padding: 6px 10px; border-radius: 6px;">
+                <i class="fas fa-info-circle" style="color: #2563eb;"></i> 
+                This is the customer's pinned location. Add a NAP Box near this pin.
             </div>
         </div>
     `);
