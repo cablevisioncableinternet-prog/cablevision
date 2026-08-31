@@ -81,7 +81,8 @@ def get_cloudinary_url(image_path, resource_type="image"):
     
     # Default: return as is
     return image_path
-####
+
+    
 # ============================================================
 # CLOUDINARY HELPER FUNCTIONS
 # ============================================================

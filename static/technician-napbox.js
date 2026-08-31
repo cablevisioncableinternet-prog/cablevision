@@ -1175,32 +1175,39 @@ function renderSlotsGrid() {
         const uniqueBarangays = [...new Set(currentSlots.map(s => s.barangay))];
         console.log("📋 Barangays in database:", uniqueBarangays);
         
-        const normalizeBarangayName = (name) => {
-            if (!name) return '';
-            
-            let normalized = name.toLowerCase().trim();
-            
-            if (normalized.includes('poblacion')) {
-                let number = '';
-                let match = normalized.match(/poblacion\s*(\d+)/);
-                if (match) number = match[1];
-                if (!number) {
-                    const romanMap = {'i':'1','ii':'2','iii':'3','iv':'4','v':'5'};
-                    match = normalized.match(/poblacion\s*(i|ii|iii|iv|v)/);
-                    if (match) number = romanMap[match[1]];
+       const normalizeBarangayName = (name) => {
+    if (!name) return '';
+    
+    let normalized = name.toLowerCase().trim();
+    
+    if (normalized.includes('poblacion')) {
+        let number = '';
+        let match = normalized.match(/poblacion\s*(\d+)/);
+        if (match) number = match[1];
+        if (!number) {
+            const romanMap = {'i':'1','ii':'2','iii':'3','iv':'4','v':'5'};
+            match = normalized.match(/poblacion\s*(i|ii|iii|iv|v)/);
+            if (match) number = romanMap[match[1]];
+        }
+        if (!number) {
+            const wordMap = {'one':'1','two':'2','three':'3','four':'4','five':'5','uno':'1','dos':'2','tres':'3','kuwatro':'4','sinko':'5'};
+            for (const [word, num] of Object.entries(wordMap)) {
+                if (normalized.includes(word)) {
+                    number = num;
+                    break;
                 }
-                if (!number) {
-                    const wordMap = {'one':'1','two':'2','three':'3','four':'4','five':'5','uno':'1','dos':'2','tres':'3','kuwatro':'4','sinko':'5'};
-                    for (const [word, num] of Object.entries(wordMap)) {
-                        if (normalized.includes(word)) {
-                            number = num;
-                            break;
-                        }
-                    }
-                }
-                if (number) return `poblacion ${number}`;
-                return 'poblacion';
             }
+        }
+        
+        // ✅ I-CONVERT SA ROMAN NUMERALS
+        const numToRoman = {
+            '1': 'i', '2': 'ii', '3': 'iii', '4': 'iv', '5': 'v'
+        };
+        if (number && numToRoman[number]) {
+            return `poblacion ${numToRoman[number]}`;
+        }
+        return 'poblacion';
+    }
             
             normalized = normalized
                 .replace(/\s*\(poblacion\)\s*/gi, '')
@@ -1671,7 +1678,7 @@ async function getBarangayFromGeoRisk(lat, lng) {
                         .replace(/ Pob\.?/gi, ' (Poblacion)')
                         .replace(/\(Poblacion\)/gi, '(Poblacion)');
                     
-                // SPECIAL HANDLING para sa Santa Cruz Poblacion - GAMIT ANG NUMBERS
+// SPECIAL HANDLING para sa Santa Cruz Poblacion - GAMIT ANG ROMAN NUMERALS
 if (detectedCity === "Santa Cruz") {
     console.log(`🔍 Raw detected barangay from GeoRisk: "${detectedBarangay}"`);
     
@@ -1730,13 +1737,17 @@ if (detectedCity === "Santa Cruz") {
         }
     }
     
-    // Set the final barangay name (gamit ang Poblacion + number)
-    if (number) {
-        detectedBarangay = `Poblacion ${number}`;
-        console.log(`🎯 FINAL Santa Cruz barangay: "${detectedBarangay}"`);
+    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    const numToRoman = {
+        '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
+    };
+    
+    if (number && numToRoman[number]) {
+        detectedBarangay = `Poblacion ${numToRoman[number]}`;
+        console.log(`🎯 FINAL Santa Cruz barangay (Roman): "${detectedBarangay}"`);
     } else if (rawName.toLowerCase().includes('poblacion')) {
-        detectedBarangay = 'Poblacion 1';
-        console.log(`⚠️ Fallback to Poblacion 1`);
+        detectedBarangay = 'Poblacion I';
+        console.log(`⚠️ Fallback to Poblacion I`);
     } else {
         // I-capitalize lang ang normal na barangay
         detectedBarangay = rawName.split(' ').map(word => 
@@ -2156,7 +2167,7 @@ if (finalDisplayBarangay) {
         word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
     
-    // Para sa Santa Cruz Poblacion, i-format ng tama (gamit ang numbers)
+  // Para sa Santa Cruz Poblacion, i-format ng tama (gamit ang ROMAN NUMERALS)
 if (detectedCity === "Santa Cruz") {
     let number = '';
     
@@ -2174,13 +2185,17 @@ if (detectedCity === "Santa Cruz") {
         }
     }
     
-    if (number) {
-        finalDisplayBarangay = `Poblacion ${number}`;
-    } else if (finalDisplayBarangay.toLowerCase().includes('poblacion')) {
-        finalDisplayBarangay = 'Poblacion 1';
-    }
+    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    const numToRoman = {
+        '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
+    };
     
-    console.log(`🎯 Santa Cruz display barangay: "${finalDisplayBarangay}"`);
+    if (number && numToRoman[number]) {
+        finalDisplayBarangay = `Poblacion ${numToRoman[number]}`;
+        console.log(`🎯 Santa Cruz display barangay (Roman): "${finalDisplayBarangay}"`);
+    } else if (finalDisplayBarangay.toLowerCase().includes('poblacion')) {
+        finalDisplayBarangay = 'Poblacion I';
+    }
 }
 
         // Para sa Pagsanjan
@@ -3931,24 +3946,35 @@ async function validateCoordinates() {
         // ===== ALL CHECKS PASSED! =====
         // ============================================================
         
-        // Format barangay name
-        let finalBarangay = barangayName;
-        if (detectedCity === "Santa Cruz") {
-            let number = '';
-            let match = finalBarangay.match(/\b(1|2|3|4|5)\b/);
-            if (match) number = match[1];
-            if (!number) {
-                match = finalBarangay.match(/\b(I|II|III|IV|V)\b/i);
-                if (match) {
-                    const romanToNum = {'I':'1','II':'2','III':'3','IV':'4','V':'5'};
-                    number = romanToNum[match[1].toUpperCase()];
-                }
-            }
-            if (number) {
-                finalBarangay = 'Poblacion ' + number;
-            } else if (finalBarangay.toLowerCase().includes('poblacion')) {
-                finalBarangay = 'Poblacion 1';
-            }
+// Format barangay name
+let finalBarangay = barangayName;
+if (detectedCity === "Santa Cruz") {
+    let number = '';
+    let match = finalBarangay.match(/\b(1|2|3|4|5)\b/);
+    if (match) {
+        number = match[1];
+    }
+    
+    if (!number) {
+        match = finalBarangay.match(/\b(I|II|III|IV|V)\b/i);
+        if (match) {
+            const romanToNum = {'I':'1','II':'2','III':'3','IV':'4','V':'5'};
+            number = romanToNum[match[1].toUpperCase()];
+        }
+    }
+    
+    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    const numToRoman = {
+        '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
+    };
+    
+    if (number && numToRoman[number]) {
+        finalBarangay = `Poblacion ${numToRoman[number]}`;
+        console.log(`🎯 Santa Cruz barangay (Roman): "${finalBarangay}"`);
+    } else if (finalBarangay.toLowerCase().includes('poblacion')) {
+        finalBarangay = 'Poblacion I';
+    }
+
         } else if (detectedCity === "Pagsanjan") {
             finalBarangay = convertPagsanjanBarangay(finalBarangay);
         }
