@@ -395,6 +395,7 @@ async function initializeNapboxPage() {
     }, 1000);
 }
 
+
 async function loadTechnicianArea(technicianId) {
     try {
         const tabId = getTabId();
