@@ -24,6 +24,15 @@ from db_config import execute_query, get_db_connection
 import mysql.connector
 import os
 
+
+from zoneinfo import ZoneInfo  # Python 3.9+ built-in na
+
+PH_TZ = ZoneInfo("Asia/Manila")
+
+def ph_now_str():
+    return datetime.now(PH_TZ).strftime("%Y-%m-%d %H:%M:%S")
+
+
 # ========== ITO LANG ANG IDINAGDAG ==========
 from db_config import execute_query
 # ===========================================
@@ -477,7 +486,7 @@ def record_login_history(user_id, user_type='admin', tab_id=None, lat=None, lng=
         location = resolve_device_location(ip_addr, lat, lng)
 
         session_token = tab_id if tab_id else f"sess_{user_id}_{int(time.time())}"
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now_str = ph_now_str()
 
         existing = execute_query(
             "SELECT id FROM login_history WHERE user_id = %s AND user_type = %s AND session_token = %s LIMIT 1",
