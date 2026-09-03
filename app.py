@@ -11194,9 +11194,6 @@ def superadmin_view_customer_application(customer_id):
     return render_template("superadmin-view-customer-application.html", customer_id=customer_id)
 
 
-# =============================== 
-# API Get Single Approved Customer - CONVERTED TO MYSQL
-# ===============================
 @app.route("/api/superadmin/customer/<customer_id>")
 def get_single_customer(customer_id):
     try:
@@ -11243,6 +11240,9 @@ def get_single_customer(customer_id):
         else:
             result = customer_data
         
+        # ✅ GUMAWA NG RANDOM PASSWORD (GALING SA BACKEND)
+        random_password = generate_secure_password(8)
+        
         # Convert image paths to Cloudinary URLs
         image_fields = ['profile_photo', 'id_front', 'id_back', 'proof_billing', 'signature']
         for field in image_fields:
@@ -11268,6 +11268,9 @@ def get_single_customer(customer_id):
                 result['tv_type'] = json.loads(result['tv_type'])
             except:
                 result['tv_type'] = []
+        
+        # ✅ IDAGDAG ANG PASSWORD SA RESPONSE
+        result['password'] = random_password
         
         return jsonify(result)
         
@@ -11422,31 +11425,7 @@ def superadmin_create_user_account():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-# =============================== 
-# Generate Password Preview (for modal display)
-# ===============================    
-@app.route("/api/superadmin/generate-password-preview", methods=["POST"])
-def generate_password_preview():
-    """Generate a secure password for preview (does NOT save to database)"""
-    try:
-        data = request.get_json()
-        application_number = data.get("application_number")
-        
-        if not application_number:
-            return jsonify({"error": "Application number required"}), 400
-        
-        # ✅ GAMITIN ANG EXISTING generate_secure_password() FUNCTION
-        password = generate_secure_password(8)
-        
-        return jsonify({
-            "success": True,
-            "password": password,
-            "application_number": application_number
-        })
-        
-    except Exception as e:
-        print(f" Error generating password preview: {e}")
-        return jsonify({"error": str(e)}), 500
+
 
 
 def send_account_creation_email(to_email, user_id, password, first_name, contract_number, customer_data):
