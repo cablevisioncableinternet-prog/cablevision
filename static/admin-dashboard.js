@@ -1257,7 +1257,7 @@ function setupExportButton() {
 // 👇 ITO ANG SUSI PARA MA-REFRESH ANG NOTIFICATIONS PAGKATAPOS MAG-SWITCH NG TAB
 async function reinitializeNotifications() {
     if (window.AdminNotificationSystem) {
-        console.log('🔄 Re-initializing notifications for current tab...');
+        console.log('Re-initializing notifications for current tab...');
         window.AdminNotificationSystem.adminId = null;
         window.AdminNotificationSystem.adminArea = null;
         await window.AdminNotificationSystem.fetchNotifications();
@@ -1324,7 +1324,7 @@ initializeDashboard();
 document.addEventListener("DOMContentLoaded", () => {
     // Initialize notification system
     if (window.AdminNotificationSystem) {
-        console.log('🔔 Initializing Admin Notification System...');
+        console.log('Initializing Admin Notification System...');
         window.AdminNotificationSystem.init();
     }
     
@@ -1337,7 +1337,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==================== VISIBILITY CHANGE EVENT - PAGBALIK SA TAB ====================
 document.addEventListener('visibilitychange', async () => {
     if (!document.hidden) {
-        console.log('👁️ Tab became visible, refreshing notifications...');
+        console.log(' Tab became visible, refreshing notifications...');
         if (window.AdminNotificationSystem) {
             window.AdminNotificationSystem.adminId = null;
             window.AdminNotificationSystem.adminArea = null;

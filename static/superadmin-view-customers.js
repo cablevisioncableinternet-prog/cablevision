@@ -225,7 +225,7 @@ function checkForCustomerRefreshFlag() {
 }
 
 function notifyUserCreated(customerId) {
-    console.log("📢 Notifying other tabs about new user creation for customer ID:", customerId);
+    console.log("Notifying other tabs about new user creation for customer ID:", customerId);
     const notification = {
         type: 'USER_CREATED',
         timestamp: Date.now(),

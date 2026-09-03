@@ -80,7 +80,7 @@ async function initTechnicianData() {
         if (technicianArea) sessionStorage.setItem('technicianArea', technicianArea);
     }
     
-    // ✅ Fetch technician details including team_id from backend
+    //  Fetch technician details including team_id from backend
     try {
         const tabId = getTabId();
         const res = await fetch(`/api/technician/profile?technician_id=${encodeURIComponent(technicianId)}&tab_id=${tabId}`);
@@ -88,9 +88,9 @@ async function initTechnicianData() {
         
         if (data.team_id) {
             sessionStorage.setItem('technicianTeamId', data.team_id);
-            console.log(`✅ Technician belongs to team: ${data.team_id}`);
+            console.log(` Technician belongs to team: ${data.team_id}`);
         } else {
-            console.log('⚠️ Technician has no team assigned, falling back to area-based');
+            console.log('Technician has no team assigned, falling back to area-based');
             sessionStorage.removeItem('technicianTeamId');
         }
         
@@ -113,7 +113,7 @@ async function initTechnicianData() {
 let technicianData = null;
 initTechnicianData().then(data => {
     technicianData = data;
-    console.log('✅ Technician initialized:', technicianData);
+    console.log('Technician initialized:', technicianData);
 });
 
 // ==================== GLOBAL VARIABLES ====================
@@ -138,7 +138,7 @@ function canAssignSlotNow(installationDate) {
     const installDate = new Date(installationDate);
     installDate.setHours(0, 0, 0, 0);
     
-    // 🔥 KUNG PAREHAS NG ARAW (TODAY == INSTALLATION DATE) - PWEDE
+    // KUNG PAREHAS NG ARAW (TODAY == INSTALLATION DATE) - PWEDE
     if (installDate.getTime() === today.getTime()) {
         return { 
             canAssign: true, 
@@ -146,7 +146,7 @@ function canAssignSlotNow(installationDate) {
         };
     }
     
-    // 🔥 KUNG NAKALIPAS NA (TODAY > INSTALLATION DATE) - PWEDE PA RIN!
+    // KUNG NAKALIPAS NA (TODAY > INSTALLATION DATE) - PWEDE PA RIN!
     if (installDate < today) {
         const daysPast = Math.floor((today - installDate) / (1000 * 60 * 60 * 24));
         return { 
@@ -155,7 +155,7 @@ function canAssignSlotNow(installationDate) {
         };
     }
     
-    // 🔥 KUNG HINDI PA ARAW NG INSTALLATION (TODAY < INSTALLATION DATE) - DISABLED
+    // KUNG HINDI PA ARAW NG INSTALLATION (TODAY < INSTALLATION DATE) - DISABLED
     if (installDate > today) {
         const diffDays = Math.ceil((installDate - today) / (1000 * 60 * 60 * 24));
         return { 
@@ -177,7 +177,7 @@ const installationDateInput = document.getElementById('installationDate');
 if (installationDateInput) installationDateInput.valueAsDate = tomorrow;
 
 // ==================== (LEGACY) ORANGE NOTICE HELPERS ====================
-// ✅ No longer used for NAP box status messaging (see renderNapboxBanner below),
+// No longer used for NAP box status messaging (see renderNapboxBanner below),
 // kept only so nothing else in the codebase breaks if it's still referenced.
 function showModalNotice(messageHtml, type = 'info', showGoToNapbox = false) {
     const notice = document.getElementById('assignModalNotice');
@@ -211,7 +211,7 @@ function hideModalNotice() {
 }
 
 // ==================== UNIFIED NAP BOX INFO BANNER ====================
-// ✅ Iisang consistent na blue banner design (kagaya ng dating "System Assigned
+// Iisang consistent na blue banner design (kagaya ng dating "System Assigned
 // NAP Box" look) para sa LAHAT ng scenario: system-assigned, coverage-detected,
 // at walang na-detect na NAP box. Laging naka-render sa #preferredNapboxInfo.
 // ==================== UNIFIED NAP BOX INFO BANNER ====================
@@ -322,9 +322,9 @@ function renderNapboxBanner(options) {
         </div>
     `;
 
-    // ❌ TINANGGAL NA ANG COORDINATES CARD - hindi na ito kasama sa render
+    // TINANGGAL NA ANG COORDINATES CARD - hindi na ito kasama sa render
 
-    // ✅ I-render lang ang notice card, wala nang coords card
+    // I-render lang ang notice card, wala nang coords card
     preferredInfo.innerHTML = noticeCardHtml;
 }
 
@@ -365,7 +365,7 @@ function restorePendingAssignmentFlow() {
         const customerName = pendingData.customer_name || '';
         const contractNumber = pendingData.contract_number || '';
         const installationDate = pendingData.installation_date || '';
-        // ✅ Ibalik din ang lat/lng/barangay - kailangan ito dahil hindi pa
+        // Ibalik din ang lat/lng/barangay - kailangan ito dahil hindi pa
         // laman ang allCustomers array sa oras na tumatakbo ito (mas maaga
         // pa kaysa loadCustomers()), kaya kung hindi ito ipapasa, mafa-fallback
         // sa null ang coverage/barangay filter at lalabas lahat ng NAP boxes.
@@ -383,7 +383,7 @@ function restorePendingAssignmentFlow() {
     }
 }
 
-// ✅ Event delegation - gumagana kahit paulit-ulit na na-re-render ang button
+// Event delegation - gumagana kahit paulit-ulit na na-re-render ang button
 // (dating issue: nawawala ang click listener kada showModalNotice() rebuild)
 function attachAssignModalNoticeHandlers() {
     document.addEventListener('click', function(e) {
@@ -435,11 +435,11 @@ async function loadCustomers() {
         
         allCustomers = data.customers || [];
         
-        // ✅ Display team info if available
+        // Display team info if available
         if (data.team_id) {
-            console.log(`📋 Showing customers for team: ${data.team_id}`);
+            console.log(`Showing customers for team: ${data.team_id}`);
         } else {
-            console.log(`📋 Showing customers for area: ${data.technician_area}`);
+            console.log(`Showing customers for area: ${data.technician_area}`);
         }
         
         renderCustomers(allCustomers);
@@ -468,7 +468,7 @@ function renderCustomers(customers) {
         const installationStatus = cust.installation_status || 'Pending';
         const installationDate = cust.installation_date || null;
         
-        // ✅ KUNIN ANG COORDINATES PARA MAIPASA SA MODAL
+        // KUNIN ANG COORDINATES PARA MAIPASA SA MODAL
         const lat = cust.latitude || '';
         const lng = cust.longitude || '';
         
@@ -516,7 +516,7 @@ function renderCustomers(customers) {
         } else if (installationStatus === 'Slot Assigned' || hasSlot) {
             actionButton = `<button class="btn-ongoing" onclick="updateInstallationStatus('${cust.application_number}', 'Ongoing', '${escapeHtml(cust.first_name || '')} ${escapeHtml(cust.last_name || '')}')"><i class="fas fa-play"></i> Start Installation</button>`;
         } else {
-            // ✅ KUNIN ANG BARANGAY PARA MAIPASA
+            // KUNIN ANG BARANGAY PARA MAIPASA
             const barangay = cust.barangay || '';
             if (cust.preferred_napbox_id) {
                 actionButton = `<button class="btn-assign" onclick="openAssignModalWithPreferredNapbox('${cust.application_number}', '${escapeHtml(cust.first_name || '')} ${escapeHtml(cust.last_name || '')}', '${cust.preferred_napbox_id}', '${escapeHtml(cust.preferred_napbox_name || '')}', '${contractNumber}', '${installationDate || ''}')"><i class="fas fa-plus-circle"></i> Assign Slot</button>`;
@@ -525,7 +525,7 @@ function renderCustomers(customers) {
             }
         }
         
-        // ✅ DOWNLOAD BUTTON
+        // DOWNLOAD BUTTON
         const downloadButton = `
             <button class="btn-download" onclick="downloadApplicationForm('${cust.application_number}')" title="Download Application Form">
                 <i class="fas fa-file-pdf"></i> PDF
@@ -742,13 +742,13 @@ async function executeConfirmStatus() {
 
 // ==================== UPDATE INSTALLATION STATUS (ORIGINAL - PALITAN) ====================
 window.updateInstallationStatus = async function(applicationNumber, newStatus, customerName) {
-    // ✅ GAMITIN ANG MODAL IMBES NA confirm()
+    // GAMITIN ANG MODAL IMBES NA confirm()
     showConfirmStatusModal(applicationNumber, customerName, newStatus);
 };
 
 // ==================== OPEN ASSIGN MODAL WITH PREFERRED NAPBOX ====================
 window.openAssignModalWithPreferredNapbox = async function(appNumber, customerName, napboxId, napboxName, contractNumber, installationDate) {
-    // ✅ KUNIN ANG CUSTOMER DATA PARA SA BARANGAY, LATITUDE, LONGITUDE
+    // KUNIN ANG CUSTOMER DATA PARA SA BARANGAY, LATITUDE, LONGITUDE
     // (kailangan ang lat/lng para may pang-fallback tayo sa coverage-radius
     // detection kung sakaling fully occupied na ang preferred napbox)
     const customer = allCustomers.find(c => c.application_number === appNumber);
@@ -772,7 +772,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
     document.getElementById('modalApplicationNumber').value = appNumber;
     document.getElementById('modalContractNumber').value = contractNumber;
     
-    // 🔥 I-DISABLE ANG ASSIGN BUTTON SA SIMULA - "Select slot first"
+    // I-DISABLE ANG ASSIGN BUTTON SA SIMULA - "Select slot first"
     const confirmBtn = document.getElementById('confirmAssignBtn');
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Select slot first';
@@ -780,7 +780,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
     confirmBtn.style.cursor = 'not-allowed';
     confirmBtn.title = '';
     
-    // ✅ I-set ang installation date sa input field
+    // I-set ang installation date sa input field
     const installationDateInput = document.getElementById('installationDate');
     let canAssign = false;
     let formattedDate = installationDate;
@@ -819,7 +819,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
         installationDateInput.readOnly = true;
     }
     
-    // ✅ Buksan muna ang modal at ipakita ang "checking" state habang
+    // Buksan muna ang modal at ipakita ang "checking" state habang
     // vine-verify natin kung may available pa talagang slot sa preferred
     // NAP box (maaaring na-fully occupied na ito simula noong nag-apply
     // ang customer).
@@ -830,7 +830,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
     document.getElementById('slotSelect').disabled = true;
     document.getElementById('assignModal').classList.add('show');
     
-    // ✅ I-CHECK MUNA KUNG MAY AVAILABLE PA BANG SLOT SA PREFERRED NAP BOX
+    // I-CHECK MUNA KUNG MAY AVAILABLE PA BANG SLOT SA PREFERRED NAP BOX
     let preferredHasSlots = false;
     try {
         const tabId = getTabId();
@@ -839,11 +839,11 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
         preferredHasSlots = !!(checkData.slots && checkData.slots.length > 0);
     } catch (err) {
         console.error('Error checking preferred NAP box availability:', err);
-        preferredHasSlots = false; // ✅ safe fallback: ituring na unavailable
+        preferredHasSlots = false; // safe fallback: ituring na unavailable
     }
     
     if (!preferredHasSlots) {
-        // ⚠️ Fully occupied na ang system-assigned NAP box (o nag-error ang check).
+        // Fully occupied na ang system-assigned NAP box (o nag-error ang check).
         // I-fallback sa coverage-radius detection - kaparehong behavior ng
         // regular na openAssignModal() - para makahanap ng ibang NAP box na
         // may available pa, o kung wala talaga, lalabas ang "No NAP Box
@@ -855,9 +855,9 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
         return;
     }
     
-    // ✅ MAY AVAILABLE PA SA PREFERRED - ITULOY ANG DATING BEHAVIOR (locked selection)
+    // MAY AVAILABLE PA SA PREFERRED - ITULOY ANG DATING BEHAVIOR (locked selection)
     
-    // ✅ KUNG HINDI PA PWEDE MAG-ASSIGN - DISABLE LAHAT NG SELECTIONS
+    // KUNG HINDI PA PWEDE MAG-ASSIGN - DISABLE LAHAT NG SELECTIONS
     if (!canAssign) {
         confirmBtn.disabled = true;
         confirmBtn.textContent = 'Select slot first';
@@ -885,7 +885,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
         confirmBtn.title = '';
     }
     
-    // ✅ Consistent blue banner (same design ginagamit sa lahat ng scenario)
+    // Consistent blue banner (same design ginagamit sa lahat ng scenario)
     renderNapboxBanner({
         type: 'assigned',
         napboxName: napboxName,
@@ -896,7 +896,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
     napboxSelect.innerHTML = `<option value="${napboxId}" selected>${escapeHtml(napboxName)} (System Assigned)</option>`;
     napboxSelect.disabled = true; // Always disabled for preferred napbox
     
-    // ✅ I-LOAD ANG SLOTS KUNG PWEDE NA MAG-ASSIGN
+    // I-LOAD ANG SLOTS KUNG PWEDE NA MAG-ASSIGN
     if (canAssign) {
         loadSlotsForNapbox(napboxId);
     } else {
@@ -907,7 +907,7 @@ window.openAssignModalWithPreferredNapbox = async function(appNumber, customerNa
 };
 
 window.openAssignModal = function(appNumber, customerName, contractNumber, installationDate, customerLat = null, customerLng = null, customerBarangay = null) {
-    // ✅ KUNIN ANG CUSTOMER DATA PARA SA LATITUDE, LONGITUDE, AT BARANGAY
+    // KUNIN ANG CUSTOMER DATA PARA SA LATITUDE, LONGITUDE, AT BARANGAY
     const customer = allCustomers.find(c => c.application_number === appNumber);
     const lat = customerLat || customer?.latitude || null;
     const lng = customerLng || customer?.longitude || null;
@@ -929,7 +929,7 @@ window.openAssignModal = function(appNumber, customerName, contractNumber, insta
     document.getElementById('modalApplicationNumber').value = appNumber;
     document.getElementById('modalContractNumber').value = contractNumber;
     
-    // 🔥 I-DISABLE ANG ASSIGN BUTTON SA SIMULA - "Select slot first"
+    // I-DISABLE ANG ASSIGN BUTTON SA SIMULA - "Select slot first"
     const confirmBtn = document.getElementById('confirmAssignBtn');
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Select slot first';
@@ -937,7 +937,7 @@ window.openAssignModal = function(appNumber, customerName, contractNumber, insta
     confirmBtn.style.cursor = 'not-allowed';
     confirmBtn.title = '';
     
-    // ✅ I-set ang installation date sa input field
+    // I-set ang installation date sa input field
     const installationDateInput = document.getElementById('installationDate');
     let canAssign = false;
     let formattedDate = installationDate;
@@ -979,7 +979,7 @@ window.openAssignModal = function(appNumber, customerName, contractNumber, insta
     const napboxSelect = document.getElementById('napboxSelect');
     const slotSelect = document.getElementById('slotSelect');
 
-    // 🔥 I-DISABLE MUNA HABANG NAGLO-LOAD/NAG-DDETECT NG NAP BOX
+    // I-DISABLE MUNA HABANG NAGLO-LOAD/NAG-DDETECT NG NAP BOX
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Select slot first';
     confirmBtn.style.opacity = '0.5';
@@ -992,12 +992,12 @@ window.openAssignModal = function(appNumber, customerName, contractNumber, insta
     slotSelect.innerHTML = '<option value="" disabled selected>-- First select NAP Box --</option>';
     slotSelect.disabled = true;
 
-    // ✅ I-CLEAR ANG DATING BANNER (bago i-render ulit ng loadNapboxes)
+    // I-CLEAR ANG DATING BANNER (bago i-render ulit ng loadNapboxes)
     const preferredInfo = document.getElementById('preferredNapboxInfo');
     if (preferredInfo) preferredInfo.innerHTML = '';
     hideModalNotice();
 
-    // ✅ LAGING I-DETECT ANG NAP BOX SA COVERAGE RADIUS - kahit pa hindi araw ng
+    // LAGING I-DETECT ANG NAP BOX SA COVERAGE RADIUS - kahit pa hindi araw ng
     // installation - para consistent ang banner sa lahat ng scenario. Ang
     // pag-enable/disable ng dropdown at button na lang ang depende sa canAssign.
     loadNapboxes(lat, lng, barangay, formattedDate, canAssign);
@@ -1010,22 +1010,22 @@ async function loadSlotsForNapbox(napboxId) {
     const slotSelect = document.getElementById('slotSelect');
     const confirmBtn = document.getElementById('confirmAssignBtn');
     
-    slotSelect.innerHTML = '<option value="" disabled selected>Loading slots...</option>';  // ✅ DISABLED
+    slotSelect.innerHTML = '<option value="" disabled selected>Loading slots...</option>';  // DISABLED
     slotSelect.disabled = true;
     
-    // 🔥 I-DISABLE ANG BUTTON HABANG NAGLO-LOAD
+    // I-DISABLE ANG BUTTON HABANG NAGLO-LOAD
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Select slot first';
     confirmBtn.style.opacity = '0.5';
     confirmBtn.style.cursor = 'not-allowed';
     confirmBtn.title = '';
     
-    // ✅ I-STORE ANG CURRENT INSTALLATION DATE PARA MAGAMIT SA RESTORE
+    // I-STORE ANG CURRENT INSTALLATION DATE PARA MAGAMIT SA RESTORE
     const installationDateInput = document.getElementById('installationDate');
     const installationDate = installationDateInput ? installationDateInput.value : null;
     const canAssignResult = installationDate ? canAssignSlotNow(installationDate) : { canAssign: false, message: 'No installation date set' };
     
-    // ✅ KUNG HINDI PA PWEDE, HUWAG NA MAG-LOAD
+    // KUNG HINDI PA PWEDE, HUWAG NA MAG-LOAD
     if (!canAssignResult.canAssign) {
         slotSelect.innerHTML = `<option value="" disabled selected>${canAssignResult.message}</option>`;
         slotSelect.disabled = true;
@@ -1042,7 +1042,7 @@ async function loadSlotsForNapbox(napboxId) {
         const data = await res.json();
         
         if (data.slots && data.slots.length > 0) {
-            // ✅ ANG UNANG OPTION AY DISABLED PLACEHOLDER
+            // ANG UNANG OPTION AY DISABLED PLACEHOLDER
             slotSelect.innerHTML = '<option value="" disabled selected>-- Select Slot --</option>';
             data.slots.forEach(slot => {
                 slotSelect.innerHTML += `<option value="${slot.id}">Slot ${slot.slot_number}</option>`;
@@ -1050,7 +1050,7 @@ async function loadSlotsForNapbox(napboxId) {
             slotSelect.disabled = false;
             showToast(`${data.slots.length} available slots found in this NAP Box`, 'success');
             
-            // ✅ I-RESTORE ANG BUTTON - "Select slot first" pa rin (disabled)
+            // I-RESTORE ANG BUTTON - "Select slot first" pa rin (disabled)
             confirmBtn.textContent = 'Select slot first';
             confirmBtn.disabled = true;
             confirmBtn.style.opacity = '0.5';
@@ -1084,7 +1084,7 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
     const confirmBtn = document.getElementById('confirmAssignBtn');
     const technicianId = sessionStorage.getItem('technicianId');
     
-    console.log('🔍 loadNapboxes called with:', {
+    console.log('loadNapboxes called with:', {
         customerLat,
         customerLng,
         customerBarangay,
@@ -1095,7 +1095,7 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
     napboxSelect.innerHTML = '<option value="">Loading NAP boxes...</option>';
     napboxSelect.disabled = true;
     
-    // ✅ Alamin kung pwede na mag-assign ngayon (araw na ng installation o nakalipas na)
+    // Alamin kung pwede na mag-assign ngayon (araw na ng installation o nakalipas na)
     const installationDateInput = document.getElementById('installationDate');
     const dateToCheck = installationDate || (installationDateInput ? installationDateInput.value : null);
     const canAssignResult = dateToCheck ? canAssignSlotNow(dateToCheck) : { canAssign: false, message: 'No installation date set' };
@@ -1106,30 +1106,30 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
         const res = await fetch(`/api/technician/available-napboxes?technician_id=${encodeURIComponent(technicianId)}&tab_id=${tabId}`);
         const data = await res.json();
         
-        console.log('📡 Raw NAP boxes data:', data.napboxes);
-        console.log('📡 Number of NAP boxes from API:', data.napboxes?.length || 0);
+        console.log('Raw NAP boxes data:', data.napboxes);
+        console.log('Number of NAP boxes from API:', data.napboxes?.length || 0);
         
-        // ✅ I-FILTER ANG NAPBOXES: 1) BARANGAY-BASED, 2) COVERAGE RADIUS
+        // I-FILTER ANG NAPBOXES: 1) BARANGAY-BASED, 2) COVERAGE RADIUS
         let filteredNapboxes = data.napboxes || [];
         
-        console.log('📍 Customer Barangay:', customerBarangay);
+        console.log(' Customer Barangay:', customerBarangay);
         
-        // ✅ STEP 1: I-FILTER MUNA BATAY SA BARANGAY (KUNG MAY BARANGAY ANG CUSTOMER)
+        // STEP 1: I-FILTER MUNA BATAY SA BARANGAY (KUNG MAY BARANGAY ANG CUSTOMER)
         if (customerBarangay && filteredNapboxes.length > 0) {
             const barangayLower = customerBarangay.toLowerCase().trim();
             filteredNapboxes = filteredNapboxes.filter(napbox => {
                 const napboxBarangay = (napbox.barangay || '').toLowerCase().trim();
                 const isMatch = napboxBarangay === barangayLower;
-                console.log(`🔍 Checking ${napbox.napbox_name}: Barangay "${napboxBarangay}" vs "${barangayLower}" = ${isMatch}`);
+                console.log(`Checking ${napbox.napbox_name}: Barangay "${napboxBarangay}" vs "${barangayLower}" = ${isMatch}`);
                 return isMatch;
             });
             
-            console.log(`📍 Filtered by barangay "${customerBarangay}": ${filteredNapboxes.length} NAP boxes found`);
+            console.log(`Filtered by barangay "${customerBarangay}": ${filteredNapboxes.length} NAP boxes found`);
         } else {
-            console.log('⚠️ No barangay filter applied (customerBarangay is null or empty)');
+            console.log(' No barangay filter applied (customerBarangay is null or empty)');
         }
         
-        // ✅ STEP 2: I-FILTER PA BATAY SA COVERAGE RADIUS (KUNG MAY COORDINATES ANG CUSTOMER)
+        // STEP 2: I-FILTER PA BATAY SA COVERAGE RADIUS (KUNG MAY COORDINATES ANG CUSTOMER)
         if (customerLat && customerLng && filteredNapboxes.length > 0) {
             const customerLatNum = parseFloat(customerLat);
             const customerLngNum = parseFloat(customerLng);
@@ -1141,18 +1141,18 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
                     const coverageRadius = parseFloat(napbox.coverage_radius) || 500;
                     
                     if (isNaN(napboxLat) || isNaN(napboxLng)) {
-                        console.log(`⚠️ NAP Box ${napbox.napbox_name} has no coordinates, skipping`);
+                        console.log(` NAP Box ${napbox.napbox_name} has no coordinates, skipping`);
                         return false;
                     }
                     
                     const distance = calculateDistance(customerLatNum, customerLngNum, napboxLat, napboxLng);
                     const isWithin = distance <= coverageRadius;
-                    console.log(`📏 ${napbox.napbox_name}: ${distance.toFixed(2)}m (max: ${coverageRadius}m) = ${isWithin ? '✅ WITHIN' : '❌ OUTSIDE'}`);
+                    console.log(`${napbox.napbox_name}: ${distance.toFixed(2)}m (max: ${coverageRadius}m) = ${isWithin ? ' WITHIN' : ' OUTSIDE'}`);
                     
                     return isWithin;
                 });
                 
-                console.log(`📍 After coverage filter: ${filteredNapboxes.length} NAP boxes within coverage radius`);
+                console.log(`After coverage filter: ${filteredNapboxes.length} NAP boxes within coverage radius`);
             }
         }
         
@@ -1162,7 +1162,7 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
                 napboxSelect.innerHTML += `<option value="${napbox.id}">${napbox.napbox_name} - ${napbox.barangay} (${napbox.available_slots} slots available)</option>`;
             });
             
-            // ✅ CONSISTENT BLUE BANNER - may na-detect na NAP box sa coverage radius
+            // CONSISTENT BLUE BANNER - may na-detect na NAP box sa coverage radius
             renderNapboxBanner({
                 type: 'detected',
                 napboxName: filteredNapboxes.length === 1
@@ -1186,7 +1186,7 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
                 showToast('Please wait until the installation date to assign a slot.', 'warning');
             }
         } else {
-            // ✅ KUNG WALANG NAPBOX, I-DISABLE ANG DROPDOWN
+            // KUNG WALANG NAPBOX, I-DISABLE ANG DROPDOWN
             napboxSelect.innerHTML = '<option value="">No NAP boxes available</option>';
             napboxSelect.disabled = true;
             slotSelect.innerHTML = '<option value="" disabled selected>No NAP Box available</option>';
@@ -1196,7 +1196,7 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
             confirmBtn.style.opacity = '0.5';
             confirmBtn.style.cursor = 'not-allowed';
             
-            // ✅ I-DETERMINE KUNG BAKIT WALANG NAPBOX
+            // I-DETERMINE KUNG BAKIT WALANG NAPBOX
             const napboxesInSameBarangay = data.napboxes?.filter(nb => {
                 const nbBarangay = (nb.barangay || '').toLowerCase().trim();
                 return nbBarangay === (customerBarangay || '').toLowerCase().trim();
@@ -1231,7 +1231,7 @@ if (customerLat && customerLng) {
     }
 }   
             
-            // ✅ CONSISTENT BLUE BANNER - walang na-detect na NAP box (same design,
+            // CONSISTENT BLUE BANNER - walang na-detect na NAP box (same design,
             // may Go to NAP Box button pa rin) - gumagana ito kahit araw na ng
             // installation o hindi pa, dahil common ang installDateDisplay logic.
             renderNapboxBanner({
@@ -1313,7 +1313,7 @@ document.getElementById('napboxSelect').addEventListener('change', async functio
     const slotSelect = document.getElementById('slotSelect');
     const confirmBtn = document.getElementById('confirmAssignBtn');
     
-    // 🔥 I-DISABLE ANG BUTTON - "Select slot first"
+    // I-DISABLE ANG BUTTON - "Select slot first"
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Select slot first';
     confirmBtn.style.opacity = '0.5';
@@ -1326,7 +1326,7 @@ document.getElementById('napboxSelect').addEventListener('change', async functio
         return;
     }
     
-    // ✅ CHECK KUNG PWEDE NA MAG-ASSIGN
+    // CHECK KUNG PWEDE NA MAG-ASSIGN
     const installationDateInput = document.getElementById('installationDate');
     const installationDate = installationDateInput ? installationDateInput.value : null;
     const canAssignResult = installationDate ? canAssignSlotNow(installationDate) : { canAssign: false, message: 'No installation date set' };
@@ -1350,7 +1350,7 @@ document.getElementById('napboxSelect').addEventListener('change', async functio
         const data = await res.json();
         
         if (data.slots && data.slots.length > 0) {
-            // ✅ ANG UNANG OPTION AY DISABLED PLACEHOLDER
+            // ANG UNANG OPTION AY DISABLED PLACEHOLDER
             slotSelect.innerHTML = '<option value="" disabled selected>-- Select Slot --</option>';
             data.slots.forEach(slot => {
                 slotSelect.innerHTML += `<option value="${slot.id}">Slot ${slot.slot_number}</option>`;
@@ -1384,18 +1384,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const installationDateInput = document.getElementById('installationDate');
             const installationDate = installationDateInput ? installationDateInput.value : null;
             
-            // 🔥 I-VALIDATE KUNG PWEDE NA MAG-ASSIGN
+            // I-VALIDATE KUNG PWEDE NA MAG-ASSIGN
             if (slotId && installationDate) {
                 const result = canAssignSlotNow(installationDate);
                 if (result.canAssign) {
-                    // 🔥 PWEDE NA MAG-ASSIGN AT MAY NAPILING SLOT - ENABLE
+                    // PWEDE NA MAG-ASSIGN AT MAY NAPILING SLOT - ENABLE
                     confirmBtn.disabled = false;
                     confirmBtn.textContent = 'Assign Slot';
                     confirmBtn.style.opacity = '1';
                     confirmBtn.style.cursor = 'pointer';
                     confirmBtn.title = '';
                 } else {
-                    // 🔥 HINDI PA ARAW NG INSTALLATION - "Select slot first" (disabled)
+                    // HINDI PA ARAW NG INSTALLATION - "Select slot first" (disabled)
                     confirmBtn.disabled = true;
                     confirmBtn.textContent = 'Select slot first';
                     confirmBtn.style.opacity = '0.5';
@@ -1431,7 +1431,7 @@ document.getElementById('confirmAssignBtn').addEventListener('click', async func
     if (!slotId) { showToast('Please select a slot', 'error'); return; }
     if (!installationDate) { showToast('Please select installation date', 'error'); return; }
     
-    // 🔥 FINAL VALIDATION: I-CHECK KUNG PWEDE NA MAG-ASSIGN (TODAY == INSTALLATION DATE)
+    // FINAL VALIDATION: I-CHECK KUNG PWEDE NA MAG-ASSIGN (TODAY == INSTALLATION DATE)
     const result = canAssignSlotNow(installationDate);
     if (!result.canAssign) {
         showToast(result.message, 'error');
@@ -1490,12 +1490,12 @@ function closeAssignModal() {
     napboxSelect.disabled = false;
     napboxSelect.innerHTML = '<option value="">-- Select NAP Box --</option>';
     
-    // ✅ I-RESET ANG SLOT SELECT SA DISABLED PLACEHOLDER
+    // I-RESET ANG SLOT SELECT SA DISABLED PLACEHOLDER
     const slotSelect = document.getElementById('slotSelect');
     slotSelect.innerHTML = '<option value="" disabled selected>-- Select Slot --</option>';
     slotSelect.disabled = true;
     
-    // 🔥 I-RESET ANG CONFIRM BUTTON
+    // I-RESET ANG CONFIRM BUTTON
     const confirmBtn = document.getElementById('confirmAssignBtn');
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Select slot first';
@@ -2013,13 +2013,13 @@ window.TechnicianSlotNotificationSystem = new TechnicianSlotNotificationSystem()
 
 // ==================== DOM CONTENT LOADED ====================
 document.addEventListener("DOMContentLoaded", async () => {
-    // ✅ SESSION CHECK MUNA
+    // SESSION CHECK MUNA
     const isValid = await checkSession();
     if (!isValid) return;
     
     // Initialize technician data first
     const data = await initTechnicianData();
-    console.log('✅ Technician initialized:', data);
+    console.log('Technician initialized:', data);
     
     // Initialize notification system
     if (window.TechnicianSlotNotificationSystem) {
@@ -2029,7 +2029,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("TechnicianSlotNotificationSystem not found!");
     }
     
-    // ✅ IDAGDAG ITO - SETUP COPY COORDINATES BUTTON
+    // IDAGDAG ITO - SETUP COPY COORDINATES BUTTON
     setupCopyCoordinatesButton();
     
     // Load data

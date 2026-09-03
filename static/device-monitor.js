@@ -200,11 +200,11 @@
         currentAlertDeviceId = deviceId;
 
         if (deviceId && dismissedDeviceIds.has(deviceId)) {
-            console.log('ℹ️ Device alert was dismissed already; skipping:', deviceId);
+            console.log(' Device alert was dismissed already; skipping:', deviceId);
             return;
         }
         
-        console.log('🎯 Showing alert modal for device:', device);
+        console.log(' Showing alert modal for device:', device);
         
         // Populate device info
         const deviceBrand = device.device_brand || device.device_info || 'Unknown Device';
@@ -219,13 +219,13 @@
         const logoutBtn = document.getElementById('logoutDeviceBtn');
         if (logoutBtn && device.id) {
             logoutBtn.dataset.deviceId = device.id;
-            console.log('✅ Set logout device ID:', device.id);
+            console.log(' Set logout device ID:', device.id);
         }
 
         // Show modal with animation
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
-        console.log('✅ Modal displayed');
+        console.log(' Modal displayed');
     }
 
     // ================= CLOSE DEVICE ALERT MODAL =================
@@ -293,7 +293,7 @@
         try {
             const tabId = sessionStorage.getItem('tab_id') || '';
             if (!tabId) {
-                console.log('⚠️ No tab_id found, skipping device check');
+                console.log(' No tab_id found, skipping device check');
                 return;
             }
 
@@ -301,60 +301,60 @@
             let queryString = `/api/check-new-devices?tab_id=${encodeURIComponent(tabId)}`;
             queryString += `&last_check=${lastCheckTime}`;
 
-            console.log(`📱 Checking for new devices... (query: ${queryString})`);
+            console.log(` Checking for new devices... (query: ${queryString})`);
             const response = await fetch(queryString);
             
             if (!response.ok) {
-                console.error(`❌ API returned ${response.status}`);
+                console.error(` API returned ${response.status}`);
                 return;
             }
 
             const data = await response.json();
-            console.log('📱 Check result:', data);
+            console.log(' Check result:', data);
 
             if (data.success && data.new_devices && data.new_devices.length > 0) {
                 const newDevice = data.new_devices[0]; // Get the most recent one
                 const deviceKey = newDevice && newDevice.id ? String(newDevice.id) : null;
 
                 if (deviceKey && dismissedDeviceIds.has(deviceKey)) {
-                    console.log('ℹ️ Device was dismissed by user; skipping repeated alert:', deviceKey);
+                    console.log(' Device was dismissed by user; skipping repeated alert:', deviceKey);
                     return;
                 }
 
                 const deviceLoginUnix = newDevice.login_time ? new Date(newDevice.login_time).getTime() / 1000 : null;
                 if (deviceLoginUnix && deviceLoginUnix <= lastCheckTime) {
-                    console.log('ℹ️ Ignoring historical device login older than current session window:', newDevice);
+                    console.log(' Ignoring historical device login older than current session window:', newDevice);
                 } else if (deviceKey && !alreadyNotified.has(deviceKey)) {
-                    console.log('🚨 NEW DEVICE DETECTED:', newDevice);
+                    console.log(' NEW DEVICE DETECTED:', newDevice);
                     alreadyNotified.add(deviceKey);
                     showDeviceAlertModal(newDevice);
                 } else if (deviceKey) {
-                    console.log('ℹ️ Device already notified:', deviceKey);
+                    console.log(' Device already notified:', deviceKey);
                 }
             } else {
-                console.log('✅ No new devices found');
+                console.log(' No new devices found');
             }
 
             // Update last check time for next check
             if (data.current_timestamp) {
                 lastCheckTime = Math.floor(data.current_timestamp);
-                console.log(`📅 Updated lastCheckTime to: ${lastCheckTime}`);
+                console.log(` Updated lastCheckTime to: ${lastCheckTime}`);
             }
         } catch (error) {
-            console.error('❌ Error checking for new devices:', error);
+            console.error(' Error checking for new devices:', error);
         }
     }
 
     // ================= START MONITORING =================
     function startMonitoring() {
-        console.log('📱 Device monitor started - checking every 30 seconds');
+        console.log(' Device monitor started - checking every 30 seconds');
         console.log(`   Current tab_id: ${currentTabId}`);
         console.log(`   Initial lastCheckTime: ${lastCheckTime}`);
         
         // Initial check after 2 seconds (faster for better UX)
-        console.log('⏳ Initial device check scheduled in 2 seconds...');
+        console.log(' Initial device check scheduled in 2 seconds...');
         setTimeout(() => {
-            console.log('🔍 Running initial device check...');
+            console.log(' Running initial device check...');
             checkForNewDevices();
         }, 2000);
 
@@ -366,7 +366,7 @@
         // Stop monitoring if user logs out
         document.addEventListener('logout', () => {
             monitorActive = false;
-            console.log('📱 Device monitor stopped');
+            console.log(' Device monitor stopped');
         });
     }
 

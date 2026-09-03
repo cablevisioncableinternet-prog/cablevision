@@ -88,12 +88,12 @@ async function loadApplication() {
 
         currentApplicationStatus = data.status;
         
-        // ✅ I-SET ANG REAPPLY STATE MULA SA DATA
+        // I-SET ANG REAPPLY STATE MULA SA DATA
         const reapplyRequested = data.reapply_requested === 1 || data.reapply_requested === true;
         const reapplyRequestedAt = data.reapply_requested_at || null;
 
         // ============================================================
-        // ✅ HELPER: Set text to "—" if empty, else show value
+        // HELPER: Set text to "—" if empty, else show value
         // ============================================================
         const setTextOrHide = (id, val) => {
             const el = document.getElementById(id);
@@ -108,7 +108,7 @@ async function loadApplication() {
         };
 
         // ============================================================
-        // ✅ HELPER: Set image or hide container if no src
+        // HELPER: Set image or hide container if no src
         // ============================================================
         const setImgOrHide = (id, src) => {
             const imgEl = document.getElementById(id);
@@ -129,7 +129,7 @@ async function loadApplication() {
         };
 
         // ============================================================
-        // ✅ HELPER: Format birthdate
+        // HELPER: Format birthdate
         // ============================================================
         function formatBirthdate(dateStr) {
             if (!dateStr) return '';
@@ -271,13 +271,13 @@ async function loadApplication() {
         try {
             initMap(data);
         } catch (mapErr) {
-            console.warn("⚠️ Map initialization failed:", mapErr);
+            console.warn(" Map initialization failed:", mapErr);
         }
         
         try {
             initImageModal();
         } catch (imgErr) {
-            console.warn("⚠️ Image modal initialization failed:", imgErr);
+            console.warn(" Image modal initialization failed:", imgErr);
         }
 
         // Store application data for contract view
@@ -289,7 +289,7 @@ async function loadApplication() {
         try {
             toggleActionButtons(currentApplicationStatus, reapplyRequested, reapplyRequestedAt);
         } catch (btnErr) {
-            console.warn("⚠️ Action buttons initialization failed:", btnErr);
+            console.warn(" Action buttons initialization failed:", btnErr);
         }
 
         addStatusBadge(data.status);
@@ -299,13 +299,13 @@ async function loadApplication() {
         try {
             initViewContractButton();
         } catch (contractErr) {
-            console.warn("⚠️ View contract button initialization failed:", contractErr);
+            console.warn("View contract button initialization failed:", contractErr);
         }
 
     } catch(err){
-        console.error("❌ Failed to load application:", err);
-        console.error("❌ Error message:", err.message);
-        console.error("❌ Error stack:", err.stack);
+        console.error("Failed to load application:", err);
+        console.error("Error message:", err.message);
+        console.error("Error stack:", err.stack);
         showToast("Failed to load application data. Please refresh the page.", "error");
     }
 }
@@ -734,7 +734,6 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
     
     const statusLower = status ? status.toLowerCase() : '';
     
-    // ✅ CHECK KUNG MAY ANUMANG PENDING REQUEST
     checkAnyPendingRequest().then(pendingInfo => {
         const hasPending = pendingInfo && pendingInfo.hasPending;
         const pendingStatus = pendingInfo ? pendingInfo.requested_status : null;
@@ -743,7 +742,6 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
         if (floatingActions) {
             if (statusLower === 'pending' || statusLower === 'request sent') {
                 if (hasPending) {
-                    // ✅ MAY PENDING REQUEST - I-DISABLE ANG BUTTONS
                     floatingActions.innerHTML = `
                         <button class="btn-floating btn-approve-floating" style="opacity:0.5; cursor:not-allowed; background: #94a3b8;" disabled>
                             <i class="fas fa-check-circle"></i>
@@ -758,7 +756,6 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
                     floatingActions.style.pointerEvents = 'none';
                     floatingActions.style.opacity = '0.7';
                 } else {
-                    // ✅ WALANG PENDING - ENABLED
                     floatingActions.innerHTML = `
                         <button class="btn-floating btn-approve-floating" id="floatingApproveBtn">
                             <i class="fas fa-check-circle"></i>
@@ -782,7 +779,6 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
         // REJECTED - Show Reapply button (check reapply_requested state)
         if (floatingReapplyActions) {
             if (statusLower === 'rejected') {
-                // ✅ CHECK KUNG MAY REAPPLY_REQUESTED NA
                 if (reapplyRequested) {
                     let formattedDate = '';
                     if (reapplyRequestedAt) {
@@ -811,7 +807,6 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
                     floatingReapplyActions.style.pointerEvents = 'none';
                     floatingReapplyActions.style.opacity = '0.8';
                 } else if (hasPending && pendingStatus === 'Reapply') {
-                    // ✅ MAY PENDING REAPPLY REQUEST
                     floatingReapplyActions.innerHTML = `
                         <button class="btn-floating btn-reapply-floating" style="opacity:0.6; cursor:not-allowed; background: linear-gradient(135deg, #78716c 0%, #a8a29e 100%);" disabled>
                             <i class="fas fa-clock"></i>
@@ -825,7 +820,7 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
                     floatingReapplyActions.style.pointerEvents = 'none';
                     floatingReapplyActions.style.opacity = '0.6';
                 } else {
-                    // ✅ WALANG REAPPLY REQUESTED AT WALANG PENDING
+
                     floatingReapplyActions.innerHTML = `
                         <button class="btn-floating btn-reapply-floating" id="floatingReapplyBtn">
                             <i class="fas fa-redo-alt"></i>
@@ -844,7 +839,7 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
     });
 }
 
-// ✅ BAGONG FUNCTION - CHECK ANY PENDING REQUEST
+
 async function checkAnyPendingRequest() {
     try {
         const res = await fetch(`/api/admin/check-pending-request/${appId}`);
@@ -856,7 +851,6 @@ async function checkAnyPendingRequest() {
     }
 }
 
-// ✅ I-UPDATE ANG OLD FUNCTION PARA GAMITIN ANG BAGO
 async function checkPendingReapplyRequest() {
     const result = await checkAnyPendingRequest();
     // Para sa backward compatibility, return true kung may pending na Reapply
@@ -918,7 +912,7 @@ async function sendAdminRequest(status, reason = null) {
             showToast(data.message || `Request to ${displayAction} application sent to superadmin!`);
             currentApplicationStatus = "Request Sent";
             
-            // ✅ I-DISABLE AGAD ANG LAHAT NG BUTTONS
+
             toggleActionButtons('request sent', false, null);
             
             if (status !== "Reapply") {
@@ -1161,7 +1155,7 @@ async function processRestoreRequest() {
     if (modalButtons) modalButtons.style.display = "none";
     if (modalLoading) {
         modalLoading.style.display = "block";
-        // ✅ PALITAN ANG SPINNER PARA MAGING BLUE
+
         const spinner = modalLoading.querySelector('.spinner-border');
         if (spinner) {
             spinner.classList.remove('text-warning');
@@ -1170,7 +1164,7 @@ async function processRestoreRequest() {
     }
     if (confirmBtn) confirmBtn.disabled = true;
     
-    // ✅ Ginagamit ang existing sendAdminRequest function, "Pending" ang status
+
     const success = await sendAdminRequest("Pending");
     
     if (success) {
@@ -1226,7 +1220,7 @@ function attachRestoreButtonEvents() {
 function showReapplyRequestModal() {
     const applicantName = document.getElementById('full_name')?.textContent || 'this applicant';
     
-    // ✅ KUHAIN ANG REJECTION REASON MULA SA ELEMENT
+
     const rejectionReasonEl = document.querySelector('.rejection-reason-display');
     let rejectionReason = 'No reason provided';
     if (rejectionReasonEl) {
@@ -1294,7 +1288,7 @@ async function processReapplyRequest() {
         const reapplyModal = bootstrap.Modal.getInstance(document.getElementById('reapplyRequestModal'));
         if (reapplyModal) reapplyModal.hide();
         
-        // ✅ I-UPDATE ANG BUTTON STATE AGAD
+   
         setTimeout(() => {
             toggleActionButtons('rejected');
         }, 300);
@@ -1458,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupApproveModalEvents();
     setupRejectModalEvents();
     setupRestoreRequestModalEvents();
-    setupReapplyRequestModalEvents();  // ✅ ADD THIS
+    setupReapplyRequestModalEvents();
     attachActionButtonEvents();
     attachRestoreButtonEvents();
     setupModalPointerEvents();

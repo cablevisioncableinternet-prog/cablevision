@@ -27,45 +27,45 @@
   <!-- ================= PAGE GUARD - WITH TAB ID VALIDATION ================= -->
 <script>
     (function() {
-        // 👇 KUNIN ANG TAB ID MULA SA URL
+        //  KUNIN ANG TAB ID MULA SA URL
         const urlParams = new URLSearchParams(window.location.search);
         const urlTabId = urlParams.get('tab_id');
         const sessionTabId = sessionStorage.getItem('tab_id');
         const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
         
-        console.log('🔍 Admin Page Guard Check:');
+        console.log('Admin Page Guard Check:');
         console.log('  - Logged in:', isLoggedIn);
         console.log('  - URL Tab ID:', urlTabId);
         console.log('  - Session Tab ID:', sessionTabId);
         
         if (!isLoggedIn) {
-            console.log('❌ Not logged in, redirecting to login...');
+            console.log(' Not logged in, redirecting to login...');
             window.location.replace('/');
             return;
         }
         
         if (!urlTabId && sessionTabId) {
-            console.log('🔄 No tab_id in URL, adding from session...');
+            console.log(' No tab_id in URL, adding from session...');
             const newUrl = window.location.pathname + '?tab_id=' + sessionTabId;
             window.location.replace(newUrl);
             return;
         }
         
         if (urlTabId && !sessionTabId) {
-            console.log('🔄 Tab ID found in URL, saving to session...');
+            console.log(' Tab ID found in URL, saving to session...');
             sessionStorage.setItem('tab_id', urlTabId);
             window.location.reload();
             return;
         }
         
         if (urlTabId && sessionTabId && urlTabId !== sessionTabId) {
-            console.warn('⚠️ Tab ID mismatch! URL:', urlTabId, 'Session:', sessionTabId);
+            console.warn(' Tab ID mismatch! URL:', urlTabId, 'Session:', sessionTabId);
             sessionStorage.setItem('tab_id', urlTabId);
             window.location.reload();
             return;
         }
         
-        console.log('✅ Page Guard passed! Tab ID:', urlTabId || sessionTabId);
+        console.log(' Page Guard passed! Tab ID:', urlTabId || sessionTabId);
         
         history.replaceState(null, null, window.location.href);
         

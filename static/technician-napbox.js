@@ -288,7 +288,7 @@ const LAGUNA_MUNICIPALITIES = {
 // Initialize when page loads
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async function() {
-    // ✅ SESSION CHECK MUNA
+    // SESSION CHECK MUNA
     const isValid = await checkSession();
     if (!isValid) return;
     
@@ -315,16 +315,16 @@ async function initializeNapboxPage() {
     if (fromAssignModal && customerLatitude && customerLongitude) {
         sessionStorage.setItem('customerTargetLatitude', customerLatitude);
         sessionStorage.setItem('customerTargetLongitude', customerLongitude);
-        // ✅ I-SET ANG FLAG PARA MAIPAKITA ANG CUSTOMER MARKER
+        // I-SET ANG FLAG PARA MAIPAKITA ANG CUSTOMER MARKER
         sessionStorage.setItem('showCustomerLocationMarker', 'true');
-        console.log('✅ Customer location marker will be shown (from assign modal)');
+        console.log(' Customer location marker will be shown (from assign modal)');
     } else {
-        // ✅ KUNG NORMAL VISIT LANG, TANGGALIN ANG FLAG
+        // KUNG NORMAL VISIT LANG, TANGGALIN ANG FLAG
         sessionStorage.removeItem('showCustomerLocationMarker');
-        console.log('ℹ️ Normal visit - no customer marker');
+        console.log(' Normal visit - no customer marker');
     }
     
-    // ✅ SIGURADUHIN NA MAY TECHNICIAN ID
+    // SIGURADUHIN NA MAY TECHNICIAN ID
     let technicianId = sessionStorage.getItem('technicianId');
     
     // Kung wala, subukan kunin mula sa URL
@@ -333,7 +333,7 @@ async function initializeNapboxPage() {
         technicianId = urlParams.get('technician_id');
         if (technicianId) {
             sessionStorage.setItem('technicianId', technicianId);
-            console.log('✅ Technician ID from URL:', technicianId);
+            console.log(' Technician ID from URL:', technicianId);
         }
     }
     
@@ -346,9 +346,9 @@ async function initializeNapboxPage() {
         return;
     }
     
-    console.log('✅ Technician ID:', technicianId);
+    console.log(' Technician ID:', technicianId);
 
-    // ✅ I-HIDE ANG CUSTOMER LEGEND SA SIMULA (default)
+    // I-HIDE ANG CUSTOMER LEGEND SA SIMULA (default)
     const legendItem = document.getElementById('customerLegendItem');
     if (legendItem) {
         legendItem.style.display = 'none';
@@ -361,17 +361,17 @@ async function initializeNapboxPage() {
     setupEditSlotModalListenersTech();
     setupCoordinatePasteAutoFill();
 
-    // ✅ I-HIDE ANG CUSTOMER PIN BUTTON SA SIMULA (default)
+    // I-HIDE ANG CUSTOMER PIN BUTTON SA SIMULA (default)
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         customerPinBtn.style.display = 'none';
         customerPinBtn.style.visibility = 'hidden';
         customerPinBtn.dataset.lat = '';
         customerPinBtn.dataset.lng = '';
-        console.log('✅ Customer Pin button hidden by default');
+        console.log(' Customer Pin button hidden by default');
     }
 
-    // ✅ MAGDAGDAG NG FORCED DISPLAY KUNG MAY CUSTOMER LOCATION
+    // MAGDAGDAG NG FORCED DISPLAY KUNG MAY CUSTOMER LOCATION
     // Siguraduhin na lalabas ang customer pin button kung may marker
     setTimeout(() => {
         const showMarker = sessionStorage.getItem('showCustomerLocationMarker') === 'true';
@@ -387,9 +387,9 @@ async function initializeNapboxPage() {
                     btn.dataset.lat = parseFloat(lat);
                     btn.dataset.lng = parseFloat(lng);
                 }
-                console.log('✅ Customer Pin button forced to show');
+                console.log(' Customer Pin button forced to show');
             } else {
-                console.warn('⚠️ Customer Pin button not found for forced display');
+                console.warn(' Customer Pin button not found for forced display');
             }
         }
     }, 1000);
@@ -409,14 +409,14 @@ async function loadTechnicianArea(technicianId) {
         technicianArea = data.area;
         
         console.log("=========================================");
-        console.log("📌 TECHNICIAN AREA FROM API:", technicianArea);
-        console.log("📌 RAW DATA:", data);
+        console.log(" TECHNICIAN AREA FROM API:", technicianArea);
+        console.log(" RAW DATA:", data);
         console.log("=========================================");
         
-        // ✅ I-save ang raw area sa sessionStorage
+        // I-save ang raw area sa sessionStorage
         sessionStorage.setItem("technicianAreaRaw", technicianArea);
         
-        // ✅ IDAGDAG ITO - Area mappings para sa NAP box naming
+        // IDAGDAG ITO - Area mappings para sa NAP box naming
         const areaMappings = {
             "santa cruz": "Santa Cruz",
             "sta. cruz": "Santa Cruz",
@@ -433,36 +433,36 @@ async function loadTechnicianArea(technicianId) {
         // I-check kung may mapping
         if (areaMappings[lowerArea]) {
             mappedArea = areaMappings[lowerArea];
-            console.log(`📍 Mapped area: "${technicianArea}" → "${mappedArea}"`);
+            console.log(` Mapped area: "${technicianArea}" → "${mappedArea}"`);
             technicianArea = mappedArea;
         }
         // Kung hindi exact match, subukan ang partial match
         else if (lowerArea.includes('santa')) {
             technicianArea = "Santa Cruz";
-            console.log(`📍 Partial match: "${data.area}" → Santa Cruz`);
+            console.log(` Partial match: "${data.area}" → Santa Cruz`);
         }
         else if (lowerArea.includes('pagsanjan')) {
             technicianArea = "Pagsanjan";
-            console.log(`📍 Partial match: "${data.area}" → Pagsanjan`);
+            console.log(` Partial match: "${data.area}" → Pagsanjan`);
         }
         else if (lowerArea.includes('pila')) {
             technicianArea = "Pila";
-            console.log(`📍 Partial match: "${data.area}" → Pila`);
+            console.log(` Partial match: "${data.area}" → Pila`);
         }
         else if (lowerArea.includes('magdalena')) {
             technicianArea = "Magdalena";
-            console.log(`📍 Partial match: "${data.area}" → Magdalena`);
+            console.log(` Partial match: "${data.area}" → Magdalena`);
         }
         
-        // ✅ I-save ang normalized area sa sessionStorage
+        // I-save ang normalized area sa sessionStorage
         sessionStorage.setItem("technicianArea", technicianArea);
         
-        console.log("✅ Final technicianArea for NAP naming:", technicianArea);
+        console.log(" Final technicianArea for NAP naming:", technicianArea);
         
         // Make sure it's exactly "Santa Cruz" with proper spacing
         if (technicianArea === "Sta. Cruz") {
             technicianArea = "Santa Cruz";
-            console.log("✅ Converted Sta. Cruz to Santa Cruz");
+            console.log(" Converted Sta. Cruz to Santa Cruz");
         }
         
         technicianCoordinates = {
@@ -487,7 +487,7 @@ async function loadTechnicianArea(technicianId) {
 
         // Show municipal boundary AUTOMATICALLY for assigned area
         if (technicianArea) {
-            console.log("🎯 Calling showCityBoundary with:", technicianArea);
+            console.log(" Calling showCityBoundary with:", technicianArea);
             setTimeout(() => {
                 showCityBoundary(technicianArea);
             }, 1000);
@@ -553,7 +553,7 @@ async function loadBarangaysFromDatabase() {
 // ================= SIMPLE ZOOM TO BARANGAY (FIXED - WITH POBLACION HANDLING) =================
 async function zoomToBarangay(barangayName) {
     if (!barangayName || !technicianArea) {
-        console.error("❌ Missing barangayName or technicianArea", { barangayName, technicianArea });
+        console.error(" Missing barangayName or technicianArea", { barangayName, technicianArea });
         showToast(`Error: Missing location data`, 'error');
         return;
     }
@@ -571,7 +571,7 @@ async function zoomToBarangay(barangayName) {
             normalizedBarangay === 'i' || 
             normalizedBarangay === '1' ||
             normalizedBarangay === 'uno') {
-            console.log(`📍 Using hardcoded coordinates for Pagsanjan Barangay I (Poblacion)`);
+            console.log(` Using hardcoded coordinates for Pagsanjan Barangay I (Poblacion)`);
             map.setView([14.274037, 121.455957], 16);
             showToast(`Zoomed to ${barangayName}`, 'success');
             return;
@@ -582,15 +582,15 @@ async function zoomToBarangay(barangayName) {
                  normalizedBarangay === 'ii' || 
                  normalizedBarangay === '2' ||
                  normalizedBarangay === 'dos') {
-            console.log(`📍 Using hardcoded coordinates for Pagsanjan Barangay II (Poblacion)`);
+            console.log(` Using hardcoded coordinates for Pagsanjan Barangay II (Poblacion)`);
             map.setView([14.273942, 121.451841], 18);
-            showToast(`✓ Zoomed to ${barangayName}`, 'success');
+            showToast(` Zoomed to ${barangayName}`, 'success');
             return;
         }
     }
     
-    console.log(`🔍 Zooming to: ${barangayName}, ${technicianArea}`);
-    console.log(`📍 Map object exists:`, map !== null);
+    console.log(` Zooming to: ${barangayName}, ${technicianArea}`);
+    console.log(` Map object exists:`, map !== null);
     showToast(`Loading ${barangayName}...`, 'loading');
     
     const mapDiv = document.getElementById('napboxMap');
@@ -638,41 +638,41 @@ async function zoomToBarangay(barangayName) {
         const encodedQuery = encodeURIComponent(searchQuery);
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&limit=1`;
         
-        console.log(`🌐 Nominatim Query:`, searchQuery);
+        console.log(` Nominatim Query:`, searchQuery);
         
         const response = await fetch(url, {
             headers: { 'User-Agent': 'CableVision-Technician/1.0' }
         });
         const data = await response.json();
         
-        console.log(`📡 Nominatim Response:`, data);
+        console.log(` Nominatim Response:`, data);
         
         if (data && data.length > 0) {
             const lat = parseFloat(data[0].lat);
             const lng = parseFloat(data[0].lon);
             const displayName = data[0].display_name;
             
-            console.log(`✅ Found location - Lat: ${lat}, Lng: ${lng}`);
-            console.log(`📌 Display Name: ${displayName}`);
+            console.log(` Found location - Lat: ${lat}, Lng: ${lng}`);
+            console.log(` Display Name: ${displayName}`);
             
             if (!map) {
-                console.error("❌ Map object is null or undefined!");
+                console.error(" Map object is null or undefined!");
                 showTemporaryMessage("Map not initialized yet", "error");
                 return;
             }
             
             map.setView([lat, lng], 16);
             showToast(`Zoomed to ${barangayName}`, 'success');
-            console.log(`✅ Zoomed to: ${barangayName} at zoom level 16`);
+            console.log(` Zoomed to: ${barangayName} at zoom level 16`);
         } else {
-            console.warn(`⚠️ No results found for: ${searchQuery}`);
+            console.warn(` No results found for: ${searchQuery}`);
             
             // Try alternative search without the city
             const altQuery = `${cleanBarangayName}, Laguna`;
             const altEncodedQuery = encodeURIComponent(altQuery);
             const altUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${altEncodedQuery}&limit=1`;
             
-            console.log(`🌐 Alternative Nominatim Query:`, altQuery);
+            console.log(` Alternative Nominatim Query:`, altQuery);
             
             const altResponse = await fetch(altUrl, {
                 headers: { 'User-Agent': 'CableVision-Technician/1.0' }
@@ -684,14 +684,14 @@ async function zoomToBarangay(barangayName) {
                 const lng = parseFloat(altData[0].lon);
                 
                 map.setView([lat, lng], 16);
-                showTemporaryMessage(`✓ Zoomed to ${barangayName}`, "success");
-                console.log(`✅ Zoomed to: ${barangayName} using alternative search`);
+                showTemporaryMessage(` Zoomed to ${barangayName}`, "success");
+                console.log(` Zoomed to: ${barangayName} using alternative search`);
             } else {
                showToast(`Location "${barangayName}" not found`, 'error');
             }
         }
     } catch (error) {
-        console.error('❌ Error zooming to barangay:', error);
+        console.error(' Error zooming to barangay:', error);
         console.error('Error details:', error.message, error.stack);
        showToast('Error finding location: ' + error.message, 'error');
     } finally {
@@ -777,7 +777,7 @@ function initializeMap() {
     const satelliteControl = new SatelliteControl();
     satelliteControl.addTo(map);
     
-    // ✅ I-CHECK KUNG MAY CUSTOMER LOCATION NA DAPAT IPAKITA
+    // I-CHECK KUNG MAY CUSTOMER LOCATION NA DAPAT IPAKITA
     const showCustomerMarker = sessionStorage.getItem('showCustomerLocationMarker') === 'true';
     
     map.whenReady(() => {
@@ -785,15 +785,15 @@ function initializeMap() {
             map.invalidateSize();
         }, 300);
         
-        // ✅ I-DELAY NG KONTI PARA SURE NA NA-LOAD NA ANG LAHAT
+        // I-DELAY NG KONTI PARA SURE NA NA-LOAD NA ANG LAHAT
         setTimeout(() => {
             if (showCustomerMarker) {
-                // ✅ MAY CUSTOMER LOCATION - IPAKITA ANG MARKER
-                console.log('✅ Showing customer location marker...');
+                // MAY CUSTOMER LOCATION - IPAKITA ANG MARKER
+                console.log(' Showing customer location marker...');
                 showCustomerLocationMarkerOnMap();
             } else {
-                // ✅ WALANG CUSTOMER LOCATION - NORMAL BEHAVIOR
-                console.log('ℹ️ No customer marker to show');
+                // WALANG CUSTOMER LOCATION - NORMAL BEHAVIOR
+                console.log(' No customer marker to show');
                 if (!focusCustomerTargetLocation()) {
                     showCurrentLocation(false);
                 }
@@ -881,56 +881,56 @@ function normalizeCityName(cityName) {
 // NEW
 async function showCityBoundary(cityName) {
     console.log("=========================================");
-    console.log(`🔍 Looking for boundary of "${cityName}"...`);
+    console.log(` Looking for boundary of "${cityName}"...`);
     console.log("=========================================");
     clearBoundary();
 
     const properCityName = normalizeCityName(cityName);
 
     if (!properCityName) {
-        console.log(`❌ Could not normalize city name: ${cityName}`);
+        console.log(` Could not normalize city name: ${cityName}`);
         showBoundaryToast(cityName, 'error');
         return;
     }
 
-    console.log(`📝 Original: "${cityName}" → Normalized: "${properCityName}"`);
-    console.log(`📝 Available keys: ${Object.keys(LAGUNA_GEOJSON_URLS).join(', ')}`);
+    console.log(` Original: "${cityName}" → Normalized: "${properCityName}"`);
+    console.log(` Available keys: ${Object.keys(LAGUNA_GEOJSON_URLS).join(', ')}`);
 
     const url = LAGUNA_GEOJSON_URLS[properCityName];
 
-    console.log(`📡 Looking for key: "${properCityName}"`);
-    console.log(`📡 URL: ${url || 'NOT FOUND!'}`);
+    console.log(` Looking for key: "${properCityName}"`);
+    console.log(` URL: ${url || 'NOT FOUND!'}`);
 
     if (!url) {
-        console.log(`❌ No URL configured for "${properCityName}"`);
+        console.log(` No URL configured for "${properCityName}"`);
         showBoundaryToast(properCityName, 'error');
         return;
     }
 
     try {
-        console.log(`📡 Fetching GeoJSON from: ${url}`);
+        console.log(` Fetching GeoJSON from: ${url}`);
         const response = await fetch(url);
-        console.log(`📡 Response status: ${response.status}`);
+        console.log(` Response status: ${response.status}`);
 
         if (response.ok) {
             const geojsonData = await response.json();
-            console.log(`✅ GeoJSON loaded successfully`);
-            console.log(`✅ Features count: ${geojsonData.features?.length || 0}`);
+            console.log(` GeoJSON loaded successfully`);
+            console.log(` Features count: ${geojsonData.features?.length || 0}`);
 
             if (geojsonData?.features?.length > 0) {
                 displayBoundaryOnly(geojsonData, properCityName);
             } else {
-                console.log(`❌ No features found in GeoJSON`);
+                console.log(` No features found in GeoJSON`);
                 showBoundaryToast(properCityName, 'loading');
             }
         } else {
             // GitHub failed — fall back to Nominatim polygon
-            console.warn(`⚠️ GitHub fetch failed (HTTP ${response.status}), falling back to Nominatim...`);
+            console.warn(` GitHub fetch failed (HTTP ${response.status}), falling back to Nominatim...`);
             await showBoundaryFromNominatim(properCityName);
         }
     } catch (error) {
-        console.error("❌ Error showing boundary:", error);
-        console.warn("⚠️ Falling back to Nominatim...");
+        console.error(" Error showing boundary:", error);
+        console.warn(" Falling back to Nominatim...");
         await showBoundaryFromNominatim(properCityName);
     }
 }
@@ -947,7 +947,7 @@ async function showBoundaryFromNominatim(cityName) {
         const data = await res.json();
 
         if (data?.length > 0 && data[0].geojson) {
-            console.log(`✅ Nominatim polygon found for ${cityName}`);
+            console.log(` Nominatim polygon found for ${cityName}`);
             displayBoundaryOnly({
                 type: "FeatureCollection",
                 features: [{ type: "Feature", geometry: data[0].geojson, properties: {} }]
@@ -977,13 +977,13 @@ async function showBoundaryFromNominatim(cityName) {
             showBoundaryToast(cityName, 'error');
         }
     } catch (err) {
-        console.error("❌ Nominatim fallback failed:", err);
+        console.error(" Nominatim fallback failed:", err);
        showBoundaryToast(cityName, 'error');
     }
 }
 
 function displayBoundaryOnly(geojsonData, cityName) {
-    console.log(`🎨 Displaying boundary for: ${cityName}`);
+    console.log(` Displaying boundary for: ${cityName}`);
 
     if (cityBoundaryLayer) {
         map.removeLayer(cityBoundaryLayer);
@@ -1042,7 +1042,7 @@ function displayBoundaryOnly(geojsonData, cityName) {
 
     if (bounds.isValid()) {
         map.fitBounds(bounds, { padding: [40, 40] });
-        console.log(`✅ Boundary visible for ${cityName}`);
+        console.log(` Boundary visible for ${cityName}`);
     }
 
     currentCity = cityName;
@@ -1057,7 +1057,7 @@ function clearBoundary() {
     if (cityBoundaryLayer) {
         map.removeLayer(cityBoundaryLayer);
         cityBoundaryLayer = null;
-        console.log("🗑️ Boundary cleared from map");
+        console.log(" Boundary cleared from map");
     }
     currentCity = null;
     const clearBtn = document.getElementById('clearBoundaryBtn');
@@ -1105,13 +1105,13 @@ async function loadNapboxSlots() {
         
         const data = await response.json();
         
-        // 🔥 SIGURADUHIN NA NA-U-UPDATE ANG GLOBAL VARIABLES
+        // SIGURADUHIN NA NA-U-UPDATE ANG GLOBAL VARIABLES
         currentSlots = data.slots || [];
         currentNapboxes = data.napboxes || [];
         
-        console.log(`✅ Loaded ${currentSlots.length} slots and ${currentNapboxes.length} napboxes`);
-        console.log(`📋 Sample slots:`, currentSlots.slice(0, 3));
-        console.log(`📋 Sample napboxes:`, currentNapboxes.slice(0, 3));
+        console.log(` Loaded ${currentSlots.length} slots and ${currentNapboxes.length} napboxes`);
+        console.log(` Sample slots:`, currentSlots.slice(0, 3));
+        console.log(` Sample napboxes:`, currentNapboxes.slice(0, 3));
         
         // I-update ang stats
         const stats = {
@@ -1121,10 +1121,10 @@ async function loadNapboxSlots() {
         };
         updateStatsSummary(stats);
         
-        // ✅ I-REBUILD ANG SLOTS GRID
+        // I-REBUILD ANG SLOTS GRID
         renderSlotsGrid();
         
-        // ✅ I-REBUILD ANG MARKERS SA MAP
+        // I-REBUILD ANG MARKERS SA MAP
         // I-clear muna ang existing markers
         if (currentNapboxMarkers.length) {
             currentNapboxMarkers.forEach(m => {
@@ -1194,11 +1194,11 @@ function renderSlotsGrid() {
     
     // Filter by barangay
     if (currentBarangayFilter && currentBarangayFilter !== '') {
-        console.log(`🔍 Filtering slots for barangay: "${currentBarangayFilter}"`);
+        console.log(` Filtering slots for barangay: "${currentBarangayFilter}"`);
         console.log(`Total slots before filter: ${filteredSlots.length}`);
         
         const uniqueBarangays = [...new Set(currentSlots.map(s => s.barangay))];
-        console.log("📋 Barangays in database:", uniqueBarangays);
+        console.log(" Barangays in database:", uniqueBarangays);
         
        const normalizeBarangayName = (name) => {
     if (!name) return '';
@@ -1224,7 +1224,7 @@ function renderSlotsGrid() {
             }
         }
         
-        // ✅ I-CONVERT SA ROMAN NUMERALS
+        // I-CONVERT SA ROMAN NUMERALS
         const numToRoman = {
             '1': 'i', '2': 'ii', '3': 'iii', '4': 'iv', '5': 'v'
         };
@@ -1248,7 +1248,7 @@ function renderSlotsGrid() {
         };
         
         const normalizedFilter = normalizeBarangayName(currentBarangayFilter);
-        console.log(`📌 Normalized filter: "${normalizedFilter}"`);
+        console.log(` Normalized filter: "${normalizedFilter}"`);
         
         filteredSlots = filteredSlots.filter(slot => {
             const slotBarangay = slot.barangay || '';
@@ -1256,15 +1256,15 @@ function renderSlotsGrid() {
             const isMatch = normalizedSlot === normalizedFilter;
             
             if (isMatch) {
-                console.log(`✅ MATCH: "${slotBarangay}" == "${currentBarangayFilter}"`);
+                console.log(` MATCH: "${slotBarangay}" == "${currentBarangayFilter}"`);
             } else {
-                console.log(`❌ NO MATCH: "${slotBarangay}" (norm: "${normalizedSlot}") vs "${currentBarangayFilter}" (norm: "${normalizedFilter}")`);
+                console.log(` NO MATCH: "${slotBarangay}" (norm: "${normalizedSlot}") vs "${currentBarangayFilter}" (norm: "${normalizedFilter}")`);
             }
             
             return isMatch;
         });
         
-        console.log(`📊 Slots after filter: ${filteredSlots.length}`);
+        console.log(` Slots after filter: ${filteredSlots.length}`);
     }
     
     // Display result
@@ -1288,25 +1288,25 @@ function renderSlotsGrid() {
     slotsGrid.style.gap = '12px';
     
     slotsGrid.innerHTML = filteredSlots.map(slot => {
-        // ✅ KUNIN ANG NAPBOX NAME
+        // KUNIN ANG NAPBOX NAME
         const napbox = currentNapboxes.find(n => n.id === slot.napbox_id);
         const napboxName = napbox ? napbox.name : slot.napbox_name || 'N/A';
         // I-shorten ang napbox name kung masyadong mahaba
         const shortNapboxName = napboxName.length > 14 ? napboxName.substring(0, 12) + '...' : napboxName;
         
-        // ✅ AVAILABLE / OCCUPIED LABEL
+        // AVAILABLE / OCCUPIED LABEL
         const isAvailable = slot.status === 'available';
         const statusLabel = isAvailable ? 'AVAILABLE' : 'OCCUPIED';
         const statusClass = isAvailable ? 'available' : 'occupied';
         
-        // ✅ ACTIVE / INACTIVE LABEL
+        // ACTIVE / INACTIVE LABEL
         // ACTIVE: kapag OCCUPIED (may customer na naka-assign)
         // INACTIVE: kapag AVAILABLE (walang customer)
         const isActive = slot.status === 'occupied' && slot.customer_name && slot.customer_name !== '';
         const activeLabel = isActive ? 'ACTIVE' : 'INACTIVE';
         const activeClass = isActive ? 'active' : 'inactive';
         
-        // ✅ AVAILABLE PERO MAY PREVIOUS CUSTOMER (last owner) - INACTIVE pa rin
+        // AVAILABLE PERO MAY PREVIOUS CUSTOMER (last owner) - INACTIVE pa rin
         // Dahil ang activeLabel ay INACTIVE kapag available (isActive = false)
         
         return `
@@ -1336,7 +1336,7 @@ function escapeHtml(text) {
 function addNapboxMarkers(napboxes) {
     if (!map) return;
     
-    // 🔥 SIGURADUHIN NA MALINIS ANG MGA LUMANG MARKERS
+    // SIGURADUHIN NA MALINIS ANG MGA LUMANG MARKERS
     if (currentNapboxMarkers.length) {
         currentNapboxMarkers.forEach(m => {
             if (map.hasLayer(m)) map.removeLayer(m);
@@ -1350,13 +1350,13 @@ function addNapboxMarkers(napboxes) {
         currentCircles = [];
     }
     
-    // 🔥 KUNG WALANG NAPBOXES, MAG-RETURN LANG
+    // KUNG WALANG NAPBOXES, MAG-RETURN LANG
     if (!napboxes || napboxes.length === 0) {
         console.log('No napboxes to display');
         return;
     }
     
-    console.log(`🔄 Adding ${napboxes.length} napbox markers...`);
+    console.log(` Adding ${napboxes.length} napbox markers...`);
     
     napboxes.forEach(napbox => {
         if (napbox.latitude && napbox.longitude) {
@@ -1382,7 +1382,7 @@ function addNapboxMarkers(napboxes) {
             const availableCount = napboxSlots.filter(s => s.status === 'available').length;
             const occupiedCount = napboxSlots.filter(s => s.status === 'occupied').length;
 
-            // 🔥 I-SECURE ANG NAPBOX NAME PARA MAI-SAVE SA BUTTON
+            // I-SECURE ANG NAPBOX NAME PARA MAI-SAVE SA BUTTON
             const safeNapboxName = napbox.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
             marker.bindPopup(`
@@ -1418,7 +1418,7 @@ function addNapboxMarkers(napboxes) {
             currentNapboxMarkers.push(marker);
             currentCircles.push(circle);
             
-            console.log(`✅ Added marker for ${napbox.name} (ID: ${napbox.id})`);
+            console.log(` Added marker for ${napbox.name} (ID: ${napbox.id})`);
         }
     });
 }
@@ -1519,10 +1519,10 @@ async function deleteNapbox(napboxId, napboxName) {
 
         showToast(`"${napboxName}" deleted successfully`, 'success');
         
-        // 🔥 IMPORTANTE: I-RELOAD ANG DATA AGAD
+        // IMPORTANTE: I-RELOAD ANG DATA AGAD
         await loadNapboxSlots();
         
-        // 🔥 SIGURADUHIN NA NAG-REBUILD ANG MARKERS
+        // SIGURADUHIN NA NAG-REBUILD ANG MARKERS
         // I-clear muna ang existing markers
         if (currentNapboxMarkers.length) {
             currentNapboxMarkers.forEach(m => {
@@ -1644,7 +1644,7 @@ function startAddNapbox() {
 
     isAddingNapbox = true;
     pendingLocation = null;
-    window.tempBarangayName = null; // ✅ I-clear ang temp variable
+    window.tempBarangayName = null; // I-clear ang temp variable
     showToast('Click on the map to place the NAP box', 'info');
 
     
@@ -1689,7 +1689,7 @@ async function getBarangayFromGeoRisk(lat, lng) {
                 let detectedCity = props.city_name || "";
                 let detectedBarangay = props.brgy_name || "";
                 
-                console.log(`📍 GeoRisk raw: City="${detectedCity}", Barangay="${detectedBarangay}"`);
+                console.log(` GeoRisk raw: City="${detectedCity}", Barangay="${detectedBarangay}"`);
                 
                 if (detectedBarangay) {
                     // I-convert sa Proper Case para tumugma sa database
@@ -1705,7 +1705,7 @@ async function getBarangayFromGeoRisk(lat, lng) {
                     
 // SPECIAL HANDLING para sa Santa Cruz Poblacion - GAMIT ANG ROMAN NUMERALS
 if (detectedCity === "Santa Cruz") {
-    console.log(`🔍 Raw detected barangay from GeoRisk: "${detectedBarangay}"`);
+    console.log(` Raw detected barangay from GeoRisk: "${detectedBarangay}"`);
     
     let number = '';
     let rawName = detectedBarangay;
@@ -1714,7 +1714,7 @@ if (detectedCity === "Santa Cruz") {
     let match = rawName.match(/Poblacion\s*(\d+)/i);
     if (match) {
         number = match[1];
-        console.log(`✅ Pattern 1 (Poblacion X): ${number}`);
+        console.log(` Pattern 1 (Poblacion X): ${number}`);
     }
     
     // Pattern 2: "Barangay 1 (Poblacion)", "Barangay 2 (Poblacion)", etc.
@@ -1722,7 +1722,7 @@ if (detectedCity === "Santa Cruz") {
         match = rawName.match(/Barangay\s*(\d+)\s*\(Poblacion\)/i);
         if (match) {
             number = match[1];
-            console.log(`✅ Pattern 2 (Barangay X (Poblacion)): ${number}`);
+            console.log(` Pattern 2 (Barangay X (Poblacion)): ${number}`);
         }
     }
     
@@ -1731,7 +1731,7 @@ if (detectedCity === "Santa Cruz") {
         match = rawName.match(/Barangay\s*(\d+)/i);
         if (match) {
             number = match[1];
-            console.log(`✅ Pattern 3 (Barangay X): ${number}`);
+            console.log(` Pattern 3 (Barangay X): ${number}`);
         }
     }
     
@@ -1743,7 +1743,7 @@ if (detectedCity === "Santa Cruz") {
         match = rawName.match(/\b(I|II|III|IV|V)\b/i);
         if (match) {
             number = romanMap[match[1].toUpperCase()];
-            console.log(`✅ Pattern 4 (Roman numeral ${match[1]} → ${number})`);
+            console.log(` Pattern 4 (Roman numeral ${match[1]} → ${number})`);
         }
     }
     
@@ -1756,23 +1756,23 @@ if (detectedCity === "Santa Cruz") {
         for (const [spanish, num] of Object.entries(spanishMap)) {
             if (rawName.toLowerCase().includes(spanish)) {
                 number = num;
-                console.log(`✅ Pattern 5 (Spanish ${spanish} → ${number})`);
+                console.log(` Pattern 5 (Spanish ${spanish} → ${number})`);
                 break;
             }
         }
     }
     
-    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    // I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
     const numToRoman = {
         '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
     };
     
     if (number && numToRoman[number]) {
         detectedBarangay = `Poblacion ${numToRoman[number]}`;
-        console.log(`🎯 FINAL Santa Cruz barangay (Roman): "${detectedBarangay}"`);
+        console.log(` FINAL Santa Cruz barangay (Roman): "${detectedBarangay}"`);
     } else if (rawName.toLowerCase().includes('poblacion')) {
         detectedBarangay = 'Poblacion I';
-        console.log(`⚠️ Fallback to Poblacion I`);
+        console.log(` Fallback to Poblacion I`);
     } else {
         // I-capitalize lang ang normal na barangay
         detectedBarangay = rawName.split(' ').map(word => 
@@ -1817,7 +1817,7 @@ if (detectedCity === "Santa Cruz") {
                     if (detectedCity === "Pagsanjan") {
                         const originalBarangay = detectedBarangay;
                         detectedBarangay = convertPagsanjanBarangay(detectedBarangay);
-                        console.log(`🔄 Pagsanjan conversion: "${originalBarangay}" → "${detectedBarangay}"`);
+                        console.log(` Pagsanjan conversion: "${originalBarangay}" → "${detectedBarangay}"`);
                     }
                 }
                 
@@ -1947,20 +1947,20 @@ async function getAccurateBarangay(lat, lng) {
     let result = await getBarangayFromGeoRisk(lat, lng);
     
     if (result && result.barangay) {
-        console.log(`✅ GeoRisk success: ${result.barangay}`);
+        console.log(` GeoRisk success: ${result.barangay}`);
         return result;
     }
     
     // Fallback to Nominatim
-    console.log('⚠️ GeoRisk failed, trying Nominatim...');
+    console.log(' GeoRisk failed, trying Nominatim...');
     result = await getBarangayFromNominatim(lat, lng);
     
     if (result && result.barangay) {
-        console.log(`✅ Nominatim success: ${result.barangay}`);
+        console.log(` Nominatim success: ${result.barangay}`);
         return result;
     }
     
-    console.log('❌ Both GeoRisk and Nominatim failed');
+    console.log(' Both GeoRisk and Nominatim failed');
     return null;
 }
 
@@ -1977,7 +1977,7 @@ async function onMapClickForAdd(e) {
             .setLatLng([lat, lng])
             .setContent(`
                 <div style="text-align:center; padding: 6px 4px;">
-                    <div style="font-size: 28px; margin-bottom: 6px;">🚫</div>
+                    <div style="font-size: 28px; margin-bottom: 6px;"></div>
                     <div style="font-weight: bold; font-size: 14px; color: #dc2626; margin-bottom: 4px;">
                         Outside Municipal Area
                     </div>
@@ -2001,7 +2001,7 @@ async function onMapClickForAdd(e) {
     let detectedCity = geoData?.city || '';
     let barangayValid = false;
     
-    console.log(`📍 Detected barangay: "${barangayName}", City: "${detectedCity}"`);
+    console.log(` Detected barangay: "${barangayName}", City: "${detectedCity}"`);
     
     // ===== CHECK 2: BARANGAY MUST BE IN DATABASE =====
     if (barangayName && allBarangays && allBarangays.length > 0) {
@@ -2045,16 +2045,16 @@ const normalize = (str) => {
         
         if (barangayExists && cityMatch) {
             barangayValid = true;
-            console.log(`✅ Barangay "${barangayName}" is valid (exists in database and city matches)`);
+            console.log(` Barangay "${barangayName}" is valid (exists in database and city matches)`);
         } else if (barangayExists && !cityMatch) {
-            console.log(`⚠️ Barangay exists but city mismatch: ${detectedCity} vs ${technicianArea}`);
+            console.log(` Barangay exists but city mismatch: ${detectedCity} vs ${technicianArea}`);
             barangayValid = false;
         } else {
-            console.log(`❌ Barangay "${barangayName}" NOT found in database`);
+            console.log(` Barangay "${barangayName}" NOT found in database`);
             barangayValid = false;
         }
     } else {
-        console.log(`⚠️ No barangay detected or allBarangays not loaded`);
+        console.log(` No barangay detected or allBarangays not loaded`);
         barangayValid = false;
     }
     
@@ -2119,7 +2119,7 @@ const normalize = (str) => {
                 .setLatLng([lat, lng])
                 .setContent(`
                     <div style="text-align:center; padding: 6px 4px;">
-                        <div style="font-size: 26px; margin-bottom: 6px;">🛣️</div>
+                        <div style="font-size: 26px; margin-bottom: 6px;"></div>
                         <div style="font-weight: bold; font-size: 14px; color: #d97706; margin-bottom: 4px;">
                             Not On a Road
                         </div>
@@ -2182,7 +2182,7 @@ tempMarker = L.marker([snappedLat, snappedLng], {
 
 pendingLocation = { lat: snappedLat, lng: snappedLng };
 
-// ✅ GAMITIN ANG DETECTED BARANGAY NAME MULA SA GEORISK (hindi na mag-extract)
+// GAMITIN ANG DETECTED BARANGAY NAME MULA SA GEORISK (hindi na mag-extract)
 let finalDisplayBarangay = barangayName; // Ito na ang tamang barangay name mula sa GeoRisk
 
 // I-ensure na proper case at may tamang format
@@ -2210,14 +2210,14 @@ if (detectedCity === "Santa Cruz") {
         }
     }
     
-    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    // I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
     const numToRoman = {
         '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
     };
     
     if (number && numToRoman[number]) {
         finalDisplayBarangay = `Poblacion ${numToRoman[number]}`;
-        console.log(`🎯 Santa Cruz display barangay (Roman): "${finalDisplayBarangay}"`);
+        console.log(` Santa Cruz display barangay (Roman): "${finalDisplayBarangay}"`);
     } else if (finalDisplayBarangay.toLowerCase().includes('poblacion')) {
         finalDisplayBarangay = 'Poblacion I';
     }
@@ -2227,7 +2227,7 @@ if (detectedCity === "Santa Cruz") {
     else if (detectedCity === "Pagsanjan") {
         // I-convert ang barangay name (Uno/Dos to I/II)
         finalDisplayBarangay = convertPagsanjanBarangay(finalDisplayBarangay);
-        console.log(`✅ Pagsanjan conversion result: ${finalDisplayBarangay}`);
+        console.log(` Pagsanjan conversion result: ${finalDisplayBarangay}`);
     }
     
     // Para sa Pila
@@ -2249,7 +2249,7 @@ if (detectedCity === "Santa Cruz") {
     }
 }
 
-console.log(`✅ Final barangay for display: "${finalDisplayBarangay}"`);
+console.log(` Final barangay for display: "${finalDisplayBarangay}"`);
 
 document.getElementById('selectedLocation').innerHTML = `
     Latitude: ${snappedLat.toFixed(6)}<br>
@@ -2257,10 +2257,10 @@ document.getElementById('selectedLocation').innerHTML = `
     Barangay: ${finalDisplayBarangay} (Valid)<br>
 `;
 
-// ✅ I-save ang tamang barangay name para magamit sa confirmAddNapbox
+// I-save ang tamang barangay name para magamit sa confirmAddNapbox
 window.tempBarangayName = finalDisplayBarangay;
 
-// ✅ AUTO-GENERATE NAP BOX NAME
+// AUTO-GENERATE NAP BOX NAME
 setNapboxNameField();
 
 document.getElementById('addNapboxModal').style.display = 'block';
@@ -2293,15 +2293,15 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 }
 
 async function confirmAddNapbox() {
-    // ✅ GET FULL NAME FROM PREFIX + NUMBER
+    // GET FULL NAME FROM PREFIX + NUMBER
     const napboxName = getFullNapboxName();
     const numSlots = parseInt(document.getElementById('napboxSlots').value);
     
-    console.log("🔍 confirmAddNapbox called");
-    console.log("📍 pendingLocation:", pendingLocation);
-    console.log("📍 napboxName:", napboxName);
-    console.log("📍 numSlots:", numSlots);
-    console.log("📍 tempBarangayName:", window.tempBarangayName);
+    console.log(" confirmAddNapbox called");
+    console.log(" pendingLocation:", pendingLocation);
+    console.log(" napboxName:", napboxName);
+    console.log(" numSlots:", numSlots);
+    console.log(" tempBarangayName:", window.tempBarangayName);
     
     if (!napboxName) {
         showToast('Please enter a valid NAP box name', 'error');
@@ -2322,42 +2322,42 @@ async function confirmAddNapbox() {
     }
     
     let barangayName = window.tempBarangayName || '';
-    console.log("📍 Initial barangayName:", barangayName);
+    console.log(" Initial barangayName:", barangayName);
     
     if (!barangayName) {
         const selectedLocationText = document.getElementById('selectedLocation').innerHTML;
-        console.log("📍 selectedLocationText:", selectedLocationText);
+        console.log(" selectedLocationText:", selectedLocationText);
         const barangayMatch = selectedLocationText.match(/Barangay:\s*([^<]+)/i);
         if (barangayMatch && barangayMatch[1]) {
             barangayName = barangayMatch[1].trim().replace(/\s*\(Valid\)\s*/i, '');
-            console.log("📍 Barangay from selectedLocation:", barangayName);
+            console.log(" Barangay from selectedLocation:", barangayName);
         }
     }
     
     if (!barangayName) {
-        console.log("📍 Trying to get barangay from GeoRisk...");
+        console.log(" Trying to get barangay from GeoRisk...");
         const geoData = await getAccurateBarangay(pendingLocation.lat, pendingLocation.lng);
         if (geoData && geoData.barangay) {
             barangayName = geoData.barangay;
-            console.log("📍 Barangay from GeoRisk:", barangayName);
+            console.log(" Barangay from GeoRisk:", barangayName);
         }
     }
     
     if (!barangayName) {
         barangayName = 'Unknown';
-        console.log("📍 Barangay set to default: Unknown");
+        console.log(" Barangay set to default: Unknown");
     }
     
     const finalBarangay = barangayName;
-    console.log(`✅ Final barangay for database: "${finalBarangay}"`);
-    console.log(`✅ Full NAP box name: "${napboxName}"`);
-    console.log(`✅ Pending location:`, pendingLocation);
+    console.log(` Final barangay for database: "${finalBarangay}"`);
+    console.log(` Full NAP box name: "${napboxName}"`);
+    console.log(` Pending location:`, pendingLocation);
     
     try {
         const technicianId = sessionStorage.getItem('technicianId');
         const technicianAreaLocal = sessionStorage.getItem('technicianArea');
         
-        console.log("📤 Sending to server:", {
+        console.log(" Sending to server:", {
             napbox_name: napboxName,
             latitude: pendingLocation.lat,
             longitude: pendingLocation.lng,
@@ -2426,10 +2426,10 @@ async function confirmAddNapbox() {
         
         showToast(`NAP Box "${napboxName}" added with ${numSlots} slots for ${finalBarangay}`, 'success');
         
-        console.log('🔄 Reloading NAP box data...');
+        console.log(' Reloading NAP box data...');
         await loadNapboxSlots();
         
-        console.log(`📊 After reload: ${currentSlots.length} slots, ${currentNapboxes.length} napboxes`);
+        console.log(` After reload: ${currentSlots.length} slots, ${currentNapboxes.length} napboxes`);
         
         renderSlotsGrid();
         
@@ -2454,7 +2454,7 @@ async function confirmAddNapbox() {
         }
         addNapboxMarkers(currentNapboxes);
         
-        console.log('✅ UI refresh complete');
+        console.log(' UI refresh complete');
         
     } catch (error) {
         console.error('Error adding NAP box:', error);
@@ -2496,7 +2496,7 @@ function showSlotDetails(slot) {
     const statusIcon = slot.status === 'available' ? 'fa-check-circle' : 'fa-circle';
     const statusColor = slot.status === 'available' ? '#22c55e' : '#ef4444';
     
-    // ✅ Check if slot is available but has previous customer data
+    // Check if slot is available but has previous customer data
     const hasCustomerData = slot.customer_name || slot.customer_phone || slot.application_number;
     const showClearButton = slot.status === 'available' && hasCustomerData;
     
@@ -2757,7 +2757,7 @@ async function executeConfirmAvailable() {
         };
         updateStatsSummary(stats);
         
-        // ✅ SIGURADUHIN NA SARADO ANG SLOT DETAILS MODAL
+        // SIGURADUHIN NA SARADO ANG SLOT DETAILS MODAL
         closeSlotModal();
         
         showToast(`Slot #${slotNumber} is now AVAILABLE and ready for a new customer assignment.`, 'success');
@@ -2780,12 +2780,12 @@ async function updateSlotStatus(slotId, slotNumber) {
     const currentSlot = currentSlots.find(s => s.id === slotId);
     const currentStatus = currentSlot ? currentSlot.status : null;
     
-    // 🔥 KUNG MAGIGING AVAILABLE AT OCCUPIED ANG KASALUKUYAN, MAG-MODAL
+    // KUNG MAGIGING AVAILABLE AT OCCUPIED ANG KASALUKUYAN, MAG-MODAL
     if (newStatus === 'available' && currentStatus === 'occupied') {
-        // ✅ UNA, ISARA ANG SLOT DETAILS MODAL
+        // UNA, ISARA ANG SLOT DETAILS MODAL
         closeSlotModal();
         
-        // ✅ PAGKATAPOS, I-OPEN ANG CONFIRMATION MODAL
+        // PAGKATAPOS, I-OPEN ANG CONFIRMATION MODAL
         showConfirmAvailableModal(slotId, slotNumber, currentSlot);
         return;
     }
@@ -2860,7 +2860,7 @@ function closeSlotModal() {
     if (modal) {
         modal.style.display = 'none';
         modal.classList.remove('show');
-        // ✅ I-RESTORE ANG SCROLL
+        // I-RESTORE ANG SCROLL
         document.body.style.overflow = '';
     }
 }
@@ -2989,7 +2989,7 @@ function setupEventListeners() {
 
             const selectedBarangay = e.target.value;
 
-            console.log("📌 Barangay selected:", selectedBarangay);
+            console.log(" Barangay selected:", selectedBarangay);
 
             if (selectedBarangay && technicianArea) {
 
@@ -3008,7 +3008,7 @@ function setupEventListeners() {
 
                 renderSlotsGrid();
 
-                console.log("✅ Slots filtered for barangay:", selectedBarangay);
+                console.log(" Slots filtered for barangay:", selectedBarangay);
 
             } else if (selectedBarangay && !technicianArea) {
 
@@ -3027,11 +3027,11 @@ function setupEventListeners() {
 
                 renderSlotsGrid();
 
-                console.log("✅ All barangays selected - showing all slots");
+                console.log(" All barangays selected - showing all slots");
             }
         });
 
-        console.log("✅ Barangay filter event listener attached");
+        console.log(" Barangay filter event listener attached");
     }
 
     // ================= REFRESH MAP BUTTON =================
@@ -3178,7 +3178,7 @@ if (currentLocationBtn) {
     // ================= CUSTOMER PIN BUTTON =================
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
-        // ✅ REMOVE OLD EVENT LISTENERS BY CLONING
+        // REMOVE OLD EVENT LISTENERS BY CLONING
         const newCustomerPinBtn = customerPinBtn.cloneNode(true);
         customerPinBtn.parentNode.replaceChild(newCustomerPinBtn, customerPinBtn);
         
@@ -3186,30 +3186,30 @@ if (currentLocationBtn) {
             const lat = parseFloat(this.dataset.lat);
             const lng = parseFloat(this.dataset.lng);
             
-            console.log('📍 Customer Pin button clicked:', { lat, lng });
+            console.log(' Customer Pin button clicked:', { lat, lng });
             
             if (isNaN(lat) || isNaN(lng)) {
                 showToast('No customer pin location available', 'warning');
                 return;
             }
             
-            // ✅ FLY TO CUSTOMER LOCATION
+            // FLY TO CUSTOMER LOCATION
             map.flyTo([lat, lng], 18, {
                 animate: true,
                 duration: 1.5
             });
             
-            // ✅ RE-OPEN POPUP IF MARKER EXISTS
+            // RE-OPEN POPUP IF MARKER EXISTS
             if (customerLocationMarker) {
                 customerLocationMarker.openPopup();
             }
             
-            showToast('📍 Zooming to customer pin location', 'info');
+            showToast(' Zooming to customer pin location', 'info');
         });
         
-        console.log('✅ Customer Pin button event listener attached');
+        console.log(' Customer Pin button event listener attached');
     } else {
-        console.warn('⚠️ Customer Pin button not found in DOM');
+        console.warn(' Customer Pin button not found in DOM');
     }
 
 
@@ -3419,7 +3419,7 @@ function showCurrentLocation(shouldZoom = true) {
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             
-            console.log(`✅ Current location: ${lat}, ${lng}`);
+            console.log(` Current location: ${lat}, ${lng}`);
             
             // Remove existing marker if any
             if (currentLocationMarker) {
@@ -3647,7 +3647,7 @@ function openCoordinatesModal() {
         tempMarker = null;
     }
     
-    // ✅ AUTO-GENERATE NAP BOX NAME
+    // AUTO-GENERATE NAP BOX NAME
     setNapboxNameField();
 }
 
@@ -3814,12 +3814,12 @@ async function validateCoordinates() {
     let barangayName = geoData?.barangay || '';
     let detectedCity = geoData?.city || '';
     
-    console.log(`📍 Detected barangay: "${barangayName}", City: "${detectedCity}"`);
+    console.log(` Detected barangay: "${barangayName}", City: "${detectedCity}"`);
     
     // ===== CHECK 2: BARANGAY MUST BE IN DATABASE (SAME AS onMapClickForAdd) =====
     let barangayValid = false;
     if (barangayName && allBarangays && allBarangays.length > 0) {
-        // ✅ GAMITIN ANG PAREHONG NORMALIZATION LOGIC
+        // GAMITIN ANG PAREHONG NORMALIZATION LOGIC
         const normalize = (str) => {
             if (!str) return '';
             let normalized = str.toLowerCase()
@@ -3859,16 +3859,16 @@ async function validateCoordinates() {
         
         if (barangayExists && cityMatch) {
             barangayValid = true;
-            console.log(`✅ Barangay "${barangayName}" is valid (exists in database and city matches)`);
+            console.log(` Barangay "${barangayName}" is valid (exists in database and city matches)`);
         } else if (barangayExists && !cityMatch) {
-            console.log(`⚠️ Barangay exists but city mismatch: ${detectedCity} vs ${technicianArea}`);
+            console.log(` Barangay exists but city mismatch: ${detectedCity} vs ${technicianArea}`);
             barangayValid = false;
         } else {
-            console.log(`❌ Barangay "${barangayName}" NOT found in database`);
+            console.log(` Barangay "${barangayName}" NOT found in database`);
             barangayValid = false;
         }
     } else {
-        console.log(`⚠️ No barangay detected or allBarangays not loaded`);
+        console.log(` No barangay detected or allBarangays not loaded`);
         barangayValid = false;
     }
     
@@ -3990,14 +3990,14 @@ if (detectedCity === "Santa Cruz") {
         }
     }
     
-    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    // I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
     const numToRoman = {
         '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
     };
     
     if (number && numToRoman[number]) {
         finalBarangay = `Poblacion ${numToRoman[number]}`;
-        console.log(`🎯 Santa Cruz barangay (Roman): "${finalBarangay}"`);
+        console.log(` Santa Cruz barangay (Roman): "${finalBarangay}"`);
     } else if (finalBarangay.toLowerCase().includes('poblacion')) {
         finalBarangay = 'Poblacion I';
     }
@@ -4107,7 +4107,7 @@ document.getElementById('proceedFromCoordsBtn')?.addEventListener('click', funct
     // Set the barangay name
     window.tempBarangayName = validatedBarangay;
     
-    // ✅ I-SET ANG isAddingNapbox PARA MAG-OPEN ANG MODAL
+    // I-SET ANG isAddingNapbox PARA MAG-OPEN ANG MODAL
     isAddingNapbox = true;
     
     // Close coordinates modal (pero huwag i-reset ang isAddingNapbox)
@@ -4126,10 +4126,10 @@ document.getElementById('proceedFromCoordsBtn')?.addEventListener('click', funct
         tempMarker = null;
     }
     
-    // ✅ AUTO-GENERATE NAP BOX NAME
+    // AUTO-GENERATE NAP BOX NAME
     setNapboxNameField();
     
-    // ✅ I-UPDATE ANG LOCATION PREVIEW NA MAY TAMANG FORMAT
+    // I-UPDATE ANG LOCATION PREVIEW NA MAY TAMANG FORMAT
     const locationPreview = document.getElementById('selectedLocation');
     if (locationPreview) {
         locationPreview.innerHTML = `
@@ -4152,14 +4152,14 @@ document.getElementById('proceedFromCoordsBtn')?.addEventListener('click', funct
         locationPreview.className = 'location-preview has-location';
     }
     
-    // ✅ I-SHOW ANG ADD NAP BOX MODAL
+    // I-SHOW ANG ADD NAP BOX MODAL
     const addModal = document.getElementById('addNapboxModal');
     if (addModal) {
         addModal.style.display = 'block';
         addModal.classList.add('show');
     }
     
-    // ✅ MAG-ADD NG MARKER SA MAP
+    // MAG-ADD NG MARKER SA MAP
     if (tempMarker) map.removeLayer(tempMarker);
     tempMarker = L.marker([pendingLocation.lat, pendingLocation.lng], {
         icon: L.divIcon({
@@ -4281,7 +4281,7 @@ cancelAddNapbox = function() {
 let pendingClearSlot = null;
 
 function showClearSlotModal(slotId, slotNumber) {
-    // ✅ UNA, ISARA ANG SLOT DETAILS MODAL
+    // UNA, ISARA ANG SLOT DETAILS MODAL
     closeSlotModal();
     
     // Hanapin ang slot data mula sa currentSlots
@@ -4347,7 +4347,7 @@ async function executeClearSlot() {
             tab_id: tabId
         };
         
-        console.log("📤 Sending request to server:", requestBody);
+        console.log(" Sending request to server:", requestBody);
         
         const response = await fetch(`/api/technician/clear-slot`, {
             method: 'POST',
@@ -4357,12 +4357,12 @@ async function executeClearSlot() {
             body: JSON.stringify(requestBody)
         });
         
-        console.log("📥 Response status:", response.status);
+        console.log(" Response status:", response.status);
         
         let result;
         try {
             result = await response.json();
-            console.log("📥 Response data:", result);
+            console.log(" Response data:", result);
         } catch (parseError) {
             console.error('Error parsing response:', parseError);
             showToast('Server error: Invalid response', 'error');
@@ -4375,7 +4375,7 @@ async function executeClearSlot() {
         
         showToast(`Slot #${slotNumber} cleared successfully!`, 'success');
         
-        // ✅ SIGURADUHIN NA SARADO ANG SLOT DETAILS MODAL
+        // SIGURADUHIN NA SARADO ANG SLOT DETAILS MODAL
         closeSlotModal();
         
         // I-RELOAD ANG SLOTS DATA
@@ -4415,8 +4415,8 @@ async function executeClearSlot() {
 
 // ================= CLEAR SLOT DATA =================
 async function clearSlotData(slotId, slotNumber) {
-    // ✅ GAMITIN ANG MODAL IMBES NA confirm()
-    // ✅ AUTO-CLOSE ANG SLOT DETAILS MODAL
+    // GAMITIN ANG MODAL IMBES NA confirm()
+    // AUTO-CLOSE ANG SLOT DETAILS MODAL
     showClearSlotModal(slotId, slotNumber);
 }
 
@@ -4438,7 +4438,7 @@ const TECH_CONTRACT_PREFIXES = {
 function getTechnicianContractPrefix() {
     const area = technicianArea || sessionStorage.getItem('technicianArea') || '';
     
-    // ✅ SPECIAL CASE: Pila may choice ng prefix (GIF- or POB-)
+    // SPECIAL CASE: Pila may choice ng prefix (GIF- or POB-)
     if (area === "Pila") {
         return technicianSelectedContractPrefix || "GIF-";
     }
@@ -4469,7 +4469,7 @@ function showEditSlotModalTech(slot) {
     document.getElementById('editCustomerNameTech').value = slot.customer_name || '';
     document.getElementById('editCustomerPhoneTech').value = slot.customer_phone || '';
 
-    // ✅ CHECK KUNG PILA ANG AREA - SHOW PREFIX CHOICES
+    // CHECK KUNG PILA ANG AREA - SHOW PREFIX CHOICES
     const normalizedAreaForPrefix = technicianArea || sessionStorage.getItem('technicianArea') || '';
     const prefixWrapperTech = document.getElementById('prefixChoiceWrapperTech');
     const prefixGIFBtnTech = document.getElementById('prefixChoiceGIFTech');
@@ -4518,7 +4518,7 @@ function showEditSlotModalTech(slot) {
     if (nameError) nameError.style.display = 'none';
     if (contractError) contractError.style.display = 'none';
 
-    // ✅ I-RESET ANG SAVE BUTTON TUWING MAGBUBUKAS ANG MODAL
+    // I-RESET ANG SAVE BUTTON TUWING MAGBUBUKAS ANG MODAL
     const saveBtnReset = document.getElementById('saveEditBtnTech');
     if (saveBtnReset) {
         saveBtnReset.innerHTML = '<i class="fas fa-save"></i> Save Changes';
@@ -4566,7 +4566,7 @@ function closeEditSlotModalTech() {
     if (nameError) nameError.style.display = 'none';
     if (contractError) contractError.style.display = 'none';
 
-    // ✅ I-RESET ANG SAVE BUTTON PABALIK SA ORIGINAL STATE
+    // I-RESET ANG SAVE BUTTON PABALIK SA ORIGINAL STATE
     const saveBtn = document.getElementById('saveEditBtnTech');
     if (saveBtn) {
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
@@ -4598,7 +4598,7 @@ async function saveEditSlotTech() {
     const nameError = document.getElementById('editNameErrorTech');
     const contractError = document.getElementById('editContractErrorTech');
 
-    // ✅ I-RESET ANG MGA ERROR MESSAGES
+    // I-RESET ANG MGA ERROR MESSAGES
     nameInput.className = 'form-input';
     contractInput.className = 'form-input';
     if (nameError) {
@@ -4651,7 +4651,7 @@ async function saveEditSlotTech() {
         showToast('Status changed to AVAILABLE because fields are empty', 'info');
     }
 
-    // ✅ VALIDATE: CONTRACT NUMBER LENGTH (4 DIGITS ONLY)
+    // VALIDATE: CONTRACT NUMBER LENGTH (4 DIGITS ONLY)
     if (cleanContractNumber) {
         const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
         if (numberPart.length !== 4) {
@@ -4665,7 +4665,7 @@ async function saveEditSlotTech() {
             return;
         }
         
-        // ✅ VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
+        // VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
         try {
             const tabId = getTabId();
             const technicianId = sessionStorage.getItem('technicianId');
@@ -4729,7 +4729,7 @@ async function saveEditSlotTech() {
             if (response.status === 400 && data.error && data.error.includes('already used')) {
                 contractInput.className = 'form-input input-error';
                 if (contractError) {
-                    contractError.textContent = `⚠️ ${data.error}`;
+                    contractError.textContent = ` ${data.error}`;
                     contractError.style.display = 'flex';
                 }
                 showToast(data.error, 'error');
@@ -4824,7 +4824,7 @@ function setupEditSlotModalListenersTech() {
                 }
             }
             numberPart = numberPart.replace(/[^0-9-]/g, '');
-            // ✅ LIMIT TO 4 DIGITS
+            // LIMIT TO 4 DIGITS
             if (numberPart.length > 4) {
                 numberPart = numberPart.substring(0, 4);
             }
@@ -4839,10 +4839,10 @@ function setupEditSlotModalListenersTech() {
         prefixPOBBtnListenerTech.addEventListener('click', () => setSelectedPrefixTech('POB-'));
     }
 
-    // ✅ CONTRACT INPUT - WITH 4 DIGIT LIMIT
+    // CONTRACT INPUT - WITH 4 DIGIT LIMIT
     const contractInput = document.getElementById('editContractNumberTech');
     if (contractInput) {
-        // ✅ REMOVE OLD EVENT LISTENERS BY CLONING
+        // REMOVE OLD EVENT LISTENERS BY CLONING
         const newContractInput = contractInput.cloneNode(true);
         contractInput.parentNode.replaceChild(newContractInput, contractInput);
         
@@ -4855,7 +4855,7 @@ function setupEditSlotModalListenersTech() {
             }
         });
 
-        // ✅ INPUT EVENT - LIMIT TO 4 DIGITS
+        // INPUT EVENT - LIMIT TO 4 DIGITS
         newContractInput.addEventListener('input', function() {
             const prefix = getTechnicianContractPrefix();
             let value = this.value;
@@ -4874,23 +4874,23 @@ function setupEditSlotModalListenersTech() {
                 }
             }
             
-            // ✅ REMOVE NON-NUMERIC CHARACTERS
+            // REMOVE NON-NUMERIC CHARACTERS
             numberPart = numberPart.replace(/[^0-9]/g, '');
             
-            // ✅ LIMIT TO 4 DIGITS ONLY
+            // LIMIT TO 4 DIGITS ONLY
             if (numberPart.length > 4) {
                 numberPart = numberPart.substring(0, 4);
                 showToast('Contract number limited to 4 digits', 'warning');
             }
             
-            // ✅ UPDATE VALUE
+            // UPDATE VALUE
             this.value = prefix + numberPart;
             
-            // ✅ I-SET ANG CURSOR SA DULO
+            // I-SET ANG CURSOR SA DULO
             this.setSelectionRange(this.value.length, this.value.length);
         });
 
-        // ✅ BLUR EVENT
+        // BLUR EVENT
         newContractInput.addEventListener('blur', function() {
             const prefix = getTechnicianContractPrefix();
             let value = this.value.trim();
@@ -4900,19 +4900,19 @@ function setupEditSlotModalListenersTech() {
             }
             if (!value.startsWith(prefix)) {
                 const numberPart = value.replace(/^[A-Z]+-/i, '');
-                // ✅ LIMIT TO 4 DIGITS
+                // LIMIT TO 4 DIGITS
                 const cleanNumber = numberPart.replace(/[^0-9]/g, '').substring(0, 4);
                 this.value = cleanNumber ? prefix + cleanNumber : prefix;
             }
         });
 
-        // ✅ KEYDOWN EVENT - PREVENT TYPING BEYOND 4 DIGITS
+        // KEYDOWN EVENT - PREVENT TYPING BEYOND 4 DIGITS
         newContractInput.addEventListener('keydown', function(e) {
             const prefix = getTechnicianContractPrefix();
             const currentValue = this.value;
             const numberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // ✅ IF ALREADY 4 DIGITS, PREVENT ADDING MORE
+            // IF ALREADY 4 DIGITS, PREVENT ADDING MORE
             if (numberPart.length >= 4) {
                 // Allow: backspace, delete, tab, escape, enter, arrow keys, home, end
                 const allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40];
@@ -4927,7 +4927,7 @@ function setupEditSlotModalListenersTech() {
             }
         });
 
-        // ✅ PASTE EVENT - LIMIT TO 4 DIGITS
+        // PASTE EVENT - LIMIT TO 4 DIGITS
         newContractInput.addEventListener('paste', function(e) {
             e.preventDefault();
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -4937,14 +4937,14 @@ function setupEditSlotModalListenersTech() {
             const currentValue = this.value;
             const currentNumberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // ✅ GET AVAILABLE SPACE (4 - current length)
+            // GET AVAILABLE SPACE (4 - current length)
             const availableSpace = 4 - currentNumberPart.length;
             if (availableSpace <= 0) {
                 showToast('Contract number already has 4 digits', 'warning');
                 return;
             }
             
-            // ✅ TAKE ONLY WHAT FITS
+            // TAKE ONLY WHAT FITS
             const newNumbers = numbersOnly.substring(0, availableSpace);
             if (newNumbers) {
                 const newValue = prefix + (currentNumberPart + newNumbers);
@@ -4996,10 +4996,10 @@ function showCustomerLocationMarkerOnMap() {
     const lat = sessionStorage.getItem('customerTargetLatitude');
     const lng = sessionStorage.getItem('customerTargetLongitude');
     
-    console.log('📍 showCustomerLocationMarkerOnMap called with:', { lat, lng });
+    console.log(' showCustomerLocationMarkerOnMap called with:', { lat, lng });
     
     if (!lat || !lng || !map) {
-        console.log('⚠️ No customer location or map not ready');
+        console.log(' No customer location or map not ready');
         return;
     }
     
@@ -5007,13 +5007,13 @@ function showCustomerLocationMarkerOnMap() {
     const lngNum = parseFloat(lng);
     
     if (isNaN(latNum) || isNaN(lngNum)) {
-        console.log('⚠️ Invalid customer coordinates');
+        console.log(' Invalid customer coordinates');
         return;
     }
     
-    console.log(`📍 Adding customer location marker at ${latNum}, ${lngNum}`);
+    console.log(` Adding customer location marker at ${latNum}, ${lngNum}`);
     
-    // ✅ REMOVE EXISTING MARKER IF ANY
+    // REMOVE EXISTING MARKER IF ANY
     if (customerLocationMarker) {
         map.removeLayer(customerLocationMarker);
         customerLocationMarker = null;
@@ -5023,13 +5023,13 @@ function showCustomerLocationMarkerOnMap() {
         customerLabelMarker = null;
     }
 
-    // ✅ SHOW CUSTOMER LEGEND ITEM
+    // SHOW CUSTOMER LEGEND ITEM
     const legendItem = document.getElementById('customerLegendItem');
     if (legendItem) {
         legendItem.style.display = 'flex';
     }
 
-    // ✅ SHOW CUSTOMER PIN BUTTON
+    // SHOW CUSTOMER PIN BUTTON
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         customerPinBtn.style.display = 'inline-flex';
@@ -5037,11 +5037,11 @@ function showCustomerLocationMarkerOnMap() {
         customerPinBtn.style.opacity = '1';
         customerPinBtn.dataset.lat = latNum;
         customerPinBtn.dataset.lng = lngNum;
-        console.log('✅ Customer Pin button shown with coords:', latNum, lngNum);
-        console.log('✅ Button display style:', customerPinBtn.style.display);
-        console.log('✅ Button classes:', customerPinBtn.className);
+        console.log(' Customer Pin button shown with coords:', latNum, lngNum);
+        console.log(' Button display style:', customerPinBtn.style.display);
+        console.log(' Button classes:', customerPinBtn.className);
     } else {
-        console.warn('⚠️ Customer Pin button NOT FOUND in DOM!');
+        console.warn(' Customer Pin button NOT FOUND in DOM!');
         setTimeout(() => {
             const btn = document.getElementById('customerPinBtn');
             if (btn) {
@@ -5050,14 +5050,14 @@ function showCustomerLocationMarkerOnMap() {
                 btn.style.opacity = '1';
                 btn.dataset.lat = latNum;
                 btn.dataset.lng = lngNum;
-                console.log('✅ Customer Pin button found and shown (delayed)');
+                console.log(' Customer Pin button found and shown (delayed)');
             } else {
-                console.error('❌ Customer Pin button still not found!');
+                console.error(' Customer Pin button still not found!');
             }
         }, 500);
     }
     
-    // ✅ CREATE CUSTOM DIV ICON FOR CUSTOMER LOCATION
+    // CREATE CUSTOM DIV ICON FOR CUSTOMER LOCATION
     const customerIcon = L.divIcon({
         className: 'customer-location-marker',
         html: `
@@ -5084,19 +5084,19 @@ function showCustomerLocationMarkerOnMap() {
         popupAnchor: [0, -9]
     });
     
-    // ✅ ADD THE MARKER
+    // ADD THE MARKER
     customerLocationMarker = L.marker([latNum, lngNum], {
         icon: customerIcon,
         zIndexOffset: 2000
     }).addTo(map);
     
-    // ✅ FLY TO THE LOCATION
+    // FLY TO THE LOCATION
     map.flyTo([latNum, lngNum], 16, {
         animate: true,
         duration: 1.5
     });
     
-    // ✅ ADD POPUP WITH INFO - WALANG COORDINATES AT COPY BUTTON
+    // ADD POPUP WITH INFO - WALANG COORDINATES AT COPY BUTTON
     customerLocationMarker.bindPopup(`
         <div style="padding: 4px 0; min-width: 160px;">
             <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px; text-align: center;">
@@ -5110,17 +5110,17 @@ function showCustomerLocationMarkerOnMap() {
         </div>
     `);
     
-    // ✅ OPEN POPUP AUTOMATICALLY AFTER DELAY
+    // OPEN POPUP AUTOMATICALLY AFTER DELAY
     setTimeout(() => {
         if (customerLocationMarker) {
             customerLocationMarker.openPopup();
         }
     }, 800);
     
-    showToast('📍 Customer location loaded. Add NAP box near this pin.', 'info');
+    showToast(' Customer location loaded. Add NAP box near this pin.', 'info');
 }
 
-// ✅ FUNCTION TO REMOVE CUSTOMER LOCATION MARKER
+// FUNCTION TO REMOVE CUSTOMER LOCATION MARKER
 function removeCustomerLocationMarker() {
     if (customerLocationMarker) {
         map.removeLayer(customerLocationMarker);
@@ -5131,27 +5131,27 @@ function removeCustomerLocationMarker() {
         customerLabelMarker = null;
     }
     
-    // ✅ HIDE CUSTOMER LEGEND ITEM
+    // HIDE CUSTOMER LEGEND ITEM
     const legendItem = document.getElementById('customerLegendItem');
     if (legendItem) {
         legendItem.style.display = 'none';
     }
 
-                // ✅ HIDE CUSTOMER PIN BUTTON
+                // HIDE CUSTOMER PIN BUTTON
     const customerPinBtn = document.getElementById('customerPinBtn');
     if (customerPinBtn) {
         customerPinBtn.style.display = 'none';
         customerPinBtn.style.visibility = 'hidden';
         customerPinBtn.dataset.lat = '';
         customerPinBtn.dataset.lng = '';
-        console.log('✅ Customer Pin button hidden');
+        console.log(' Customer Pin button hidden');
     }
     
     // I-clear din ang sessionStorage flags
     sessionStorage.removeItem('showCustomerLocationMarker');
     sessionStorage.removeItem('customerTargetLatitude');
     sessionStorage.removeItem('customerTargetLongitude');
-    console.log('🗑️ Customer location marker removed');
+    console.log(' Customer location marker removed');
 }
 
 
@@ -5163,9 +5163,9 @@ function copyCustomerCoordinates(lat, lng) {
     
     // Copy to clipboard
     navigator.clipboard.writeText(coordsText).then(() => {
-        showToast('📍 Coordinates copied to clipboard!', 'success');
+        showToast(' Coordinates copied to clipboard!', 'success');
         
-        // ✅ I-STORE SA SESSIONSTORAGE PARA MAGAMIT SA PASTE
+        // I-STORE SA SESSIONSTORAGE PARA MAGAMIT SA PASTE
         sessionStorage.setItem('copiedCoordinates', coordsText);
         sessionStorage.setItem('copiedLat', lat.toFixed(6));
         sessionStorage.setItem('copiedLng', lng.toFixed(6));
@@ -5177,7 +5177,7 @@ function copyCustomerCoordinates(lat, lng) {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        showToast('📍 Coordinates copied to clipboard!', 'success');
+        showToast(' Coordinates copied to clipboard!', 'success');
         
         sessionStorage.setItem('copiedCoordinates', coordsText);
         sessionStorage.setItem('copiedLat', lat.toFixed(6));
@@ -5192,7 +5192,7 @@ function setupCoordinatePasteAutoFill() {
     
     if (!latInput || !lngInput) return;
     
-    // ✅ LISTEN TO PASTE EVENT ON LATITUDE FIELD
+    // LISTEN TO PASTE EVENT ON LATITUDE FIELD
     latInput.addEventListener('paste', function(e) {
         // Give time for the paste to complete
         setTimeout(() => {
@@ -5206,16 +5206,16 @@ function setupCoordinatePasteAutoFill() {
                 const lng = parseFloat(parts[1]);
                 
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    // ✅ AUTO-FILL BOTH FIELDS
+                    // AUTO-FILL BOTH FIELDS
                     document.getElementById('coordLatitude').value = lat.toFixed(6);
                     document.getElementById('coordLongitude').value = lng.toFixed(6);
                     
-                    // ✅ TRIGGER INPUT EVENT PARA MAG-UPDATE ANG UI
+                    // TRIGGER INPUT EVENT PARA MAG-UPDATE ANG UI
                     const inputEvent = new Event('input', { bubbles: true });
                     document.getElementById('coordLatitude').dispatchEvent(inputEvent);
                     document.getElementById('coordLongitude').dispatchEvent(inputEvent);
                     
-                    // ✅ HIGHLIGHT FIELDS
+                    // HIGHLIGHT FIELDS
                     document.getElementById('coordLatitude').style.borderColor = '#22c55e';
                     document.getElementById('coordLongitude').style.borderColor = '#22c55e';
                     document.getElementById('coordLatitude').style.background = '#f0fdf4';
@@ -5228,9 +5228,9 @@ function setupCoordinatePasteAutoFill() {
                         document.getElementById('coordLongitude').style.background = '';
                     }, 2000);
                     
-                    showToast('✅ Both coordinates auto-filled!', 'success');
+                    showToast(' Both coordinates auto-filled!', 'success');
                     
-                    // ✅ AUTO-VALIDATE AFTER FILL
+                    // AUTO-VALIDATE AFTER FILL
                     setTimeout(() => {
                         if (typeof validateCoordinates === 'function') {
                             validateCoordinates();
@@ -5241,7 +5241,7 @@ function setupCoordinatePasteAutoFill() {
         }, 50);
     });
     
-    // ✅ LISTEN TO PASTE EVENT ON LONGITUDE FIELD (same logic)
+    // LISTEN TO PASTE EVENT ON LONGITUDE FIELD (same logic)
     lngInput.addEventListener('paste', function(e) {
         setTimeout(() => {
             const pastedText = this.value.trim();
@@ -5271,7 +5271,7 @@ function setupCoordinatePasteAutoFill() {
                         document.getElementById('coordLongitude').style.background = '';
                     }, 2000);
                     
-                    showToast('✅ Both coordinates auto-filled!', 'success');
+                    showToast(' Both coordinates auto-filled!', 'success');
                     
                     setTimeout(() => {
                         if (typeof validateCoordinates === 'function') {

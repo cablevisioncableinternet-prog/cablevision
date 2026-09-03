@@ -495,23 +495,23 @@ function updatePasswordStrengthUI(password) {
     
     switch(strength) {
         case 'too-short':
-            message = '⚠️ Password must be at least 8 characters';
+            message = ' Password must be at least 8 characters';
             className = 'weak';
             break;
         case 'all-uppercase':
-            message = '⚠️ Password must contain at least one lowercase letter';
+            message = ' Password must contain at least one lowercase letter';
             className = 'weak';
             break;
         case 'all-numbers':
-            message = '⚠️ Password cannot be all numbers';
+            message = ' Password cannot be all numbers';
             className = 'weak';
             break;
         case 'acceptable':
-            message = '✓ Password looks good (add numbers for stronger password)';
+            message = ' Password looks good (add numbers for stronger password)';
             className = 'strong';
             break;
         case 'strong':
-            message = '✓ Strong password!';
+            message = ' Strong password!';
             className = 'strong';
             break;
         default:
@@ -579,7 +579,7 @@ function clearFieldErrors() {
     const errorElements = [emailError, contactError, currentPasswordError, confirmPasswordError];
     const inputElements = [emailEl, contactEl, currentPasswordEl, confirmPasswordEl];
     
-    // ✅ TANGGALIN ANG NAME ERROR
+    // TANGGALIN ANG NAME ERROR
     // const errorElements = [nameError, emailError, contactError, confirmPasswordError];
     // const inputElements = [nameEl, emailEl, contactEl, confirmPasswordEl];
     
@@ -615,7 +615,7 @@ function validateForm() {
     
     clearFieldErrors();
     
-    // ✅ TANGGALIN ANG NAME VALIDATION (hindi na editable)
+    // TANGGALIN ANG NAME VALIDATION (hindi na editable)
     // const name = nameEl ? nameEl.value : '';
     // const nameValidation = validateName(name);
     // if (!nameValidation.isValid) {
@@ -702,7 +702,7 @@ function validateForm() {
 // ===================== Load Admin Profile =====================
 async function loadAdminProfile() {
     try {
-        // 👇 KUHAIN ANG USERNAME MULA SA FLASK SESSION GAMIT ANG TAB ID
+        // KUHAIN ANG USERNAME MULA SA FLASK SESSION GAMIT ANG TAB ID
         const username = await getAdminUsername();
         const tabId = getTabId();
         
@@ -713,8 +713,8 @@ async function loadAdminProfile() {
             return;
         }
         
-        console.log("🔍 Loading profile for admin:", username);
-        console.log("🆔 Tab ID:", tabId);
+        console.log(" Loading profile for admin:", username);
+        console.log(" Tab ID:", tabId);
 
         const res = await fetch(`/api/admin/profile?username=${encodeURIComponent(username)}&tab_id=${tabId}`);
         const data = await res.json();
@@ -744,7 +744,7 @@ async function loadAdminProfile() {
         if (emailEl) emailEl.value = data.email || "";
         if (contactEl) contactEl.value = data.contact || "";
 
-        // 👇 I-STORE SA SESSIONSTORAGE PARA SA MGA FUNCTIONS
+        // I-STORE SA SESSIONSTORAGE PARA SA MGA FUNCTIONS
         sessionStorage.setItem("adminUsername", data.username);
         localStorage.setItem("adminUsername", data.username);
         
@@ -802,15 +802,15 @@ function hideConfirmModal() {
 // ===================== Edit Mode =====================
 if (editBtn) {
     editBtn.addEventListener("click", () => {
-        // ✅ NAME AY LAGING DISABLED (hindi na-e-edit)
+        // NAME AY LAGING DISABLED (hindi na-e-edit)
         // [nameEl, emailEl, contactEl, passwordEl, confirmPasswordEl].forEach(f => {
         //     if (f) f.disabled = false;
         // });
         
-        // ✅ I-ENABLE LANG ANG MGA Pwede i-edit
+        // I-ENABLE LANG ANG MGA Pwede i-edit
         if (emailEl) emailEl.disabled = false;
         if (contactEl) {
-            // ✅ I-REMOVE ANG SPACES PARA SA EDITING
+            // I-REMOVE ANG SPACES PARA SA EDITING
             contactEl.value = contactEl.value.replace(/\s/g, '');
             contactEl.disabled = false;
         }
@@ -826,7 +826,7 @@ if (editBtn) {
         if (passwordStrength) passwordStrength.style.display = "none";
         clearFieldErrors();
         
-        if (emailEl) emailEl.focus();  // ✅ FOCUS SA EMAIL
+        if (emailEl) emailEl.focus();  // FOCUS SA EMAIL
     });
 }
 
@@ -870,7 +870,7 @@ async function updateProfile() {
     const password = passwordEl ? passwordEl.value.trim() : "";
     const currentPassword = currentPasswordEl ? currentPasswordEl.value : "";
     
-    // ✅ KUNG MAY BINAGO SA EMAIL, I-VERIFY MUNA
+    // KUNG MAY BINAGO SA EMAIL, I-VERIFY MUNA
     if (email && email !== originalValues.email) {
         try {
             const checkRes = await fetch(`/api/admin/check-email?email=${encodeURIComponent(email)}&tab_id=${tabId}`);
@@ -906,7 +906,7 @@ async function updateProfile() {
         if (res.ok) {
             showToast("Profile updated successfully!");
             
-            // ✅ I-FORMAT ANG CONTACT NUMBER PAGKATAPOS MAG-SAVE
+            // I-FORMAT ANG CONTACT NUMBER PAGKATAPOS MAG-SAVE
             if (contactEl) {
                 contactEl.value = formatContact(contactEl.value);
             }
@@ -1171,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // ===================== RE-INITIALIZE ON TAB VISIBILITY =====================
 document.addEventListener('visibilitychange', async () => {
     if (!document.hidden) {
-        console.log('👁️ Tab became visible, reloading profile...');
+        console.log(' Tab became visible, reloading profile...');
         await loadAdminProfile();
     }
 });

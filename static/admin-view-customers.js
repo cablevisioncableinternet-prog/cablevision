@@ -745,7 +745,7 @@ document.addEventListener('keydown', function(e) {
 // ================= VISIBILITY CHANGE - REFRESH ON TAB SWITCH =================
 document.addEventListener('visibilitychange', async () => {
     if (!document.hidden) {
-        console.log('👁️ Tab became visible, refreshing customers...');
+        console.log(' Tab became visible, refreshing customers...');
         await refreshAdminInfo();
         clearCustomersCache();
         fetchApprovedCustomers(true);

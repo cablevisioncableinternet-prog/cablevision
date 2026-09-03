@@ -1,11 +1,11 @@
 // admin-napbox.js - ADMIN NAP BOX MONITORING (WITH TAB ID SUPPORT)
 
-// ==================== 🆕 GET TAB ID HELPER (BAGO) ====================
+// ==================== GET TAB ID HELPER (BAGO) ====================
 function getTabId() {
     return sessionStorage.getItem('tab_id') || '';
 }
 
-// ==================== 🆕 GET ADMIN USERNAME FROM FLASK SESSION (BAGO) ====================
+// ==================== GET ADMIN USERNAME FROM FLASK SESSION (BAGO) ====================
 async function getAdminUsername() {
     const tabId = getTabId();
     try {
@@ -24,7 +24,7 @@ async function getAdminUsername() {
     return localStorage.getItem('adminUsername') || null;
 }
 
-// ==================== 🆕 GET ADMIN AREA FROM FLASK SESSION (BAGO) ====================
+// ==================== GET ADMIN AREA FROM FLASK SESSION (BAGO) ====================
 async function getAdminArea() {
     const tabId = getTabId();
     try {
@@ -43,7 +43,7 @@ async function getAdminArea() {
     return localStorage.getItem('adminArea') || null;
 }
 
-// ==================== 🆕 REFRESH ADMIN INFO FROM SESSION (BAGO) ====================
+// ==================== REFRESH ADMIN INFO FROM SESSION (BAGO) ====================
 async function refreshAdminInfo() {
     const adminUsername = await getAdminUsername();
     const tabId = getTabId();
@@ -214,9 +214,9 @@ function showToast(message, type = 'info') {
     }
 }
 
-// ==================== 🆕 LOAD ADMIN PROFILE (UPDATED WITH TAB ID) ====================
+// ==================== LOAD ADMIN PROFILE (UPDATED WITH TAB ID) ====================
 async function loadAdminProfile() {
-    // 👇 KUHAIN ANG USERNAME MULA SA FLASK SESSION
+    // KUHAIN ANG USERNAME MULA SA FLASK SESSION
     const adminUsername = await getAdminUsername();
     const tabId = getTabId();
     
@@ -226,7 +226,7 @@ async function loadAdminProfile() {
     }
     
     try {
-        // 👇 ISAMA ANG TAB ID SA REQUEST
+        // ISAMA ANG TAB ID SA REQUEST
         const response = await fetch(`/api/admin/profile?username=${encodeURIComponent(adminUsername)}&tab_id=${tabId}`);
         if (!response.ok) throw new Error("Failed to fetch profile");
         const profile = await response.json();
@@ -238,8 +238,8 @@ async function loadAdminProfile() {
         if (profileNameSpan) profileNameSpan.textContent = '';
         
         console.log(`=========================================`);
-        console.log(`👤 Admin raw assigned area: "${adminRawAssignedArea}"`);
-        console.log(`👤 Admin normalized area: "${adminAssignedArea}"`);
+        console.log(` Admin raw assigned area: "${adminRawAssignedArea}"`);
+        console.log(` Admin normalized area: "${adminAssignedArea}"`);
         console.log(`=========================================`);
         
         const dashboardHeader = document.querySelector('.dashboard-header-left p');
@@ -266,7 +266,7 @@ async function loadAdminBarangays() {
         if (response.ok) {
             const areas = await response.json();
             adminAllBarangays = [...new Set(areas.map(a => a.barangay))];
-            console.log(`✅ Loaded ${adminAllBarangays.length} barangays for admin area: ${adminAssignedArea}`);
+            console.log(` Loaded ${adminAllBarangays.length} barangays for admin area: ${adminAssignedArea}`);
         } else {
             console.warn('Failed to load barangays from API');
         }
@@ -275,12 +275,12 @@ async function loadAdminBarangays() {
     }
 }
 
-// ==================== 🆕 LOAD NAPBOX DATA (UPDATED WITH TAB ID) ====================
+// ==================== LOAD NAPBOX DATA (UPDATED WITH TAB ID) ====================
 async function loadAdminNapboxData() {
-    console.log('🔄 Loading admin NAP box data...');
+    console.log(' Loading admin NAP box data...');
     
     try {
-        // 👇 I-REFRESH MUNA ANG ADMIN INFO
+        // I-REFRESH MUNA ANG ADMIN INFO
         await refreshAdminInfo();
         
         const adminUsername = await getAdminUsername();
@@ -291,11 +291,11 @@ async function loadAdminNapboxData() {
             return;
         }
         
-        // 👇 ISAMA ANG TAB ID SA REQUEST
+        // ISAMA ANG TAB ID SA REQUEST
         const techResponse = await fetch(`/api/superadmin/technicians?tab_id=${tabId}`);
         const technicians = await techResponse.json();
         
-        console.log(`📋 Found ${technicians.length} technicians total`);
+        console.log(` Found ${technicians.length} technicians total`);
         
         let filteredTechnicians = technicians;
         
@@ -305,13 +305,13 @@ async function loadAdminNapboxData() {
                 const isMatch = techArea === adminAssignedArea;
                 return isMatch;
             });
-            console.log(`📋 Filtered to ${filteredTechnicians.length} technicians in area: ${adminAssignedArea}`);
+            console.log(` Filtered to ${filteredTechnicians.length} technicians in area: ${adminAssignedArea}`);
         } else {
-            console.log(`📋 No admin assigned area, showing ALL technicians`);
+            console.log(` No admin assigned area, showing ALL technicians`);
         }
         
         if (filteredTechnicians.length === 0) {
-            console.warn(`⚠️ No technicians found in area: ${adminAssignedArea}`);
+            console.warn(` No technicians found in area: ${adminAssignedArea}`);
             const grid = document.getElementById('adminSlotsGrid');
             if (grid) {
                 grid.innerHTML = `<div class="no-data-message" style="text-align: center; padding: 40px;">
@@ -328,15 +328,15 @@ async function loadAdminNapboxData() {
         
         for (const tech of filteredTechnicians) {
             try {
-                console.log(`📡 Fetching napboxes for technician: ${tech.technician_id} (${tech.area})`);
-                // 👇 ISAMA ANG TAB ID SA REQUEST
+                console.log(` Fetching napboxes for technician: ${tech.technician_id} (${tech.area})`);
+                // ISAMA ANG TAB ID SA REQUEST
                 const response = await fetch(`/api/technician/technician-napbox?technician_id=${encodeURIComponent(tech.technician_id)}&tab_id=${tabId}`);
                 if (response.ok) {
                     const data = await response.json();
                     const napboxes = data.napboxes || [];
                     const slots = data.slots || [];
                     
-                    console.log(`   📦 Found ${napboxes.length} napboxes, ${slots.length} slots`);
+                    console.log(`   Found ${napboxes.length} napboxes, ${slots.length} slots`);
                     
                     napboxes.forEach(napbox => {
                         if (!napboxIds.has(napbox.id)) {
@@ -354,7 +354,7 @@ async function loadAdminNapboxData() {
                         }
                     });
                 } else {
-                    console.warn(`   ⚠️ Failed to fetch for ${tech.technician_id}: ${response.status}`);
+                    console.warn(`   Failed to fetch for ${tech.technician_id}: ${response.status}`);
                 }
             } catch (err) {
                 console.warn(`Error loading napboxes for technician ${tech.technician_id}:`, err);
@@ -365,7 +365,7 @@ async function loadAdminNapboxData() {
         adminAllSlots = allSlots;
         
         console.log(`=========================================`);
-        console.log(`✅ Loaded ${adminAllNapboxes.length} napboxes and ${adminAllSlots.length} slots`);
+        console.log(` Loaded ${adminAllNapboxes.length} napboxes and ${adminAllSlots.length} slots`);
         console.log(`=========================================`);
         
         const stats = {
@@ -390,7 +390,7 @@ async function loadAdminNapboxData() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading NAP box data:', error);
+        console.error(' Error loading NAP box data:', error);
         const grid = document.getElementById('adminSlotsGrid');
         if (grid) {
             grid.innerHTML = `<div class="loading-spinner"><p style="color: #ef4444;">Failed to load data: ${error.message}</p></div>`;
@@ -411,7 +411,7 @@ function clearAdminMarkers() {
     }
     adminMarkers = [];
     adminCircles = [];
-    console.log('🗑️ Cleared all markers and circles');
+    console.log(' Cleared all markers and circles');
 }
 
 function updateAdminStats(stats) {
@@ -459,7 +459,7 @@ async function loadAdminBarangayFilter(selectedArea) {
     });
     
     barangaySelect.disabled = false;
-    console.log(`📋 Loaded ${barangays.length} barangays for filter`);
+    console.log(` Loaded ${barangays.length} barangays for filter`);
 }
 
 // ==================== GET FILTERED SLOTS ====================
@@ -496,18 +496,18 @@ function renderAdminSlotsGrid() {
     }
     
     grid.innerHTML = filteredSlots.map(slot => {
-        // ✅ KUNIN ANG NAPBOX NAME
+        // KUNIN ANG NAPBOX NAME
         const napbox = adminAllNapboxes.find(n => n.id === slot.napbox_id);
         const napboxName = napbox ? napbox.name : slot.napbox_name || 'N/A';
         // I-shorten ang napbox name kung masyadong mahaba
         const shortNapboxName = napboxName.length > 14 ? napboxName.substring(0, 12) + '...' : napboxName;
         
-        // ✅ AVAILABLE / OCCUPIED LABEL
+        // AVAILABLE / OCCUPIED LABEL
         const isAvailable = slot.status === 'available';
         const statusClass = isAvailable ? 'available' : 'occupied';
         const statusText = isAvailable ? 'AVAILABLE' : 'OCCUPIED';
         
-        // ✅ ACTIVE / INACTIVE LABEL
+        // ACTIVE / INACTIVE LABEL
         // ACTIVE: kapag OCCUPIED (may customer na naka-assign)
         // INACTIVE: kapag AVAILABLE (walang customer) - kahit may previous customer name
         const isActive = slot.status === 'occupied' && slot.customer_name && slot.customer_name !== '';
@@ -516,7 +516,7 @@ function renderAdminSlotsGrid() {
         
         const slotData = JSON.stringify(slot).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
         
-        // ✅ CUSTOMER NAME - one line, walang ellipsis
+        // CUSTOMER NAME - one line, walang ellipsis
         let customerDisplay = '';
         if (slot.customer_name) {
             const customerName = slot.customer_name;
@@ -556,7 +556,7 @@ function initAdminMap() {
         adminMap = null;
     }
     
-    console.log('🗺️ Initializing admin map...');
+    console.log(' Initializing admin map...');
     
     const allowedBounds = L.latLngBounds([14.18, 121.34], [14.33, 121.48]);
     adminMap = L.map('adminNapboxMap').fitBounds(allowedBounds);
@@ -595,7 +595,7 @@ function initAdminMap() {
     satelliteControl.addTo(adminMap);
     
     adminMap.on('load', () => {
-        console.log('✅ Admin map loaded');
+        console.log(' Admin map loaded');
         addAdminNapboxMarkers();
         if (adminAssignedArea) {
             showAdminCityBoundary(adminAssignedArea);
@@ -604,7 +604,7 @@ function initAdminMap() {
     
     setTimeout(() => {
         if (adminMap) {
-            console.log('⏰ Timeout: Adding markers to admin map');
+            console.log(' Timeout: Adding markers to admin map');
             addAdminNapboxMarkers();
             if (adminAssignedArea) {
                 showAdminCityBoundary(adminAssignedArea);
@@ -661,7 +661,7 @@ function adminToggleSatelliteView() {
 // ==================== ADD NAPBOX MARKERS ====================
 function addAdminNapboxMarkers() {
     if (!adminMap) {
-        console.error('❌ adminMap is null, cannot add markers');
+        console.error(' adminMap is null, cannot add markers');
         return;
     }
     
@@ -669,7 +669,7 @@ function addAdminNapboxMarkers() {
     
     let napboxesToShow = [...adminAllNapboxes];
     
-    console.log(`📍 Total napboxes in adminAllNapboxes: ${adminAllNapboxes.length}`);
+    console.log(` Total napboxes in adminAllNapboxes: ${adminAllNapboxes.length}`);
     
     if (adminAssignedArea && adminAssignedArea !== '') {
         const beforeFilterCount = napboxesToShow.length;
@@ -678,13 +678,13 @@ function addAdminNapboxMarkers() {
             const isMatch = napboxAreaNorm === adminAssignedArea;
             return isMatch;
         });
-        console.log(`📍 Filtered napboxes: ${beforeFilterCount} → ${napboxesToShow.length} (area: ${adminAssignedArea})`);
+        console.log(` Filtered napboxes: ${beforeFilterCount} → ${napboxesToShow.length} (area: ${adminAssignedArea})`);
     } else {
-        console.log(`📍 No area filter applied, showing all ${napboxesToShow.length} napboxes`);
+        console.log(` No area filter applied, showing all ${napboxesToShow.length} napboxes`);
     }
     
     if (napboxesToShow.length === 0) {
-        console.log('⚠️ No napboxes to show after filtering');
+        console.log(' No napboxes to show after filtering');
         return;
     }
     
@@ -745,7 +745,7 @@ function addAdminNapboxMarkers() {
         }
     });
     
-    console.log(`✅ Added ${validMarkersAdded} markers to admin map (out of ${napboxesToShow.length} napboxes)`);
+    console.log(` Added ${validMarkersAdded} markers to admin map (out of ${napboxesToShow.length} napboxes)`);
     
     if (validMarkersAdded > 0 && adminMarkers.length > 0) {
         try {
@@ -753,7 +753,7 @@ function addAdminNapboxMarkers() {
             const bounds = group.getBounds();
             if (bounds.isValid()) {
                 adminMap.fitBounds(bounds, { padding: [50, 50] });
-                console.log('🔍 Zoomed to fit all markers');
+                console.log(' Zoomed to fit all markers');
             }
         } catch (e) {
             console.warn('Could not auto-zoom:', e);
@@ -873,7 +873,7 @@ function showAdminSlotDetails(slot) {
     const napbox = adminAllNapboxes.find(n => n.id === slot.napbox_id);
     const napboxName = napbox ? (napbox.name || 'N/A') : (slot.napbox_name || 'N/A');
     
-    // ✅ Check kung may previous data pero available na ang slot
+    // Check kung may previous data pero available na ang slot
     const hasCustomerData = slot.customer_name || slot.customer_phone || slot.application_number;
     const showClearButton = slot.status === 'available' && hasCustomerData;
     
@@ -1022,7 +1022,7 @@ function closeAdminSlotModal() {
 let adminPendingClearSlot = null;
 
 function adminShowClearSlotModal(slot) {
-    // ✅ UNA, ISARA ANG SLOT DETAILS MODAL
+    // UNA, ISARA ANG SLOT DETAILS MODAL
     closeAdminSlotModal();
     
     // I-set ang pending data
@@ -1082,7 +1082,7 @@ async function adminExecuteClearSlot() {
             tab_id: tabId
         };
         
-        console.log("📤 Sending request to server:", requestBody);
+        console.log(" Sending request to server:", requestBody);
         
         const response = await fetch(`/api/technician/clear-slot`, {
             method: 'POST',
@@ -1092,12 +1092,12 @@ async function adminExecuteClearSlot() {
             body: JSON.stringify(requestBody)
         });
         
-        console.log("📥 Response status:", response.status);
+        console.log(" Response status:", response.status);
         
         let result;
         try {
             result = await response.json();
-            console.log("📥 Response data:", result);
+            console.log(" Response data:", result);
         } catch (parseError) {
             console.error('Error parsing response:', parseError);
             showToast('Server error: Invalid response', 'error');
@@ -1110,7 +1110,7 @@ async function adminExecuteClearSlot() {
         
         showToast(`Slot #${slotNumber} cleared successfully!`, 'success');
         
-        // ✅ SIGURADUHIN NA SARADO ANG SLOT DETAILS MODAL
+        // SIGURADUHIN NA SARADO ANG SLOT DETAILS MODAL
         closeAdminSlotModal();
         
         // I-RELOAD ANG SLOTS DATA
@@ -1142,7 +1142,7 @@ function showEditSlotModal(slot) {
     document.getElementById('editCustomerName').value = slot.customer_name || '';
     document.getElementById('editCustomerPhone').value = slot.customer_phone || '';
     
-    // ✅ CHECK KUNG PILA ANG AREA - SHOW PREFIX CHOICES
+    // CHECK KUNG PILA ANG AREA - SHOW PREFIX CHOICES
     const normalizedAreaForPrefix = normalizeAdminAreaName(adminAssignedArea || '');
     const prefixWrapper = document.getElementById('prefixChoiceWrapper');
     const prefixGIFBtn = document.getElementById('prefixChoiceGIF');
@@ -1169,7 +1169,7 @@ function showEditSlotModal(slot) {
         adminSelectedContractPrefix = null;
     }
     
-    // ✅ I-FORMAT ANG CONTRACT NUMBER NA MAY PREFIX
+    // I-FORMAT ANG CONTRACT NUMBER NA MAY PREFIX
     const contractPrefix = getAdminContractPrefix();
     let contractValue = slot.contract_number || '';
     
@@ -1218,7 +1218,7 @@ function showEditSlotModal(slot) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    // ✅ I-FOCUS SA NAME FIELD AT SELECT ALL TEXT
+    // I-FOCUS SA NAME FIELD AT SELECT ALL TEXT
     setTimeout(() => {
         const nameField = document.getElementById('editCustomerName');
         if (nameField) {
@@ -1275,7 +1275,7 @@ async function saveEditSlot() {
     const nameError = document.getElementById('editNameError');
     const contractError = document.getElementById('editContractError');
     
-    // ✅ I-RESET ANG MGA ERROR MESSAGES
+    // I-RESET ANG MGA ERROR MESSAGES
     nameInput.className = 'form-input';
     contractInput.className = 'form-input';
     if (nameError) {
@@ -1294,14 +1294,14 @@ async function saveEditSlot() {
         if (!customerName) {
             nameInput.className = 'form-input input-error';
             if (nameError) {
-                nameError.textContent = '⚠️ Customer name is required when slot is OCCUPIED';
+                nameError.textContent = ' Customer name is required when slot is OCCUPIED';
                 nameError.style.display = 'flex';
             }
             hasError = true;
             errorMessages.push('Customer Name');
         }
         
-        // ✅ VALIDATE: CHECK IF CONTRACT NUMBER IS EXACTLY 4 DIGITS
+        // VALIDATE: CHECK IF CONTRACT NUMBER IS EXACTLY 4 DIGITS
         if (cleanContractNumber) {
             const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
             if (numberPart.length !== 4) {
@@ -1325,7 +1325,7 @@ async function saveEditSlot() {
         }
     }
     
-    // ✅ VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
+    // VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
     if (cleanContractNumber && selectedStatus === 'occupied') {
         try {
             const response = await fetch('/api/check-contract-number-exists', {
@@ -1403,7 +1403,7 @@ async function saveEditSlot() {
             if (response.status === 400 && data.error && data.error.includes('already used')) {
                 contractInput.className = 'form-input input-error';
                 if (contractError) {
-                    contractError.textContent = `⚠️ ${data.error}`;
+                    contractError.textContent = ` ${data.error}`;
                     contractError.style.display = 'flex';
                 }
                 showToast(data.error, 'error');
@@ -1586,7 +1586,7 @@ async function getAdminAccurateBarangay(lat, lng) {
                 let detectedCity = props.city_name || "";
                 let detectedBarangay = props.brgy_name || "";
                 
-                console.log(`📍 GeoRisk raw: City="${detectedCity}", Barangay="${detectedBarangay}"`);
+                console.log(` GeoRisk raw: City="${detectedCity}", Barangay="${detectedBarangay}"`);
                 
                 if (detectedBarangay) {
                     // I-convert sa Proper Case para tumugma sa database
@@ -1602,7 +1602,7 @@ async function getAdminAccurateBarangay(lat, lng) {
                     
 // SPECIAL HANDLING para sa Santa Cruz Poblacion - GAMIT ANG ROMAN NUMERALS
 if (detectedCity === "Santa Cruz") {
-    console.log(`🔍 Raw detected barangay from GeoRisk: "${detectedBarangay}"`);
+    console.log(` Raw detected barangay from GeoRisk: "${detectedBarangay}"`);
     
     let number = '';
     let rawName = detectedBarangay;
@@ -1611,7 +1611,7 @@ if (detectedCity === "Santa Cruz") {
     let match = rawName.match(/Poblacion\s*(\d+)/i);
     if (match) {
         number = match[1];
-        console.log(`✅ Pattern 1 (Poblacion X): ${number}`);
+        console.log(` Pattern 1 (Poblacion X): ${number}`);
     }
     
     // Pattern 2: "Barangay 1 (Poblacion)", "Barangay 2 (Poblacion)", etc.
@@ -1619,7 +1619,7 @@ if (detectedCity === "Santa Cruz") {
         match = rawName.match(/Barangay\s*(\d+)\s*\(Poblacion\)/i);
         if (match) {
             number = match[1];
-            console.log(`✅ Pattern 2 (Barangay X (Poblacion)): ${number}`);
+            console.log(` Pattern 2 (Barangay X (Poblacion)): ${number}`);
         }
     }
     
@@ -1628,7 +1628,7 @@ if (detectedCity === "Santa Cruz") {
         match = rawName.match(/Barangay\s*(\d+)/i);
         if (match) {
             number = match[1];
-            console.log(`✅ Pattern 3 (Barangay X): ${number}`);
+            console.log(` Pattern 3 (Barangay X): ${number}`);
         }
     }
     
@@ -1640,7 +1640,7 @@ if (detectedCity === "Santa Cruz") {
         match = rawName.match(/\b(I|II|III|IV|V)\b/i);
         if (match) {
             number = romanMap[match[1].toUpperCase()];
-            console.log(`✅ Pattern 4 (Roman numeral ${match[1]} → ${number})`);
+            console.log(` Pattern 4 (Roman numeral ${match[1]} → ${number})`);
         }
     }
     
@@ -1653,23 +1653,23 @@ if (detectedCity === "Santa Cruz") {
         for (const [spanish, num] of Object.entries(spanishMap)) {
             if (rawName.toLowerCase().includes(spanish)) {
                 number = num;
-                console.log(`✅ Pattern 5 (Spanish ${spanish} → ${number})`);
+                console.log(` Pattern 5 (Spanish ${spanish} → ${number})`);
                 break;
             }
         }
     }
     
-    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    // I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
     const numToRoman = {
         '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
     };
     
     if (number && numToRoman[number]) {
         detectedBarangay = `Poblacion ${numToRoman[number]}`;
-        console.log(`🎯 FINAL Santa Cruz barangay (Roman): "${detectedBarangay}"`);
+        console.log(` FINAL Santa Cruz barangay (Roman): "${detectedBarangay}"`);
     } else if (rawName.toLowerCase().includes('poblacion')) {
         detectedBarangay = 'Poblacion I';
-        console.log(`⚠️ Fallback to Poblacion I`);
+        console.log(` Fallback to Poblacion I`);
     } else {
         // I-capitalize lang ang normal na barangay
         detectedBarangay = rawName.split(' ').map(word => 
@@ -1714,7 +1714,7 @@ if (detectedCity === "Santa Cruz") {
                     if (detectedCity === "Pagsanjan") {
                         const originalBarangay = detectedBarangay;
                         detectedBarangay = convertPagsanjanBarangay(detectedBarangay);
-                        console.log(`🔄 Pagsanjan conversion: "${originalBarangay}" → "${detectedBarangay}"`);
+                        console.log(` Pagsanjan conversion: "${originalBarangay}" → "${detectedBarangay}"`);
                     }
                 }
                 
@@ -1731,7 +1731,7 @@ if (detectedCity === "Santa Cruz") {
         // ================================================================
         // FALLBACK TO NOMINATIM
         // ================================================================
-        console.log('⚠️ GeoRisk failed or no data, trying Nominatim...');
+        console.log(' GeoRisk failed or no data, trying Nominatim...');
         
         try {
             const nomResponse = await fetch(
@@ -1948,7 +1948,7 @@ async function adminValidateCoordinates() {
         let barangayName = geoData?.barangay || '';
         let detectedCity = geoData?.city || '';
         
-        console.log(`📍 Detected: ${barangayName}, ${detectedCity}`);
+        console.log(` Detected: ${barangayName}, ${detectedCity}`);
         
         // ===== VALIDATE BARANGAY - SAME AS TECH SIDE =====
         let barangayValid = false;
@@ -1993,16 +1993,16 @@ if (detectedCity === "Santa Cruz") {
             
             if (barangayExists && cityMatch) {
                 barangayValid = true;
-                console.log(`✅ Barangay "${barangayName}" is valid (exists in database and city matches)`);
+                console.log(` Barangay "${barangayName}" is valid (exists in database and city matches)`);
             } else if (barangayExists && !cityMatch) {
-                console.log(`⚠️ Barangay exists but city mismatch: ${detectedCity} vs ${adminAssignedArea}`);
+                console.log(` Barangay exists but city mismatch: ${detectedCity} vs ${adminAssignedArea}`);
                 barangayValid = false;
             } else {
-                console.log(`❌ Barangay "${barangayName}" NOT found in database`);
+                console.log(` Barangay "${barangayName}" NOT found in database`);
                 barangayValid = false;
             }
         } else {
-            console.log(`⚠️ No barangay detected or adminAllBarangays not loaded`);
+            console.log(` No barangay detected or adminAllBarangays not loaded`);
             barangayValid = false;
         }
         
@@ -2026,7 +2026,7 @@ if (detectedCity === "Santa Cruz") {
         }
         
         // ===== STEP 3: ROAD CHECK (via Overpass API) =====
-        console.log('🛣️ Checking road location...');
+        console.log(' Checking road location...');
         
         let roadCheckPassed = false;
         let nearestRoadName = '';
@@ -2099,7 +2099,7 @@ if (detectedCity === "Santa Cruz") {
             snappedLng = closestPoint.lng;
             nearestDistance = Math.round(minDist);
             
-            console.log(`🛣️ Nearest road: "${nearestRoadName}" (${nearestDistance}m away)`);
+            console.log(` Nearest road: "${nearestRoadName}" (${nearestDistance}m away)`);
             
         } catch (err) {
             console.warn('Overpass road check fallback:', err);
@@ -2140,7 +2140,7 @@ if (detectedCity === "Santa Cruz") {
         }
     }
     
-    // ✅ I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
+    // I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
     const numToRoman = {
         '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
     };
@@ -2203,7 +2203,7 @@ if (detectedCity === "Santa Cruz") {
         // Add marker on map at snapped location
         addAdminTempMarker(snappedLat, snappedLng);
         
-        // ✅ AUTO-GO TO STEP 2
+        // AUTO-GO TO STEP 2
         adminGoToStep2();
         
         showToast('Location validated successfully!', 'success');
@@ -2463,7 +2463,7 @@ function setupAdminEventListeners() {
     
     // Slot filter buttons
     const filterChips = document.querySelectorAll('.filter-chip');
-    console.log(`🔍 Found ${filterChips.length} filter chips`);
+    console.log(` Found ${filterChips.length} filter chips`);
     
     if (filterChips.length > 0) {
         filterChips.forEach(btn => {
@@ -2471,19 +2471,19 @@ function setupAdminEventListeners() {
             btn.addEventListener('click', handleFilterClick);
         });
     } else {
-        console.warn('⚠️ No .filter-chip elements found! Check if elements exist in HTML.');
+        console.warn(' No .filter-chip elements found! Check if elements exist in HTML.');
     }
     
     function handleFilterClick(event) {
         const btn = event.currentTarget;
         const filterValue = btn.getAttribute('data-filter');
         
-        console.log(`🔘 Filter clicked: ${filterValue}`);
+        console.log(` Filter clicked: ${filterValue}`);
         
         filterChips.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         adminCurrentFilter = filterValue;
-        console.log(`📌 Filter changed to: ${adminCurrentFilter}`);
+        console.log(` Filter changed to: ${adminCurrentFilter}`);
         renderAdminSlotsGrid();
     }
     
@@ -2603,7 +2603,7 @@ document.addEventListener('keydown', (e) => {
     // ===== CONTRACT NUMBER AUTO-FORMAT WITH 4-DIGIT LIMIT =====
     const contractInput = document.getElementById('editContractNumber');
     if (contractInput) {
-        // ✅ REMOVE OLD EVENT LISTENERS BY CLONING
+        // REMOVE OLD EVENT LISTENERS BY CLONING
         const newContractInput = contractInput.cloneNode(true);
         contractInput.parentNode.replaceChild(newContractInput, contractInput);
         
@@ -2619,7 +2619,7 @@ document.addEventListener('keydown', (e) => {
             }
         });
         
-        // ✅ INPUT EVENT - LIMIT TO 4 DIGITS (SILENT, NO TOAST)
+        // INPUT EVENT - LIMIT TO 4 DIGITS (SILENT, NO TOAST)
         newContractInput.addEventListener('input', function() {
             const prefix = getAdminContractPrefix();
             let value = this.value;
@@ -2637,10 +2637,10 @@ document.addEventListener('keydown', (e) => {
                 }
             }
             
-            // ✅ REMOVE NON-NUMERIC CHARACTERS
+            // REMOVE NON-NUMERIC CHARACTERS
             numberPart = numberPart.replace(/[^0-9]/g, '');
             
-            // ✅ LIMIT TO 4 DIGITS ONLY (SILENT)
+            // LIMIT TO 4 DIGITS ONLY (SILENT)
             if (numberPart.length > 4) {
                 numberPart = numberPart.substring(0, 4);
             }
@@ -2649,7 +2649,7 @@ document.addEventListener('keydown', (e) => {
             this.setSelectionRange(this.value.length, this.value.length);
         });
         
-        // ✅ BLUR EVENT - ENSURE PROPER FORMAT
+        // BLUR EVENT - ENSURE PROPER FORMAT
         newContractInput.addEventListener('blur', function() {
             const prefix = getAdminContractPrefix();
             let value = this.value.trim();
@@ -2666,13 +2666,13 @@ document.addEventListener('keydown', (e) => {
             }
         });
         
-        // ✅ KEYDOWN EVENT - PREVENT TYPING BEYOND 4 DIGITS (SILENT)
+        // KEYDOWN EVENT - PREVENT TYPING BEYOND 4 DIGITS (SILENT)
         newContractInput.addEventListener('keydown', function(e) {
             const prefix = getAdminContractPrefix();
             const currentValue = this.value;
             const numberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // ✅ IF ALREADY 4 DIGITS, PREVENT ADDING MORE (SILENTLY - NO TOAST)
+            // IF ALREADY 4 DIGITS, PREVENT ADDING MORE (SILENTLY - NO TOAST)
             if (numberPart.length >= 4) {
                 const allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40];
                 if (!allowedKeys.includes(e.keyCode) && 
@@ -2681,12 +2681,12 @@ document.addEventListener('keydown', (e) => {
                     !(e.keyCode === 86 && e.ctrlKey) && // Ctrl+V
                     !(e.keyCode === 88 && e.ctrlKey)) { // Ctrl+X
                     e.preventDefault();
-                    // ❌ WALANG TOAST DITO
+                    // WALANG TOAST DITO
                 }
             }
         });
         
-        // ✅ PASTE EVENT - LIMIT TO 4 DIGITS
+        // PASTE EVENT - LIMIT TO 4 DIGITS
         newContractInput.addEventListener('paste', function(e) {
             e.preventDefault();
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -2698,7 +2698,7 @@ document.addEventListener('keydown', (e) => {
             
             const availableSpace = 4 - currentNumberPart.length;
             if (availableSpace <= 0) {
-                // ❌ WALANG TOAST DITO
+                // WALANG TOAST DITO
                 return;
             }
             
@@ -2998,7 +2998,7 @@ function addAdminNapboxMarkersFiltered(napboxesToShow) {
         }
     });
     
-    console.log(`✅ Added ${validMarkersAdded} filtered markers`);
+    console.log(` Added ${validMarkersAdded} filtered markers`);
     
     if (validMarkersAdded > 0 && adminMarkers.length > 0) {
         const group = L.featureGroup(adminMarkers);
@@ -3115,18 +3115,18 @@ function setupHamburgerMenu() {
     }
 }
 
-// ==================== 🆕 VISIBILITY CHANGE - REFRESH ON TAB SWITCH (BAGO) ====================
+// ==================== VISIBILITY CHANGE - REFRESH ON TAB SWITCH (BAGO) ====================
 document.addEventListener('visibilitychange', async () => {
     if (!document.hidden) {
-        console.log('👁️ Tab became visible, refreshing NAP box data...');
+        console.log(' Tab became visible, refreshing NAP box data...');
         await refreshAdminInfo();
         await loadAdminNapboxData();
     }
 });
 
-// ==================== 🆕 INITIALIZATION (UPDATED) ====================
+// ==================== INITIALIZATION (UPDATED) ====================
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Admin NAP Box page initializing...');
+    console.log(' Admin NAP Box page initializing...');
     setupHamburgerMenu();
     setupProfileDropdown();
     setupLogout();
@@ -3134,7 +3134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isValid = await checkSession();
     if (!isValid) return;
     
-    // 👇 I-REFRESH MUNA ANG ADMIN INFO BAGO MAG-LOAD NG DATA
+    // I-REFRESH MUNA ANG ADMIN INFO BAGO MAG-LOAD NG DATA
     await refreshAdminInfo();
     
     await loadAdminProfile();
@@ -3159,7 +3159,7 @@ function getAdminContractPrefix() {
     const area = adminAssignedArea || sessionStorage.getItem('adminArea') || '';
     const normalizedArea = normalizeAdminAreaName(area);
     
-    // ✅ SPECIAL CASE: Pila may choice ng prefix (GIF- or POB-)
+    // SPECIAL CASE: Pila may choice ng prefix (GIF- or POB-)
     if (normalizedArea === "Pila") {
         return adminSelectedContractPrefix || "GIF-";
     }

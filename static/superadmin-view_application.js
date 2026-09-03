@@ -300,13 +300,13 @@ function setupBillingDateInput(billingInput) {
 // =========================
 async function loadTeamsForDropdown(city = null) {
     try {
-        console.log(`🔍 Loading teams for city: "${city}"`);
+        console.log(` Loading teams for city: "${city}"`);
         
-        // ✅ KUHAIN MUNA ANG TEAMS
+        // KUHAIN MUNA ANG TEAMS
         const response = await fetch('/api/superadmin/teams?status=Active&t=' + Date.now());
         const teams = await response.json();
         
-        // ✅ KUHAIN ANG TECHNICIANS PARA MA-CHECK KUNG MAY MEMBERS ANG TEAM
+        // KUHAIN ANG TECHNICIANS PARA MA-CHECK KUNG MAY MEMBERS ANG TEAM
         const techResponse = await fetch('/api/superadmin/technicians?t=' + Date.now());
         const technicians = await techResponse.json();
         
@@ -316,19 +316,19 @@ async function loadTeamsForDropdown(city = null) {
         // I-clear ang dropdown
         teamSelect.innerHTML = '<option value="" disabled selected>-- Select Team --</option>';
         
-        // ✅ I-FILTER ANG TEAMS: ACTIVE LANG + DAPAT MAY AT LEAST 1 MEMBER
+        // I-FILTER ANG TEAMS: ACTIVE LANG + DAPAT MAY AT LEAST 1 MEMBER
         let filteredTeams = teams.filter(team => {
-            // ✅ CHECK: Active lang ang status
+            // CHECK: Active lang ang status
             if (team.status !== 'Active') {
                 return false;
             }
             
             // Count technicians in this team
             const memberCount = technicians.filter(tech => tech.team_id === team.team_id).length;
-            return memberCount > 0; // ✅ DAPAT MAY MEMBER
+            return memberCount > 0; // DAPAT MAY MEMBER
         });
         
-        // ✅ I-FILTER PA BATAY SA CITY (case-insensitive)
+        // I-FILTER PA BATAY SA CITY (case-insensitive)
         if (city && city.trim() !== '') {
             const cityLower = city.toLowerCase().trim();
             filteredTeams = filteredTeams.filter(team => {
@@ -336,15 +336,15 @@ async function loadTeamsForDropdown(city = null) {
                 return teamArea === cityLower;
             });
             
-            console.log(`📋 Found ${filteredTeams.length} active teams in area "${city}" with members`);
+            console.log(` Found ${filteredTeams.length} active teams in area "${city}" with members`);
         } else {
-            console.log(`📋 No city filter applied, showing ${filteredTeams.length} active teams with members`);
+            console.log(` No city filter applied, showing ${filteredTeams.length} active teams with members`);
         }
         
         // Populate dropdown with filtered teams
         if (filteredTeams && filteredTeams.length > 0) {
             filteredTeams.forEach(team => {
-                // ✅ KUHAIN ANG MEMBER COUNT PARA I-DISPLAY
+                // KUHAIN ANG MEMBER COUNT PARA I-DISPLAY
                 const memberCount = technicians.filter(tech => tech.team_id === team.team_id).length;
                 const option = document.createElement('option');
                 option.value = team.team_id;
@@ -382,13 +382,13 @@ function setInstallationDateMin() {
     if (installationDateInput) {
         const today = new Date();
         
-        // ✅ SET MIN DATE - Today
+        // SET MIN DATE - Today
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         installationDateInput.setAttribute('min', `${year}-${month}-${day}`);
         
-        // ✅ SET MAX DATE - 6 months from today
+        // SET MAX DATE - 6 months from today
         const maxDate = new Date(today);
         maxDate.setMonth(maxDate.getMonth() + 6);
         const maxYear = maxDate.getFullYear();
@@ -398,7 +398,7 @@ function setInstallationDateMin() {
         
         installationDateInput.value = '';
         
-        console.log(`📅 Installation date range: ${year}-${month}-${day} to ${maxYear}-${maxMonth}-${maxDay}`);
+        console.log(` Installation date range: ${year}-${month}-${day} to ${maxYear}-${maxMonth}-${maxDay}`);
     }
 }
 
@@ -415,28 +415,28 @@ async function loadApplication() {
             return;
         }
 
-        // ✅ STEP 1: I-SET MUNA ANG LAHAT NG VARIABLES
+        // STEP 1: I-SET MUNA ANG LAHAT NG VARIABLES
         currentApplicationStatus = data.status;
         applicationCity = data.city || '';
         currentRejectionReason = data.rejection_reason || '';
         currentReapplyRequested = data.reapply_requested === 1 || data.reapply_requested === true;
         currentReapplyRequestedAt = data.reapply_requested_at || null;
         
-        console.log("🔍 Reapply State:", { 
+        console.log(" Reapply State:", { 
             currentReapplyRequested, 
             currentReapplyRequestedAt,
             raw_reapply_requested: data.reapply_requested,
             status: currentApplicationStatus 
         });
 
-        // ✅ STEP 2: LOAD APPROVAL REQUESTS
+        // STEP 2: LOAD APPROVAL REQUESTS
         await loadApprovalRequests();
 
-        // ✅ STEP 3: TUMATAWAG NG toggleFloatingButtons (NA MAY CORRECT NA VARIABLES)
+        // STEP 3: TUMATAWAG NG toggleFloatingButtons (NA MAY CORRECT NA VARIABLES)
         toggleFloatingButtons(currentApplicationStatus);
         toggleViewContractButton(currentApplicationStatus);
 
-        // ✅ STEP 4: DISPLAY DATA (REST OF THE CODE)
+        // STEP 4: DISPLAY DATA (REST OF THE CODE)
         const setTextOrHide = (id, val) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -694,14 +694,14 @@ function toggleFloatingButtons(status) {
 
         // ===== REJECTED: Request Reapply (or Reapply Requested) + Delete =====
         if (statusLower === "rejected") {
-            // ✅ CHECK KUNG MAY PENDING REAPPLY REQUEST
+            // CHECK KUNG MAY PENDING REAPPLY REQUEST
             const hasPendingReapply = currentApprovalRequest && 
                                       currentApprovalRequest.requested_status === 'Reapply' && 
                                       currentApprovalRequest.status === 'Pending';
             
             let reapplyBtnHtml;
             
-            // ✅ PRIORITIZE: KUNG MAY REAPPLY_REQUESTED = 1, MAG-DISABLE
+            // PRIORITIZE: KUNG MAY REAPPLY_REQUESTED = 1, MAG-DISABLE
             if (currentReapplyRequested) {
                 const formattedDate = formatReapplyTimestamp(currentReapplyRequestedAt);
                 reapplyBtnHtml = `
@@ -714,7 +714,7 @@ function toggleFloatingButtons(status) {
                     </button>
                 `;
             } else if (hasPendingReapply) {
-                // ✅ KUNG MAY PENDING REQUEST PERO HINDI PA APPROVED
+                // KUNG MAY PENDING REQUEST PERO HINDI PA APPROVED
                 reapplyBtnHtml = `
                     <button class="btn-floating btn-reapply-floating btn-reapply-disabled" id="floatingReapplyBtn" disabled>
                         <i class="fas fa-clock"></i>
@@ -725,7 +725,7 @@ function toggleFloatingButtons(status) {
                     </button>
                 `;
             } else {
-                // ✅ WALANG REAPPLY REQUESTED AT WALANG PENDING REQUEST
+                // WALANG REAPPLY REQUESTED AT WALANG PENDING REQUEST
                 reapplyBtnHtml = `
                     <button class="btn-floating btn-reapply-floating" id="floatingReapplyBtn">
                         <i class="fas fa-redo-alt"></i><span>Request Reapply</span>
@@ -759,7 +759,7 @@ function toggleFloatingButtons(status) {
             return;
         }
 
-        // ✅ CHECK IF THERE'S A PENDING APPROVAL REQUEST (APPROVED, REJECTED, PENDING, REAPPLY)
+        // CHECK IF THERE'S A PENDING APPROVAL REQUEST (APPROVED, REJECTED, PENDING, REAPPLY)
         if (currentApprovalRequest &&
             currentApprovalRequest.requested_status &&
             currentApprovalRequest.status === "Pending") {
@@ -1151,7 +1151,7 @@ function addViewContractButtonListener() {
 // SAVE CONTRACT TO MYSQL (FIXED)
 // =========================
 async function saveContractToMySQL(contractNumber, applicationData, billingDate) {
-    console.log("🔵🔵🔵 SAVE CONTRACT TO MYSQL CALLED 🔵🔵🔵");
+    console.log(" SAVE CONTRACT TO MYSQL CALLED ");
     console.log("Contract Number:", contractNumber);
     console.log("Billing Date:", billingDate);
     
@@ -1276,7 +1276,7 @@ function setupInstallmentDateInputs(installmentMonths) {
         firstInstallmentInput.value = '';
         firstInstallmentInput.classList.remove('is-invalid');
         
-        // ✅ GAWING READ-ONLY ANG FIRST INSTALLMENT DATE
+        // GAWING READ-ONLY ANG FIRST INSTALLMENT DATE
         firstInstallmentInput.setAttribute('readonly', true);
         firstInstallmentInput.style.cursor = 'not-allowed';
         firstInstallmentInput.style.backgroundColor = '#f3f4f6';
@@ -1285,7 +1285,7 @@ function setupInstallmentDateInputs(installmentMonths) {
         const newFirstInstallmentInput = firstInstallmentInput.cloneNode(true);
         firstInstallmentInput.parentNode.replaceChild(newFirstInstallmentInput, firstInstallmentInput);
         
-        // ✅ AUTO-FILL FIRST INSTALLMENT DATE FROM INSTALLATION DATE
+        // AUTO-FILL FIRST INSTALLMENT DATE FROM INSTALLATION DATE
         newFirstInstallmentInput.addEventListener('focus', function() {
             // Check if installation date is selected and first installment is empty
             if (installationDateInput && installationDateInput.value && !this.value) {
@@ -1298,7 +1298,7 @@ function setupInstallmentDateInputs(installmentMonths) {
                     // Check if month is not in the past
                     if (monthYear >= currentMonth) {
                         this.value = monthYear;
-                        console.log(`✅ Auto-filled first installment: ${monthYear}`);
+                        console.log(` Auto-filled first installment: ${monthYear}`);
                         
                         // Trigger change event to compute last installment
                         const changeEvent = new Event('change', { bubbles: true });
@@ -1341,7 +1341,7 @@ function setupInstallmentDateInputs(installmentMonths) {
                     if (lastInstallmentInputElement) lastInstallmentInputElement.classList.remove('is-invalid');
                     this.classList.remove('is-invalid');
                     
-                    console.log(`✅ Auto-computed last installment: ${lastDate}`);
+                    console.log(` Auto-computed last installment: ${lastDate}`);
                 }
             } else if (!selectedDate && lastInstallmentInputElement) {
                 lastInstallmentInputElement.value = '';
@@ -1359,7 +1359,7 @@ function setupInstallmentDateInputs(installmentMonths) {
         lastInstallmentInput.value = '';
         lastInstallmentInput.classList.remove('is-invalid');
         
-        // ✅ GAWING READ-ONLY ANG LAST INSTALLMENT DATE
+        // GAWING READ-ONLY ANG LAST INSTALLMENT DATE
         lastInstallmentInput.setAttribute('readonly', true);
         lastInstallmentInput.style.cursor = 'not-allowed';
         lastInstallmentInput.style.backgroundColor = '#f3f4f6';
@@ -1379,7 +1379,7 @@ function setupInstallmentDateInputs(installmentMonths) {
         });
     }
     
-    // ✅ AUTO-FILL WHEN INSTALLATION DATE CHANGES
+    // AUTO-FILL WHEN INSTALLATION DATE CHANGES
     if (installationDateInput) {
         const newInstallationDateInput = installationDateInput.cloneNode(true);
         installationDateInput.parentNode.replaceChild(newInstallationDateInput, installationDateInput);
@@ -1396,7 +1396,7 @@ function setupInstallmentDateInputs(installmentMonths) {
                     
                     if (monthYear >= currentMonth) {
                         firstInstallmentInputElement.value = monthYear;
-                        console.log(`✅ Auto-filled first installment from installation date: ${monthYear}`);
+                        console.log(` Auto-filled first installment from installation date: ${monthYear}`);
                         
                         // Trigger change event to compute last installment
                         const changeEvent = new Event('change', { bubbles: true });
@@ -1503,10 +1503,10 @@ function showContractNumberModal() {
     currentSelectedTeam = null;
     currentInstallationDateValue = null;
     
-    // ✅ LOAD TEAMS FILTERED BY APPLICATION CITY
+    // LOAD TEAMS FILTERED BY APPLICATION CITY
     loadApplicationData().then(appData => {
         const appCity = appData.city || applicationCity || '';
-        console.log(`📍 Application city for team filter: "${appCity}"`);
+        console.log(` Application city for team filter: "${appCity}"`);
         loadTeamsForDropdown(appCity);
         setInstallationDateMin();
     });
@@ -1623,7 +1623,7 @@ if (freshInstallationDateInput) {
                 return;
             }
 
-            // ✅ VALIDATE: Installation date must be within 6 months from today
+            // VALIDATE: Installation date must be within 6 months from today
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const selectedDate = new Date(installationDateValue);
@@ -1638,7 +1638,7 @@ if (freshInstallationDateInput) {
                 return;
             }
 
-            // ✅ Check if date is beyond 6 months
+            // Check if date is beyond 6 months
             const maxDate = new Date(today);
             maxDate.setMonth(maxDate.getMonth() + 6);
             if (selectedDate > maxDate) {
@@ -1715,10 +1715,10 @@ if (freshInstallationDateInput) {
             currentContractNumber = contractNumber;
             currentBillingDate = billingDate;
             
-            console.log("✅ CONTRACT NUMBER SET:", currentContractNumber);
-            console.log("✅ BILLING DATE SET:", currentBillingDate);
-            console.log("✅ TEAM ID SET:", currentSelectedTeam);
-            console.log("✅ INSTALLATION DATE SET:", currentInstallationDateValue);
+            console.log(" CONTRACT NUMBER SET:", currentContractNumber);
+            console.log(" BILLING DATE SET:", currentBillingDate);
+            console.log(" TEAM ID SET:", currentSelectedTeam);
+            console.log(" INSTALLATION DATE SET:", currentInstallationDateValue);
             
             const modal = bootstrap.Modal.getInstance(contractModalElement);
             if (modal) modal.hide();
@@ -1742,7 +1742,7 @@ if (freshInstallationDateInput) {
                     const newFinalBtn = finalApprovalBtn.cloneNode(true);
                     finalApprovalBtn.parentNode.replaceChild(newFinalBtn, finalApprovalBtn);
                     newFinalBtn.addEventListener('click', function() {
-                        console.log("🔵 PROCEED TO FINAL APPROVAL CLICKED");
+                        console.log(" PROCEED TO FINAL APPROVAL CLICKED");
                         contractPreviewModal.hide();
                         showConfirmApprovalModal();
                     });
@@ -1810,10 +1810,10 @@ function showContractNumberModalForRequest() {
     currentSelectedTeam = null;
     currentInstallationDateValue = null;
     
-    // ✅ LOAD TEAMS FILTERED BY APPLICATION CITY
+    // LOAD TEAMS FILTERED BY APPLICATION CITY
     loadApplicationData().then(appData => {
         const appCity = appData.city || applicationCity || '';
-        console.log(`📍 Application city for team filter (request): "${appCity}"`);
+        console.log(` Application city for team filter (request): "${appCity}"`);
         loadTeamsForDropdown(appCity);
         setInstallationDateMin();
     });
@@ -1930,7 +1930,7 @@ function showContractNumberModalForRequest() {
                 return;
             }
 
-            // ✅ VALIDATE: Installation date must be within 6 months from today
+            // VALIDATE: Installation date must be within 6 months from today
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const selectedDate = new Date(installationDateValue);
@@ -2020,9 +2020,9 @@ function showContractNumberModalForRequest() {
             currentContractNumber = contractNumber;
             currentBillingDate = billingDate;
             
-            console.log("✅ CONTRACT NUMBER SET (Request):", currentContractNumber);
-            console.log("✅ TEAM ID SET:", currentSelectedTeam);
-            console.log("✅ INSTALLATION DATE SET:", currentInstallationDateValue);
+            console.log(" CONTRACT NUMBER SET (Request):", currentContractNumber);
+            console.log(" TEAM ID SET:", currentSelectedTeam);
+            console.log(" INSTALLATION DATE SET:", currentInstallationDateValue);
             
             const modal = bootstrap.Modal.getInstance(contractModalElement);
             if (modal) modal.hide();
@@ -2117,12 +2117,12 @@ function showConfirmModalForRequest() {
 // PROCESS APPROVAL FOR REQUEST - WITH TEAM AND INSTALLATION DATE
 // =========================
 async function processApprovalWithContractForRequest(requestId) {
-    console.log("🔵🔵🔵 processApprovalWithContractForRequest CALLED 🔵🔵🔵");
-    console.log("🔵 requestId:", requestId);
-    console.log("🔵 currentContractNumber:", currentContractNumber);
-    console.log("🔵 currentBillingDate:", currentBillingDate);
-    console.log("🔵 currentSelectedTeam:", currentSelectedTeam);
-    console.log("🔵 currentInstallationDateValue:", currentInstallationDateValue);
+    console.log(" processApprovalWithContractForRequest CALLED ");
+    console.log(" requestId:", requestId);
+    console.log(" currentContractNumber:", currentContractNumber);
+    console.log(" currentBillingDate:", currentBillingDate);
+    console.log(" currentSelectedTeam:", currentSelectedTeam);
+    console.log(" currentInstallationDateValue:", currentInstallationDateValue);
     
     if (!currentContractNumber) {
         showToast("Missing contract number. Please start over.", "error");
@@ -2192,7 +2192,7 @@ async function processApprovalWithContractForRequest(requestId) {
             installation_date: currentInstallationDateValue
         };
         
-        console.log("🚀 SAVING CONTRACT DIRECTLY...");
+        console.log(" SAVING CONTRACT DIRECTLY...");
         
         const saveResponse = await fetch(`/api/superadmin/contracts/${currentContractNumber}`, {
             method: "POST",
@@ -2201,13 +2201,13 @@ async function processApprovalWithContractForRequest(requestId) {
         });
         
         const saveResult = await saveResponse.json();
-        console.log("📡 Save contract response:", saveResult);
+        console.log(" Save contract response:", saveResult);
         
         if (!saveResponse.ok) {
             throw new Error(saveResult.error || "Failed to save contract");
         }
         
-        console.log("✅ CONTRACT SAVED!");
+        console.log(" CONTRACT SAVED!");
         
         const requestResponse = await fetch(`/api/superadmin/approval-request/${requestId}`, {
             method: "PUT",
@@ -2248,7 +2248,7 @@ async function processApprovalWithContractForRequest(requestId) {
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <div class="text-success mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-success fw-bold">Application approved successfully!</p>
                 <p class="text-muted mt-2">Contract Number: <strong>${currentContractNumber}</strong></p>
                 <p class="text-muted">Billing Day: Every ${currentBillingDate} of the month</p>
@@ -2264,11 +2264,11 @@ async function processApprovalWithContractForRequest(requestId) {
         }, 2000);
 
     } catch (err) {
-        console.error("❌ ERROR:", err);
+        console.error(" ERROR:", err);
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to approve application</p>
                 <p class="text-danger mt-2">${err.message}</p>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -2287,14 +2287,14 @@ async function processApprovalWithContractForRequest(requestId) {
 // PROCESS APPROVAL WITH CONTRACT - FIXED
 // =========================
 async function processApprovalWithContract() {
-    console.log("🔵🔵🔵 processApprovalWithContract CALLED 🔵🔵🔵");
-    console.log("🔵 currentContractNumber:", currentContractNumber);
-    console.log("🔵 currentBillingDate:", currentBillingDate);
-    console.log("🔵 currentSelectedTeam:", currentSelectedTeam);
-    console.log("🔵 currentInstallationDateValue:", currentInstallationDateValue);
+    console.log(" processApprovalWithContract CALLED ");
+    console.log(" currentContractNumber:", currentContractNumber);
+    console.log(" currentBillingDate:", currentBillingDate);
+    console.log(" currentSelectedTeam:", currentSelectedTeam);
+    console.log(" currentInstallationDateValue:", currentInstallationDateValue);
     
     if (!currentContractNumber) {
-        console.error("❌ NO CONTRACT NUMBER!");
+        console.error(" NO CONTRACT NUMBER!");
         showToast("Missing contract number. Please start over.", "error");
         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
         if (confirmModal) confirmModal.hide();
@@ -2303,7 +2303,7 @@ async function processApprovalWithContract() {
     }
     
     if (!currentBillingDate) {
-        console.error("❌ NO BILLING DATE!");
+        console.error(" NO BILLING DATE!");
         showToast("Missing billing date. Please start over.", "error");
         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
         if (confirmModal) confirmModal.hide();
@@ -2312,7 +2312,7 @@ async function processApprovalWithContract() {
     }
     
     if (!currentSelectedTeam) {
-        console.error("❌ NO TEAM SELECTED!");
+        console.error(" NO TEAM SELECTED!");
         showToast("Please select an installation team.", "error");
         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
         if (confirmModal) confirmModal.hide();
@@ -2321,7 +2321,7 @@ async function processApprovalWithContract() {
     }
     
     if (!currentInstallationDateValue) {
-        console.error("❌ NO INSTALLATION DATE!");
+        console.error(" NO INSTALLATION DATE!");
         showToast("Please select an installation date.", "error");
         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
         if (confirmModal) confirmModal.hide();
@@ -2335,7 +2335,7 @@ async function processApprovalWithContract() {
     try {
         const appData = await loadApplicationData();
         
-        console.log("📦 Application Data loaded");
+        console.log(" Application Data loaded");
         
         const firstName = appData.first_name || '';
         const middleName = appData.middle_name || '';
@@ -2379,7 +2379,7 @@ async function processApprovalWithContract() {
             installation_date: currentInstallationDateValue
         };
         
-        console.log("🚀 SAVING CONTRACT DIRECTLY to /api/superadmin/contracts/" + currentContractNumber);
+        console.log(" SAVING CONTRACT DIRECTLY to /api/superadmin/contracts/" + currentContractNumber);
         
         const saveResponse = await fetch(`/api/superadmin/contracts/${currentContractNumber}`, {
             method: "POST",
@@ -2387,28 +2387,28 @@ async function processApprovalWithContract() {
             body: JSON.stringify(contractData)
         });
         
-        // ✅ Check if response is JSON
+        // Check if response is JSON
         const contentType = saveResponse.headers.get('content-type');
         let saveResult;
         if (contentType && contentType.includes('application/json')) {
             saveResult = await saveResponse.json();
         } else {
             const text = await saveResponse.text();
-            console.error("❌ Non-JSON response from save contract:", text.substring(0, 200));
+            console.error(" Non-JSON response from save contract:", text.substring(0, 200));
             // Continue anyway - contract might still be saved
             saveResult = { success: true, message: "Contract saved (non-JSON response)" };
         }
         
-        console.log("📡 Save contract response:", saveResult);
+        console.log(" Save contract response:", saveResult);
         
         if (!saveResponse.ok) {
             throw new Error(saveResult.error || "Failed to save contract");
         }
         
-        console.log("✅ CONTRACT SAVED SUCCESSFULLY!");
+        console.log(" CONTRACT SAVED SUCCESSFULLY!");
         
         // ========== UPDATE APPLICATION STATUS ==========
-        console.log("➡️ Updating application status...");
+        console.log(" Updating application status...");
         
         const updatePayload = { 
             status: "Approved",
@@ -2420,7 +2420,7 @@ async function processApprovalWithContract() {
             installation_date: currentInstallationDateValue
         };
         
-        console.log("📦 Update payload:", updatePayload);
+        console.log(" Update payload:", updatePayload);
         
         const statusRes = await fetch(`/api/superadmin/application/${appId}/status`, {
             method: "PUT",
@@ -2428,24 +2428,24 @@ async function processApprovalWithContract() {
             body: JSON.stringify(updatePayload)
         });
 
-        // ✅ Check if response is JSON
+        // Check if response is JSON
         const statusContentType = statusRes.headers.get('content-type');
         let statusData;
         
         if (statusContentType && statusContentType.includes('application/json')) {
             statusData = await statusRes.json();
-            console.log("📡 Status update response:", statusData);
+            console.log(" Status update response:", statusData);
         } else {
             const text = await statusRes.text();
-            console.error("❌ Non-JSON response from status update:", text.substring(0, 200));
+            console.error(" Non-JSON response from status update:", text.substring(0, 200));
             
-            // ✅ Since contract is already saved, show success anyway
+            // Since contract is already saved, show success anyway
             // The status update might have succeeded even with non-JSON response
             const modalBody = modalElement.querySelector('.modal-body');
             modalBody.innerHTML = `
                 <div class="text-center py-4">
-                    <div class="text-success mb-3" style="font-size: 48px;">✓</div>
-                    <p class="mt-2 mb-0 text-success fw-bold">✓ Application approved successfully!</p>
+                    <div class="text-success mb-3" style="font-size: 48px;"></div>
+                    <p class="mt-2 mb-0 text-success fw-bold"> Application approved successfully!</p>
                     <p class="text-muted mt-2">Contract Number: <strong>${currentContractNumber}</strong></p>
                     <p class="text-muted">Billing Day: Every ${currentBillingDate} of the month</p>
                     <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${currentSelectedTeam}</strong></p>
@@ -2461,7 +2461,7 @@ async function processApprovalWithContract() {
         }
         
         if (!statusRes.ok) {
-            console.error("❌ Status update failed:", statusData);
+            console.error(" Status update failed:", statusData);
             throw new Error(statusData.error || "Approval failed");
         }
 
@@ -2479,8 +2479,8 @@ async function processApprovalWithContract() {
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
-                <p class="mt-2 mb-0 text-success fw-bold">✓ Application approved successfully!</p>
+                <div class="text-success mb-3" style="font-size: 48px;"></div>
+                <p class="mt-2 mb-0 text-success fw-bold"> Application approved successfully!</p>
                 <p class="text-muted mt-2">Contract Number: <strong>${currentContractNumber}</strong></p>
                 <p class="text-muted">Billing Day: Every ${currentBillingDate} of the month</p>
                 <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${teamName}</strong></p>
@@ -2494,11 +2494,11 @@ async function processApprovalWithContract() {
         }, 2000);
 
     } catch (err) {
-        console.error("❌ ERROR:", err);
+        console.error(" ERROR:", err);
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to approve application</p>
                 <small class="text-muted">${err.message}</small>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -2538,12 +2538,12 @@ function openRequestModal(action, requestId, requestedStatus) {
     const reason = currentApprovalRequest?.reason || '';
     const reasonHtml = reason ? `<br><br><strong>Reason:</strong> ${escapeHtml(reason)}` : '';
 
-    // ✅ DETERMINE ACTION VERB BASED ON REQUESTED STATUS
+    // DETERMINE ACTION VERB BASED ON REQUESTED STATUS
     let actionVerb = requestedStatus.toLowerCase();
     if (requestedStatus === 'Pending') actionVerb = 'restore';
     else if (requestedStatus === 'Reapply') actionVerb = 'send a reapply invitation';
 
-    // ✅ DETERMINE ACTION LABEL
+    // DETERMINE ACTION LABEL
     let actionLabel = requestedStatus;
     if (requestedStatus === 'Pending') actionLabel = 'Restore';
     else if (requestedStatus === 'Reapply') actionLabel = 'Send Reapply';
@@ -2628,15 +2628,15 @@ async function processRequest(requestId, requestedStatus, action) {
 
     try {
         if (action === 'accept') {
-            // ✅ BUILD REQUEST BODY - PARA SA REAPPLY, WALANG CONTRACT DETAILS
+            // BUILD REQUEST BODY - PARA SA REAPPLY, WALANG CONTRACT DETAILS
             let requestBody = {};
             
             if (requestedStatus === 'Reapply') {
-                // ✅ PARA SA REAPPLY - WALANG CONTRACT NUMBER, BILLING DATE, ETC.
+                // PARA SA REAPPLY - WALANG CONTRACT NUMBER, BILLING DATE, ETC.
                 // I-SEND LANG ANG EMPTY OBJECT (OR WALANG BODY)
                 requestBody = {};
             } else {
-                // ✅ PARA SA APPROVED/REJECTED/PENDING - MAY CONTRACT DETAILS
+                // PARA SA APPROVED/REJECTED/PENDING - MAY CONTRACT DETAILS
                 requestBody = {
                     contract_number: currentContractNumber,
                     billing_date: currentBillingDate,
@@ -2660,7 +2660,7 @@ async function processRequest(requestId, requestedStatus, action) {
 
             sessionStorage.setItem('refresh_admin_applications', 'true');
 
-            // ✅ IBAHIN ANG SUCCESS MESSAGE PARA SA REAPPLY
+            // IBAHIN ANG SUCCESS MESSAGE PARA SA REAPPLY
             let successMessage = `Application has been ${requestedStatus.toLowerCase()} as requested by the admin.`;
             let teamDisplay = '';
             
@@ -2683,7 +2683,7 @@ async function processRequest(requestId, requestedStatus, action) {
 
             loadingDiv.innerHTML = `
                 <div class="loading-content">
-                    <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                    <div class="text-success mb-3" style="font-size: 48px;"></div>
                     <p class="mt-2 mb-0 text-success fw-bold">Request accepted successfully!</p>
                     <p class="text-muted mt-2">${successMessage}</p>
                     ${teamDisplay}
@@ -2715,7 +2715,7 @@ async function processRequest(requestId, requestedStatus, action) {
 
             loadingDiv.innerHTML = `
                 <div class="loading-content">
-                    <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                    <div class="text-success mb-3" style="font-size: 48px;"></div>
                     <p class="mt-2 mb-0 text-success fw-bold">Request rejected!</p>
                     <p class="text-muted mt-2">${rejectMessage}</p>
                     <small class="text-muted">Reloading page...</small>
@@ -2731,7 +2731,7 @@ async function processRequest(requestId, requestedStatus, action) {
         console.error("Error processing request:", err);
         loadingDiv.innerHTML = `
             <div class="loading-content">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to process request</p>
                 <p class="text-danger mt-2">${err.message}</p>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -2944,10 +2944,10 @@ function showRestoreModal() {
         }
     }
     
-    // ✅ LOAD TEAMS FOR RESTORE MODAL (ONLY FOR CANCELLED)
+    // LOAD TEAMS FOR RESTORE MODAL (ONLY FOR CANCELLED)
     loadApplicationData().then(appData => {
         const appCity = appData.city || applicationCity || '';
-        console.log(`📍 Loading teams for restore modal, city: "${appCity}"`);
+        console.log(` Loading teams for restore modal, city: "${appCity}"`);
         loadTeamsForRestore(appCity);
         setRestoreInstallationDateMin();
     });
@@ -2971,7 +2971,7 @@ function showRestoreModal() {
 // =========================
 async function loadTeamsForRestore(city = null) {
     try {
-        console.log(`🔍 Loading teams for restore modal, city: "${city}"`);
+        console.log(` Loading teams for restore modal, city: "${city}"`);
         
         const response = await fetch('/api/superadmin/teams?status=Active&t=' + Date.now());
         const teams = await response.json();
@@ -2998,7 +2998,7 @@ async function loadTeamsForRestore(city = null) {
                 const teamArea = (team.area || '').toLowerCase().trim();
                 return teamArea === cityLower;
             });
-            console.log(`📋 Found ${filteredTeams.length} active teams in area "${city}" with members`);
+            console.log(` Found ${filteredTeams.length} active teams in area "${city}" with members`);
         }
         
         if (filteredTeams && filteredTeams.length > 0) {
@@ -3052,7 +3052,7 @@ function setRestoreInstallationDateMin() {
         
         installationDateInput.value = '';
         
-        console.log(`📅 Restore installation date range: ${year}-${month}-${day} to ${maxYear}-${maxMonth}-${maxDay}`);
+        console.log(` Restore installation date range: ${year}-${month}-${day} to ${maxYear}-${maxMonth}-${maxDay}`);
     }
 }
 
@@ -3073,7 +3073,7 @@ async function executeRestore() {
     // Determine target status
     const targetStatus = isCancelled ? 'Approved' : 'Pending';
     
-    // ✅ VALIDATE TEAM AND INSTALLATION DATE FOR CANCELLED
+    // VALIDATE TEAM AND INSTALLATION DATE FOR CANCELLED
     let selectedTeam = null;
     let installationDateValue = null;
     
@@ -3132,7 +3132,7 @@ async function executeRestore() {
         if (dateInput) dateInput.classList.remove('is-invalid');
     }
     
-    // 🔥 SHOW LOADING STATE
+    // SHOW LOADING STATE
     modalBody.innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
@@ -3149,9 +3149,9 @@ async function executeRestore() {
     }
 
     try {
-        console.log(`🔄 Restoring application with status: ${currentStatus} -> ${targetStatus}`);
+        console.log(` Restoring application with status: ${currentStatus} -> ${targetStatus}`);
         
-        // ✅ BUILD REQUEST BODY
+        // BUILD REQUEST BODY
         const requestBody = { 
             status: targetStatus,
             assigned_team_id: selectedTeam,
@@ -3186,7 +3186,7 @@ async function executeRestore() {
 
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <div class="text-success mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-success fw-bold">Application restored successfully!</p>
                 <p class="text-muted mt-2">Status changed from <strong>${currentStatus}</strong> to <strong>${targetStatus}</strong>.</p>
                 <p class="text-muted">The application has been <strong>unarchived</strong> and is now visible in the main list.</p>
@@ -3207,7 +3207,7 @@ async function executeRestore() {
         console.error("Restore error:", err);
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to restore application</p>
                 <small class="text-muted">${err.message}</small>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -3236,7 +3236,7 @@ function addStatusBadge(status) {
 }
 
 
-// ✅ BAGONG FUNCTION - REJECTION REASON DISPLAY (with Cancelled support)
+// BAGONG FUNCTION - REJECTION REASON DISPLAY (with Cancelled support)
 function showRejectionReason(status, reason) {
     const appNumberDiv = document.querySelector(".app-number");
     if (!appNumberDiv) return;
@@ -3318,7 +3318,7 @@ function showModalLoading(modalElement, isLoading, actionType = '') {
             }
         }
 
-        // ✅ IBAHIN ANG LOADING TEXT PARA SA REJECTION
+        // IBAHIN ANG LOADING TEXT PARA SA REJECTION
         const loadingTitle = actionType === 'rejection' ? 'Rejecting' : 'Processing';
         const loadingColor = actionType === 'rejection' ? 'text-danger' : 'text-primary';
 
@@ -3392,14 +3392,14 @@ window.rejectHandler = async function () {
             body: JSON.stringify({ status: "Rejected", reason: reason })
         });
 
-        // ✅ I-CHEK MUNA KUNG ANO ANG RESPONSE
+        // I-CHEK MUNA KUNG ANO ANG RESPONSE
         const contentType = res.headers.get('content-type');
         let result;
         
         if (contentType && contentType.includes('application/json')) {
             result = await res.json();
         } else {
-            // ✅ KUNG HINDI JSON, KUHAIN ANG TEXT
+            // KUNG HINDI JSON, KUHAIN ANG TEXT
             const text = await res.text();
             console.error("Non-JSON response:", text);
             throw new Error(`Server error (${res.status}): ${text.substring(0, 100)}`);
@@ -3415,7 +3415,7 @@ window.rejectHandler = async function () {
         
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✕</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold" style="font-size: 18px;">Application Rejected!</p>
                 <p class="text-muted mt-3">The application has been rejected and the customer has been notified.</p>
                 <div class="alert alert-danger mt-3" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 12px 16px;">
@@ -3438,7 +3438,7 @@ window.rejectHandler = async function () {
         const modalBody = modalElement.querySelector('.modal-body');
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✕</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to reject application</p>
                 <p class="text-danger mt-2">${escapeHtml(err.message)}</p>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -3462,7 +3462,7 @@ function initializeEventListeners() {
     
     document.getElementById("confirmRejectBtn")?.addEventListener("click", window.rejectHandler);
     
-    // ✅ TEAM SELECTION VALIDATION - Check if selected team matches application city
+    // TEAM SELECTION VALIDATION - Check if selected team matches application city
     const teamSelect = document.getElementById('teamAssignment');
     if (teamSelect) {
         const newTeamSelect = teamSelect.cloneNode(true);
@@ -3484,7 +3484,7 @@ function initializeEventListeners() {
         const newFinalApproveBtn = finalApproveBtn.cloneNode(true);
         finalApproveBtn.parentNode.replaceChild(newFinalApproveBtn, finalApproveBtn);
         newFinalApproveBtn.addEventListener("click", function() {
-            console.log("🔴 FINAL APPROVE CLICKED 🔴");
+            console.log(" FINAL APPROVE CLICKED ");
             console.log("currentContractNumber:", currentContractNumber);
             console.log("currentBillingDate:", currentBillingDate);
             console.log("currentSelectedTeam:", currentSelectedTeam);
@@ -3493,30 +3493,30 @@ function initializeEventListeners() {
             console.log("pendingRequestedStatus:", pendingRequestedStatus);
             
             if (!currentContractNumber) {
-                console.error("❌ currentContractNumber is NULL or UNDEFINED!");
+                console.error(" currentContractNumber is NULL or UNDEFINED!");
                 showToast("Contract number not set. Please go back and enter contract details.", "error");
                 return;
             }
             
             if (!currentBillingDate) {
-                console.error("❌ currentBillingDate is NULL or UNDEFINED!");
+                console.error(" currentBillingDate is NULL or UNDEFINED!");
                 showToast("Billing date not set. Please go back and enter billing date.", "error");
                 return;
             }
             
             if (!currentSelectedTeam) {
-                console.error("❌ currentSelectedTeam is NULL or UNDEFINED!");
+                console.error(" currentSelectedTeam is NULL or UNDEFINED!");
                 showToast("Please select an installation team.", "error");
                 return;
             }
             
             if (!currentInstallationDateValue) {
-                console.error("❌ currentInstallationDateValue is NULL or UNDEFINED!");
+                console.error(" currentInstallationDateValue is NULL or UNDEFINED!");
                 showToast("Please select an installation date.", "error");
                 return;
             }
             
-            // ✅ VALIDATE: Check if selected team's area matches application city
+            // VALIDATE: Check if selected team's area matches application city
             const teamSelectElement = document.getElementById('teamAssignment');
             if (teamSelectElement) {
                 const selectedOption = teamSelectElement.options[teamSelectElement.selectedIndex];
@@ -3530,7 +3530,7 @@ function initializeEventListeners() {
                     const appCityLower = appCity.toLowerCase().trim();
                     const selectedAreaLower = selectedArea.toLowerCase().trim();
                     if (appCityLower !== selectedAreaLower) {
-                        console.error(`❌ Team area (${selectedArea}) does not match application city (${appCity})`);
+                        console.error(` Team area (${selectedArea}) does not match application city (${appCity})`);
                         showToast(`Team area (${selectedArea}) does not match application city (${appCity}). Please select a team from the same area.`, "error");
                         return;
                     }
@@ -3538,10 +3538,10 @@ function initializeEventListeners() {
             }
             
             if (pendingRequestId && pendingRequestedStatus) {
-                console.log("➡️ Calling processApprovalWithContractForRequest");
+                console.log(" Calling processApprovalWithContractForRequest");
                 processApprovalWithContractForRequest(pendingRequestId);
             } else {
-                console.log("➡️ Calling processApprovalWithContract");
+                console.log(" Calling processApprovalWithContract");
                 processApprovalWithContract();
             }
         });
@@ -3655,7 +3655,7 @@ document.getElementById("downloadPdfBtn")?.addEventListener("click", () => {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", async function() {
-    // ✅ SESSION CHECK MUNA
+    // SESSION CHECK MUNA
     const isValid = await checkSession();
     if (!isValid) return;
     
@@ -3763,7 +3763,7 @@ async function executeDelete() {
     }
 
     try {
-        console.log(`🗑️ Deleting application: ${appId}`);
+        console.log(` Deleting application: ${appId}`);
         
         const res = await fetch(`/api/superadmin/application/${appId}`, {
             method: "DELETE",
@@ -3779,7 +3779,7 @@ async function executeDelete() {
 
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <div class="text-success mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-success fw-bold">Application deleted successfully!</p>
                 <p class="text-muted mt-2">The application has been permanently removed from the system.</p>
                 <small class="text-muted">Redirecting to applications list...</small>
@@ -3794,7 +3794,7 @@ async function executeDelete() {
         console.error("Delete error:", err);
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to delete application</p>
                 <small class="text-muted">${err.message}</small>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
@@ -3944,13 +3944,13 @@ async function executeReapplyRequest() {
         const result = await res.json();
         if (!res.ok) throw new Error(result.error || "Failed to send reapply request");
 
-        // ✅ UPDATE LOCAL STATE IMMEDIATELY
+        // UPDATE LOCAL STATE IMMEDIATELY
         currentReapplyRequested = true;
         currentReapplyRequestedAt = new Date().toISOString();
 
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;">✓</div>
+                <div class="text-success mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-success fw-bold">Reapply request sent!</p>
                 <p class="text-muted mt-2">The customer has been notified via email with the reapply link.</p>
                 <small class="text-muted">Closing...</small>
@@ -3971,7 +3971,7 @@ async function executeReapplyRequest() {
             }
             if (closeBtn) closeBtn.disabled = false;
 
-            // ✅ RE-RENDER THE FLOATING BUTTON TO SHOW DISABLED STATE
+            // RE-RENDER THE FLOATING BUTTON TO SHOW DISABLED STATE
             toggleFloatingButtons(currentApplicationStatus);
         }, 1800);
 
@@ -3979,7 +3979,7 @@ async function executeReapplyRequest() {
         console.error("Reapply request error:", err);
         modalBody.innerHTML = `
             <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;">✗</div>
+                <div class="text-danger mb-3" style="font-size: 48px;"></div>
                 <p class="mt-2 mb-0 text-danger fw-bold">Failed to send reapply request</p>
                 <small class="text-muted">${err.message}</small>
             </div>

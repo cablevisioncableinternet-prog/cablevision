@@ -90,10 +90,10 @@ def get_cloudinary_url(image_path, resource_type="image"):
 def upload_to_cloudinary(file, folder="plans"):
     """Upload file to Cloudinary and return URL"""
     try:
-        print(f"📤 Uploading to Cloudinary: {file.filename}")
+        print(f" Uploading to Cloudinary: {file.filename}")
         
-        # ✅ I-reset ang file pointer bago mag-upload
-        file.stream.seek(0)  # 👈 ITO ANG SUSI!
+        # I-reset ang file pointer bago mag-upload
+        file.stream.seek(0)  # ITO ANG SUSI!
         
         filename_without_ext = file.filename.rsplit('.', 1)[0]
         
@@ -105,11 +105,11 @@ def upload_to_cloudinary(file, folder="plans"):
             overwrite=True
         )
         
-        print(f"✅ Upload successful: {result['secure_url']}")
+        print(f" Upload successful: {result['secure_url']}")
         return result['secure_url']
         
     except Exception as e:
-        print(f"❌ Cloudinary upload error: {e}")
+        print(f" Cloudinary upload error: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -117,12 +117,12 @@ def upload_to_cloudinary(file, folder="plans"):
 def delete_from_cloudinary(image_url):
     """Delete file from Cloudinary using URL"""
     if not image_url:
-        print("ℹ️ No image URL to delete")
+        print(" No image URL to delete")
         return
     
     try:
         if 'cloudinary.com' in image_url:
-            # ✅ Extract public_id from URL
+            # Extract public_id from URL
             # Example: https://res.cloudinary.com/oa3fcr2b/image/upload/cablevision/plans/plan_xxx.png
             # Public ID: cablevision/plans/plan_xxx
             
@@ -130,30 +130,30 @@ def delete_from_cloudinary(image_url):
             parts = image_url.split('/upload/')
             if len(parts) > 1:
                 public_id_with_ext = parts[1]
-                print(f"🔍 Public ID with extension: {public_id_with_ext}")
+                print(f" Public ID with extension: {public_id_with_ext}")
                 
-                # ✅ Remove version number if present (v1234567890/)
+                # Remove version number if present (v1234567890/)
                 if '/' in public_id_with_ext and public_id_with_ext.split('/')[0].startswith('v'):
                     public_id_with_ext = '/'.join(public_id_with_ext.split('/')[1:])
-                    print(f"🔍 After removing version: {public_id_with_ext}")
+                    print(f" After removing version: {public_id_with_ext}")
                 
-                # ✅ Remove file extension (.png, .jpg, etc.)
+                # Remove file extension (.png, .jpg, etc.)
                 public_id = public_id_with_ext.rsplit('.', 1)[0]
-                print(f"✅ Final public_id: {public_id}")
+                print(f" Final public_id: {public_id}")
                 
-                # ✅ Delete from Cloudinary
+                # Delete from Cloudinary
                 result = cloudinary.uploader.destroy(public_id, resource_type="image")
-                print(f"🗑️ Cloudinary delete result: {result}")
+                print(f" Cloudinary delete result: {result}")
                 
                 if result.get('result') == 'ok':
-                    print(f"✅ Successfully deleted: {public_id}")
+                    print(f" Successfully deleted: {public_id}")
                     return True
                 else:
-                    print(f"⚠️ Delete result: {result}")
+                    print(f" Delete result: {result}")
                     return False
                     
     except Exception as e:
-        print(f"❌ Cloudinary delete error: {e}")
+        print(f" Cloudinary delete error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -184,9 +184,9 @@ def ensure_temp_reset_password_column():
 
         if "new_password" not in column_names:
             execute_query("ALTER TABLE temp_reset ADD COLUMN new_password VARCHAR(255) NULL")
-            print("✅ Added temp_reset.new_password column")
+            print(" Added temp_reset.new_password column")
     except Exception as e:
-        print(f"⚠️ temp_reset schema check failed: {e}")
+        print(f" temp_reset schema check failed: {e}")
 
 
 ensure_temp_reset_password_column()
@@ -230,9 +230,9 @@ def upgrade_password_if_needed(table, id_column, id_value, stored_password, prov
             new_hash = hash_password(provided_password)
             update_query = f"UPDATE {table} SET password = %s WHERE {id_column} = %s"
             execute_query(update_query, (new_hash, id_value))
-            print(f"🔐 Upgraded {table}.{id_column}={id_value} password to hashed format")
+            print(f" Upgraded {table}.{id_column}={id_value} password to hashed format")
         except Exception as e:
-            print(f"⚠️ Password upgrade failed for {table}.{id_column}={id_value}: {e}")
+            print(f" Password upgrade failed for {table}.{id_column}={id_value}: {e}")
 
 # ========== WALA NA ITO (TINANGGAL ANG FIREBASE) ==========
 # cred = credentials.Certificate("cablevision-27a81-firebase-adminsdk-fbsvc-23f87c44c6.json")
@@ -988,7 +988,7 @@ def forgot_password():
     data = request.json
     identifier = data.get("identifier")
     
-    print(f"🔍 Searching for identifier: {identifier}")
+    print(f" Searching for identifier: {identifier}")
     
     if not identifier:
         return jsonify({"error": "Identifier required"}), 400
@@ -998,7 +998,7 @@ def forgot_password():
     superadmin = execute_query(query, (identifier, identifier), fetch_one=True)
     
     if superadmin:
-        print(f"✅ Found SUPERADMIN: {superadmin.get('username')}")
+        print(f" Found SUPERADMIN: {superadmin.get('username')}")
         email = superadmin.get('email')
         username = superadmin.get('username')
         user_type = "superadmin"
@@ -1035,7 +1035,7 @@ def forgot_password():
     admin = execute_query(query, (identifier, identifier, identifier), fetch_one=True)
     
     if admin:
-        print(f"✅ Found ADMIN: {admin.get('username')}")
+        print(f" Found ADMIN: {admin.get('username')}")
         username = admin.get('username')
         email = admin.get('email')
         user_type = "admin"
@@ -1073,7 +1073,7 @@ def forgot_password():
     technician = execute_query(query, (identifier, identifier), fetch_one=True)
     
     if technician:
-        print(f"✅ Found TECHNICIAN: {technician.get('technician_id')}")
+        print(f" Found TECHNICIAN: {technician.get('technician_id')}")
         username = technician.get('technician_id')
         email = technician.get('email')
         user_type = "technician"
@@ -1103,7 +1103,7 @@ def forgot_password():
             return jsonify({"error": "Failed to send OTP email"}), 500
 
     # Kung walang nahanap sa lahat
-    print(f"❌ No user found with identifier: {identifier}")
+    print(f" No user found with identifier: {identifier}")
     return jsonify({"error": "Email not found"}), 404
 
 # ===============================
@@ -1170,7 +1170,7 @@ def reset_password():
             "error": "Invalid verification code"
         }), 400
 
-    print(f"✅ Found temp_data: {temp_data}")
+    print(f" Found temp_data: {temp_data}")
 
     # ===============================
     # CHECK OTP EXPIRATION
@@ -1201,8 +1201,8 @@ def reset_password():
             "error": "Account information not found"
         }), 400
 
-    print(f"👤 User Type: {user_type}")
-    print(f"👤 Username/ID: {actual_username}")
+    print(f" User Type: {user_type}")
+    print(f" Username/ID: {actual_username}")
 
     # ===============================
     # HASH NEW PASSWORD
@@ -1210,7 +1210,7 @@ def reset_password():
     hashed_new_password = hash_password(new_password)
 
     print(
-        f"🔐 Hashed password: "
+        f" Hashed password: "
         f"{hashed_new_password[:50]}..."
     )
 
@@ -1233,7 +1233,7 @@ def reset_password():
     )
 
     print(
-        f"📝 Update temp_reset result: "
+        f" Update temp_reset result: "
         f"{update_temp_result}"
     )
 
@@ -1251,7 +1251,7 @@ def reset_password():
     )
 
     print(
-        f"🔍 Verified new_password: "
+        f" Verified new_password: "
         f"{'SAVED' if verify_temp and verify_temp.get('new_password') else 'NULL'}"
     )
 
@@ -1278,7 +1278,7 @@ def reset_password():
         )
 
         print(
-            f"✅ Superadmin password updated: "
+            f" Superadmin password updated: "
             f"{update_rows} rows affected"
         )
 
@@ -1299,7 +1299,7 @@ def reset_password():
         )
 
         print(
-            f"✅ Admin password updated: "
+            f" Admin password updated: "
             f"{update_rows} rows affected"
         )
 
@@ -1320,7 +1320,7 @@ def reset_password():
         )
 
         print(
-            f"✅ Technician password updated: "
+            f" Technician password updated: "
             f"{update_rows} rows affected"
         )
 
@@ -1359,7 +1359,7 @@ def reset_password():
         )
 
     print(
-        f"🔐 Auto-login after reset for "
+        f" Auto-login after reset for "
         f"{actual_username} "
         f"(type: {user_type})"
     )
@@ -1439,7 +1439,7 @@ def reset_password():
         )
 
         print(
-            f"✅ Superadmin session created "
+            f" Superadmin session created "
             f"for tab: {tab_id}"
         )
 
@@ -1527,7 +1527,7 @@ def reset_password():
         )
 
         print(
-            f"✅ Admin session created "
+            f" Admin session created "
             f"for tab: {tab_id}"
         )
 
@@ -1619,7 +1619,7 @@ def reset_password():
         )
 
         print(
-            f"✅ Technician session created "
+            f" Technician session created "
             f"for tab: {tab_id}"
         )
 
@@ -1641,19 +1641,19 @@ def reset_password():
     # DEBUG SESSION
     # ===============================
     print("=========================================")
-    print("✅ PASSWORD RESET SUCCESSFUL")
-    print("✅ AUTO-LOGIN SESSION CREATED")
-    print(f"✅ User ID: {user_id}")
-    print(f"✅ Username: {actual_username}")
-    print(f"✅ User Type: {user_type}")
-    print(f"✅ Tab ID: {tab_id}")
-    print(f"✅ Active Tab: {session.get('active_tab')}")
+    print(" PASSWORD RESET SUCCESSFUL")
+    print(" AUTO-LOGIN SESSION CREATED")
+    print(f" User ID: {user_id}")
+    print(f" Username: {actual_username}")
+    print(f" User Type: {user_type}")
+    print(f" Tab ID: {tab_id}")
+    print(f" Active Tab: {session.get('active_tab')}")
     print(
-        f"✅ Tab Session Exists: "
+        f" Tab Session Exists: "
         f"{bool(session.get(f'admin_{tab_id}'))}"
     )
     print(
-        f"✅ Session User Type: "
+        f" Session User Type: "
         f"{session.get('user_type')}"
     )
     print("=========================================")
@@ -1728,7 +1728,7 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
     # ===============================
 
     if not brevo_api_key:
-        print("❌ BREVO_API_KEY is not configured!")
+        print(" BREVO_API_KEY is not configured!")
         return False
 
     # ===============================
@@ -1914,7 +1914,7 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
     try:
 
         print(
-            f"📧 Sending {type_display} password reset OTP "
+            f" Sending {type_display} password reset OTP "
             f"via Brevo to {to_email}..."
         )
 
@@ -1932,7 +1932,7 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
         if response.status_code not in (200, 201):
 
             print(
-                f"❌ Brevo API error "
+                f" Brevo API error "
                 f"({response.status_code}): "
                 f"{response.text}"
             )
@@ -1952,14 +1952,14 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
             if message_id:
 
                 print(
-                    f"📨 Brevo Message ID: {message_id}"
+                    f" Brevo Message ID: {message_id}"
                 )
 
         except Exception:
             pass
 
         print(
-            f"✅ {type_display} password reset OTP "
+            f" {type_display} password reset OTP "
             f"sent successfully to {to_email}"
         )
 
@@ -1972,7 +1972,7 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
     except requests.exceptions.Timeout:
 
         print(
-            "❌ Brevo API request timed out"
+            " Brevo API request timed out"
         )
 
         return False
@@ -1980,7 +1980,7 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
     except requests.exceptions.RequestException as e:
 
         print(
-            f"❌ Brevo API request error: {e}"
+            f" Brevo API request error: {e}"
         )
 
         return False
@@ -1988,7 +1988,7 @@ def send_universal_otp_email(to_email, name, otp_code, user_type):
     except Exception as e:
 
         print(
-            f"❌ Error sending password reset OTP: {e}"
+            f" Error sending password reset OTP: {e}"
         )
 
         import traceback
@@ -2198,7 +2198,7 @@ def generate_next_admin_id():
         
         # Generate admin ID with zero-padded 4 digits
         admin_id = f"ACV-{str(next_number).zfill(4)}"
-        print(f"✨ Generated new admin ID: {admin_id}")
+        print(f" Generated new admin ID: {admin_id}")
         return admin_id
         
     except Exception as e:
@@ -2215,7 +2215,7 @@ def create_admin():
     email = data.get("email")
     area = data.get("area")
 
-    print(f"📝 Received - Username: {username}, Email: {email}, Area: {area}")
+    print(f" Received - Username: {username}, Email: {email}, Area: {area}")
 
     if not username or not email or not area:
         return jsonify({"error": "All fields are required"}), 400
@@ -2231,20 +2231,20 @@ def create_admin():
         return jsonify({"error": "Invalid email address"}), 400
 
     try:
-        # ========== 🔥 CHECK USERNAME IN ADMINS TABLE ==========
+        # ========== CHECK USERNAME IN ADMINS TABLE ==========
         check_username_query = "SELECT username FROM admins WHERE username = %s"
         username_exists = execute_query(check_username_query, (username,), fetch_one=True)
         
         if username_exists:
             return jsonify({"error": "Username already exists"}), 400
 
-        # ========== 🔥 CHECK DUPLICATE AREA ==========
+        # ========== CHECK DUPLICATE AREA ==========
         area_exists_query = "SELECT admin_id FROM admins WHERE area = %s LIMIT 1"
         area_exists = execute_query(area_exists_query, (area,), fetch_one=True)
         if area_exists:
             return jsonify({"error": "This area already has an administrator assigned. Delete the existing admin first before creating another one for the same area."}), 400
 
-        # ========== 🔥 CHECK EMAIL IN ALL TABLES ==========
+        # ========== CHECK EMAIL IN ALL TABLES ==========
         check_all_query = """
             SELECT 
                 (SELECT COUNT(*) FROM technicians WHERE email = %s) as tech_count,
@@ -2257,7 +2257,7 @@ def create_admin():
         admin_exists = result.get('admin_count', 0) > 0 if result else False
         superadmin_exists = result.get('superadmin_count', 0) > 0 if result else False
 
-        # ✅ GENERIC MESSAGE - EMAIL LANG ANG NAKALAGAY
+        # GENERIC MESSAGE - EMAIL LANG ANG NAKALAGAY
         if tech_exists or admin_exists or superadmin_exists:
             return jsonify({"error": f"Email '{email}' already exists"}), 400
 
@@ -2285,13 +2285,13 @@ def create_admin():
         
         execute_query(insert_query, params)
         
-        print(f"✅ Admin saved successfully: {admin_id}")
+        print(f" Admin saved successfully: {admin_id}")
         
         # Send email (with plain password, not hashed)
         try:
             send_admin_email(email, admin_id, username, default_password)
         except Exception as e:
-            print(f"⚠️ Email error but admin was created: {e}")
+            print(f" Email error but admin was created: {e}")
 
         return jsonify({
             "message": "Admin created successfully",
@@ -2299,7 +2299,7 @@ def create_admin():
         }), 201
 
     except Exception as e:
-        print(f"❌ Error creating admin: {e}")
+        print(f" Error creating admin: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -2342,11 +2342,11 @@ def send_admin_email(to_email, admin_id, username, password):
     # ===============================
 
     if not brevo_api_key:
-        print("❌ BREVO_API_KEY is not configured!")
+        print(" BREVO_API_KEY is not configured!")
         return False
 
     if not to_email:
-        print("❌ Cannot send admin email: recipient email is empty.")
+        print(" Cannot send admin email: recipient email is empty.")
         return False
 
     # ===============================
@@ -2533,7 +2533,7 @@ def send_admin_email(to_email, admin_id, username, password):
                             color:#9a3412;
                             margin-bottom:6px;
                         ">
-                            ⚠️ Security Notice
+                            Security Notice
                         </div>
                         <div style="
                             font-size:13px;
@@ -2574,7 +2574,7 @@ def send_admin_email(to_email, admin_id, username, password):
                         font-size:11px;
                         color:#64748b;
                     ">
-                        © 2026 Cablevision Systems Corporation. All rights reserved.
+                        2026 Cablevision Systems Corporation. All rights reserved.
                     </div>
                     <div style="
                         margin-top:4px;
@@ -2657,12 +2657,12 @@ Sta. Cruz, Laguna, Philippines
 
     try:
         print("========================================")
-        print("📧 ADMIN ACCOUNT EMAIL")
+        print(" ADMIN ACCOUNT EMAIL")
         print("========================================")
-        print(f"📧 From: {sender_email}")
-        print(f"📧 To: {to_email}")
-        print(f"📧 Admin ID: {admin_id}")
-        print(f"📧 Username: {username}")
+        print(f" From: {sender_email}")
+        print(f" To: {to_email}")
+        print(f" Admin ID: {admin_id}")
+        print(f" Username: {username}")
         print("========================================")
 
         response = requests.post(
@@ -2677,7 +2677,7 @@ Sta. Cruz, Laguna, Philippines
         # ===============================
 
         if response.status_code not in (200, 201):
-            print(f"❌ Brevo API error ({response.status_code}): {response.text}")
+            print(f" Brevo API error ({response.status_code}): {response.text}")
             return False
 
         # ===============================
@@ -2688,11 +2688,11 @@ Sta. Cruz, Laguna, Philippines
             brevo_response = response.json()
             message_id = brevo_response.get("messageId")
             if message_id:
-                print(f"📨 Brevo Message ID: {message_id}")
+                print(f" Brevo Message ID: {message_id}")
         except Exception:
             pass
 
-        print(f"✅ Admin account email sent successfully to {to_email}")
+        print(f" Admin account email sent successfully to {to_email}")
         return True
 
     # ===============================
@@ -2700,15 +2700,15 @@ Sta. Cruz, Laguna, Philippines
     # ===============================
 
     except requests.exceptions.Timeout:
-        print("❌ Brevo API request timed out.")
+        print(" Brevo API request timed out.")
         return False
 
     except requests.exceptions.RequestException as e:
-        print(f"❌ Brevo API request error: {e}")
+        print(f" Brevo API request error: {e}")
         return False
 
     except Exception as e:
-        print(f"❌ Error sending admin account email: {e}")
+        print(f" Error sending admin account email: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -2726,7 +2726,7 @@ def list_admins():
         """
         admins_list = execute_query(query, fetch=True) or []
         
-        print(f"📋 Listing {len(admins_list)} admins")
+        print(f" Listing {len(admins_list)} admins")
         return jsonify(admins_list)
         
     except Exception as e:
@@ -2812,24 +2812,24 @@ def update_admin(admin_id):
 @app.route("/api/superadmin/admins/<admin_id>", methods=["DELETE"])
 def delete_admin(admin_id):
     try:
-        print(f"🗑️ Attempting to delete admin with ID: {admin_id}")
+        print(f" Attempting to delete admin with ID: {admin_id}")
         
         # Get admin info first (for logging)
         get_query = "SELECT username, email FROM admins WHERE admin_id = %s"
         admin_data = execute_query(get_query, (admin_id,), fetch_one=True)
         
         if not admin_data:
-            print(f"❌ Admin not found with ID: {admin_id}")
+            print(f" Admin not found with ID: {admin_id}")
             return jsonify({"error": "Admin not found"}), 404
         
         username = admin_data.get("username")
-        print(f"📝 Found admin: {username} (ID: {admin_id})")
+        print(f" Found admin: {username} (ID: {admin_id})")
         
         # Delete from MySQL
         delete_query = "DELETE FROM admins WHERE admin_id = %s"
         execute_query(delete_query, (admin_id,))
         
-        print(f"✅ Admin '{username}' (ID: {admin_id}) deleted successfully")
+        print(f" Admin '{username}' (ID: {admin_id}) deleted successfully")
         return jsonify({"message": f"Admin '{username}' deleted successfully"})
         
     except Exception as e:
@@ -2845,7 +2845,7 @@ def update_admin_status(admin_id):
         data = request.get_json()
         new_status = data.get("status")
         
-        print(f"🔄 Updating admin {admin_id} status to: {new_status}")
+        print(f" Updating admin {admin_id} status to: {new_status}")
         
         if new_status not in ["Active", "Deactivated"]:
             return jsonify({"error": "Invalid status. Use 'Active' or 'Deactivated'"}), 400
@@ -2862,7 +2862,7 @@ def update_admin_status(admin_id):
         execute_query(update_query, (new_status, admin_id))
         
         username = admin_data.get("username")
-        print(f"✅ Admin '{username}' status updated to {new_status}")
+        print(f" Admin '{username}' status updated to {new_status}")
         return jsonify({"message": f"Admin '{username}' status updated to {new_status}"})
         
     except Exception as e:
@@ -2924,7 +2924,7 @@ def generate_next_team_id(area):
         return f"{prefix}-{str(next_number).zfill(4)}"
         
     except Exception as e:
-        print(f"❌ Error generating team ID: {e}")
+        print(f" Error generating team ID: {e}")
         return f"TEAM-{int(datetime.now().timestamp())}"
 
 # ===============================
@@ -2940,10 +2940,10 @@ def create_team():
     status = data.get("status", "Active")
     
     print("=" * 60)
-    print("🔍 DEBUGGING CREATE TEAM")
-    print(f"📝 Team Name: '{team_name}'")
-    print(f"📝 Area: '{area}'")
-    print(f"📝 Team Leader: '{team_leader_id}'")
+    print(" DEBUGGING CREATE TEAM")
+    print(f" Team Name: '{team_name}'")
+    print(f" Area: '{area}'")
+    print(f" Team Leader: '{team_leader_id}'")
     print("=" * 60)
     
     if not team_name or not area:
@@ -2963,7 +2963,7 @@ def create_team():
         team_id = generate_next_team_id(area)
         
         # ==============================================
-        # 🔥 BAGO: I-verify ang team leader
+        # BAGO: I-verify ang team leader
         # ==============================================
         if team_leader_id:
             # Check if technician exists and is active
@@ -2993,10 +2993,10 @@ def create_team():
         params = (team_id, team_name, area, team_leader_id, status)
         execute_query(insert_query, params)
         
-        print(f"✅ Team created successfully: {team_id}")
+        print(f" Team created successfully: {team_id}")
         
         # ==============================================
-        # 🔥 BAGO: 2. I-ADD ANG TEAM LEADER AS MEMBER
+        # BAGO: 2. I-ADD ANG TEAM LEADER AS MEMBER
         # ==============================================
         if team_leader_id:
             # I-update ang technician's team_id
@@ -3006,7 +3006,7 @@ def create_team():
                 WHERE technician_id = %s
             """
             execute_query(update_tech_query, (team_id, team_leader_id))
-            print(f"✅ Team leader {team_leader_id} added as member of team {team_id}")
+            print(f" Team leader {team_leader_id} added as member of team {team_id}")
         
         return jsonify({
             "message": "Team created successfully",
@@ -3014,7 +3014,7 @@ def create_team():
         }), 201
         
     except Exception as e:
-        print(f"❌ Error creating team: {e}")
+        print(f" Error creating team: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -3120,14 +3120,14 @@ def update_team(team_id):
             return jsonify({"error": "Team name already exists"}), 400
         
         # ==============================================
-        # 🔥 I-DETECT KUNG NAGBAGO ANG AREA
+        # I-DETECT KUNG NAGBAGO ANG AREA
         # ==============================================
         old_area = existing_team.get('area')
         area_changed = old_area != area
-        print(f"📍 Area changed: {old_area} → {area} (Changed: {area_changed})")
+        print(f" Area changed: {old_area} → {area} (Changed: {area_changed})")
         
         # ==============================================
-        # 🔥 I-HANDLE ANG TEAM LEADER CHANGES
+        # I-HANDLE ANG TEAM LEADER CHANGES
         # ==============================================
         old_leader_id = existing_team.get('team_leader_id')
         
@@ -3160,10 +3160,10 @@ def update_team(team_id):
         execute_query(update_query, params)
         
         # ==============================================
-        # 🔥 2. KUNG NAGBAGO ANG AREA, I-UPDATE ANG LAHAT NG MEMBERS
+        # 2. KUNG NAGBAGO ANG AREA, I-UPDATE ANG LAHAT NG MEMBERS
         # ==============================================
         if area_changed:
-            print(f"🔄 Updating all members of team {team_id} from '{old_area}' to '{area}'")
+            print(f" Updating all members of team {team_id} from '{old_area}' to '{area}'")
             
             # I-update ang area ng lahat ng technicians na member ng team
             update_members_query = """
@@ -3178,7 +3178,7 @@ def update_team(team_id):
             count_result = execute_query(count_query, (team_id,), fetch_one=True)
             member_count = count_result.get('count', 0) if count_result else 0
             
-            print(f"✅ Updated {member_count} technicians' area from '{old_area}' to '{area}'")
+            print(f" Updated {member_count} technicians' area from '{old_area}' to '{area}'")
         
         # ==============================================
         # 3. I-HANDLE ANG TEAM LEADER CHANGES
@@ -3194,9 +3194,9 @@ def update_team(team_id):
             if not is_member:
                 update_tech = "UPDATE technicians SET team_id = %s WHERE technician_id = %s"
                 execute_query(update_tech, (team_id, team_leader_id))
-                print(f"✅ New team leader {team_leader_id} added as member")
+                print(f" New team leader {team_leader_id} added as member")
         
-        print(f"✅ Team updated successfully: {team_id}")
+        print(f" Team updated successfully: {team_id}")
         
         return jsonify({
             "message": "Team updated successfully",
@@ -3222,7 +3222,7 @@ def add_team_member(team_id):
     technician_id = data.get("technician_id")
     
     print("=" * 60)
-    print(f"🔍 ADD MEMBER - Team: {team_id}, Technician: {technician_id}")
+    print(f" ADD MEMBER - Team: {team_id}, Technician: {technician_id}")
     print("=" * 60)
     
     if not technician_id:
@@ -3233,30 +3233,30 @@ def add_team_member(team_id):
         team_query = "SELECT team_id FROM teams WHERE team_id = %s"
         team = execute_query(team_query, (team_id,), fetch_one=True)
         if not team:
-            print(f"❌ Team {team_id} not found")
+            print(f" Team {team_id} not found")
             return jsonify({"error": "Team not found"}), 404
         
         # Check if technician exists
         tech_query = "SELECT technician_id, team_id FROM technicians WHERE technician_id = %s"
         tech = execute_query(tech_query, (technician_id,), fetch_one=True)
         if not tech:
-            print(f"❌ Technician {technician_id} not found")
+            print(f" Technician {technician_id} not found")
             return jsonify({"error": "Technician not found"}), 404
         
         # Check if technician is already in a team
         if tech.get('team_id'):
-            print(f"❌ Technician {technician_id} already in team {tech.get('team_id')}")
+            print(f" Technician {technician_id} already in team {tech.get('team_id')}")
             return jsonify({"error": "Technician is already assigned to a team"}), 400
         
         # Update technician's team
         update_query = "UPDATE technicians SET team_id = %s WHERE technician_id = %s"
         execute_query(update_query, (team_id, technician_id))
         
-        print(f"✅ Successfully added {technician_id} to {team_id}")
+        print(f" Successfully added {technician_id} to {team_id}")
         return jsonify({"message": "Member added to team successfully"})
         
     except Exception as e:
-        print(f"❌ Error adding member: {e}")
+        print(f" Error adding member: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -3272,7 +3272,7 @@ def remove_team_member(team_id):
     technician_id = data.get("technician_id")
     
     print("=" * 60)
-    print(f"🔍 REMOVE MEMBER - Team: {team_id}, Technician: {technician_id}")
+    print(f" REMOVE MEMBER - Team: {team_id}, Technician: {technician_id}")
     print("=" * 60)
     
     if not technician_id:
@@ -3283,22 +3283,22 @@ def remove_team_member(team_id):
         check_query = "SELECT team_id FROM technicians WHERE technician_id = %s"
         current = execute_query(check_query, (technician_id,), fetch_one=True)
         if not current:
-            print(f"❌ Technician {technician_id} not found")
+            print(f" Technician {technician_id} not found")
             return jsonify({"error": "Technician not found"}), 404
         
         if current.get('team_id') != team_id:
-            print(f"❌ Technician {technician_id} is in team {current.get('team_id')}, not {team_id}")
+            print(f" Technician {technician_id} is in team {current.get('team_id')}, not {team_id}")
             return jsonify({"error": "Technician is not in this team"}), 400
         
         # Remove technician from team
         update_query = "UPDATE technicians SET team_id = NULL WHERE technician_id = %s"
         execute_query(update_query, (technician_id,))
         
-        print(f"✅ Successfully removed {technician_id} from {team_id}")
+        print(f" Successfully removed {technician_id} from {team_id}")
         return jsonify({"message": "Member removed from team successfully"})
         
     except Exception as e:
-        print(f"❌ Error removing member: {e}")
+        print(f" Error removing member: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -3327,7 +3327,7 @@ def get_all_technicians():
         technicians = execute_query(query, fetch=True) or []
         return jsonify(technicians)
     except Exception as e:
-        print(f"❌ Error getting technicians: {e}")
+        print(f" Error getting technicians: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -3348,28 +3348,28 @@ def get_technician_prefix(area):
     """Get technician ID prefix based on area"""
     # Handle None or empty
     if not area:
-        print("⚠️ Area is None or empty")
+        print(" Area is None or empty")
         return 'TECH'
     
     # Convert to uppercase and strip whitespace
     area_clean = area.upper().strip()
-    print(f"🔍 get_technician_prefix - Cleaned area: '{area_clean}'")
+    print(f" get_technician_prefix - Cleaned area: '{area_clean}'")
     
     # Simple if-else
     if area_clean == 'SANTA CRUZ':
-        print("✅ Match: SANTA CRUZ -> TSTC")
+        print(" Match: SANTA CRUZ -> TSTC")
         return 'TSTC'
     elif area_clean == 'PAGSANJAN':
-        print("✅ Match: PAGSANJAN -> TPSN")
+        print(" Match: PAGSANJAN -> TPSN")
         return 'TPSN'
     elif area_clean == 'MAGDALENA':
-        print("✅ Match: MAGDALENA -> TMAG")
+        print(" Match: MAGDALENA -> TMAG")
         return 'TMAG'
     elif area_clean == 'PILA':
-        print("✅ Match: PILA -> TPIL")
+        print(" Match: PILA -> TPIL")
         return 'TPIL'
     else:
-        print(f"⚠️ No match for '{area_clean}', using default TECH")
+        print(f" No match for '{area_clean}', using default TECH")
         return 'TECH'
 
 
@@ -3381,7 +3381,7 @@ def generate_next_technician_id(area):
         
         # Kung prefix ay TECH, ibig sabihin hindi recognized ang area
         if prefix == 'TECH':
-            print(f"⚠️ Area '{area}' not recognized, using timestamp fallback")
+            print(f" Area '{area}' not recognized, using timestamp fallback")
             return f"TECH-{int(datetime.now().timestamp())}"
         
         # Get all technician IDs with this prefix
@@ -3406,11 +3406,11 @@ def generate_next_technician_id(area):
             next_number += 1
         
         technician_id = f"{prefix}-{str(next_number).zfill(4)}"
-        print(f"✨ Generated: {technician_id}")
+        print(f" Generated: {technician_id}")
         return technician_id
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         return f"TECH-{int(datetime.now().timestamp())}"
 
 
@@ -3428,11 +3428,11 @@ def create_technician():
     team_id = data.get("team_id")
 
     print("=" * 60)
-    print("🔍 DEBUGGING CREATE TECHNICIAN")
-    print(f"📝 Name: '{name}'")
-    print(f"📝 Email: '{email}'")
-    print(f"📝 Area: '{area}'")
-    print(f"📝 Team ID: '{team_id}'")
+    print(" DEBUGGING CREATE TECHNICIAN")
+    print(f" Name: '{name}'")
+    print(f" Email: '{email}'")
+    print(f" Area: '{area}'")
+    print(f" Team ID: '{team_id}'")
     print("=" * 60)
 
     if not name or not email or not area:
@@ -3449,7 +3449,7 @@ def create_technician():
         return jsonify({"error": "Invalid email address"}), 400
 
     try:
-        # ========== 🔥 CHECK EMAIL IN ALL TABLES ==========
+        # ========== CHECK EMAIL IN ALL TABLES ==========
         check_all_query = """
             SELECT 
                 (SELECT COUNT(*) FROM technicians WHERE email = %s) as tech_count,
@@ -3462,7 +3462,7 @@ def create_technician():
         admin_exists = result.get('admin_count', 0) > 0 if result else False
         superadmin_exists = result.get('superadmin_count', 0) > 0 if result else False
 
-        # ✅ GENERIC MESSAGE - EMAIL LANG ANG NAKALAGAY
+        # GENERIC MESSAGE - EMAIL LANG ANG NAKALAGAY
         if tech_exists or admin_exists or superadmin_exists:
             return jsonify({"error": f"Email '{email}' already exists"}), 400
 
@@ -3498,13 +3498,13 @@ def create_technician():
         )
         
         execute_query(insert_query, params)
-        print(f"✅ Technician saved successfully: {technician_id}")
+        print(f" Technician saved successfully: {technician_id}")
         
         # Send email
         try:
             send_technician_email(email, technician_id, name, default_password, area, team_id)
         except Exception as e:
-            print(f"⚠️ Email error: {e}")
+            print(f" Email error: {e}")
 
         return jsonify({
             "message": "Technician created successfully",
@@ -3512,7 +3512,7 @@ def create_technician():
         }), 201
 
     except Exception as e:
-        print(f"❌ Error creating technician: {e}")
+        print(f" Error creating technician: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -3565,11 +3565,11 @@ def send_technician_email(
     # ===============================
 
     if not brevo_api_key:
-        print("❌ BREVO_API_KEY is not configured!")
+        print(" BREVO_API_KEY is not configured!")
         return False
 
     if not to_email:
-        print("❌ Cannot send technician email: recipient email is empty.")
+        print(" Cannot send technician email: recipient email is empty.")
         return False
 
     # ===============================
@@ -3825,7 +3825,7 @@ def send_technician_email(
                             color:#9a3412;
                             margin-bottom:6px;
                         ">
-                            ⚠️ Security Notice
+                            Security Notice
                         </div>
                         <div style="
                             font-size:13px;
@@ -3866,7 +3866,7 @@ def send_technician_email(
                         font-size:11px;
                         color:#64748b;
                     ">
-                        © 2026 Cablevision Systems Corporation. All rights reserved.
+                        2026 Cablevision Systems Corporation. All rights reserved.
                     </div>
                     <div style="
                         margin-top:4px;
@@ -3960,14 +3960,14 @@ Sta. Cruz, Laguna, Philippines
 
     try:
         print("========================================")
-        print("📧 TECHNICIAN ACCOUNT EMAIL")
+        print(" TECHNICIAN ACCOUNT EMAIL")
         print("========================================")
-        print(f"📧 From: {sender_email}")
-        print(f"📧 To: {to_email}")
-        print(f"📧 Technician ID: {technician_id}")
-        print(f"📧 Name: {name}")
-        print(f"📧 Area: {area}")
-        print(f"📧 Team ID: {team_id}")
+        print(f" From: {sender_email}")
+        print(f" To: {to_email}")
+        print(f" Technician ID: {technician_id}")
+        print(f" Name: {name}")
+        print(f" Area: {area}")
+        print(f" Team ID: {team_id}")
         print("========================================")
 
         response = requests.post(
@@ -3982,7 +3982,7 @@ Sta. Cruz, Laguna, Philippines
         # ===============================
 
         if response.status_code not in (200, 201):
-            print(f"❌ Brevo API error ({response.status_code}): {response.text}")
+            print(f" Brevo API error ({response.status_code}): {response.text}")
             return False
 
         # ===============================
@@ -3993,11 +3993,11 @@ Sta. Cruz, Laguna, Philippines
             brevo_response = response.json()
             message_id = brevo_response.get("messageId")
             if message_id:
-                print(f"📨 Brevo Message ID: {message_id}")
+                print(f" Brevo Message ID: {message_id}")
         except Exception:
             pass
 
-        print(f"✅ Technician account email sent successfully to {to_email}")
+        print(f" Technician account email sent successfully to {to_email}")
         return True
 
     # ===============================
@@ -4005,15 +4005,15 @@ Sta. Cruz, Laguna, Philippines
     # ===============================
 
     except requests.exceptions.Timeout:
-        print("❌ Brevo API request timed out.")
+        print(" Brevo API request timed out.")
         return False
 
     except requests.exceptions.RequestException as e:
-        print(f"❌ Brevo API request error: {e}")
+        print(f" Brevo API request error: {e}")
         return False
 
     except Exception as e:
-        print(f"❌ Error sending technician account email: {e}")
+        print(f" Error sending technician account email: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -4101,7 +4101,7 @@ def update_technician(technician_id):
         update_query = f"UPDATE technicians SET {', '.join(updates)} WHERE technician_id = %s"
         execute_query(update_query, tuple(params))
         
-        print(f"✅ Technician {technician_id} updated successfully")
+        print(f" Technician {technician_id} updated successfully")
         return jsonify({"message": "Technician updated successfully"})
         
     except Exception as e:
@@ -4145,7 +4145,7 @@ def update_technician_status(technician_id):
         data = request.get_json()
         new_status = data.get("status")
         
-        print(f"🔄 Updating technician {technician_id} status to: {new_status}")
+        print(f" Updating technician {technician_id} status to: {new_status}")
         
         if new_status not in ["Active", "Deactivated"]:
             return jsonify({"error": "Invalid status. Use 'Active' or 'Deactivated'"}), 400
@@ -4162,7 +4162,7 @@ def update_technician_status(technician_id):
         execute_query(update_query, (new_status, technician_id))
         
         name = technician_data.get("name")
-        print(f"✅ Technician '{name}' status updated to {new_status}")
+        print(f" Technician '{name}' status updated to {new_status}")
         return jsonify({"message": f"Technician '{name}' status updated to {new_status}"})
         
     except Exception as e:
@@ -4256,7 +4256,7 @@ def delete_technician(technician_id):
 def get_super_napbox_slots():
     """Get all NAP boxes and slots for super admin monitoring (read-only)"""
     try:
-        # ✅ FIXED: Gamitin ang tamang column name na 'napbox_name' hindi 'name'
+        # FIXED: Gamitin ang tamang column name na 'napbox_name' hindi 'name'
         napboxes_query = """
             SELECT id, napbox_name as name, location, latitude, longitude, area, barangay, coverage_radius 
             FROM napboxes 
@@ -4264,7 +4264,7 @@ def get_super_napbox_slots():
         """
         napboxes = execute_query(napboxes_query, fetch=True) or []
         
-        # ✅ FIXED: Gamitin ang tamang column name sa JOIN
+        # FIXED: Gamitin ang tamang column name sa JOIN
         slots_query = """
             SELECT 
                 ns.id, 
@@ -4320,7 +4320,7 @@ def get_super_napbox_slots():
                 "area": slot.get('area')
             })
         
-        print(f"✅ Superadmin NAP Box Slots: {len(napboxes_list)} napboxes, {len(slots_list)} slots")
+        print(f" Superadmin NAP Box Slots: {len(napboxes_list)} napboxes, {len(slots_list)} slots")
         
         return jsonify({
             'success': True,
@@ -4329,7 +4329,7 @@ def get_super_napbox_slots():
         })
         
     except Exception as e:
-        print(f"❌ Error in get_super_napbox_slots: {e}")
+        print(f" Error in get_super_napbox_slots: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e), 'napboxes': [], 'slots': []}), 500
@@ -4732,11 +4732,11 @@ def update_user_status(user_id):
     try:
         data = request.get_json()
         new_status = data.get("status")
-        balance = data.get("balance", 0)  # 🔥 KUNIN ANG BALANCE
+        balance = data.get("balance", 0)  # KUNIN ANG BALANCE
         
-        print(f"🔍 Received: user_id={user_id}, new_status={new_status}, balance={balance}")
+        print(f" Received: user_id={user_id}, new_status={new_status}, balance={balance}")
         
-        # 🔥 TANGGAPIN ANG "Active" at "Inactive"
+        # TANGGAPIN ANG "Active" at "Inactive"
         if new_status not in ["Active", "Inactive"]:
             return jsonify({"error": "Invalid status. Use 'Active' or 'Inactive'"}), 400
         
@@ -4750,10 +4750,10 @@ def update_user_status(user_id):
         current_status = user.get('status')
         current_connection = user.get('connection_status')
         
-        print(f"📊 Current: Status='{current_status}', Connection='{current_connection}'")
-        print(f"📊 New: Status='{new_status}', Balance='{balance}'")
+        print(f" Current: Status='{current_status}', Connection='{current_connection}'")
+        print(f" New: Status='{new_status}', Balance='{balance}'")
         
-        # 🔥 I-UPDATE ANG STATUS, CONNECTION_STATUS, AT BALANCE
+        # I-UPDATE ANG STATUS, CONNECTION_STATUS, AT BALANCE
         if new_status == "Active":
             update_query = """
                 UPDATE users 
@@ -4763,7 +4763,7 @@ def update_user_status(user_id):
                 WHERE user_id = %s
             """
             execute_query(update_query, (new_status, balance, user_id))
-            print(f"✅ User {user_id} ACTIVATED: Status=Active, Connection=Connected, Balance={balance}")
+            print(f" User {user_id} ACTIVATED: Status=Active, Connection=Connected, Balance={balance}")
             
             title = "Account Activated"
             message = "Your account has been successfully activated. You can now log in to your dashboard."
@@ -4779,7 +4779,7 @@ def update_user_status(user_id):
                 WHERE user_id = %s
             """
             execute_query(update_query, (new_status, balance, user_id))
-            print(f"✅ User {user_id} DEACTIVATED: Status=Inactive, Connection=Disconnected, Balance={balance}")
+            print(f" User {user_id} DEACTIVATED: Status=Inactive, Connection=Disconnected, Balance={balance}")
             
             title = "Account Deactivated"
             message = f"Your account has been deactivated. Your internet connection has been disconnected. Balance: ₱{balance:.2f}"
@@ -4817,15 +4817,15 @@ def update_user_status(user_id):
                 datetime.now().isoformat(),
                 0
             ))
-            print(f"🔔 Notification sent to user {user_id}")
+            print(f" Notification sent to user {user_id}")
             
         except Exception as notif_error:
-            print(f"⚠️ Error creating notification: {notif_error}")
+            print(f" Error creating notification: {notif_error}")
         
-        # 🔥 I-VERIFY ANG UPDATE
+        # I-VERIFY ANG UPDATE
         verify_query = "SELECT status, connection_status, balance FROM users WHERE user_id = %s"
         verified = execute_query(verify_query, (user_id,), fetch_one=True)
-        print(f"📊 VERIFIED: Status='{verified.get('status')}', Connection='{verified.get('connection_status')}', Balance='{verified.get('balance')}'")
+        print(f" VERIFIED: Status='{verified.get('status')}', Connection='{verified.get('connection_status')}', Balance='{verified.get('balance')}'")
         
         return jsonify({
             "message": f"User {user_id} updated to {new_status}",
@@ -4835,7 +4835,7 @@ def update_user_status(user_id):
         })
         
     except Exception as e:
-        print("❌ Update user status error:", e)
+        print(" Update user status error:", e)
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -4903,10 +4903,10 @@ def update_user_connection(user_id):
                 datetime.now().isoformat(),
                 0  # unread
             ))
-            print(f"✅ Notification sent to user {user_id} about connection {new_status}")
+            print(f" Notification sent to user {user_id} about connection {new_status}")
             
         except Exception as notif_error:
-            print(f"⚠️ Error creating user notification: {notif_error}")
+            print(f" Error creating user notification: {notif_error}")
             import traceback
             traceback.print_exc()
         
@@ -4987,8 +4987,8 @@ def delete_terminated_user(user_id):
         
         application_number = user.get('application_number')
         
-        print(f"🗑️ Deleting terminated user: {user_id}")
-        print(f"📋 Application number: {application_number}")
+        print(f" Deleting terminated user: {user_id}")
+        print(f" Application number: {application_number}")
         
         # ========== DELETE CONTRACT (if exists) ==========
         if application_number:
@@ -5001,29 +5001,29 @@ def delete_terminated_user(user_id):
                 # Delete from contracts table
                 delete_contract = "DELETE FROM contracts WHERE contract_number = %s"
                 execute_query(delete_contract, (contract_number,))
-                print(f"✅ Deleted contract: {contract_number}")
+                print(f" Deleted contract: {contract_number}")
         
         # ========== DELETE CUSTOMER (if exists) ==========
         if application_number:
             delete_customer = "DELETE FROM customers WHERE application_number = %s"
             execute_query(delete_customer, (application_number,))
-            print(f"✅ Deleted customer record for: {application_number}")
+            print(f" Deleted customer record for: {application_number}")
         
         # ========== DELETE APPLICATION (if exists) ==========
         if application_number:
             delete_application = "DELETE FROM applications WHERE application_number = %s"
             execute_query(delete_application, (application_number,))
-            print(f"✅ Deleted application: {application_number}")
+            print(f" Deleted application: {application_number}")
         
         # ========== DELETE USER NOTIFICATIONS ==========
         delete_notifications = "DELETE FROM user_notifications WHERE user_id = %s"
         execute_query(delete_notifications, (user_id,))
-        print(f"✅ Deleted notifications for user: {user_id}")
+        print(f" Deleted notifications for user: {user_id}")
         
         # ========== DELETE USER ==========
         delete_user = "DELETE FROM users WHERE user_id = %s"
         execute_query(delete_user, (user_id,))
-        print(f"✅ Deleted user: {user_id}")
+        print(f" Deleted user: {user_id}")
         
         return jsonify({
             "success": True,
@@ -5031,7 +5031,7 @@ def delete_terminated_user(user_id):
         })
         
     except Exception as e:
-        print(f"❌ Error deleting user: {e}")
+        print(f" Error deleting user: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -5124,14 +5124,14 @@ def approve_reconnect_request(request_id):
         if not user_info:
             return jsonify({"error": "User not found"}), 404
         
-        # 🔥 CHECK KUNG ANO ANG CURRENT STATUS NG USER
+        # CHECK KUNG ANO ANG CURRENT STATUS NG USER
         current_user_status = user_info.get('status', '')
         req_app_num = application_number or user_info.get("application_number")
         req_contract_num = user_info.get("contract_number")
         user_email = user_info.get("email") or ""
         user_full_name = f"{user_info.get('first_name', '')} {user_info.get('last_name', '')}".strip() or "User"
         
-        # 🔥 KUNG INACTIVE LANG ANG USER, DI NA KAILANGAN NG SLOT REASSIGNMENT
+        # KUNG INACTIVE LANG ANG USER, DI NA KAILANGAN NG SLOT REASSIGNMENT
         is_inactive_only = (current_user_status == 'Inactive')
         
         customer_city = None
@@ -5148,9 +5148,9 @@ def approve_reconnect_request(request_id):
                 if not user_email:
                     user_email = cust_info.get("email") or ""
 
-        # 🔥 PAG INACTIVE LANG: DI NA KAILANGAN NG NAP BOX SLOT CHECK
+        # PAG INACTIVE LANG: DI NA KAILANGAN NG NAP BOX SLOT CHECK
         if is_inactive_only:
-            print(f"✅ User {user_id} is INACTIVE only - reactivating directly...")
+            print(f" User {user_id} is INACTIVE only - reactivating directly...")
             
             # I-ACTIVATE AGAD ANG USER
             update_user_query = """
@@ -5161,7 +5161,7 @@ def approve_reconnect_request(request_id):
                 WHERE user_id = %s
             """
             execute_query(update_user_query, (user_id,))
-            print(f"✅ User {user_id} reactivated: Active / Connected")
+            print(f" User {user_id} reactivated: Active / Connected")
             
             if req_app_num:
                 execute_query("UPDATE customers SET status = 'Approved', installation_status = 'Installed' WHERE application_number = %s", (req_app_num,))
@@ -5172,7 +5172,7 @@ def approve_reconnect_request(request_id):
             is_slot_available = True
             
         else:
-            # 🔥 ORIGINAL LOGIC PARA SA TERMINATED USERS
+            # ORIGINAL LOGIC PARA SA TERMINATED USERS
             # CHECK DATING NAP BOX SLOT
             former_slot = None
             if req_app_num or req_contract_num:
@@ -5199,7 +5199,7 @@ def approve_reconnect_request(request_id):
                     WHERE id = %s
                 """
                 execute_query(update_slot_query, (former_slot['id'],))
-                print(f"✅ Former NAP Box slot #{former_slot['id']} set back to 'occupied' for user {user_id}")
+                print(f" Former NAP Box slot #{former_slot['id']} set back to 'occupied' for user {user_id}")
 
                 update_user_query = """
                     UPDATE users 
@@ -5209,7 +5209,7 @@ def approve_reconnect_request(request_id):
                     WHERE user_id = %s
                 """
                 execute_query(update_user_query, (user_id,))
-                print(f"✅ User {user_id} reactivated: Active / Connected")
+                print(f" User {user_id} reactivated: Active / Connected")
 
                 if req_app_num:
                     execute_query("UPDATE customers SET status = 'Approved', installation_status = 'Installed' WHERE application_number = %s", (req_app_num,))
@@ -5220,9 +5220,9 @@ def approve_reconnect_request(request_id):
                 
             else:
                 # CASE B: Former slot is occupied by a NEW owner or missing!
-                print(f"⚠️ Former NAP Box slot for user {user_id} is occupied by another customer or missing.")
+                print(f" Former NAP Box slot for user {user_id} is occupied by another customer or missing.")
                 
-                # 🔥 KUNG TERMINATED ANG USER, KEEP AS TERMINATED
+                # KUNG TERMINATED ANG USER, KEEP AS TERMINATED
                 update_user_query = """
                     UPDATE users 
                     SET status = 'Terminated', 
@@ -5235,7 +5235,7 @@ def approve_reconnect_request(request_id):
                 if req_app_num:
                     execute_query("UPDATE customers SET installation_status = 'Pending' WHERE application_number = %s", (req_app_num,))
                     execute_query("UPDATE applications SET installation_status = 'Pending' WHERE application_number = %s", (req_app_num,))
-                    print(f"✅ Customer {req_app_num} installation_status set to 'Pending' for technician reassignment.")
+                    print(f" Customer {req_app_num} installation_status set to 'Pending' for technician reassignment.")
 
                 if customer_city:
                     create_technician_notifications_by_area(
@@ -5247,7 +5247,7 @@ def approve_reconnect_request(request_id):
                         application_number=req_app_num,
                         customer_name=user_full_name
                     )
-                    print(f"🔔 Technician notification sent for area: {customer_city}")
+                    print(f" Technician notification sent for area: {customer_city}")
 
                 user_notif_message = "Your reconnection request has been approved by the superadmin. A technician will reassign a new NAP Box slot for your connection soon."
                 user_connection_status_for_notif = "Disconnected"
@@ -5269,7 +5269,7 @@ def approve_reconnect_request(request_id):
                     str(plan_details.get('price')),
                     application_number
                 ))
-                print(f"✅ Customer {application_number} plan updated to {plan_details.get('name')} ({plan_details.get('speed')} - ₱{plan_details.get('price')})")
+                print(f" Customer {application_number} plan updated to {plan_details.get('name')} ({plan_details.get('speed')} - ₱{plan_details.get('price')})")
             else:
                 update_customer_query = """
                     UPDATE customers 
@@ -5277,7 +5277,7 @@ def approve_reconnect_request(request_id):
                     WHERE application_number = %s
                 """
                 execute_query(update_customer_query, (new_plan_name, application_number))
-                print(f"⚠️ Plan id {new_plan_id} not found in plans table — only updated plan name to {new_plan_name}")
+                print(f" Plan id {new_plan_id} not found in plans table — only updated plan name to {new_plan_name}")
         
         # 3. MARK REQUEST AS APPROVED
         update_request_query = """
@@ -5307,7 +5307,7 @@ def approve_reconnect_request(request_id):
                 user_connection_status_for_notif, datetime.now().isoformat(), 0
             ))
         except Exception as notif_error:
-            print(f"⚠️ Error creating notification: {notif_error}")
+            print(f" Error creating notification: {notif_error}")
         
         return jsonify({
             "success": True,
@@ -5317,7 +5317,7 @@ def approve_reconnect_request(request_id):
         })
         
     except Exception as e:
-        print("❌ Approve request error:", e)
+        print(" Approve request error:", e)
         import traceback    
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -5353,7 +5353,7 @@ def reject_reconnect_request(request_id):
             WHERE user_id = %s
         """
         execute_query(update_user_query, (user_id,))
-        print(f"✅ User {user_id} pending reconnect flag cleared")
+        print(f" User {user_id} pending reconnect flag cleared")
         
         # 2. MARK REQUEST AS REJECTED
         update_request_query = """
@@ -5362,7 +5362,7 @@ def reject_reconnect_request(request_id):
             WHERE request_id = %s
         """
         execute_query(update_request_query, (request_id,))
-        print(f"✅ Request {request_id} marked as Rejected")
+        print(f" Request {request_id} marked as Rejected")
         
         # 3. NOTIFY THE USER
         try:
@@ -5387,7 +5387,7 @@ def reject_reconnect_request(request_id):
                 "Disconnected", datetime.now().isoformat(), 0
             ))
         except Exception as notif_error:
-            print(f"⚠️ Error creating notification: {notif_error}")
+            print(f" Error creating notification: {notif_error}")
         
         return jsonify({
             "success": True,
@@ -5396,7 +5396,7 @@ def reject_reconnect_request(request_id):
         })
         
     except Exception as e:
-        print("❌ Reject request error:", e)
+        print(" Reject request error:", e)
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -5487,7 +5487,7 @@ def superadmin_export_all_customers_excel():
         end_date = request.args.get("end_date")
         area_filter = request.args.get("area")
         
-        print(f"📊 Export filters - Start: {start_date}, End: {end_date}, Area: {area_filter}")
+        print(f" Export filters - Start: {start_date}, End: {end_date}, Area: {area_filter}")
         
         # Build query for customers
         query = """
@@ -5509,28 +5509,28 @@ def superadmin_export_all_customers_excel():
         if area_filter and area_filter != "":
             query += " AND city = %s"
             params.append(area_filter)
-            print(f"📍 Filtering by area: {area_filter}")
+            print(f" Filtering by area: {area_filter}")
         
         # Add date filters
         if start_date and end_date:
             query += " AND DATE(approval_date) >= DATE(%s) AND DATE(approval_date) <= DATE(%s)"
             params.append(start_date)
             params.append(end_date)
-            print(f"📅 Date range: {start_date} to {end_date}")
+            print(f" Date range: {start_date} to {end_date}")
         elif start_date:
             query += " AND DATE(approval_date) >= DATE(%s)"
             params.append(start_date)
-            print(f"📅 Start date: {start_date}")
+            print(f" Start date: {start_date}")
         elif end_date:
             query += " AND DATE(approval_date) <= DATE(%s)"
             params.append(end_date)
-            print(f"📅 End date: {end_date}")
+            print(f" End date: {end_date}")
         
         query += " ORDER BY approval_date DESC"
         
         customers = execute_query(query, params, fetch=True) or []
         
-        print(f"✅ Found {len(customers)} customers matching filters")
+        print(f" Found {len(customers)} customers matching filters")
         
         # Create Excel workbook
         wb = openpyxl.Workbook()
@@ -5641,7 +5641,7 @@ def get_superadmin_profile():
         session_data = session.get(f"admin_{tab_id}")
         
         if not session_data or session_data.get('user_type') != 'superadmin':
-            print(f"❌ Unauthorized access attempt. tab_id: {tab_id}")
+            print(f" Unauthorized access attempt. tab_id: {tab_id}")
             return jsonify({"error": "Unauthorized"}), 403
         
         username = session_data.get('username')
@@ -5649,7 +5649,7 @@ def get_superadmin_profile():
         if not username:
             return jsonify({"error": "Not logged in"}), 401
         
-        print(f"🔍 Getting profile for username: {username} (tab_id: {tab_id})")
+        print(f" Getting profile for username: {username} (tab_id: {tab_id})")
         
         query = "SELECT username, name, email, area, status, ga_enabled, ga_secret FROM superadmins WHERE username = %s"
         superadmin = execute_query(query, (username,), fetch_one=True)
@@ -5657,11 +5657,11 @@ def get_superadmin_profile():
         if superadmin:
             display_name = session_data.get('admin_display_name') or superadmin.get("name") or superadmin.get("username")
             
-            # ✅ I-CONVERT SA BOOL
+            # I-CONVERT SA BOOL
             ga_enabled = bool(superadmin.get("ga_enabled", 0))
             ga_secret = superadmin.get("ga_secret")
             
-            # ✅ I-UPDATE ANG SESSION KUNG MAGKAIBA
+            # I-UPDATE ANG SESSION KUNG MAGKAIBA
             if session_data.get('ga_enabled') != ga_enabled:
                 session_data['ga_enabled'] = ga_enabled
                 session[f"admin_{tab_id}"] = session_data
@@ -5681,7 +5681,7 @@ def get_superadmin_profile():
                 "email": superadmin.get("email", ""),
                 "area": superadmin.get("area", "Sta. Cruz"),
                 "status": superadmin.get("status", "Active"),
-                "ga_enabled": ga_enabled,  # ✅ BOOL NA ITO
+                "ga_enabled": ga_enabled,  # BOOL NA ITO
                 "ga_secret": ga_secret,
                 "ga_setup_uri": ga_setup_uri
             })
@@ -5724,13 +5724,13 @@ def update_superadmin_profile():
         session_data = session.get(f"admin_{tab_id}")
         
         if not session_data or session_data.get('user_type') != 'superadmin':
-            print(f"❌ Unauthorized update attempt. tab_id: {tab_id}")
+            print(f" Unauthorized update attempt. tab_id: {tab_id}")
             return jsonify({"error": "Unauthorized"}), 403
         
         # 3. KUNIN ANG USERNAME MULA SA SESSION
         username = session_data.get('username')
         
-        print(f"🔍 Updating profile for username: {username} (tab_id: {tab_id})")
+        print(f" Updating profile for username: {username} (tab_id: {tab_id})")
         
         if not username:
             return jsonify({"error": "Not logged in"}), 401
@@ -5740,7 +5740,7 @@ def update_superadmin_profile():
         check_result = execute_query(check_query, (username,), fetch_one=True)
         
         if not check_result:
-            print(f"❌ Username '{username}' not found in database!")
+            print(f" Username '{username}' not found in database!")
             return jsonify({"error": f"User '{username}' not found in database"}), 404
         
         if password and len(password) >= 8:
@@ -5774,12 +5774,12 @@ def update_superadmin_profile():
         params.append(username)
         update_query = f"UPDATE superadmins SET {', '.join(update_fields)} WHERE username = %s"
         
-        print(f"🔍 UPDATE QUERY: {update_query}")
-        print(f"🔍 PARAMS: {params}")
+        print(f" UPDATE QUERY: {update_query}")
+        print(f" PARAMS: {params}")
         
         # 6. EXECUTE UPDATE
         result = execute_query(update_query, params)
-        print(f"✅ Update result: {result}")
+        print(f" Update result: {result}")
         
         # 7. I-UPDATE ANG SESSION DISPLAY NAME KUNG MAY NAME CHANGE
         if name:
@@ -5932,7 +5932,7 @@ def get_plans():
         for plan in plans:
             image_path = plan.get('image_path', '')
             
-            # ✅ If already Cloudinary URL, keep it
+            # If already Cloudinary URL, keep it
             # If local path, convert to Cloudinary URL
             if image_path and not image_path.startswith('http'):
                 image_path = get_cloudinary_url(image_path)
@@ -5968,7 +5968,7 @@ def create_plan():
         if not image_file or not allowed_plan_file(image_file.filename):
             return jsonify({"error": "Valid image file is required"}), 400
 
-        # ✅ I-reset ang file pointer bago mag-validation
+        # I-reset ang file pointer bago mag-validation
         image_file.stream.seek(0)
         
         # Validate orientation
@@ -5976,8 +5976,8 @@ def create_plan():
         if not is_valid:
             return jsonify({"error": error_message}), 400
         
-        # ✅ I-reset ang file pointer BAGO mag-upload sa Cloudinary!
-        image_file.stream.seek(0)  # 👈 ITO ANG SUSI!
+        # I-reset ang file pointer BAGO mag-upload sa Cloudinary!
+        image_file.stream.seek(0)  # ITO ANG SUSI!
         
         # Upload to Cloudinary
         image_url = upload_to_cloudinary(image_file)
@@ -6029,11 +6029,11 @@ def update_plan(plan_id):
             if not is_valid:
                 return jsonify({"error": error_message}), 400
 
-            # ✅ Delete old image from Cloudinary
+            # Delete old image from Cloudinary
             if image_url and 'cloudinary.com' in image_url:
                 delete_from_cloudinary(image_url)
             
-            # ✅ Upload new image to Cloudinary
+            # Upload new image to Cloudinary
             image_url = upload_to_cloudinary(image_file)
         
         # Update plan
@@ -6072,7 +6072,7 @@ def delete_plan(plan_id):
         
         image_url = plan.get('image_path')
         
-        # ✅ Delete from Cloudinary
+        # Delete from Cloudinary
         if image_url and 'cloudinary.com' in image_url:
             delete_from_cloudinary(image_url)
         
@@ -6196,12 +6196,12 @@ def superadmin_get_single_application(app_id):
         if not application:
             return jsonify({"error": "Application not found"}), 404
         
-        # ✅ Convert image paths to Cloudinary URLs
+        # Convert image paths to Cloudinary URLs
         image_fields = ['profile_photo', 'id_front', 'id_back', 'proof_billing', 'signature']
         for field in image_fields:
             if application.get(field):
                 application[field] = get_cloudinary_url(application[field])
-                print(f"✅ Converted {field}: {application[field]}")
+                print(f" Converted {field}: {application[field]}")
         
         # Parse JSON fields (tv_qty, tv_brand, tv_type are stored as JSON strings)
         if application.get('tv_qty'):
@@ -6225,7 +6225,7 @@ def superadmin_get_single_application(app_id):
         # Keep id field for frontend compatibility
         application['id'] = application.get('application_number')
         
-        print(f"🔍 Reapply data from DB: reapply_requested={application.get('reapply_requested')}, reapply_requested_at={application.get('reapply_requested_at')}")
+        print(f" Reapply data from DB: reapply_requested={application.get('reapply_requested')}, reapply_requested_at={application.get('reapply_requested_at')}")
         
         return jsonify(application)
         
@@ -6316,7 +6316,7 @@ def download_pdf(application_number):
 
     # ================= DEBUG: Print image info =================
     print("=" * 80)
-    print("🔍 IMAGE DATA FROM DATABASE:")
+    print(" IMAGE DATA FROM DATABASE:")
     print(f"Application Number (folder): {app_folder}")
     print(f"id_front: {data.get('id_front', 'None')}")
     print(f"id_back: {data.get('id_back', 'None')}")
@@ -6330,22 +6330,22 @@ def download_pdf(application_number):
         if not image_path:
             return None
         
-        # ✅ Convert to Cloudinary URL
+        # Convert to Cloudinary URL
         cloudinary_url = get_cloudinary_url(image_path)
         
         if cloudinary_url and cloudinary_url.startswith('http'):
             try:
-                print(f"📤 Downloading from Cloudinary: {cloudinary_url}")
+                print(f" Downloading from Cloudinary: {cloudinary_url}")
                 response = requests.get(cloudinary_url, timeout=30)
                 if response.status_code == 200:
-                    print(f"✅ Downloaded {len(response.content)} bytes")
+                    print(f" Downloaded {len(response.content)} bytes")
                     return response.content
                 else:
-                    print(f"❌ Cloudinary download failed: {response.status_code}")
+                    print(f" Cloudinary download failed: {response.status_code}")
             except Exception as e:
-                print(f"❌ Error downloading from Cloudinary: {e}")
+                print(f" Error downloading from Cloudinary: {e}")
         
-        # ✅ Fallback: Try local path (for development)
+        # Fallback: Try local path (for development)
         SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
         
         # Extract filename from path
@@ -6354,7 +6354,7 @@ def download_pdf(application_number):
         # Try to find in application_uploads folder
         full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
         if os.path.exists(full_path):
-            print(f"✅ Found locally: {full_path}")
+            print(f" Found locally: {full_path}")
             with open(full_path, 'rb') as f:
                 return f.read()
         
@@ -6366,18 +6366,18 @@ def download_pdf(application_number):
         
         for alt_path in alt_paths:
             if os.path.exists(alt_path):
-                print(f"✅ Found locally: {alt_path}")
+                print(f" Found locally: {alt_path}")
                 with open(alt_path, 'rb') as f:
                     return f.read()
         
-        print(f"❌ Image not found: {image_path}")
+        print(f" Image not found: {image_path}")
         return None
 
     # ================= HELPER: Load and convert image =================
     def load_and_convert_image(image_data):
         """Load image and convert to RGB format for PDF"""
         if not image_data:
-            print(f"❌ No image data provided")
+            print(f" No image data provided")
             return None
         
         img_bytes = None
@@ -6399,65 +6399,65 @@ def download_pdf(application_number):
                     
                     image_data = image_data.strip()
                     img_bytes = base64.b64decode(image_data)
-                    print(f"✅ Decoded base64 image ({len(img_bytes)} bytes)")
+                    print(f" Decoded base64 image ({len(img_bytes)} bytes)")
                 except Exception as e:
-                    print(f"❌ Error decoding base64: {e}")
+                    print(f" Error decoding base64: {e}")
         
         if not img_bytes:
-            print(f"❌ No image bytes loaded")
+            print(f" No image bytes loaded")
             return None
         
         # Convert image to RGB format using PIL
         try:
             img = Image.open(io.BytesIO(img_bytes))
-            print(f"✅ Image opened: {img.format}, {img.size}, {img.mode}")
+            print(f" Image opened: {img.format}, {img.size}, {img.mode}")
             
             if img.mode != 'RGB':
                 img = img.convert('RGB')
-                print(f"✅ Converted to RGB")
+                print(f" Converted to RGB")
             
             output = io.BytesIO()
             img.save(output, format='JPEG', quality=90)
             output.seek(0)
             
-            print(f"✅ Converted to JPEG ({output.getbuffer().nbytes} bytes)")
+            print(f" Converted to JPEG ({output.getbuffer().nbytes} bytes)")
             return output.getvalue()
             
         except Exception as e:
-            print(f"❌ Error converting image: {e}")
+            print(f" Error converting image: {e}")
             return img_bytes
 
     # ================= HELPER: Draw image safely =================
     def draw_image_safe(p, image_data, x, y, width, height, label="Image"):
         """Safely draw an image on the PDF"""
         try:
-            print(f"🖼️ Drawing {label}...")
+            print(f" Drawing {label}...")
             img_bytes = load_and_convert_image(image_data)
             if img_bytes:
                 with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
                     tmp_file.write(img_bytes)
                     tmp_path = tmp_file.name
-                    print(f"📝 Temp file: {tmp_path}")
+                    print(f" Temp file: {tmp_path}")
                 
                 try:
                     img = ImageReader(tmp_path)
                     p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
-                    print(f"✅ Drew {label} successfully")
+                    print(f" Drew {label} successfully")
                     return True
                 except Exception as e:
-                    print(f"❌ Error in drawImage for {label}: {e}")
+                    print(f" Error in drawImage for {label}: {e}")
                     return False
                 finally:
                     try:
                         os.unlink(tmp_path)
-                        print(f"🗑️ Deleted temp file: {tmp_path}")
+                        print(f" Deleted temp file: {tmp_path}")
                     except:
                         pass
             else:
-                print(f"❌ No image bytes for {label}")
+                print(f" No image bytes for {label}")
                 return False
         except Exception as e:
-            print(f"❌ Error drawing {label}: {e}")
+            print(f" Error drawing {label}: {e}")
             return False
 
     # ================= MAX PAGES =================
@@ -6822,15 +6822,15 @@ def download_pdf(application_number):
         ensure_space(25)
         p.setFont("Helvetica-Bold", 12)
         p.setFillColorRGB(0, 0.5, 0)
-        p.drawCentredString(width / 2, y, "📍 GET DIRECTIONS from your current location to this address")
-        text_width = p.stringWidth("📍 GET DIRECTIONS from your current location to this address", "Helvetica-Bold", 12)
+        p.drawCentredString(width / 2, y, " GET DIRECTIONS from your current location to this address")
+        text_width = p.stringWidth(" GET DIRECTIONS from your current location to this address", "Helvetica-Bold", 12)
         p.linkURL(google_maps_direction_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 12), relative=0)
         p.setFillColorRGB(0, 0, 0)
         y -= 20
         
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.5, 0.5, 0.5)
-        p.drawCentredString(width / 2, y, "👉 Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
+        p.drawCentredString(width / 2, y, " Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
         p.setFillColorRGB(0, 0, 0)
         y -= 20
 
@@ -6853,7 +6853,7 @@ def download_pdf(application_number):
         
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.5, 0.5, 0.5)
-        p.drawCentredString(width / 2, y, "💡 Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
+        p.drawCentredString(width / 2, y, " Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
         p.setFillColorRGB(0, 0, 0)
         y -= 15
     else:
@@ -6907,10 +6907,10 @@ def update_internet_application_status(app_id):
         assigned_team_id = data.get("assigned_team_id", None)
         installation_date = data.get("installation_date", None)
 
-        print(f"🔍 DEBUG - Received request for app_id: {app_id}")
-        print(f"🔍 DEBUG - Status: {status}")
+        print(f" DEBUG - Received request for app_id: {app_id}")
+        print(f" DEBUG - Status: {status}")
 
-        # ✅ ALLOW BOTH APPROVED, REJECTED, AND PENDING (for restore)
+        # ALLOW BOTH APPROVED, REJECTED, AND PENDING (for restore)
         if status not in ["Approved", "Rejected", "Pending"]:
             return jsonify({"error": "Invalid status"}), 400
 
@@ -6939,7 +6939,7 @@ def update_internet_application_status(app_id):
             
             if not billing_date:
                 billing_date = "15th"
-            print(f"🔍 Generated contract number: {contract_number}")
+            print(f" Generated contract number: {contract_number}")
 
         # ========== UPDATE APPLICATIONS TABLE ==========
         if status == "Approved":
@@ -6967,22 +6967,22 @@ def update_internet_application_status(app_id):
                 app_id
             )
             
-            print(f"📝 UPDATE QUERY: {update_query[:100]}...")
-            print(f"📝 PARAMS: {params}")
+            print(f" UPDATE QUERY: {update_query[:100]}...")
+            print(f" PARAMS: {params}")
             
             cursor.execute(update_query, params)
             conn.commit()
-            print(f"✅ Application {app_id} updated - Rows affected: {cursor.rowcount}")
+            print(f" Application {app_id} updated - Rows affected: {cursor.rowcount}")
             
-            # ✅ I-VERIFY AGAD
+            # I-VERIFY AGAD
             cursor.execute("SELECT status, contract_number, billing_date, approval_date FROM applications WHERE application_number = %s", (app_id,))
             verify = cursor.fetchone()
-            print(f"🔍 VERIFIED - Status: {verify.get('status') if verify else 'Not found'}")
-            print(f"🔍 VERIFIED - Contract: {verify.get('contract_number') if verify else 'Not found'}")
-            print(f"🔍 VERIFIED - Billing Date: {verify.get('billing_date') if verify else 'Not found'}")
+            print(f" VERIFIED - Status: {verify.get('status') if verify else 'Not found'}")
+            print(f" VERIFIED - Contract: {verify.get('contract_number') if verify else 'Not found'}")
+            print(f" VERIFIED - Billing Date: {verify.get('billing_date') if verify else 'Not found'}")
             
         elif status == "Pending":
-            # ✅ FOR RESTORE - Update status to Pending
+            # FOR RESTORE - Update status to Pending
             update_query = """
                 UPDATE applications SET 
                     status = %s,
@@ -6999,7 +6999,7 @@ def update_internet_application_status(app_id):
             
             cursor.execute(update_query, params)
             conn.commit()
-            print(f"✅ Application {app_id} restored to Pending")
+            print(f" Application {app_id} restored to Pending")
             
         else:  # Rejected
             update_query = """
@@ -7020,11 +7020,11 @@ def update_internet_application_status(app_id):
             
             cursor.execute(update_query, params)
             conn.commit()
-            print(f"✅ Application {app_id} rejected — reapply flags reset")
+            print(f" Application {app_id} rejected — reapply flags reset")
 
         # ========== IF APPROVED, INSERT INTO CUSTOMERS TABLE ==========
         if status == "Approved":
-            print(f"🔍 DEBUG - Processing customer record for {app_id}")
+            print(f" DEBUG - Processing customer record for {app_id}")
             
             customer_data = {
                 "application_number": app_id,
@@ -7065,10 +7065,10 @@ def update_internet_application_status(app_id):
                 columns = ', '.join(customer_data.keys())
                 placeholders = ', '.join(['%s'] * len(customer_data))
                 insert_query = f"INSERT INTO customers ({columns}) VALUES ({placeholders})"
-                print(f"📝 INSERT Query: {insert_query}")
+                print(f" INSERT Query: {insert_query}")
                 cursor.execute(insert_query, tuple(customer_data.values()))
                 conn.commit()
-                print(f"✅ Customer INSERTED for {app_id}")
+                print(f" Customer INSERTED for {app_id}")
             else:
                 update_fields = []
                 update_params = []
@@ -7077,14 +7077,14 @@ def update_internet_application_status(app_id):
                     update_params.append(value)
                 update_params.append(app_id)
                 update_customer_query = f"UPDATE customers SET {', '.join(update_fields)} WHERE application_number = %s"
-                print(f"📝 UPDATE Query: {update_customer_query}")
+                print(f" UPDATE Query: {update_customer_query}")
                 cursor.execute(update_customer_query, tuple(update_params))
                 conn.commit()
-                print(f"✅ Customer UPDATED for {app_id}")
+                print(f" Customer UPDATED for {app_id}")
             
             # ========== INSERT INTO CONTRACTS TABLE ==========
             try:
-                print(f"🔵 CONTRACT - Insert for {app_id}")
+                print(f" CONTRACT - Insert for {app_id}")
                 
                 full_name = ' '.join(filter(None, [
                     app_data.get('first_name', ''),
@@ -7152,12 +7152,12 @@ def update_internet_application_status(app_id):
                     
                     cursor.execute(contract_insert_query, contract_params)
                     conn.commit()
-                    print(f"✅ Contract {contract_number} INSERTED!")
+                    print(f" Contract {contract_number} INSERTED!")
                 else:
-                    print(f"⚠️ Contract already exists for {app_id}")
+                    print(f" Contract already exists for {app_id}")
                 
             except Exception as contract_err:
-                print(f"❌ Contract error: {contract_err}")
+                print(f" Contract error: {contract_err}")
                 import traceback
                 traceback.print_exc()
                 # Don't rollback here, we want to keep the application update
@@ -7170,7 +7170,7 @@ def update_internet_application_status(app_id):
             reapplied_count = app_data.get("reapplied_count", 0)
 
             if customer_email:
-                # ✅ GAMITIN ANG THREAD PARA HINDI MAG-TIMEOUT ANG WORKER
+                # GAMITIN ANG THREAD PARA HINDI MAG-TIMEOUT ANG WORKER
                 import threading
                 email_thread = threading.Thread(
                     target=send_application_status_email,
@@ -7189,18 +7189,18 @@ def update_internet_application_status(app_id):
                     }
                 )
                 email_thread.start()
-                print(f"📧 Email thread started for {customer_email}")
+                print(f" Email thread started for {customer_email}")
                 # Huwag hintayin ang thread, hayaan itong tumakbo sa background.
                 # Ibalik agad ang response sa frontend para hindi mag-timeout.
             else:
-                print(f"⚠️ No email address for {app_id}")
+                print(f" No email address for {app_id}")
         except Exception as email_err:
-            print(f"❌ Email thread error: {email_err}")
+            print(f" Email thread error: {email_err}")
             import traceback
             traceback.print_exc()
             # Huwag i-fail ang request kung mag-fail ang email
 
-        # ✅ ALWAYS RETURN JSON
+        # ALWAYS RETURN JSON
         return jsonify({
             "message": "Status updated successfully",
             "status": status,
@@ -7208,12 +7208,12 @@ def update_internet_application_status(app_id):
         }), 200
 
     except mysql.connector.Error as db_err:
-        print(f"❌ Database error: {db_err}")
+        print(f" Database error: {db_err}")
         if conn:
             conn.rollback()
         return jsonify({"error": str(db_err)}), 500
     except Exception as e:
-        print(f"❌ Update status error: {e}")
+        print(f" Update status error: {e}")
         import traceback
         traceback.print_exc()
         if conn:
@@ -7224,10 +7224,10 @@ def update_internet_application_status(app_id):
             cursor.close()
         if conn:
             conn.close()
-            print("🔒 Database connection closed")
+            print(" Database connection closed")
 
 
-import requests  # ✅ I-ADD SA PINAKA-ITAAS NG FILE
+import requests  # I-ADD SA PINAKA-ITAAS NG FILE
 
 # ===============================
 # SEND APPLICATION STATUS EMAIL
@@ -7257,10 +7257,10 @@ def send_application_status_email(
     api_key = os.getenv("BREVO_API_KEY", "")
 
     if not api_key:
-        print("❌ Brevo API key not configured!")
+        print(" Brevo API key not configured!")
         return False
 
-    print(f"📧 Sending application status email via Brevo to {to_email}...")
+    print(f" Sending application status email via Brevo to {to_email}...")
 
     subject = "Cablevision - Application Status Update"
 
@@ -7280,7 +7280,7 @@ def send_application_status_email(
     is_approved = status == "Approved"
     status_color = "#10b981" if is_approved else "#ef4444"
     status_bg = "#ecfdf5" if is_approved else "#fef2f2"
-    status_icon = "✓" if is_approved else "✗"
+    status_icon = "" if is_approved else ""
 
     # ===============================
     # MAIN MESSAGE
@@ -7581,7 +7581,7 @@ def send_application_status_email(
                         font-size: 11px;
                         color: #64748b;
                     ">
-                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                        2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
             </div>
@@ -7658,9 +7658,9 @@ def send_application_status_email(
                                 }
                             ]
 
-                            print(f"📎 PDF attached for application {app_id}")
+                            print(f" PDF attached for application {app_id}")
             except Exception as pdf_err:
-                print(f"⚠️ PDF attachment error: {pdf_err}")
+                print(f" PDF attachment error: {pdf_err}")
 
         # ===============================
         # SEND REQUEST
@@ -7669,14 +7669,14 @@ def send_application_status_email(
         response = requests.post(url, json=data, headers=headers, timeout=30)
 
         if response.status_code in [200, 201]:
-            print(f"✅ Application status email sent to {to_email}")
+            print(f" Application status email sent to {to_email}")
             return True
 
-        print(f"❌ Brevo API error: {response.status_code} - {response.text}")
+        print(f" Brevo API error: {response.status_code} - {response.text}")
         return False
 
     except Exception as e:
-        print(f"❌ Email API error: {e}")
+        print(f" Email API error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -7731,7 +7731,7 @@ def save_contract(contract_number):
         print(f"🟢 Data received: {data}")
         
         if not data:
-            print("❌ No data received!")
+            print(" No data received!")
             return jsonify({"error": "No data provided"}), 400
         
         # I-print ang lahat ng keys at values para makita kung may mali
@@ -7774,14 +7774,14 @@ def save_contract(contract_number):
         print(f"🟢 Verification result: {verify_result}")
         
         if verify_result:
-            print(f"✅ Contract {contract_number} successfully saved to MySQL!")
+            print(f" Contract {contract_number} successfully saved to MySQL!")
             return jsonify({"success": True, "message": "Contract saved successfully"})
         else:
-            print(f"❌ Contract {contract_number} was NOT saved!")
+            print(f" Contract {contract_number} was NOT saved!")
             return jsonify({"error": "Contract was not saved"}), 500
         
     except Exception as e:
-        print(f"❌ Error saving contract: {e}")
+        print(f" Error saving contract: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -7945,21 +7945,21 @@ def download_contract_pdf(app_id, contract_number):
             if not image_path:
                 return None
             
-            # ✅ Convert to Cloudinary URL
+            # Convert to Cloudinary URL
             cloudinary_url = get_cloudinary_url(image_path)
             
             if cloudinary_url and cloudinary_url.startswith('http'):
                 try:
-                    print(f"📤 Downloading from Cloudinary: {cloudinary_url}")
+                    print(f" Downloading from Cloudinary: {cloudinary_url}")
                     response = requests.get(cloudinary_url, timeout=30)
                     if response.status_code == 200:
-                        print(f"✅ Downloaded {len(response.content)} bytes")
+                        print(f" Downloaded {len(response.content)} bytes")
                         return response.content
                     else:
-                        print(f"❌ Cloudinary download failed: {response.status_code}")
+                        print(f" Cloudinary download failed: {response.status_code}")
                         return None
                 except Exception as e:
-                    print(f"❌ Error downloading from Cloudinary: {e}")
+                    print(f" Error downloading from Cloudinary: {e}")
                     return None
             
             return None
@@ -7970,7 +7970,7 @@ def download_contract_pdf(app_id, contract_number):
             if not image_path_or_data:
                 return None
             
-            # ✅ TRY CLOUDINARY FIRST
+            # TRY CLOUDINARY FIRST
             img_bytes = get_image_bytes_from_cloudinary(image_path_or_data)
             if img_bytes:
                 return img_bytes
@@ -7984,16 +7984,16 @@ def download_contract_pdf(app_id, contract_number):
                 app_folder = str(app_id)
                 full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
                 
-                print(f"🔍 Looking for signature: {full_path}")
+                print(f" Looking for signature: {full_path}")
                 
                 if os.path.exists(full_path):
                     try:
                         with open(full_path, 'rb') as f:
                             img_bytes = f.read()
-                        print(f"✅ Found signature: {full_path} ({len(img_bytes)} bytes)")
+                        print(f" Found signature: {full_path} ({len(img_bytes)} bytes)")
                         return img_bytes
                     except Exception as e:
-                        print(f"❌ Error reading signature: {e}")
+                        print(f" Error reading signature: {e}")
                         return None
                 
                 # Try extracting app_id from path
@@ -8001,15 +8001,15 @@ def download_contract_pdf(app_id, contract_number):
                 if match:
                     extracted_folder = match.group(1)
                     alt_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', extracted_folder, filename)
-                    print(f"📂 Trying extracted: {alt_path}")
+                    print(f" Trying extracted: {alt_path}")
                     if os.path.exists(alt_path):
                         try:
                             with open(alt_path, 'rb') as f:
                                 img_bytes = f.read()
-                            print(f"✅ Found signature: {alt_path} ({len(img_bytes)} bytes)")
+                            print(f" Found signature: {alt_path} ({len(img_bytes)} bytes)")
                             return img_bytes
                         except Exception as e:
-                            print(f"❌ Error reading signature: {e}")
+                            print(f" Error reading signature: {e}")
                             return None
                 
                 # Try base64 decoding
@@ -8023,10 +8023,10 @@ def download_contract_pdf(app_id, contract_number):
                                 image_path_or_data = match.group(2)
                         image_path_or_data = image_path_or_data.strip()
                         img_bytes = base64.b64decode(image_path_or_data)
-                        print(f"✅ Decoded base64 signature ({len(img_bytes)} bytes)")
+                        print(f" Decoded base64 signature ({len(img_bytes)} bytes)")
                         return img_bytes
                     except Exception as e:
-                        print(f"❌ Error decoding base64: {e}")
+                        print(f" Error decoding base64: {e}")
                         return None
             
             return None
@@ -8039,14 +8039,14 @@ def download_contract_pdf(app_id, contract_number):
             
             try:
                 img = PILImage.open(io.BytesIO(img_bytes))
-                print(f"✅ Signature opened: {img.format}, {img.size}, {img.mode}")
+                print(f" Signature opened: {img.format}, {img.size}, {img.mode}")
                 
                 if img.mode != 'RGB':
                     img = img.convert('RGB')
                 
                 if img.width > max_width or img.height > max_height:
                     img.thumbnail((max_width, max_height), PILImage.Resampling.LANCZOS)
-                    print(f"✅ Signature resized to: {img.size}")
+                    print(f" Signature resized to: {img.size}")
                 
                 output = io.BytesIO()
                 img.save(output, format='JPEG', quality=85)
@@ -8055,23 +8055,23 @@ def download_contract_pdf(app_id, contract_number):
                 img_reportlab = Image(output)
                 img_reportlab.drawWidth = min(img.width, max_width)
                 img_reportlab.drawHeight = min(img.height, max_height)
-                print(f"✅ Signature converted for ReportLab")
+                print(f" Signature converted for ReportLab")
                 return img_reportlab
                 
             except Exception as e:
-                print(f"❌ Error converting signature: {e}")
+                print(f" Error converting signature: {e}")
                 return None
         
         # ========== GET SIGNATURE IMAGE ==========
         signature_img = None
-        print(f"🔍 Signature data from DB: {signature_data}")
+        print(f" Signature data from DB: {signature_data}")
         
         img_bytes = get_image_bytes(signature_data)
         if img_bytes:
             signature_img = convert_image_for_reportlab(img_bytes, max_width=180, max_height=60)
         
         if not signature_img:
-            print("⚠️ No signature image available")
+            print(" No signature image available")
         
         # ========== 3. STYLES ==========
         header_style = ParagraphStyle(
@@ -8504,7 +8504,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         application_data = execute_query(query, (application_number,), fetch_one=True)
     
     if not application_data:
-        print(f"❌ Application not found for: {application_number}")
+        print(f" Application not found for: {application_number}")
         return None
     
     # Parse JSON fields (tv_qty, tv_brand, tv_type)
@@ -8534,13 +8534,13 @@ def generate_application_pdf(application_number, application_data=None, contract
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # ================= ✅ CLOUDINARY HELPER =================
+    # ================= CLOUDINARY HELPER =================
     def get_image_from_cloudinary(image_path):
         """Get image from Cloudinary URL or convert relative path"""
         if not image_path:
             return None
         
-        # ✅ Convert to Cloudinary URL if not already
+        # Convert to Cloudinary URL if not already
         if not image_path.startswith('http'):
             cloudinary_url = get_cloudinary_url(image_path)
         else:
@@ -8548,16 +8548,16 @@ def generate_application_pdf(application_number, application_data=None, contract
         
         if cloudinary_url and cloudinary_url.startswith('http'):
             try:
-                print(f"📤 Downloading from Cloudinary: {cloudinary_url[:80]}...")
+                print(f" Downloading from Cloudinary: {cloudinary_url[:80]}...")
                 response = requests.get(cloudinary_url, timeout=30)
                 if response.status_code == 200:
-                    print(f"✅ Downloaded {len(response.content)} bytes")
+                    print(f" Downloaded {len(response.content)} bytes")
                     return response.content
                 else:
-                    print(f"❌ Cloudinary download failed: {response.status_code}")
+                    print(f" Cloudinary download failed: {response.status_code}")
                     return None
             except Exception as e:
-                print(f"❌ Error downloading from Cloudinary: {e}")
+                print(f" Error downloading from Cloudinary: {e}")
                 return None
         
         return None
@@ -8568,7 +8568,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         if not image_path_or_data:
             return None
         
-        # ✅ TRY CLOUDINARY FIRST
+        # TRY CLOUDINARY FIRST
         cloudinary_bytes = get_image_from_cloudinary(image_path_or_data)
         if cloudinary_bytes:
             return cloudinary_bytes
@@ -8586,16 +8586,16 @@ def generate_application_pdf(application_number, application_data=None, contract
             SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
             full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', str(app_id), filename)
             
-            print(f"🔍 Looking for image locally: {full_path}")
+            print(f" Looking for image locally: {full_path}")
             
             if os.path.exists(full_path):
                 try:
                     with open(full_path, 'rb') as f:
                         img_bytes = f.read()
-                    print(f"✅ Found image locally: {full_path} ({len(img_bytes)} bytes)")
+                    print(f" Found image locally: {full_path} ({len(img_bytes)} bytes)")
                     return img_bytes
                 except Exception as e:
-                    print(f"❌ Error reading image: {e}")
+                    print(f" Error reading image: {e}")
                     return None
             
             # Try extracting app_id from path
@@ -8603,15 +8603,15 @@ def generate_application_pdf(application_number, application_data=None, contract
             if match:
                 extracted_folder = match.group(1)
                 alt_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', extracted_folder, filename)
-                print(f"📂 Trying extracted: {alt_path}")
+                print(f" Trying extracted: {alt_path}")
                 if os.path.exists(alt_path):
                     try:
                         with open(alt_path, 'rb') as f:
                             img_bytes = f.read()
-                        print(f"✅ Found image: {alt_path} ({len(img_bytes)} bytes)")
+                        print(f" Found image: {alt_path} ({len(img_bytes)} bytes)")
                         return img_bytes
                     except Exception as e:
-                        print(f"❌ Error reading image: {e}")
+                        print(f" Error reading image: {e}")
                         return None
             
             # Try base64 decoding
@@ -8625,10 +8625,10 @@ def generate_application_pdf(application_number, application_data=None, contract
                             image_path_or_data = match.group(2)
                     image_path_or_data = image_path_or_data.strip()
                     img_bytes = base64.b64decode(image_path_or_data)
-                    print(f"✅ Decoded base64 image ({len(img_bytes)} bytes)")
+                    print(f" Decoded base64 image ({len(img_bytes)} bytes)")
                     return img_bytes
                 except Exception as e:
-                    print(f"❌ Error decoding base64: {e}")
+                    print(f" Error decoding base64: {e}")
                     return None
         
         return None
@@ -8642,7 +8642,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         try:
             # Open with PIL
             img = PILImage.open(io.BytesIO(img_bytes))
-            print(f"✅ Image opened: {img.format}, {img.size}, {img.mode}")
+            print(f" Image opened: {img.format}, {img.size}, {img.mode}")
             
             # Convert to RGB if needed
             if img.mode != 'RGB':
@@ -8651,7 +8651,7 @@ def generate_application_pdf(application_number, application_data=None, contract
             # Resize if dimensions provided
             if max_width and max_height:
                 img.thumbnail((max_width, max_height), PILImage.Resampling.LANCZOS)
-                print(f"✅ Image resized to: {img.size}")
+                print(f" Image resized to: {img.size}")
             
             # Save to BytesIO as JPEG
             output = io.BytesIO()
@@ -8661,14 +8661,14 @@ def generate_application_pdf(application_number, application_data=None, contract
             return output.getvalue()
             
         except Exception as e:
-            print(f"❌ Error converting image: {e}")
+            print(f" Error converting image: {e}")
             return None
 
     # ================= HELPER: Draw image safely =================
     def draw_image_safe(p, image_data, x, y, width, height, label="Image", app_id=None):
         """Safely draw an image on the PDF"""
         try:
-            print(f"🖼️ Drawing {label}...")
+            print(f" Drawing {label}...")
             img_bytes = get_image_bytes(image_data, app_id)
             if img_bytes:
                 converted = convert_image_for_reportlab(img_bytes, max_width=width, max_height=height)
@@ -8681,10 +8681,10 @@ def generate_application_pdf(application_number, application_data=None, contract
                     try:
                         img = ImageReader(tmp_path)
                         p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
-                        print(f"✅ Drew {label} successfully")
+                        print(f" Drew {label} successfully")
                         return True
                     except Exception as e:
-                        print(f"❌ Error in drawImage for {label}: {e}")
+                        print(f" Error in drawImage for {label}: {e}")
                         return False
                     finally:
                         try:
@@ -8692,10 +8692,10 @@ def generate_application_pdf(application_number, application_data=None, contract
                         except:
                             pass
             else:
-                print(f"❌ No image data for {label}")
+                print(f" No image data for {label}")
                 return False
         except Exception as e:
-            print(f"❌ Error drawing {label}: {e}")
+            print(f" Error drawing {label}: {e}")
             return False
 
     # ================= MAX PAGES =================
@@ -9067,15 +9067,15 @@ def generate_application_pdf(application_number, application_data=None, contract
         ensure_space(25)
         p.setFont("Helvetica-Bold", 12)
         p.setFillColorRGB(0, 0.5, 0)
-        p.drawCentredString(width / 2, y, "📍 GET DIRECTIONS from your current location to this address")
-        text_width = p.stringWidth("📍 GET DIRECTIONS from your current location to this address", "Helvetica-Bold", 12)
+        p.drawCentredString(width / 2, y, " GET DIRECTIONS from your current location to this address")
+        text_width = p.stringWidth(" GET DIRECTIONS from your current location to this address", "Helvetica-Bold", 12)
         p.linkURL(google_maps_direction_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 12), relative=0)
         p.setFillColorRGB(0, 0, 0)
         y -= 20
         
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.5, 0.5, 0.5)
-        p.drawCentredString(width / 2, y, "👉 Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
+        p.drawCentredString(width / 2, y, " Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
         p.setFillColorRGB(0, 0, 0)
         y -= 20
 
@@ -9098,7 +9098,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.5, 0.5, 0.5)
-        p.drawCentredString(width / 2, y, "💡 Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
+        p.drawCentredString(width / 2, y, " Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
         p.setFillColorRGB(0, 0, 0)
         y -= 15
     else:
@@ -9185,7 +9185,7 @@ def delete_application(app_id):
         delete_customer_query = "DELETE FROM customers WHERE application_number = %s"
         execute_query(delete_customer_query, (app_id,))
         
-        print(f"✅ Application {app_id} deleted successfully from MySQL")
+        print(f" Application {app_id} deleted successfully from MySQL")
         
         return jsonify({"message": "Application deleted successfully"})
         
@@ -9210,7 +9210,7 @@ def restore_application(app_id):
 
         cursor = conn.cursor(dictionary=True)
 
-        # ✅ START TRANSACTION
+        # START TRANSACTION
         conn.start_transaction()
 
         # Check if application exists
@@ -9224,23 +9224,23 @@ def restore_application(app_id):
         current_status = app_data.get("status")
         contract_number = app_data.get("contract_number")
         
-        print(f"📌 Current status: {current_status}")
-        print(f"📌 Contract number: {contract_number}")
+        print(f" Current status: {current_status}")
+        print(f" Contract number: {contract_number}")
         
-        # ✅ ALLOW BOTH REJECTED AND CANCELLED
+        # ALLOW BOTH REJECTED AND CANCELLED
         if current_status not in ["Rejected", "Cancelled"]:
             return jsonify({"error": f"Only rejected or cancelled applications can be restored. Current status: {current_status}"}), 400
 
-        # ✅ DETERMINE TARGET STATUS
+        # DETERMINE TARGET STATUS
         is_cancelled = current_status == "Cancelled"
         target_status = "Approved" if is_cancelled else "Pending"
         
-        # ✅ GET TEAM AND INSTALLATION DATE FROM REQUEST BODY
+        # GET TEAM AND INSTALLATION DATE FROM REQUEST BODY
         request_data = request.get_json() or {}
         assigned_team_id = request_data.get('assigned_team_id')
         installation_date = request_data.get('installation_date')
         
-        print(f"📌 Request data: assigned_team_id={assigned_team_id}, installation_date={installation_date}")
+        print(f" Request data: assigned_team_id={assigned_team_id}, installation_date={installation_date}")
         
         # ========== UPDATE APPLICATIONS TABLE ==========
         if is_cancelled:
@@ -9272,12 +9272,12 @@ def restore_application(app_id):
             """
             params = (app_id,)
         
-        print(f"🔄 SQL Query: {update_query}")
-        print(f"🔄 Params: {params}")
+        print(f" SQL Query: {update_query}")
+        print(f" Params: {params}")
         
         cursor.execute(update_query, params)
         rows_affected = cursor.rowcount
-        print(f"📌 Rows affected in applications: {rows_affected}")
+        print(f" Rows affected in applications: {rows_affected}")
         
         if rows_affected == 0:
             conn.rollback()
@@ -9286,18 +9286,18 @@ def restore_application(app_id):
         # ========== UPDATE CUSTOMERS TABLE (NO updated_at) ==========
         if is_cancelled:
             try:
-                # ✅ CHECK MUNA KUNG MAY CUSTOMER RECORD
+                # CHECK MUNA KUNG MAY CUSTOMER RECORD
                 cursor.execute("SELECT * FROM customers WHERE application_number = %s", (app_id,))
                 existing_customer = cursor.fetchone()
                 
                 if existing_customer:
-                    print(f"📌 Existing customer found:")
+                    print(f" Existing customer found:")
                     print(f"  - status: {existing_customer.get('status')}")
                     print(f"  - installation_status: {existing_customer.get('installation_status')}")
                     print(f"  - assigned_team_id: {existing_customer.get('assigned_team_id')}")
                     print(f"  - installation_date: {existing_customer.get('installation_date')}")
                     
-                    # ✅ UPDATE - WALANG updated_at (hindi existing ang column)
+                    # UPDATE - WALANG updated_at (hindi existing ang column)
                     update_customer_sql = """
                         UPDATE customers 
                         SET 
@@ -9309,12 +9309,12 @@ def restore_application(app_id):
                     """
                     cursor.execute(update_customer_sql, (assigned_team_id, installation_date, app_id))
                     customer_rows = cursor.rowcount
-                    print(f"📌 Customer rows affected: {customer_rows}")
+                    print(f" Customer rows affected: {customer_rows}")
                     
                     if customer_rows == 0:
-                        # ✅ TRY USING contract_number
+                        # TRY USING contract_number
                         if contract_number:
-                            print(f"📌 Trying update with contract_number: {contract_number}")
+                            print(f" Trying update with contract_number: {contract_number}")
                             update_customer_sql2 = """
                                 UPDATE customers 
                                 SET 
@@ -9326,12 +9326,12 @@ def restore_application(app_id):
                             """
                             cursor.execute(update_customer_sql2, (assigned_team_id, installation_date, contract_number))
                             customer_rows2 = cursor.rowcount
-                            print(f"📌 Customer rows affected (via contract): {customer_rows2}")
+                            print(f" Customer rows affected (via contract): {customer_rows2}")
                 else:
-                    print(f"⚠️ No customer record found for {app_id}")
+                    print(f" No customer record found for {app_id}")
                     
-                    # ✅ INSERT NEW CUSTOMER RECORD (WALANG updated_at)
-                    print(f"📌 Inserting new customer record for {app_id}")
+                    # INSERT NEW CUSTOMER RECORD (WALANG updated_at)
+                    print(f" Inserting new customer record for {app_id}")
                     insert_sql = """
                         INSERT INTO customers (
                             application_number, first_name, last_name, middle_name, suffix,
@@ -9374,28 +9374,28 @@ def restore_application(app_id):
                         app_data.get('longitude')
                     )
                     cursor.execute(insert_sql, insert_params)
-                    print(f"✅ New customer record inserted")
+                    print(f" New customer record inserted")
                     
             except mysql.connector.Error as customer_err:
-                print(f"❌ Customer error: {customer_err}")
+                print(f" Customer error: {customer_err}")
                 # Don't rollback - continue
 
-        # ✅ COMMIT TRANSACTION
+        # COMMIT TRANSACTION
         conn.commit()
-        print("✅ Transaction committed successfully")
+        print(" Transaction committed successfully")
 
-        # ✅ FINAL VERIFICATION
+        # FINAL VERIFICATION
         if is_cancelled:
             cursor.execute("SELECT status, installation_status, assigned_team_id, installation_date FROM customers WHERE application_number = %s", (app_id,))
             final_check = cursor.fetchone()
             if final_check:
-                print(f"🔍 FINAL CUSTOMER VERIFICATION:")
+                print(f" FINAL CUSTOMER VERIFICATION:")
                 print(f"  - status: {final_check.get('status')}")
                 print(f"  - installation_status: {final_check.get('installation_status')}")
                 print(f"  - assigned_team_id: {final_check.get('assigned_team_id')}")
                 print(f"  - installation_date: {final_check.get('installation_date')}")
             else:
-                print(f"⚠️ NO CUSTOMER RECORD FOUND AFTER RESTORE")
+                print(f" NO CUSTOMER RECORD FOUND AFTER RESTORE")
 
         # ========== SEND EMAIL NOTIFICATION ==========
         try:
@@ -9412,9 +9412,9 @@ def restore_application(app_id):
                     assigned_team_id=assigned_team_id,
                     installation_date=installation_date
                 )
-                print(f"✅ Restore email sent to {customer_email}")
+                print(f" Restore email sent to {customer_email}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
+            print(f" Email error: {email_err}")
 
         return jsonify({
             "success": True,
@@ -9423,12 +9423,12 @@ def restore_application(app_id):
         })
 
     except mysql.connector.Error as db_err:
-        print(f"❌ Database error: {db_err}")
+        print(f" Database error: {db_err}")
         if conn:
             conn.rollback()
         return jsonify({"error": str(db_err)}), 500
     except Exception as e:
-        print(f"❌ Restore error: {e}")
+        print(f" Restore error: {e}")
         import traceback
         traceback.print_exc()
         if conn:
@@ -9439,7 +9439,7 @@ def restore_application(app_id):
             cursor.close()
         if conn:
             conn.close()
-            print("🔒 Database connection closed")
+            print(" Database connection closed")
 
 
 # ===============================
@@ -9454,7 +9454,7 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
     sender_name = os.getenv("BREVO_SENDER_NAME", "Cablevision")
 
     if not api_key:
-        print("❌ BREVO_API_KEY is not configured.")
+        print(" BREVO_API_KEY is not configured.")
         return False
 
     def escape_html(text):
@@ -9494,7 +9494,7 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
 
                 <div style="padding:20px 28px 0;text-align:center;">
                     <div style="display:inline-block;background:{status_bg};padding:8px 24px;border-radius:60px;">
-                        <span style="font-size:14px;font-weight:600;color:{status_color};">✓ APPLICATION APPROVED</span>
+                        <span style="font-size:14px;font-weight:600;color:{status_color};"> APPLICATION APPROVED</span>
                     </div>
                 </div>
 
@@ -9530,7 +9530,7 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
 
                     <div style="margin:20px 0;padding:16px;background:{status_bg};border-radius:12px;border-left:4px solid {status_color};">
                         <p style="margin:0 0 8px;color:#0f172a;">
-                            <strong>📌 What happens next?</strong>
+                            <strong> What happens next?</strong>
                         </p>
                         <ul style="margin:0;padding-left:20px;color:#1e293b;font-size:14px;line-height:1.6;">
                             <li>Your application has been approved and restored.</li>
@@ -9550,7 +9550,7 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
 
                 <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
                     <div style="font-size:11px;color:#64748b;">
-                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                        2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
 
@@ -9568,7 +9568,7 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
     }
 
     try:
-        print(f"📧 Sending restore email to {to_email} via Brevo API...")
+        print(f" Sending restore email to {to_email} via Brevo API...")
 
         response = requests.post(
             "https://api.brevo.com/v3/smtp/email",
@@ -9583,18 +9583,18 @@ def send_restore_email(to_email, first_name, app_id, application_data=None, targ
 
         if response.ok:
             result = response.json()
-            print(f"✅ Restore email sent to {to_email}")
-            print(f"📨 Brevo Message ID: {result.get('messageId')}")
+            print(f" Restore email sent to {to_email}")
+            print(f" Brevo Message ID: {result.get('messageId')}")
             return True
 
-        print(f"❌ Brevo restore email failed: {response.status_code} - {response.text}")
+        print(f" Brevo restore email failed: {response.status_code} - {response.text}")
         return False
 
     except requests.RequestException as e:
-        print(f"❌ Brevo connection error: {e}")
+        print(f" Brevo connection error: {e}")
         return False
     except Exception as e:
-        print(f"❌ Restore email failed: {e}")
+        print(f" Restore email failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -9621,7 +9621,7 @@ def request_reapply(app_id):
         if app_data.get("status") != "Rejected":
             return jsonify({"error": "Only rejected applications can request a re-application."}), 400
 
-        # ✅ ONCE-ONLY CHECK
+        # ONCE-ONLY CHECK
         if app_data.get("reapply_requested"):
             return jsonify({"error": "A reapply request has already been sent for this application."}), 400
 
@@ -9652,7 +9652,7 @@ def request_reapply(app_id):
         if not sent:
             return jsonify({"error": "Failed to send email"}), 500
 
-        # ✅ SET THE FLAG + SAVE MESSAGE + TIMESTAMP
+        # SET THE FLAG + SAVE MESSAGE + TIMESTAMP
         update_query = """
             UPDATE applications
             SET reapply_requested = 1,
@@ -9670,12 +9670,12 @@ def request_reapply(app_id):
         })
 
     except mysql.connector.Error as db_err:
-        print(f"❌ Database error: {db_err}")
+        print(f" Database error: {db_err}")
         if conn:
             conn.rollback()
         return jsonify({"error": str(db_err)}), 500
     except Exception as e:
-        print(f"❌ Request reapply error: {e}")
+        print(f" Request reapply error: {e}")
         import traceback
         traceback.print_exc()
         if conn:
@@ -9707,10 +9707,10 @@ def send_reapply_request_email(
     api_key = os.getenv("BREVO_API_KEY", "")
 
     if not api_key:
-        print("❌ Brevo API key not configured!")
+        print(" Brevo API key not configured!")
         return False
 
-    print(f"📧 Sending reapply request email via Brevo to {to_email}...")
+    print(f" Sending reapply request email via Brevo to {to_email}...")
 
     # ==========================================
     # PRODUCTION USER WEBSITE
@@ -9775,7 +9775,7 @@ def send_reapply_request_email(
                 font-size: 14px;
                 font-weight: 600;
             ">
-                ⚠️ You have reached the maximum number of re-applications (2).
+                You have reached the maximum number of re-applications (2).
                 Further re-applications are not allowed.
             </p>
         </div>
@@ -9979,7 +9979,7 @@ def send_reapply_request_email(
                         font-size:11px;
                         color:#64748b;
                     ">
-                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                        2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
             </div>
@@ -10019,15 +10019,15 @@ def send_reapply_request_email(
         response = requests.post(url, json=email_data, headers=headers, timeout=30)
 
         if response.status_code in [200, 201, 202]:
-            print(f"✅ Reapply request email sent successfully to {to_email}")
-            print(f"🔗 Reapply URL: {BASE_URL}/reapply/{application_id}")
+            print(f" Reapply request email sent successfully to {to_email}")
+            print(f" Reapply URL: {BASE_URL}/reapply/{application_id}")
             return True
         else:
-            print(f"❌ Brevo API error: {response.status_code} - {response.text}")
+            print(f" Brevo API error: {response.status_code} - {response.text}")
             return False
 
     except Exception as e:
-        print(f"❌ Reapply email API error: {e}")
+        print(f" Reapply email API error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -10122,11 +10122,11 @@ def approve_request(req_id):
     cursor = None
     try:
         print("=" * 60)
-        print("🚀 APPROVE REQUEST STARTED")
-        print(f"📝 Request ID: {req_id}")
+        print(" APPROVE REQUEST STARTED")
+        print(f" Request ID: {req_id}")
 
         request_data = request.get_json() or {}
-        print(f"📝 Request data: {request_data}")
+        print(f" Request data: {request_data}")
 
         contract_number = request_data.get("contract_number", None)
         billing_date = request_data.get("billing_date", None)
@@ -10142,7 +10142,7 @@ def approve_request(req_id):
             return jsonify({"error": "Database connection failed"}), 500
 
         cursor = conn.cursor(dictionary=True)
-        print("✅ Database connected")
+        print(" Database connected")
 
         # Get the approval request
         req_query = """
@@ -10154,7 +10154,7 @@ def approve_request(req_id):
         """
         cursor.execute(req_query, (req_id,))
         req = cursor.fetchone()
-        print(f"📝 Approval request found: {req}")
+        print(f" Approval request found: {req}")
 
         if not req:
             return jsonify({"error": "Request not found"}), 404
@@ -10167,7 +10167,7 @@ def approve_request(req_id):
         admin_area = req.get("admin_area")
         admin_city = req.get("admin_city")
 
-        print(f"📝 App ID: {app_id}, Requested Status: {requested_status}")
+        print(f" App ID: {app_id}, Requested Status: {requested_status}")
 
         # Check if request is already processed
         if req.get("status") == "Done":
@@ -10177,7 +10177,7 @@ def approve_request(req_id):
         app_query = "SELECT * FROM applications WHERE application_number = %s"
         cursor.execute(app_query, (app_id,))
         app_data = cursor.fetchone()
-        print(f"📝 Application data status: {app_data.get('status') if app_data else 'Not found'}")
+        print(f" Application data status: {app_data.get('status') if app_data else 'Not found'}")
 
         if not app_data:
             return jsonify({"error": "Application not found"}), 404
@@ -10187,7 +10187,7 @@ def approve_request(req_id):
 
         # ========== HANDLE REAPPLY REQUEST ==========
         if requested_status == "Reapply":
-            print("🔄 Processing REAPPLY request from admin")
+            print(" Processing REAPPLY request from admin")
 
             if app_data.get("reapply_requested"):
                 return jsonify({"error": "A reapply request has already been sent to the customer"}), 400
@@ -10200,7 +10200,7 @@ def approve_request(req_id):
             if not customer_email:
                 return jsonify({"error": "Customer email not found"}), 400
 
-            # ✅ SEND REAPPLY EMAIL VIA BREVO (HTTP API — hindi naaapektuhan ng SMTP port blocking sa Railway)
+            # SEND REAPPLY EMAIL VIA BREVO (HTTP API — hindi naaapektuhan ng SMTP port blocking sa Railway)
             email_sent = send_reapply_request_email(
                 to_email=customer_email,
                 first_name=first_name,
@@ -10214,7 +10214,7 @@ def approve_request(req_id):
             if not email_sent:
                 return jsonify({"error": "Failed to send email"}), 500
 
-            # ✅ UPDATE APPLICATION - SET REAPPLY FLAGS
+            # UPDATE APPLICATION - SET REAPPLY FLAGS
             update_query = """
                 UPDATE applications
                 SET reapply_requested = 1,
@@ -10225,7 +10225,7 @@ def approve_request(req_id):
             """
             cursor.execute(update_query, (reason, app_id))
 
-            # ✅ CREATE ADMIN NOTIFICATION
+            # CREATE ADMIN NOTIFICATION
             admin_notification_id = int(datetime.now().timestamp() * 1000)
             admin_notif_title = "Admin Reapply Request - Approved"
             admin_notif_message = f"Your request to send a reapply invitation to {app_data.get('first_name', '')} {app_data.get('last_name', '')}'s application ({app_id}) has been APPROVED by superadmin. The customer has been notified."
@@ -10245,7 +10245,7 @@ def approve_request(req_id):
                 app_data.get('city', ''), "superadmin", "Approved"
             ))
 
-            # ✅ MARK REQUEST AS DONE
+            # MARK REQUEST AS DONE
             cursor.execute("""
                 UPDATE approval_requests
                 SET status = 'Done', processed_at = %s
@@ -10268,11 +10268,11 @@ def approve_request(req_id):
                 date_part = datetime.now().strftime("%Y%m%d")
                 random_part = ''.join(random.choices(string.digits, k=4))
                 contract_number = f"CV-{date_part}-{random_part}"
-                print(f"🔑 Auto-generated contract number: {contract_number}")
+                print(f" Auto-generated contract number: {contract_number}")
 
             if not billing_date or billing_date.strip() == "":
                 billing_date = "15th"
-                print(f"📅 Default billing date set to: {billing_date}")
+                print(f" Default billing date set to: {billing_date}")
 
         # ========== 1. UPDATE APPLICATIONS TABLE ==========
         update_fields = ["status = %s"]
@@ -10336,7 +10336,7 @@ def approve_request(req_id):
 
             customer_data = {k: v for k, v in customer_data.items() if v is not None and v != 'none'}
 
-            print("📝 CUSTOMER DATA:", customer_data)
+            print(" CUSTOMER DATA:", customer_data)
 
             app_number = app_data.get("application_number")
             cursor.execute("SELECT application_number FROM customers WHERE application_number = %s", (app_number,))
@@ -10347,7 +10347,7 @@ def approve_request(req_id):
                 placeholders = ', '.join(['%s'] * len(customer_data))
                 insert_query = f"INSERT INTO customers ({columns}) VALUES ({placeholders})"
                 cursor.execute(insert_query, list(customer_data.values()))
-                print(f"✅ Customer record INSERTED for {app_number}")
+                print(f" Customer record INSERTED for {app_number}")
             else:
                 update_customer_fields = []
                 update_params = []
@@ -10357,7 +10357,7 @@ def approve_request(req_id):
                 update_params.append(app_number)
                 update_customer_query = f"UPDATE customers SET {', '.join(update_customer_fields)} WHERE application_number = %s"
                 cursor.execute(update_customer_query, update_params)
-                print(f"✅ Customer record UPDATED for {app_number}")
+                print(f" Customer record UPDATED for {app_number}")
 
         # ========== 3. SAVE TO CONTRACTS TABLE (if approved) ==========
         if requested_status == "Approved":
@@ -10418,7 +10418,7 @@ def approve_request(req_id):
                 placeholders = ', '.join(['%s'] * len(contract_data))
                 insert_query = f"INSERT INTO contracts ({columns}) VALUES ({placeholders})"
                 cursor.execute(insert_query, list(contract_data.values()))
-                print(f"✅ Contract {contract_number} INSERTED")
+                print(f" Contract {contract_number} INSERTED")
             else:
                 update_contract_fields = []
                 update_params = []
@@ -10429,7 +10429,7 @@ def approve_request(req_id):
                 update_params.append(contract_number)
                 update_contract_query = f"UPDATE contracts SET {', '.join(update_contract_fields)} WHERE contract_number = %s"
                 cursor.execute(update_contract_query, update_params)
-                print(f"✅ Contract {contract_number} UPDATED")
+                print(f" Contract {contract_number} UPDATED")
 
         # ========== 4. CREATE NOTIFICATION FOR ADMIN ==========
         applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
@@ -10471,13 +10471,13 @@ def approve_request(req_id):
         if requested_status == "Approved":
             try:
                 application_city = app_data.get("city", "")
-                print(f"🔍 Creating technician notification for area: {application_city}")
+                print(f" Creating technician notification for area: {application_city}")
 
                 tech_query = "SELECT technician_id FROM technicians WHERE UPPER(area) = UPPER(%s) AND status = 'Active'"
                 cursor.execute(tech_query, (application_city,))
                 technicians = cursor.fetchall()
 
-                print(f"🔍 Found {len(technicians)} technicians in area: {application_city}")
+                print(f" Found {len(technicians)} technicians in area: {application_city}")
 
                 if technicians:
                     import time
@@ -10509,12 +10509,12 @@ def approve_request(req_id):
                             ))
                             success_count += 1
 
-                    print(f"🔔 Created {success_count} technician notifications in area: {application_city}")
+                    print(f" Created {success_count} technician notifications in area: {application_city}")
                 else:
-                    print(f"⚠️ No active technicians found in area: {application_city}")
+                    print(f" No active technicians found in area: {application_city}")
 
             except Exception as tech_err:
-                print(f"⚠️ Technician notification error: {tech_err}")
+                print(f" Technician notification error: {tech_err}")
                 import traceback
                 traceback.print_exc()
 
@@ -10533,7 +10533,7 @@ def approve_request(req_id):
             processed_at_str,
             req_id
         ))
-        print(f"✅ Request {req_id} marked as Done")
+        print(f" Request {req_id} marked as Done")
 
         # ========== 7. CREATE GENERAL NOTIFICATION ==========
         general_notification_id = int(datetime.now().timestamp() * 1000) + 1
@@ -10551,25 +10551,25 @@ def approve_request(req_id):
             datetime.now().isoformat(),
             0
         ))
-        print(f"✅ General notification created")
+        print(f" General notification created")
 
         # ========== 8. COMMIT ALL CHANGES ==========
         conn.commit()
-        print("✅ All changes COMMITTED to database")
+        print(" All changes COMMITTED to database")
 
         # ========== 9. VERIFY UPDATES ==========
         cursor.execute("SELECT status, contract_number FROM applications WHERE application_number = %s", (app_id,))
         app_verified = cursor.fetchone()
-        print(f"🔍 APPLICATION VERIFIED - Status: {app_verified.get('status') if app_verified else 'Not found'}")
+        print(f" APPLICATION VERIFIED - Status: {app_verified.get('status') if app_verified else 'Not found'}")
 
         if requested_status == "Approved":
             cursor.execute("SELECT application_number FROM customers WHERE application_number = %s", (app_id,))
             customer_verified = cursor.fetchone()
-            print(f"🔍 CUSTOMER VERIFIED - Exists: {customer_verified is not None}")
+            print(f" CUSTOMER VERIFIED - Exists: {customer_verified is not None}")
 
             cursor.execute("SELECT contract_number FROM contracts WHERE contract_number = %s", (contract_number,))
             contract_verified = cursor.fetchone()
-            print(f"🔍 CONTRACT VERIFIED - Exists: {contract_verified is not None}")
+            print(f" CONTRACT VERIFIED - Exists: {contract_verified is not None}")
 
         # ========== 10. SEND EMAIL TO CUSTOMER ==========
         try:
@@ -10581,7 +10581,7 @@ def approve_request(req_id):
                         first_name=applicant_name,
                         app_id=application_number
                     )
-                    print(f"✅ Restore email sent to {applicant_email}")
+                    print(f" Restore email sent to {applicant_email}")
                 else:
                     send_application_status_email(
                         to_email=applicant_email,
@@ -10594,9 +10594,9 @@ def approve_request(req_id):
                         application_id=app_id,
                         reapplied_count=app_data.get("reapplied_count", 0)
                     )
-                    print(f"✅ Email sent to {applicant_email}")
+                    print(f" Email sent to {applicant_email}")
         except Exception as email_err:
-            print(f"⚠️ Error sending email: {email_err}")
+            print(f" Error sending email: {email_err}")
 
         # ========== 11. RETURN SUCCESS RESPONSE ==========
         response_data = {
@@ -10610,12 +10610,12 @@ def approve_request(req_id):
         return jsonify(response_data)
 
     except mysql.connector.Error as db_err:
-        print(f"❌ Database error: {db_err}")
+        print(f" Database error: {db_err}")
         if conn:
             conn.rollback()
         return jsonify({"error": str(db_err)}), 500
     except Exception as e:
-        print(f"❌ Error in approve_request: {e}")
+        print(f" Error in approve_request: {e}")
         import traceback
         traceback.print_exc()
         if conn:
@@ -10627,7 +10627,7 @@ def approve_request(req_id):
             cursor.close()
         if conn:
             conn.close()
-            print("🔒 Database connection closed")
+            print(" Database connection closed")
 
 
 
@@ -10686,16 +10686,16 @@ def reject_request(req_id):
             req_id
         ))
         
-        # ✅ DETERMINE REVERT STATUS BASED ON REQUESTED STATUS
+        # DETERMINE REVERT STATUS BASED ON REQUESTED STATUS
         if requested_status == "Pending":
             revert_status = "Rejected"
         elif requested_status == "Reapply":
-            revert_status = "Rejected"  # ✅ Stay Rejected
+            revert_status = "Rejected"  # Stay Rejected
         else:
             revert_status = "Pending"
         
         cursor.execute("UPDATE applications SET status = %s WHERE application_number = %s", (revert_status, app_id))
-        print(f"✅ Application {app_id} reverted to {revert_status} status")
+        print(f" Application {app_id} reverted to {revert_status} status")
         
         applicant_name = f"{app_data.get('first_name', '')} {app_data.get('last_name', '')}".strip()
         application_number = app_data.get('application_number', 'N/A')
@@ -10703,7 +10703,7 @@ def reject_request(req_id):
         
         admin_notification_id = int(datetime.now().timestamp() * 1000)
         
-        # ✅ MESSAGE WORDING
+        # MESSAGE WORDING
         if requested_status == "Pending":
             admin_notif_message = f"Your request to restore {applicant_name}'s application ({application_number}) has been REJECTED by superadmin. The application remains Rejected.\nReason: {reason}"
         elif requested_status == "Reapply":
@@ -10746,11 +10746,11 @@ def reject_request(req_id):
                 "superadmin_action", app_id, datetime.now().isoformat(), 0
             ))
         except Exception as gen_err:
-            print(f"⚠️ General notification note: {gen_err}")
+            print(f" General notification note: {gen_err}")
         
         conn.commit()
         
-        # ✅ NO EMAIL SENT TO CUSTOMER WHEN SUPERADMIN REJECTS ADMIN REQUEST
+        # NO EMAIL SENT TO CUSTOMER WHEN SUPERADMIN REJECTS ADMIN REQUEST
         # (in-app notification lang ang gagawin, walang email)
         
         return jsonify({
@@ -10758,7 +10758,7 @@ def reject_request(req_id):
         })
 
     except Exception as e:
-        print(f"❌ Error in reject_request: {e}")
+        print(f" Error in reject_request: {e}")
         import traceback
         traceback.print_exc()
         if conn:
@@ -10774,7 +10774,7 @@ def reject_request(req_id):
 @app.route("/api/admin/check-pending-request/<app_id>", methods=["GET"])
 def check_pending_request(app_id):
     try:
-        # ✅ KUHAIN ANG LAHAT NG PENDING REQUESTS (HINDI LANG REAPPLY)
+        # KUHAIN ANG LAHAT NG PENDING REQUESTS (HINDI LANG REAPPLY)
         query = """
             SELECT request_id, requested_status FROM approval_requests 
             WHERE app_id = %s AND status = 'Pending'
@@ -10912,9 +10912,9 @@ def unarchive_application(app_id):
                     first_name=app_data.get('first_name'),
                     app_id=app_id
                 )
-                print(f"✅ Restore email sent to {app_data.get('email')}")
+                print(f" Restore email sent to {app_data.get('email')}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
+            print(f" Email error: {email_err}")
         
         return jsonify({
             "success": True,
@@ -11002,8 +11002,8 @@ def get_approved_customers():
                 "email": cust.get('email', ''),
                 "mobile": cust.get('mobile', ''),
                 "plan": cust.get('plan', ''),
-                "plan_speed": cust.get('plan_speed', 'N/A'),  # ✅ DIREKTA MULA SA CUSTOMERS TABLE
-                "plan_price": cust.get('plan_price', 'N/A'),  # ✅ DIREKTA MULA SA CUSTOMERS TABLE
+                "plan_speed": cust.get('plan_speed', 'N/A'),  # DIREKTA MULA SA CUSTOMERS TABLE
+                "plan_price": cust.get('plan_price', 'N/A'),  # DIREKTA MULA SA CUSTOMERS TABLE
                 "status": cust.get('status', 'Approved'),
                 "installation_status": cust.get('installation_status', 'Pending'),
                 "approval_date": cust.get('approval_date', ''),
@@ -11053,7 +11053,7 @@ def get_superadmin_installation_summary():
         area = request.args.get("area")
 
         print("=" * 60)
-        print("📊 INSTALLATION SUMMARY REQUEST")
+        print(" INSTALLATION SUMMARY REQUEST")
         print(f"   start_date: {start_date}")
         print(f"   end_date: {end_date}")
         print(f"   area: {area}")
@@ -11065,7 +11065,7 @@ def get_superadmin_installation_summary():
         if end_date:
             end_date = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1, seconds=-1)
 
-        # ✅ ISAMA ANG APPROVED AT CANCELLED NA STATUS
+        # ISAMA ANG APPROVED AT CANCELLED NA STATUS
         query = """
             SELECT application_number, installation_status, city, status,
                    date_pending, date_ongoing, date_installed, 
@@ -11083,7 +11083,7 @@ def get_superadmin_installation_summary():
         # Execute query
         customers = execute_query(query, params, fetch=True) or []
 
-        # ✅ PARA SA PIE GRAPH - GAMITIN ANG installation_status
+        # PARA SA PIE GRAPH - GAMITIN ANG installation_status
         installation_summary = {
             "Pending": 0,
             "Ongoing": 0,
@@ -11109,13 +11109,13 @@ def get_superadmin_installation_summary():
 
         matched_customers = 0
 
-        print("\n🔍 PROCESSING CUSTOMERS:")
+        print("\n PROCESSING CUSTOMERS:")
         for cust in customers:
             app_num = cust.get('application_number', 'unknown')
             installation_status = cust.get('installation_status', '').strip()
             customer_status = cust.get('status', '').strip()
             
-            # 🔥 KUNIN ANG MGA DATES PARA SA FILTER
+            # KUNIN ANG MGA DATES PARA SA FILTER
             dates = {
                 "Pending": parse_date(cust.get("date_pending")),
                 "Ongoing": parse_date(cust.get("date_ongoing")),
@@ -11124,7 +11124,7 @@ def get_superadmin_installation_summary():
                 "Terminated": parse_date(cust.get("date_terminated"))
             }
             
-            # 🔥 I-FILTER KUNG NASA DATE RANGE
+            # I-FILTER KUNG NASA DATE RANGE
             is_in_date_range = False
             for status, dt in dates.items():
                 if dt:
@@ -11138,7 +11138,7 @@ def get_superadmin_installation_summary():
                         is_in_date_range = True
                         break
             
-            # 🔥 KUNG WALANG DATES, ISAMA PA RIN (para hindi mawala ang customer)
+            # KUNG WALANG DATES, ISAMA PA RIN (para hindi mawala ang customer)
             has_any_date = any(dt is not None for dt in dates.values())
             if not has_any_date:
                 is_in_date_range = True  # Isama ang customer kahit walang dates
@@ -11152,16 +11152,16 @@ def get_superadmin_installation_summary():
             print(f"    - installation_status: {installation_status}")
             print(f"    - date_cancelled: {cust.get('date_cancelled')}")
             
-            # ✅ GAMITIN ANG installation_status PARA SA PIE GRAPH
+            # GAMITIN ANG installation_status PARA SA PIE GRAPH
             if installation_status in installation_summary:
                 installation_summary[installation_status] += 1
                 matched_customers += 1
-                print(f"    ✅ Status: {installation_status}")
+                print(f"    Status: {installation_status}")
             else:
-                print(f"    ⚠️ Unknown status: {installation_status}")
+                print(f"    Unknown status: {installation_status}")
 
         print("\n" + "=" * 60)
-        print(f"📊 FINAL SUMMARY (based on installation_status): {installation_summary}")
+        print(f" FINAL SUMMARY (based on installation_status): {installation_summary}")
         print(f"   Total matched: {matched_customers}")
         print("=" * 60)
 
@@ -11242,12 +11242,12 @@ def get_single_customer(customer_id):
         else:
             result = customer_data
         
-        # ✅ Convert image paths to Cloudinary URLs
+        # Convert image paths to Cloudinary URLs
         image_fields = ['profile_photo', 'id_front', 'id_back', 'proof_billing', 'signature']
         for field in image_fields:
             if result.get(field):
                 result[field] = get_cloudinary_url(result[field])
-                print(f"✅ Converted {field}: {result[field][:50]}...")
+                print(f" Converted {field}: {result[field][:50]}...")
         
         # Parse JSON fields in customer data if any
         if result.get('tv_qty') and isinstance(result.get('tv_qty'), str):
@@ -11287,7 +11287,7 @@ def superadmin_create_user_account():
         
         data = request.get_json()
         application_number = data.get("application_number")
-        provided_user_id = data.get("user_id")  # ✅ Get the user_id from frontend
+        provided_user_id = data.get("user_id")  # Get the user_id from frontend
         
         if not application_number:
             return jsonify({"error": "Application number required"}), 400
@@ -11324,7 +11324,7 @@ def superadmin_create_user_account():
                     existing = execute_query(check_user_query, (new_user_id,), fetch_one=True)
                     if not existing:
                         break
-                print(f"⚠️ Provided user_id {provided_user_id} already exists, using {new_user_id} instead")
+                print(f" Provided user_id {provided_user_id} already exists, using {new_user_id} instead")
             else:
                 new_user_id = provided_user_id
         else:
@@ -11363,7 +11363,7 @@ def superadmin_create_user_account():
             first_name, last_name, middle_name, suffix, mobile, address
         ))
         
-        print(f"✅ User {new_user_id} created for customer {application_number}")
+        print(f" User {new_user_id} created for customer {application_number}")
         
         # Send email notification
         if email:
@@ -11376,7 +11376,7 @@ def superadmin_create_user_account():
                     contract_number,
                     customer
                 )
-                print(f"✅ Account creation email sent to {email}")
+                print(f" Account creation email sent to {email}")
             except Exception as email_error:
                 print(f"Email error: {email_error}")
         
@@ -11398,7 +11398,7 @@ def superadmin_create_user_account():
         })
         
     except Exception as e:
-        print(f"❌ Error creating user account: {e}")
+        print(f" Error creating user account: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -11414,10 +11414,10 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
     api_key = os.getenv("BREVO_API_KEY", "")
 
     if not api_key:
-        print("❌ Brevo API key not configured!")
+        print(" Brevo API key not configured!")
         return False
 
-    print(f"📧 Sending account creation email via Brevo API to {to_email}...")
+    print(f" Sending account creation email via Brevo API to {to_email}...")
 
     subject = "Cablevision - Your Account Has Been Created"
 
@@ -11438,7 +11438,7 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
             <div style="background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);">
                 <!-- HEADER -->
                 <div style="background: linear-gradient(135deg, #001f3f 0%, #002b5c 100%); padding: 32px 28px; text-align: center;">
-                    <div style="font-size: 44px; margin-bottom: 8px;">🎉</div>
+                    <div style="font-size: 44px; margin-bottom: 8px;"></div>
                     <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff;">
                         Cablevision
                     </h1>
@@ -11460,7 +11460,7 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
                     <!-- LOGIN CREDENTIALS -->
                     <div style="background: #f8fafc; border-radius: 20px; padding: 18px; margin-bottom: 20px;">
                         <div style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; text-align: center;">
-                            🔑 LOGIN CREDENTIALS
+                            LOGIN CREDENTIALS
                         </div>
                         <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
                             <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px;">
@@ -11483,7 +11483,7 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
                     <!-- CUSTOMER DETAILS -->
                     <div style="background: #eff6ff; border-radius: 20px; padding: 18px; margin-bottom: 16px;">
                         <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 12px;">
-                            📋 ACCOUNT INFORMATION
+                            ACCOUNT INFORMATION
                         </div>
                         <div style="margin-bottom: 10px;">
                             <span style="font-size: 12px; color: #64748b;">
@@ -11522,7 +11522,7 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
                     <!-- PASSWORD WARNING -->
                     <div style="margin: 20px 0; padding: 16px; background: #fef3c7; border-radius: 12px; border-left: 4px solid #f59e0b;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 20px;">⚠️</span>
+                            <span style="font-size: 20px;"></span>
                             <div>
                                 <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 4px;">
                                     Password Change Required
@@ -11545,7 +11545,7 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
                 <!-- FOOTER -->
                 <div style="background: #f1f5f9; padding: 16px 28px; text-align: center;">
                     <div style="font-size: 11px; color: #64748b;">
-                        © 2026 Cablevision Internet Service Provider. All rights reserved.
+                        2026 Cablevision Internet Service Provider. All rights reserved.
                     </div>
                 </div>
             </div>
@@ -11589,28 +11589,28 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
         # ==============================================
 
         if response.status_code in [200, 201, 202]:
-            print(f"✅ Account creation email sent successfully to {to_email}")
+            print(f" Account creation email sent successfully to {to_email}")
 
             try:
-                print(f"📨 Brevo response: {response.json()}")
+                print(f" Brevo response: {response.json()}")
             except Exception:
                 pass
 
             return True
         else:
-            print(f"❌ Brevo API error: {response.status_code} - {response.text}")
+            print(f" Brevo API error: {response.status_code} - {response.text}")
             return False
 
     except requests.exceptions.Timeout:
-        print("❌ Brevo API request timed out.")
+        print(" Brevo API request timed out.")
         return False
 
     except requests.exceptions.RequestException as e:
-        print(f"❌ Brevo API request error: {e}")
+        print(f" Brevo API request error: {e}")
         return False
 
     except Exception as e:
-        print(f"❌ Account creation email error: {e}")
+        print(f" Account creation email error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -11644,9 +11644,9 @@ os.makedirs(UPLOAD_FOLDER_ANNOUNCEMENTS, exist_ok=True)
 def upload_to_cloudinary_announcement(file):
     """Upload announcement image to Cloudinary and return URL"""
     try:
-        print(f"📤 Uploading announcement to Cloudinary: {file.filename}")
+        print(f" Uploading announcement to Cloudinary: {file.filename}")
         
-        # ✅ I-reset ang file pointer
+        # I-reset ang file pointer
         file.stream.seek(0)
         
         filename_without_ext = file.filename.rsplit('.', 1)[0] if hasattr(file, 'filename') else None
@@ -11659,11 +11659,11 @@ def upload_to_cloudinary_announcement(file):
             overwrite=True
         )
         
-        print(f"✅ Announcement uploaded: {result['secure_url']}")
+        print(f" Announcement uploaded: {result['secure_url']}")
         return result['secure_url']
         
     except Exception as e:
-        print(f"❌ Cloudinary upload error: {e}")
+        print(f" Cloudinary upload error: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -11678,29 +11678,29 @@ def delete_from_cloudinary_announcement(image_url):
             parts = image_url.split('/upload/')
             if len(parts) > 1:
                 public_id_with_ext = parts[1]
-                print(f"🔍 Public ID with extension: {public_id_with_ext}")
+                print(f" Public ID with extension: {public_id_with_ext}")
                 
                 # Remove version number if present
                 if '/' in public_id_with_ext and public_id_with_ext.split('/')[0].startswith('v'):
                     public_id_with_ext = '/'.join(public_id_with_ext.split('/')[1:])
-                    print(f"🔍 After removing version: {public_id_with_ext}")
+                    print(f" After removing version: {public_id_with_ext}")
                 
                 # Remove file extension
                 public_id = public_id_with_ext.rsplit('.', 1)[0]
-                print(f"✅ Final public_id: {public_id}")
+                print(f" Final public_id: {public_id}")
                 
                 result = cloudinary.uploader.destroy(public_id, resource_type="image")
-                print(f"🗑️ Delete result: {result}")
+                print(f" Delete result: {result}")
                 
                 if result.get('result') == 'ok':
-                    print(f"✅ Successfully deleted announcement: {public_id}")
+                    print(f" Successfully deleted announcement: {public_id}")
                     return True
                 else:
-                    print(f"⚠️ Delete result: {result}")
+                    print(f" Delete result: {result}")
                     return False
                     
     except Exception as e:
-        print(f"❌ Cloudinary delete error: {e}")
+        print(f" Cloudinary delete error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -11737,9 +11737,9 @@ def create_announcement():
         image_url = None
         
         if image_file and allowed_announcement_file(image_file.filename):
-            # ✅ Upload to Cloudinary
+            # Upload to Cloudinary
             image_url = upload_to_cloudinary_announcement(image_file)
-            print(f"📸 Image URL: {image_url}")
+            print(f" Image URL: {image_url}")
         
         if not title and not message and not image_url:
             return jsonify({"error": "Title, message, or image required"}), 400
@@ -11754,7 +11754,7 @@ def create_announcement():
         announcement_id = execute_query(insert_query, (
             title,
             message,
-            image_url,  # ✅ Cloudinary URL
+            image_url,  # Cloudinary URL
             now.strftime("%B %d, %Y"),
             now.timestamp(),
             expiration_date
@@ -11785,7 +11785,7 @@ def get_announcements():
         for ann in announcements:
             image_path = ann.get('image_path', '')
             
-            # ✅ If image_path exists, convert to Cloudinary URL if needed
+            # If image_path exists, convert to Cloudinary URL if needed
             if image_path:
                 # If it's a local path (starts with /shared-uploads/)
                 if image_path.startswith('/shared-uploads/') or image_path.startswith('shared-uploads/'):
@@ -11835,10 +11835,10 @@ def update_announcement(announcement_id):
         image_url = existing.get('image_path')
         
         if image_file and allowed_announcement_file(image_file.filename):
-            # ✅ Delete old image from Cloudinary
+            # Delete old image from Cloudinary
             if image_url and 'cloudinary.com' in image_url:
                 delete_from_cloudinary_announcement(image_url)
-            # ✅ Upload new image to Cloudinary
+            # Upload new image to Cloudinary
             image_url = upload_to_cloudinary_announcement(image_file)
         
         # Build update query dynamically
@@ -11884,7 +11884,7 @@ def delete_announcement(announcement_id):
         if not announcement:
             return jsonify({"error": "Announcement not found"}), 404
         
-        # ✅ Delete image from Cloudinary
+        # Delete image from Cloudinary
         image_url = announcement.get('image_path')
         if image_url and 'cloudinary.com' in image_url:
             delete_from_cloudinary_announcement(image_url)
@@ -11919,7 +11919,7 @@ def delete_expired_announcements():
         
         deleted_count = 0
         for ann in expired_announcements:
-            # ✅ Delete image from Cloudinary
+            # Delete image from Cloudinary
             image_url = ann.get('image_path')
             if image_url and 'cloudinary.com' in image_url:
                 delete_from_cloudinary_announcement(image_url)
@@ -11966,7 +11966,7 @@ def get_plan_change_requests():
     """Get all PENDING plan change requests for superadmin"""
     
     try:
-        # ✅ PENDING LANG ANG KUNIN (hindi na kasama ang Approved at Rejected)
+        # PENDING LANG ANG KUNIN (hindi na kasama ang Approved at Rejected)
         query = """
             SELECT 
                 pcr.id,
@@ -11993,7 +11993,7 @@ def get_plan_change_requests():
                 c.billing_date
             FROM plan_change_requests pcr
             LEFT JOIN customers c ON pcr.application_number = c.application_number
-            WHERE pcr.status = 'Pending'  -- ✅ PINAKA IMPORTANTE: PENDING LANG
+            WHERE pcr.status = 'Pending'  -- PINAKA IMPORTANTE: PENDING LANG
             ORDER BY pcr.requested_at DESC
         """
         requests = execute_query(query, fetch=True) or []
@@ -12025,7 +12025,7 @@ def get_plan_change_requests():
                 "reviewed_by": req.get("reviewed_by")
             })
         
-        print(f"📋 Found {len(result)} PENDING plan change requests")
+        print(f" Found {len(result)} PENDING plan change requests")
         return jsonify(result)
         
     except Exception as e:
@@ -12104,7 +12104,7 @@ def approve_plan_request():
         """
         execute_query(update_admin_notif, (application_number,))
 
-        # ✅ BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
+        # BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
         admin_notif_id = int(datetime.now().timestamp() * 1000)
         admin_notif_query = """
             INSERT INTO admin_notifications (
@@ -12128,12 +12128,12 @@ def approve_plan_request():
             "superadmin",
             "Approved"
         ))
-        print(f"🔔 Admin notification created: Plan change request {application_number} approved")
+        print(f" Admin notification created: Plan change request {application_number} approved")
         
         # ========== SEND EMAIL NOTIFICATION FOR APPROVAL ==========
         try:
             if customer_email:
-                print(f"📧 Attempting to send approval email to {customer_email}...")
+                print(f" Attempting to send approval email to {customer_email}...")
                 send_plan_change_email(
                     to_email=customer_email,
                     first_name=customer_name.split()[0] if customer_name else "Customer",
@@ -12144,13 +12144,13 @@ def approve_plan_request():
                     requested_speed=requested_speed,
                     requested_price=requested_price,
                     reason=None,
-                    current_speed=plan_request.get("current_speed"),      # ✅ IDAGDAG ITO
-                    current_price=plan_request.get("current_price")       # ✅ IDAGDAG ITO
+                    current_speed=plan_request.get("current_speed"),      # IDAGDAG ITO
+                    current_price=plan_request.get("current_price")       # IDAGDAG ITO
                 )
             else:
-                print(f"⚠️ No email address for customer {application_number}")
+                print(f" No email address for customer {application_number}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
+            print(f" Email error: {email_err}")
             import traceback
             traceback.print_exc()
         
@@ -12172,7 +12172,7 @@ def approve_plan_request():
             user_email = plan_request.get("email")
             user_name = customer_name
         
-        print(f"📝 Creating notification for user_id: {actual_user_id}")
+        print(f" Creating notification for user_id: {actual_user_id}")
         
         # ========== CREATE NOTIFICATION FOR USER (APPROVED) ==========
         notification_id = int(datetime.now().timestamp() * 1000)
@@ -12195,7 +12195,7 @@ def approve_plan_request():
             datetime.now().isoformat(),
             0
         ))
-        print(f"🔔 User notification created for {user_name} - Plan Change Approved")
+        print(f" User notification created for {user_name} - Plan Change Approved")
         
         return jsonify({
             "success": True,
@@ -12261,11 +12261,11 @@ def send_plan_change_email(
     # ===============================
 
     if not brevo_api_key:
-        print("❌ BREVO_API_KEY is not configured!")
+        print(" BREVO_API_KEY is not configured!")
         return False
 
     if not to_email:
-        print("❌ Customer email is empty!")
+        print(" Customer email is empty!")
         return False
 
     # ===============================
@@ -12275,7 +12275,7 @@ def send_plan_change_email(
     status = str(status or "").strip().capitalize()
 
     if status not in ("Approved", "Rejected"):
-        print(f"❌ Invalid plan change status: {status}")
+        print(f" Invalid plan change status: {status}")
         return False
 
     # ===============================
@@ -12319,7 +12319,7 @@ def send_plan_change_email(
     if status == "Approved":
         status_color = "#16a34a"
         status_bg = "#dcfce7"
-        status_icon = "✓"
+        status_icon = ""
         action_text = "APPROVED"
 
         message = f"Congratulations, {first_name}!"
@@ -12328,7 +12328,7 @@ def send_plan_change_email(
     else:
         status_color = "#dc2626"
         status_bg = "#fee2e2"
-        status_icon = "✕"
+        status_icon = ""
         action_text = "REJECTED"
 
         message = f"Plan Change Update, {first_name}"
@@ -12735,7 +12735,7 @@ def send_plan_change_email(
                         font-size:11px;
                         color:#64748b;
                     ">
-                        © 2026 Cablevision Internet Service Provider.
+                        2026 Cablevision Internet Service Provider.
                         All rights reserved.
                     </div>
                 </div>
@@ -12815,7 +12815,7 @@ def send_plan_change_email(
 
     try:
         print(
-            f"📧 Sending plan change {status.lower()} "
+            f" Sending plan change {status.lower()} "
             f"email via Brevo to {to_email}..."
         )
 
@@ -12828,7 +12828,7 @@ def send_plan_change_email(
 
         if response.status_code not in (200, 201):
             print(
-                f"❌ Brevo API error "
+                f" Brevo API error "
                 f"({response.status_code}): "
                 f"{response.text}"
             )
@@ -12839,28 +12839,28 @@ def send_plan_change_email(
             message_id = brevo_response.get("messageId")
 
             if message_id:
-                print(f"📨 Brevo Message ID: {message_id}")
+                print(f" Brevo Message ID: {message_id}")
 
         except Exception:
             pass
 
         print(
-            f"✅ Plan change {status.lower()} email "
+            f" Plan change {status.lower()} email "
             f"sent successfully to {to_email}"
         )
 
         return True
 
     except requests.exceptions.Timeout:
-        print("❌ Brevo API request timed out")
+        print(" Brevo API request timed out")
         return False
 
     except requests.exceptions.RequestException as e:
-        print(f"❌ Brevo API request error: {e}")
+        print(f" Brevo API request error: {e}")
         return False
 
     except Exception as e:
-        print(f"❌ Error sending plan change email: {e}")
+        print(f" Error sending plan change email: {e}")
 
         import traceback
         traceback.print_exc()
@@ -12930,7 +12930,7 @@ def reject_plan_request():
         """
         execute_query(update_admin_notif, (application_number,))
 
-        # ✅ BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
+        # BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
         admin_notif_id = int(datetime.now().timestamp() * 1000)
         admin_notif_query = """
             INSERT INTO admin_notifications (
@@ -12954,12 +12954,12 @@ def reject_plan_request():
             "superadmin",
             "Rejected"
         ))
-        print(f"🔔 Admin notification created: Plan change request {application_number} rejected")
+        print(f" Admin notification created: Plan change request {application_number} rejected")
         
         # ========== SEND EMAIL NOTIFICATION FOR REJECTION ==========
         try:
             if customer_email:
-                print(f"📧 Attempting to send rejection email to {customer_email}...")
+                print(f" Attempting to send rejection email to {customer_email}...")
                 send_plan_change_email(
                     to_email=customer_email,
                     first_name=customer_name.split()[0] if customer_name else "Customer",
@@ -12970,13 +12970,13 @@ def reject_plan_request():
                     requested_speed=requested_speed,
                     requested_price=requested_price,
                     reason=reason,
-                    current_speed=plan_request.get("current_speed"),      # ✅ IDAGDAG ITO
-                    current_price=plan_request.get("current_price")       # ✅ IDAGDAG ITO
+                    current_speed=plan_request.get("current_speed"),      # IDAGDAG ITO
+                    current_price=plan_request.get("current_price")       # IDAGDAG ITO
                 )
             else:
-                print(f"⚠️ No email address for customer {application_number}")
+                print(f" No email address for customer {application_number}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
+            print(f" Email error: {email_err}")
             import traceback
             traceback.print_exc()
         
@@ -12998,7 +12998,7 @@ def reject_plan_request():
             user_email = plan_request.get("email")
             user_name = customer_name
         
-        print(f"📝 Creating rejection notification for user_id: {actual_user_id}")
+        print(f" Creating rejection notification for user_id: {actual_user_id}")
         
         # ========== CREATE NOTIFICATION FOR USER (REJECTED) ==========
         notification_id = int(datetime.now().timestamp() * 1000)
@@ -13026,7 +13026,7 @@ def reject_plan_request():
             datetime.now().isoformat(),
             0
         ))
-        print(f"🔔 User notification created for {user_name} (user_id: {actual_user_id}) - Plan Change Rejected")
+        print(f" User notification created for {user_name} (user_id: {actual_user_id}) - Plan Change Rejected")
         
         return jsonify({
             "success": True,
@@ -13109,7 +13109,7 @@ def get_termination_requests():
                 "updated_at": str(req.get("updated_at")) if req.get("updated_at") else None
             })
         
-        print(f"📋 Found {len(result)} PENDING termination requests")
+        print(f" Found {len(result)} PENDING termination requests")
         return jsonify(result)
         
     except Exception as e:
@@ -13152,18 +13152,18 @@ def approve_termination_request():
         customer_name = f"{termination_request.get('first_name', '')} {termination_request.get('last_name', '')}".strip()
         request_number = termination_request.get("request_id", f"REQ-{request_id}")
         
-        # 🔥 KUNIN ANG CURRENT DATETIME PARA SA TERMINATION DATE
+        # KUNIN ANG CURRENT DATETIME PARA SA TERMINATION DATE
         from datetime import datetime
         termination_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         termination_date_display = datetime.now().strftime("%B %d, %Y at %I:%M %p")
         
-        print(f"📅 Termination date: {termination_date}")
-        print(f"📊 Balance to save: {balance}")
+        print(f" Termination date: {termination_date}")
+        print(f" Balance to save: {balance}")
         
-        # ✅ HUWAG GALAWIN ANG customers TABLE - application status lang yun
-        # ✅ ANG STATUS SA users TABLE LANG ANG MAGIGING "Terminated"
+        # HUWAG GALAWIN ANG customers TABLE - application status lang yun
+        # ANG STATUS SA users TABLE LANG ANG MAGIGING "Terminated"
         
-        # 🔥 UPDATE users table - set status to 'Terminated'
+        # UPDATE users table - set status to 'Terminated'
         update_user = """
             UPDATE users 
             SET status = 'Terminated', 
@@ -13172,9 +13172,9 @@ def approve_termination_request():
             WHERE application_number = %s
         """
         execute_query(update_user, (balance, application_number))
-        print(f"✅ User updated: status=Terminated, connection=Disconnected, balance={balance}")
+        print(f" User updated: status=Terminated, connection=Disconnected, balance={balance}")
         
-        # 🔥 UPDATE customers table - set installation_status to 'Terminated' AND date_terminated
+        # UPDATE customers table - set installation_status to 'Terminated' AND date_terminated
         update_customer = """
             UPDATE customers 
             SET installation_status = 'Terminated',
@@ -13182,12 +13182,12 @@ def approve_termination_request():
             WHERE application_number = %s
         """
         execute_query(update_customer, (termination_date, application_number))
-        print(f"✅ Customer updated: installation_status=Terminated, date_terminated={termination_date}")
+        print(f" Customer updated: installation_status=Terminated, date_terminated={termination_date}")
         
-        # 🔥 UPDATE applications table - set installation_status to 'Terminated'
+        # UPDATE applications table - set installation_status to 'Terminated'
         execute_query("UPDATE applications SET installation_status = 'Terminated' WHERE application_number = %s", (application_number,))
 
-        # 🔥 UPDATE napbox_slots - gawing 'available' ang slot ng user
+        # UPDATE napbox_slots - gawing 'available' ang slot ng user
         contract_number = termination_request.get("contract_number")
         update_slot_query = """
             UPDATE napbox_slots 
@@ -13197,7 +13197,7 @@ def approve_termination_request():
                OR (contract_number IS NOT NULL AND contract_number != '' AND contract_number = %s)
         """
         execute_query(update_slot_query, (application_number, contract_number))
-        print(f"✅ NAP Box slot set to 'available' for application: {application_number}, contract: {contract_number}")
+        print(f" NAP Box slot set to 'available' for application: {application_number}, contract: {contract_number}")
 
         # UPDATE termination_requests status
         update_request = """
@@ -13224,7 +13224,7 @@ def approve_termination_request():
         """
         execute_query(update_admin_notif, (application_number,))
 
-        # ✅ BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
+        # BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
         admin_notif_id = int(datetime.now().timestamp() * 1000)
         admin_notif_query = """
             INSERT INTO admin_notifications (
@@ -13248,12 +13248,12 @@ def approve_termination_request():
             "superadmin",
             "Approved"
         ))
-        print(f"🔔 Admin notification created: Termination request {application_number} approved")
+        print(f" Admin notification created: Termination request {application_number} approved")
         
         # ========== SEND EMAIL NOTIFICATION FOR APPROVAL WITH BALANCE ==========
         try:
             if customer_email:
-                print(f"📧 Attempting to send termination approval email to {customer_email}...")
+                print(f" Attempting to send termination approval email to {customer_email}...")
                 send_termination_email(
                     to_email=customer_email,
                     first_name=customer_name.split()[0] if customer_name else "Customer",
@@ -13265,9 +13265,9 @@ def approve_termination_request():
                     termination_date=termination_date_display  # ← IPASA ANG DATE
                 )
             else:
-                print(f"⚠️ No email address for customer {application_number}")
+                print(f" No email address for customer {application_number}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
+            print(f" Email error: {email_err}")
             import traceback
             traceback.print_exc()
         
@@ -13289,7 +13289,7 @@ def approve_termination_request():
             user_email = termination_request.get("email")
             user_name = customer_name
         
-        print(f"📝 Creating notification for user_id: {actual_user_id}")
+        print(f" Creating notification for user_id: {actual_user_id}")
         
         # ========== CREATE NOTIFICATION FOR USER (APPROVED) WITH BALANCE ==========
         notification_id = int(datetime.now().timestamp() * 1000)
@@ -13317,7 +13317,7 @@ def approve_termination_request():
             datetime.now().isoformat(),
             0
         ))
-        print(f"🔔 User notification created for {user_name} - Termination Approved with balance ₱{balance}")
+        print(f" User notification created for {user_name} - Termination Approved with balance ₱{balance}")
         
         return jsonify({
             "success": True,
@@ -13365,16 +13365,16 @@ def reject_termination_request():
         customer_name = f"{termination_request.get('first_name', '')} {termination_request.get('last_name', '')}".strip()
         request_number = termination_request.get("request_id", f"REQ-{request_id}")
         
-        print(f"📊 Balance to save (reject): {balance}")
+        print(f" Balance to save (reject): {balance}")
         
-        # 🔥 UPDATE users table - SAVE BALANCE ONLY (huwag baguhin ang status)
+        # UPDATE users table - SAVE BALANCE ONLY (huwag baguhin ang status)
         update_user = """
             UPDATE users 
             SET balance = %s
             WHERE application_number = %s
         """
         execute_query(update_user, (balance, application_number))
-        print(f"✅ User balance updated: {balance}")
+        print(f" User balance updated: {balance}")
         
         # UPDATE termination_requests status
         update_request = """
@@ -13401,7 +13401,7 @@ def reject_termination_request():
         """
         execute_query(update_admin_notif, (application_number,))
 
-        # ✅ BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
+        # BAGONG NOTIFICATION PARA MALAMAN NG ADMIN NA NA-PROCESS NA
         admin_notif_id = int(datetime.now().timestamp() * 1000)
         admin_notif_query = """
             INSERT INTO admin_notifications (
@@ -13425,12 +13425,12 @@ def reject_termination_request():
             "superadmin",
             "Rejected"
         ))
-        print(f"🔔 Admin notification created: Termination request {application_number} rejected")
+        print(f" Admin notification created: Termination request {application_number} rejected")
         
         # ========== SEND EMAIL NOTIFICATION FOR REJECTION WITH BALANCE ==========
         try:
             if customer_email:
-                print(f"📧 Attempting to send termination rejection email to {customer_email}...")
+                print(f" Attempting to send termination rejection email to {customer_email}...")
                 send_termination_email(
                     to_email=customer_email,
                     first_name=customer_name.split()[0] if customer_name else "Customer",
@@ -13442,9 +13442,9 @@ def reject_termination_request():
                     balance=balance
                 )
             else:
-                print(f"⚠️ No email address for customer {application_number}")
+                print(f" No email address for customer {application_number}")
         except Exception as email_err:
-            print(f"❌ Email error: {email_err}")
+            print(f" Email error: {email_err}")
             import traceback
             traceback.print_exc()
         
@@ -13466,7 +13466,7 @@ def reject_termination_request():
             user_email = termination_request.get("email")
             user_name = customer_name
         
-        print(f"📝 Creating notification for user_id: {actual_user_id}")
+        print(f" Creating notification for user_id: {actual_user_id}")
         
         # ========== CREATE NOTIFICATION FOR USER (REJECTED) WITH BALANCE ==========
         notification_id = int(datetime.now().timestamp() * 1000)
@@ -13498,7 +13498,7 @@ def reject_termination_request():
             datetime.now().isoformat(),
             0
         ))
-        print(f"🔔 User notification created for {user_name} - Termination Rejected with balance ₱{balance}")
+        print(f" User notification created for {user_name} - Termination Rejected with balance ₱{balance}")
         
         return jsonify({
             "success": True,
@@ -13526,7 +13526,7 @@ def send_termination_email(to_email, first_name, status, request_id, plan, termi
     sender_name = os.getenv("BREVO_SENDER_NAME", "Cablevision")
     
     if not api_key:
-        print("❌ BREVO_API_KEY is not configured.")
+        print(" BREVO_API_KEY is not configured.")
         return False
 
     def escape_html(text):
@@ -13540,14 +13540,14 @@ def send_termination_email(to_email, first_name, status, request_id, plan, termi
     approved = status == "Approved"
     status_color = "#10b981" if approved else "#ef4444"
     status_bg = "#ecfdf5" if approved else "#fef2f2"
-    status_icon = "✓" if approved else "✗"
+    status_icon = "" if approved else ""
     action_text = "APPROVED" if approved else "REJECTED"
 
     balance_html = ""
     if balance > 0:
         balance_html = f"""
         <div style="margin-top:16px;padding:16px 20px;background:#fef3c7;border-radius:12px;border-left:4px solid #f59e0b;">
-            <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:4px;">💰 Outstanding Balance</div>
+            <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:4px;"> Outstanding Balance</div>
             <div style="font-size:24px;font-weight:700;color:#dc2626;">₱{balance:,.2f}</div>
             <div style="font-size:12px;color:#78350f;margin-top:4px;">Please settle this balance with our office.</div>
         </div>
@@ -13557,7 +13557,7 @@ def send_termination_email(to_email, first_name, status, request_id, plan, termi
     if approved and termination_date:
         termination_date_html = f"""
         <div style="margin-top:12px;padding:12px 16px;background:#e0f2fe;border-radius:10px;border-left:4px solid #0284c7;">
-            <div style="font-size:13px;font-weight:600;color:#0369a1;">📅 Date Terminated</div>
+            <div style="font-size:13px;font-weight:600;color:#0369a1;"> Date Terminated</div>
             <div style="font-size:16px;font-weight:600;color:#0c4a6e;margin-top:2px;">{escape_html(termination_date)}</div>
         </div>
         """
@@ -13646,7 +13646,7 @@ def send_termination_email(to_email, first_name, status, request_id, plan, termi
                 </div>
 
                 <div style="background:#f1f5f9;padding:16px 28px;text-align:center;">
-                    <div style="font-size:11px;color:#64748b;">© 2026 Cablevision Internet Service Provider. All rights reserved.</div>
+                    <div style="font-size:11px;color:#64748b;"> 2026 Cablevision Internet Service Provider. All rights reserved.</div>
                 </div>
 
             </div>
@@ -13663,7 +13663,7 @@ def send_termination_email(to_email, first_name, status, request_id, plan, termi
     }
 
     try:
-        print(f"📧 Sending termination email to {to_email} via Brevo API...")
+        print(f" Sending termination email to {to_email} via Brevo API...")
 
         response = requests.post(
             "https://api.brevo.com/v3/smtp/email",
@@ -13678,18 +13678,18 @@ def send_termination_email(to_email, first_name, status, request_id, plan, termi
 
         if response.ok:
             result = response.json()
-            print(f"✅ Termination email sent to {to_email}")
-            print(f"📨 Brevo Message ID: {result.get('messageId')}")
+            print(f" Termination email sent to {to_email}")
+            print(f" Brevo Message ID: {result.get('messageId')}")
             return True
 
-        print(f"❌ Brevo email failed: {response.status_code} - {response.text}")
+        print(f" Brevo email failed: {response.status_code} - {response.text}")
         return False
 
     except requests.RequestException as e:
-        print(f"❌ Brevo connection error: {e}")
+        print(f" Brevo connection error: {e}")
         return False
     except Exception as e:
-        print(f"❌ Termination email failed: {e}")
+        print(f" Termination email failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -13941,12 +13941,12 @@ def check_new_devices():
         user_id, user_type, user_name, current_token = get_admin_session_user(request)
 
         if not user_id:
-            print("[CHECK NEW DEVICES] ❌ Unauthorized - no user_id")
+            print("[CHECK NEW DEVICES] Unauthorized - no user_id")
             return jsonify({"success": False, "error": "Unauthorized"}), 401
 
         ensure_login_history_table()
 
-        print(f"[CHECK NEW DEVICES] 📱 Checking for user: {user_id} ({user_type}), current_token: {current_token}")
+        print(f"[CHECK NEW DEVICES] Checking for user: {user_id} ({user_type}), current_token: {current_token}")
 
         # Get the last check time from the request (in seconds since epoch)
         last_check_time = request.args.get("last_check", None)
@@ -13955,7 +13955,7 @@ def check_new_devices():
             try:
                 from datetime import datetime as dt
                 last_check_dt = dt.fromtimestamp(float(last_check_time))
-                print(f"[CHECK NEW DEVICES] 📅 Checking devices since: {last_check_dt}")
+                print(f"[CHECK NEW DEVICES] Checking devices since: {last_check_dt}")
                 query = """
                     SELECT id, device_info, device_brand, browser, os, ip_address, location,
                            DATE_FORMAT(login_time, '%b %d, %Y %h:%i %p') as formatted_login_time,
@@ -13966,14 +13966,14 @@ def check_new_devices():
                     LIMIT 1
                 """
                 new_devices = execute_query(query, (user_id, user_type, current_token, last_check_dt), fetch=True) or []
-                print(f"[CHECK NEW DEVICES] ✅ Found {len(new_devices)} recent devices")
+                print(f"[CHECK NEW DEVICES] Found {len(new_devices)} recent devices")
             except Exception as e:
-                print(f"[CHECK NEW DEVICES] ⚠️ Timestamp parsing failed: {e}")
+                print(f"[CHECK NEW DEVICES] Timestamp parsing failed: {e}")
                 new_devices = []
         else:
             # No last_check means the page has not loaded or the client is stale.
             # Do not show historical login activity as a fresh security alert.
-            print("[CHECK NEW DEVICES] 🔒 No last_check provided; ignoring historical logins")
+            print("[CHECK NEW DEVICES] No last_check provided; ignoring historical logins")
             new_devices = []
 
         return jsonify({
@@ -14016,7 +14016,7 @@ def debug_login_history():
         print(f"  Current token: {current_token}")
         print(f"  Total devices: {len(all_devices)}")
         for device in all_devices:
-            is_current = "✅ CURRENT" if device.get('session_token') == current_token else ""
+            is_current = " CURRENT" if device.get('session_token') == current_token else ""
             print(f"    - {device.get('browser')} | {device.get('device_brand')} | Token: {device.get('session_token')[:20]}... {is_current}")
         
         return jsonify({
@@ -14042,7 +14042,7 @@ def get_admin_profile():
         identifier = request.args.get("username")
         tab_id = request.args.get("tab_id", "")
 
-        print(f"🔍 GET ADMIN PROFILE - identifier: {identifier}, tab_id: {tab_id}")
+        print(f" GET ADMIN PROFILE - identifier: {identifier}, tab_id: {tab_id}")
 
         if not identifier:
             return jsonify({"error": "Username is required"}), 400
@@ -14052,7 +14052,7 @@ def get_admin_profile():
             if user_session:
                 session_admin = user_session.get("admin_username") or user_session.get("user_name")
                 if session_admin and session_admin != identifier:
-                    print(f"⚠️ Session mismatch: {session_admin} vs {identifier}")
+                    print(f" Session mismatch: {session_admin} vs {identifier}")
                     identifier = session_admin
 
         query = """
@@ -14063,7 +14063,7 @@ def get_admin_profile():
         admin_data = execute_query(query, (identifier, identifier, identifier), fetch_one=True)
 
         if not admin_data:
-            print(f"❌ Admin not found: {identifier}")
+            print(f" Admin not found: {identifier}")
             return jsonify({"error": f"Admin '{identifier}' not found"}), 404
 
         admin_id = admin_data.get('admin_id') or admin_data.get('username')
@@ -14092,7 +14092,7 @@ def get_admin_profile():
             "ga_setup_uri": ga_setup_uri
         }
 
-        print(f"✅ Profile found: {profile}")
+        print(f" Profile found: {profile}")
 
         return jsonify(profile), 200
 
@@ -14138,10 +14138,10 @@ def admin_enable_google_auth():
         execute_query("UPDATE admins SET ga_secret = %s, ga_enabled = 1 WHERE username = %s OR admin_id = %s", (secret, username, username))
         session_data['ga_enabled'] = True
         session[f"admin_{tab_id}"] = session_data
-        flash("✅ Google Authenticator is now enabled!", "success")
+        flash(" Google Authenticator is now enabled!", "success")
         return redirect(url_for("admin_profile_page", toast="ga-enabled"))
     else:
-        flash("❌ Invalid code. Please try again.", "danger")
+        flash(" Invalid code. Please try again.", "danger")
         return redirect(url_for("admin_profile_page", toast="ga-invalid"))
 
 
@@ -14209,12 +14209,12 @@ def update_admin_profile():
         if not username:
             return jsonify({"error": "Username required"}), 400
         
-        # ✅ I-VERIFY MUNA ANG SESSION
+        # I-VERIFY MUNA ANG SESSION
         session_data = session.get(f"admin_{tab_id}")
         if not session_data or session_data.get('user_type') != 'admin':
             return jsonify({"error": "Unauthorized"}), 403
 
-        # ✅ KUNG MAY BINAGO SA EMAIL, I-CHECK SA LAHAT NG TABLES
+        # KUNG MAY BINAGO SA EMAIL, I-CHECK SA LAHAT NG TABLES
         if email:
             current_query = "SELECT email FROM admins WHERE username = %s OR admin_id = %s"
             current_admin = execute_query(current_query, (username, username), fetch_one=True)
@@ -14248,7 +14248,7 @@ def update_admin_profile():
         
         if contact is not None:
             clean_contact = contact.replace(" ", "")
-            update_fields.append("mobile = %s")  # ✅ TAMA
+            update_fields.append("mobile = %s")  # TAMA
             params.append(clean_contact)
         if email:
             update_fields.append("email = %s")
@@ -14266,7 +14266,7 @@ def update_admin_profile():
         update_query = f"UPDATE admins SET {', '.join(update_fields)} WHERE username = %s OR admin_id = %s"
         execute_query(update_query, params)
         
-        print(f"✅ Admin {username} profile updated")
+        print(f" Admin {username} profile updated")
         
         return jsonify({
             "success": True,
@@ -14307,7 +14307,7 @@ def check_admin_email():
     admin_exists = result.get('admin_count', 0) > 0 if result else False
     superadmin_exists = result.get('superadmin_count', 0) > 0 if result else False
     
-    # ✅ EXCLUDE THE CURRENT ADMIN (para hindi mag-error sa sarili niyang email)
+    # EXCLUDE THE CURRENT ADMIN (para hindi mag-error sa sarili niyang email)
     if admin_exists and username:
         check_self_query = "SELECT email FROM admins WHERE username = %s AND email = %s"
         self_email = execute_query(check_self_query, (username, email), fetch_one=True)
@@ -14394,7 +14394,7 @@ def get_admin_internet_applications():
             if user_session:
                 session_username = user_session.get("admin_username") or user_session.get("user_name")
                 if session_username and session_username != username:
-                    print(f"⚠️ Session mismatch: {session_username} vs {username}")
+                    print(f" Session mismatch: {session_username} vs {username}")
                     username = session_username
 
         admin_query = "SELECT area FROM admins WHERE username = %s OR admin_id = %s"
@@ -14405,7 +14405,7 @@ def get_admin_internet_applications():
 
         admin_area = str(admin_data.get("area", "")).strip().lower()
 
-        # ✅ IDAGDAG ANG is_archived = 0 SA WHERE CLAUSE
+        # IDAGDAG ANG is_archived = 0 SA WHERE CLAUSE
         apps_query = """
             SELECT application_number, first_name, last_name, email, 
                    date_submitted, time_submitted, barangay, city, birthdate, plan, 
@@ -14494,10 +14494,10 @@ def admin_request_application(app_id):
             }), 400
 
         print("=" * 60)
-        print("🚀 ADMIN REQUEST STARTED")
-        print(f"📌 Application ID: {app_id}")
-        print(f"📌 Requested Status: {status}")
-        print(f"📌 Username: {username}")
+        print(" ADMIN REQUEST STARTED")
+        print(f" Application ID: {app_id}")
+        print(f" Requested Status: {status}")
+        print(f" Username: {username}")
 
         # ===============================
         # GET APPLICATION
@@ -14566,7 +14566,7 @@ def admin_request_application(app_id):
         # ===============================
         # GET ADMIN INFORMATION
         # ===============================
-        print(f"🔍 Searching for admin: '{username}'")
+        print(f" Searching for admin: '{username}'")
 
         clean_username = (
             str(username)
@@ -14575,7 +14575,7 @@ def admin_request_application(app_id):
             .replace(" ", "")
         )
 
-        print(f"🔍 Cleaned username: '{clean_username}'")
+        print(f" Cleaned username: '{clean_username}'")
 
         # --------------------------------
         # Strategy 1
@@ -14673,11 +14673,11 @@ def admin_request_application(app_id):
 
             if admin_info:
                 print(
-                    f"⚠️ Using fallback admin: "
+                    f" Using fallback admin: "
                     f"{admin_info.get('admin_id')}"
                 )
 
-        print(f"🔍 Admin query result: {admin_info}")
+        print(f" Admin query result: {admin_info}")
 
         # ===============================
         # ADMIN NOT FOUND
@@ -14717,7 +14717,7 @@ def admin_request_application(app_id):
         admin_city = admin_area
 
         print(
-            f"✅ Admin found - "
+            f" Admin found - "
             f"ID: {admin_id}, "
             f"Username: {admin_username}, "
             f"Area: {admin_area}"
@@ -14777,7 +14777,7 @@ def admin_request_application(app_id):
                 "error": "Failed to create approval request"
             }), 500
 
-        print(f"✅ Approval request created: {request_id}")
+        print(f" Approval request created: {request_id}")
 
         # ===============================
         # CHANGE APPLICATION STATUS
@@ -14799,7 +14799,7 @@ def admin_request_application(app_id):
             }), 500
 
         print(
-            f"✅ Application {app_id} "
+            f" Application {app_id} "
             f"status changed to Request Sent"
         )
 
@@ -14908,11 +14908,11 @@ def admin_request_application(app_id):
 
         if notif_result is None:
             print(
-                "⚠️ Notification insertion failed"
+                " Notification insertion failed"
             )
         else:
             print(
-                f"🔔 Notification created: "
+                f" Notification created: "
                 f"{notification_id}"
             )
 
@@ -14920,7 +14920,7 @@ def admin_request_application(app_id):
         # SUCCESS
         # ===============================
         print("=" * 60)
-        print("✅ ADMIN REQUEST COMPLETED")
+        print(" ADMIN REQUEST COMPLETED")
         print("=" * 60)
 
         return jsonify({
@@ -14933,7 +14933,7 @@ def admin_request_application(app_id):
     except Exception as e:
 
         print("=" * 60)
-        print("❌ ADMIN REQUEST ERROR")
+        print(" ADMIN REQUEST ERROR")
         print(str(e))
         print("=" * 60)
 
@@ -14969,7 +14969,7 @@ def get_admin_notifications():
         tab_id = request.args.get("tab_id", "")
 
         print(
-            f"🔍 GET ADMIN NOTIFICATIONS - "
+            f" GET ADMIN NOTIFICATIONS - "
             f"admin_id: {admin_id}, tab_id: {tab_id}"
         )
 
@@ -15000,7 +15000,7 @@ def get_admin_notifications():
                     and session_admin != admin_id
                 ):
                     print(
-                        f"⚠️ Session mismatch: "
+                        f" Session mismatch: "
                         f"{session_admin} vs {admin_id}"
                     )
 
@@ -15051,7 +15051,7 @@ def get_admin_notifications():
                 )
 
                 print(
-                    f"📍 Admin location - "
+                    f" Admin location - "
                     f"City: {admin_city}, "
                     f"Area: {admin_area}"
                 )
@@ -15122,13 +15122,13 @@ def get_admin_notifications():
         # ===============================
         if notifications is None:
             print(
-                "❌ Failed to retrieve admin notifications"
+                " Failed to retrieve admin notifications"
             )
 
             return jsonify([]), 500
 
         print(
-            f"📊 Found {len(notifications)} "
+            f" Found {len(notifications)} "
             f"notifications for {admin_id}"
         )
 
@@ -15190,7 +15190,7 @@ def get_admin_notifications():
     except Exception as e:
 
         print("=" * 60)
-        print("❌ ERROR IN GET ADMIN NOTIFICATIONS")
+        print(" ERROR IN GET ADMIN NOTIFICATIONS")
         print(str(e))
         print("=" * 60)
 
@@ -15220,7 +15220,7 @@ def mark_admin_notification_read(notification_id):
         rows_affected = execute_query(query, (notification_id,))
         
         if rows_affected > 0:
-            print(f"✅ Admin {admin_id} marked notification {notification_id} as read")
+            print(f" Admin {admin_id} marked notification {notification_id} as read")
         
         return jsonify({"message": "Notification marked as read"})
     
@@ -15273,7 +15273,7 @@ def mark_all_admin_notifications_read():
         """
         rows_affected = execute_query(query, (admin_id, admin_id, admin_city, admin_city, admin_area))
         
-        print(f"✅ Admin {admin_id} marked {rows_affected} notifications as read")
+        print(f" Admin {admin_id} marked {rows_affected} notifications as read")
         return jsonify({"message": f"Marked {rows_affected} notifications as read", "count": rows_affected})
     
     except Exception as e:
@@ -15522,7 +15522,7 @@ def admin_get_single_application(app_id):
         if not data:
             return jsonify({"error": "Application not found"}), 404
         
-        # ========== ✅ CONVERT IMAGE FIELDS TO CLOUDINARY ==========
+        # ========== CONVERT IMAGE FIELDS TO CLOUDINARY ==========
         image_fields = ['signature', 'id_front', 'id_back', 'proof_billing', 'profile_photo']
         for field in image_fields:
             if data.get(field):
@@ -15530,7 +15530,7 @@ def admin_get_single_application(app_id):
                 if value and value != 'none' and value != '':
                     if not value.startswith('http'):
                         data[field] = get_cloudinary_url(value)
-                        print(f"✅ Converted {field} to Cloudinary: {data[field][:80]}...")
+                        print(f" Converted {field} to Cloudinary: {data[field][:80]}...")
         
         # Parse JSON fields (tv_qty, tv_brand, tv_type are stored as JSON strings)
         if data.get('tv_qty'):
@@ -15622,18 +15622,18 @@ def admin_view_customers_page():
 def get_admin_approved_applications():
     try:
         username = request.args.get("username") or session.get("admin_username") or session.get("adminUsername")
-        tab_id = request.args.get("tab_id", "")  # 👈 KUNIN ANG TAB ID
+        tab_id = request.args.get("tab_id", "")  # KUNIN ANG TAB ID
         
         if not username:
             return jsonify({"error": "Username required"}), 400
         
-        # 👇 KUNG MAY TAB ID, I-VERIFY NA TAMA ANG SESSION
+        # KUNG MAY TAB ID, I-VERIFY NA TAMA ANG SESSION
         if tab_id:
             user_session = session.get(f"admin_{tab_id}")
             if user_session:
                 session_username = user_session.get("admin_username") or user_session.get("user_name")
                 if session_username and session_username != username:
-                    print(f"⚠️ Session mismatch: {session_username} vs {username}")
+                    print(f" Session mismatch: {session_username} vs {username}")
                     username = session_username
 
         # ========== GET ADMIN INFO FROM MYSQL ==========
@@ -15727,7 +15727,7 @@ def admin_get_single_customer_application(app_id):
         if data.get("status") != "Approved":
             return jsonify({"error": "Customer application is not approved"}), 403
 
-        # ========== ✅ CONVERT IMAGE FIELDS TO CLOUDINARY ==========
+        # ========== CONVERT IMAGE FIELDS TO CLOUDINARY ==========
         image_fields = ['signature', 'id_front', 'id_back', 'proof_billing', 'profile_photo']
         for field in image_fields:
             if data.get(field):
@@ -15735,7 +15735,7 @@ def admin_get_single_customer_application(app_id):
                 if value and value != 'none' and value != '':
                     if not value.startswith('http'):
                         data[field] = get_cloudinary_url(value)
-                        print(f"✅ Converted {field} to Cloudinary: {data[field][:80]}...")
+                        print(f" Converted {field} to Cloudinary: {data[field][:80]}...")
 
         # Convert datetime objects to string for JSON serialization
         if data.get('birthdate'):
@@ -15814,7 +15814,7 @@ def get_admin_installation_summary():
         area_filter = str(requested_area or admin_area).strip().lower()
 
         # ========== GET CUSTOMERS FROM MYSQL ==========
-        # ✅ ISAMA ANG APPROVED AT CANCELLED NA STATUS
+        # ISAMA ANG APPROVED AT CANCELLED NA STATUS
         customers_query = """
             SELECT application_number, city, status, installation_status,
                    date_pending, date_ongoing, date_installed,
@@ -15824,7 +15824,7 @@ def get_admin_installation_summary():
         """
         all_customers = execute_query(customers_query, fetch=True) or []
 
-        # ✅ IDAGDAG ANG CANCELLED AT TERMINATED
+        # IDAGDAG ANG CANCELLED AT TERMINATED
         installation_summary = {
             "Pending": 0,
             "Ongoing": 0,
@@ -15858,7 +15858,7 @@ def get_admin_installation_summary():
                 if not (area_filter in cust_city or cust_city in area_filter):
                     continue
 
-            # ✅ GAMITIN ANG installation_status PARA SA PIE GRAPH
+            # GAMITIN ANG installation_status PARA SA PIE GRAPH
             installation_status = cust.get('installation_status', '').strip()
 
             # DATE FIELDS (para sa date filter)
@@ -15892,20 +15892,20 @@ def get_admin_installation_summary():
             if not is_in_date_range:
                 continue
 
-            # ✅ GAMITIN ANG installation_status PARA SA PIE GRAPH
+            # GAMITIN ANG installation_status PARA SA PIE GRAPH
             if installation_status in installation_summary:
                 installation_summary[installation_status] += 1
                 matched_customers += 1
 
-        # ✅ I-CONTROL ANG ORDER NG STATUSES
+        # I-CONTROL ANG ORDER NG STATUSES
         ordered_statuses = ["Pending", "Ongoing", "Installed", "Cancelled", "Terminated"]
         labels = ordered_statuses
         values = [installation_summary.get(status, 0) for status in ordered_statuses]
 
         return jsonify({
             "installation_summary": installation_summary,
-            "labels": labels,        # ✅ IDAGDAG
-            "values": values,        # ✅ IDAGDAG
+            "labels": labels,        # IDAGDAG
+            "values": values,        # IDAGDAG
             "area": area_filter.title() if area_filter else "All Areas",
             "total_matched": matched_customers,
             "date_range": {
@@ -15981,7 +15981,7 @@ def admin_update_installation_status(app_id):
             "installation_status": new_status
         }
 
-        # 🔥 ADD DATE TRACKING
+        # ADD DATE TRACKING
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if new_status == "Ongoing":
@@ -16055,9 +16055,9 @@ def get_file_type(filename):
 def upload_to_cloudinary_ad(file, file_type="image"):
     """Upload advertisement to Cloudinary and return URL"""
     try:
-        print(f"📤 Uploading advertisement to Cloudinary: {file.filename}")
+        print(f" Uploading advertisement to Cloudinary: {file.filename}")
         
-        # ✅ I-reset ang file pointer
+        # I-reset ang file pointer
         file.stream.seek(0)
         
         filename_without_ext = file.filename.rsplit('.', 1)[0] if hasattr(file, 'filename') else None
@@ -16074,11 +16074,11 @@ def upload_to_cloudinary_ad(file, file_type="image"):
             overwrite=True
         )
         
-        print(f"✅ Advertisement uploaded: {result['secure_url']}")
+        print(f" Advertisement uploaded: {result['secure_url']}")
         return result['secure_url']
         
     except Exception as e:
-        print(f"❌ Cloudinary upload error: {e}")
+        print(f" Cloudinary upload error: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -16093,32 +16093,32 @@ def delete_from_cloudinary_ad(image_url):
             parts = image_url.split('/upload/')
             if len(parts) > 1:
                 public_id_with_ext = parts[1]
-                print(f"🔍 Public ID with extension: {public_id_with_ext}")
+                print(f" Public ID with extension: {public_id_with_ext}")
                 
                 # Remove version number if present
                 if '/' in public_id_with_ext and public_id_with_ext.split('/')[0].startswith('v'):
                     public_id_with_ext = '/'.join(public_id_with_ext.split('/')[1:])
-                    print(f"🔍 After removing version: {public_id_with_ext}")
+                    print(f" After removing version: {public_id_with_ext}")
                 
                 # Remove file extension
                 public_id = public_id_with_ext.rsplit('.', 1)[0]
-                print(f"✅ Final public_id: {public_id}")
+                print(f" Final public_id: {public_id}")
                 
                 # Determine resource type based on URL
                 resource_type = "video" if "/video/upload/" in image_url else "image"
                 
                 result = cloudinary.uploader.destroy(public_id, resource_type=resource_type)
-                print(f"🗑️ Delete result: {result}")
+                print(f" Delete result: {result}")
                 
                 if result.get('result') == 'ok':
-                    print(f"✅ Successfully deleted advertisement: {public_id}")
+                    print(f" Successfully deleted advertisement: {public_id}")
                     return True
                 else:
-                    print(f"⚠️ Delete result: {result}")
+                    print(f" Delete result: {result}")
                     return False
                     
     except Exception as e:
-        print(f"❌ Cloudinary delete error: {e}")
+        print(f" Cloudinary delete error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -16163,7 +16163,7 @@ def save_ad_file(file):
             return None, None, None
         
         # If portrait, upload to Cloudinary
-        # ✅ Reset file pointer
+        # Reset file pointer
         file.seek(0)
         file_url = upload_to_cloudinary_ad(file, file_type="video")
         
@@ -16179,7 +16179,7 @@ def save_ad_file(file):
         return file_url, file_type, file_size
     else:
         # For images, upload directly to Cloudinary
-        # ✅ Reset file pointer
+        # Reset file pointer
         file.seek(0)
         file_url = upload_to_cloudinary_ad(file, file_type="image")
         
@@ -16241,7 +16241,7 @@ def get_advertisements():
         for ad in ads:
             file_path = ad.get('file_path', '')
             
-            # ✅ If it's a local path, convert to Cloudinary URL
+            # If it's a local path, convert to Cloudinary URL
             if file_path and file_path.startswith('/shared-uploads/'):
                 file_type = ad.get('file_type', 'image')
                 file_path = get_cloudinary_url(file_path, resource_type=file_type)
@@ -16273,7 +16273,7 @@ def create_advertisement():
         
         file_type = get_file_type(ad_file.filename)
         
-        # ✅ Save file to Cloudinary (includes orientation check for videos)
+        # Save file to Cloudinary (includes orientation check for videos)
         file_url, saved_type, file_size = save_ad_file(ad_file)
         
         if not file_url:
@@ -16290,7 +16290,7 @@ def create_advertisement():
             VALUES (%s, %s, %s, %s, %s, NOW())
         """
         ad_id = execute_query(insert_query, (
-            file_url,  # ✅ Cloudinary URL
+            file_url,  # Cloudinary URL
             saved_type,
             file_size,
             now.strftime("%B %d, %Y"),
@@ -16323,7 +16323,7 @@ def delete_advertisement(ad_id):
         
         file_path = ad.get('file_path')
         
-        # ✅ Delete from Cloudinary if exists
+        # Delete from Cloudinary if exists
         if file_path and 'cloudinary.com' in file_path:
             delete_from_cloudinary_ad(file_path)
         
@@ -16356,7 +16356,7 @@ def init_advertisements_table():
             )
         """
         execute_query(create_table_query)
-        print("✅ advertisements table ready")
+        print(" advertisements table ready")
         
     except Exception as e:
         print(f"Error creating advertisements table: {e}")
@@ -16399,7 +16399,7 @@ def migrate_old_logos_to_advertisements():
                     logo.get('timestamp')
                 ))
             
-            print(f"✅ Migrated {old_count[0].get('count', 0)} old logos to advertisements table")
+            print(f" Migrated {old_count[0].get('count', 0)} old logos to advertisements table")
     except Exception as e:
         print(f"Migration skipped (no old data): {e}")
 
@@ -16543,10 +16543,10 @@ def technician_enable_google_auth():
         execute_query("UPDATE technicians SET ga_secret = %s, ga_enabled = 1 WHERE technician_id = %s", (secret, technician_id))
         session_data['ga_enabled'] = True
         session[f"admin_{tab_id}"] = session_data
-        flash("✅ Google Authenticator is now enabled!", "success")
+        flash(" Google Authenticator is now enabled!", "success")
         return redirect(url_for("technician_profile", toast="ga-enabled"))
     else:
-        flash("❌ Invalid code. Please try again.", "danger")
+        flash(" Invalid code. Please try again.", "danger")
         return redirect(url_for("technician_profile", toast="ga-invalid"))
 
 
@@ -16585,12 +16585,12 @@ def update_technician_profile():
         if not technician_id:
             return jsonify({"error": "Technician ID required"}), 400
 
-        # ✅ I-VERIFY MUNA ANG SESSION
+        # I-VERIFY MUNA ANG SESSION
         session_data = session.get(f"admin_{tab_id}")
         if not session_data or session_data.get('user_type') != 'technician':
             return jsonify({"error": "Unauthorized"}), 403
 
-        # ✅ KUNG MAY BINAGO SA EMAIL, I-CHECK SA LAHAT NG TABLES
+        # KUNG MAY BINAGO SA EMAIL, I-CHECK SA LAHAT NG TABLES
         if email:
             current_query = "SELECT email FROM technicians WHERE technician_id = %s OR email = %s"
             current_tech = execute_query(current_query, (technician_id, email), fetch=True)
@@ -16644,7 +16644,7 @@ def update_technician_profile():
         update_query = f"UPDATE technicians SET {', '.join(update_fields)} WHERE technician_id = %s"
         execute_query(update_query, params)
         
-        print(f"✅ Technician {technician_id} profile updated")
+        print(f" Technician {technician_id} profile updated")
         
         return jsonify({
             "success": True,
@@ -16685,7 +16685,7 @@ def check_technician_email():
     admin_exists = result[0].get('admin_count', 0) > 0 if result else False
     superadmin_exists = result[0].get('superadmin_count', 0) > 0 if result else False
     
-    # ✅ EXCLUDE THE CURRENT TECHNICIAN (para hindi mag-error sa sarili niyang email)
+    # EXCLUDE THE CURRENT TECHNICIAN (para hindi mag-error sa sarili niyang email)
     if tech_exists and technician_id:
         check_self_query = "SELECT email FROM technicians WHERE technician_id = %s AND email = %s"
         self_email = execute_query(check_self_query, (technician_id, email), fetch=True)
@@ -16764,13 +16764,13 @@ def get_municipal_boundary_from_georisk(city_name):
                     "type": "FeatureCollection",
                     "features": data["features"]
                 }
-                print(f"✅ Got municipal boundary for {city_name} with {len(data['features'])} barangays")
+                print(f" Got municipal boundary for {city_name} with {len(data['features'])} barangays")
                 return combined
             else:
-                print(f"❌ No boundary data found for {city_name}")
+                print(f" No boundary data found for {city_name}")
                 return None
         else:
-            print(f"❌ GeoRisk API error: {response.status_code}")
+            print(f" GeoRisk API error: {response.status_code}")
             return None
             
     except Exception as e:
@@ -16802,7 +16802,7 @@ def get_technician_area():
     
     technician_area_raw = technician[0].get('area', '')
     
-    print(f"📌 Technician area: '{technician_area_raw}'")
+    print(f" Technician area: '{technician_area_raw}'")
     
     # Get actual count from napboxes table (case-insensitive)
     count_query = """
@@ -16822,7 +16822,7 @@ def get_technician_area():
     slots_result = execute_query(slots_count_query, (technician_area_raw,), fetch=True)
     actual_slots_count = slots_result[0].get('total_slots', 0) if slots_result else 0
     
-    print(f"📊 Actual NAP boxes: {actual_napbox_count}, Actual slots: {actual_slots_count}")
+    print(f" Actual NAP boxes: {actual_napbox_count}, Actual slots: {actual_slots_count}")
     
     # Get or create area_mapping
     check_area_query = "SELECT id FROM area_mapping WHERE UPPER(area_name) = UPPER(%s)"
@@ -16836,7 +16836,7 @@ def get_technician_area():
             WHERE UPPER(area_name) = UPPER(%s)
         """
         execute_query(update_query, (actual_napbox_count, actual_slots_count, technician_area_raw))
-        print(f"✅ Updated area_mapping for '{technician_area_raw}'")
+        print(f" Updated area_mapping for '{technician_area_raw}'")
     else:
         # Create new area_mapping
         insert_query = """
@@ -16844,7 +16844,7 @@ def get_technician_area():
             VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
         """
         execute_query(insert_query, (technician_area_raw, technician_area_raw, 14.5995, 120.9842, actual_napbox_count, actual_slots_count))
-        print(f"✅ Created area_mapping for '{technician_area_raw}'")
+        print(f" Created area_mapping for '{technician_area_raw}'")
     
     return jsonify({
         "technician_id": technician[0].get('technician_id'),
@@ -16919,7 +16919,7 @@ def get_technician_napbox():
     
     technician_area = technician.get('area', '')
     
-    print(f"📌 Technician area: '{technician_area}'")
+    print(f" Technician area: '{technician_area}'")
     
     # Get napboxes - case-insensitive comparison with created_at
     napbox_query = """
@@ -16931,7 +16931,7 @@ def get_technician_napbox():
     """
     napboxes = execute_query(napbox_query, (technician_area,), fetch=True) or []
     
-    print(f"📌 Found {len(napboxes)} NAP boxes for area '{technician_area}'")
+    print(f" Found {len(napboxes)} NAP boxes for area '{technician_area}'")
     
     napbox_ids = [nb.get('id') for nb in napboxes if nb.get('id')]
     
@@ -16976,7 +16976,7 @@ def get_technician_napbox():
             if status in status_counts:
                 status_counts[status] += 1
     
-    # ✅ I-RETURN ANG MGA NAPBOXES NA MAY CREATED_AT
+    # I-RETURN ANG MGA NAPBOXES NA MAY CREATED_AT
     napboxes_for_map = []
     for nb in napboxes:
         lat = nb.get('latitude')
@@ -16998,7 +16998,7 @@ def get_technician_napbox():
                 napbox_data['latitude'] = float(lat)
                 napbox_data['longitude'] = float(lng)
             except (ValueError, TypeError):
-                print(f"⚠️ Invalid coordinates for NAP box {nb.get('id')}")
+                print(f" Invalid coordinates for NAP box {nb.get('id')}")
                 napbox_data['latitude'] = None
                 napbox_data['longitude'] = None
         else:
@@ -17021,10 +17021,10 @@ def get_technician_napbox():
 def get_areas_by_city(city):
     """Get barangays by city name from areas table"""
     try:
-        # ✅ GAMITIN ANG get_db_connection() (hindi localhost)
+        # GAMITIN ANG get_db_connection() (hindi localhost)
         conn = get_db_connection()
         if not conn:
-            print("❌ Database connection failed")
+            print(" Database connection failed")
             return jsonify([]), 500
             
         cursor = conn.cursor(dictionary=True)
@@ -17048,7 +17048,7 @@ def get_areas_by_city(city):
                 "zip": area.get("zip", "")
             })
         
-        print(f"✅ Found {len(result)} barangays for city: {city}")
+        print(f" Found {len(result)} barangays for city: {city}")
         return jsonify(result)
         
     except Exception as e:
@@ -17070,7 +17070,7 @@ def add_or_update_napbox():
         num_slots = data.get("num_slots", 8)
         barangay = data.get("barangay")
         
-        print(f"📌 Adding NAP box - Name: {napbox_name}, Area: '{area}', Coords: {latitude}, {longitude}, Slots: {num_slots}")
+        print(f" Adding NAP box - Name: {napbox_name}, Area: '{area}', Coords: {latitude}, {longitude}, Slots: {num_slots}")
         
         if not napbox_name or not latitude or not longitude or not area:
             return jsonify({"error": "Missing required fields"}), 400
@@ -17102,9 +17102,9 @@ def add_or_update_napbox():
             """
             execute_query(update_query, (latitude, longitude, napbox_name, coverage_radius, barangay, napbox_id))
             message = "NAP box location updated"
-            print(f"✅ Updated NAP box ID: {napbox_id}")
+            print(f" Updated NAP box ID: {napbox_id}")
         else:
-            # ✅ GAMITIN ANG get_db_connection() (hindi localhost)
+            # GAMITIN ANG get_db_connection() (hindi localhost)
             conn = get_db_connection()
             if not conn:
                 return jsonify({"error": "Database connection failed"}), 500
@@ -17119,7 +17119,7 @@ def add_or_update_napbox():
                 """
                 cursor.execute(insert_query, (napbox_name, napbox_name, latitude, longitude, area, coverage_radius, barangay))
                 napbox_id = cursor.lastrowid
-                print(f"✅ Inserted NAP box ID: {napbox_id}, Area: '{area}'")
+                print(f" Inserted NAP box ID: {napbox_id}, Area: '{area}'")
                 
                 # 2. CREATE SLOTS
                 for slot_num in range(1, num_slots + 1):
@@ -17128,14 +17128,14 @@ def add_or_update_napbox():
                         VALUES (%s, 'available', %s, %s)
                     """
                     cursor.execute(slot_query, (str(slot_num), napbox_id, barangay))
-                    print(f"   ✅ Created slot {slot_num} for NAP box {napbox_id}")
+                    print(f"   Created slot {slot_num} for NAP box {napbox_id}")
                 
                 # 3. COMMIT ALL CHANGES
                 conn.commit()
-                print(f"✅ COMMITTED {num_slots} slots to napbox_slots table")
+                print(f" COMMITTED {num_slots} slots to napbox_slots table")
                 
             except Exception as db_error:
-                print(f"❌ Database error: {db_error}")
+                print(f" Database error: {db_error}")
                 conn.rollback()
                 raise db_error
             finally:
@@ -17162,7 +17162,7 @@ def add_or_update_napbox():
                 WHERE LOWER(area_name) = LOWER(%s)
             """
             execute_query(update_area_query, (new_count, total_slots, area))
-            print(f"✅ Updated area_mapping for '{area}': napbox_count={new_count}, total_slots={total_slots}")
+            print(f" Updated area_mapping for '{area}': napbox_count={new_count}, total_slots={total_slots}")
             
             message = "NAP box added successfully"
         
@@ -17174,7 +17174,7 @@ def add_or_update_napbox():
         })
         
     except Exception as e:
-        print(f"❌ Error adding/updating NAP box: {e}")
+        print(f" Error adding/updating NAP box: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -17189,7 +17189,7 @@ def update_slot_status():
         new_status = data.get('status')
         technician_id = data.get('technician_id')
         
-        print(f"🔧 Updating slot {slot_id} to status: {new_status}")
+        print(f" Updating slot {slot_id} to status: {new_status}")
         
         if not slot_id or not new_status:
             return jsonify({'success': False, 'error': 'Missing slot_id or status'}), 400
@@ -17208,9 +17208,9 @@ def update_slot_status():
         
         current_status = current_slot.get('status')
         
-        print(f"📝 Current status: {current_status}, New status: {new_status}")
+        print(f" Current status: {current_status}, New status: {new_status}")
         
-        # ✅ UPDATE STATUS LANG - HUWAG BURAHIN ANG CUSTOMER DATA
+        # UPDATE STATUS LANG - HUWAG BURAHIN ANG CUSTOMER DATA
         # Keep all customer details, only change the status
         query = """
             UPDATE napbox_slots 
@@ -17219,7 +17219,7 @@ def update_slot_status():
         """
         execute_query(query, (new_status, slot_id))
         
-        print(f"✅ Slot {slot_id} status updated from {current_status} to {new_status}")
+        print(f" Slot {slot_id} status updated from {current_status} to {new_status}")
         print(f"   Customer data preserved: {current_slot.get('customer_name')}, {current_slot.get('customer_phone')}, {current_slot.get('application_number')}")
         
         # Optional: If slot became available, you might want to update the customer's installation status
@@ -17227,7 +17227,7 @@ def update_slot_status():
         if current_status == 'occupied' and new_status == 'available':
             app_number = current_slot.get('application_number')
             if app_number:
-                print(f"📝 Slot {slot_id} is now available but still has customer data from application {app_number}")
+                print(f" Slot {slot_id} is now available but still has customer data from application {app_number}")
         
         return jsonify({
             'success': True, 
@@ -17241,7 +17241,7 @@ def update_slot_status():
         })
         
     except Exception as e:
-        print(f"❌ Error updating slot status: {e}")
+        print(f" Error updating slot status: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -17289,7 +17289,7 @@ def create_napbox_tables():
         """
         execute_query(slots_query)
         
-        print("✅ NAP box tables ready - NO DEFAULT DATA INSERTED")
+        print(" NAP box tables ready - NO DEFAULT DATA INSERTED")
         
     except Exception as e:
         print(f"Error creating NAP box tables: {e}")
@@ -17304,7 +17304,7 @@ create_napbox_tables()
 def delete_napbox(napbox_id):
     """Delete a NAP box and all its slots"""
     try:
-        print(f"🗑️ Deleting NAP box ID: {napbox_id}")
+        print(f" Deleting NAP box ID: {napbox_id}")
         
         # Get napbox info first (including area)
         check_query = "SELECT id, napbox_name, area FROM napboxes WHERE id = %s"
@@ -17350,7 +17350,7 @@ def delete_napbox(napbox_id):
                 WHERE LOWER(area_name) = LOWER(%s)
             """
             execute_query(update_area_query, (new_count, total_slots, area))
-            print(f"✅ Updated area_mapping for '{area}': napbox_count={new_count}, total_slots={total_slots}")
+            print(f" Updated area_mapping for '{area}': napbox_count={new_count}, total_slots={total_slots}")
         
         return jsonify({
             "success": True,
@@ -17358,7 +17358,7 @@ def delete_napbox(napbox_id):
         })
         
     except Exception as e:
-        print(f"❌ Error deleting NAP box: {e}")
+        print(f" Error deleting NAP box: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -17406,9 +17406,9 @@ def delete_napbox_post():
                 WHERE LOWER(area_name) = LOWER(%s)
             """
             execute_query(update_area_query, (new_count, total_slots, area))
-            print(f"✅ Updated area_mapping for '{area}': napbox_count={new_count}, total_slots={total_slots}")
+            print(f" Updated area_mapping for '{area}': napbox_count={new_count}, total_slots={total_slots}")
         
-        print(f"✅ NAP Box '{napbox_name}' deleted via POST fallback")
+        print(f" NAP Box '{napbox_name}' deleted via POST fallback")
         
         return jsonify({
             "success": True,
@@ -17416,7 +17416,7 @@ def delete_napbox_post():
         })
         
     except Exception as e:
-        print(f"❌ Error deleting NAP box (POST): {e}")
+        print(f" Error deleting NAP box (POST): {e}")
         return jsonify({"error": str(e)}), 500
         
 
@@ -17442,7 +17442,7 @@ def get_pending_customers_for_technician():
         if not technician_id:
             return jsonify({"error": "Technician ID required"}), 400
         
-        # ✅ Get technician's team_id
+        # Get technician's team_id
         tech_query = "SELECT team_id, area FROM technicians WHERE technician_id = %s LIMIT 1"
         tech_result = execute_query(tech_query, (technician_id,), fetch_one=True)
         
@@ -17452,11 +17452,11 @@ def get_pending_customers_for_technician():
         team_id = tech_result.get('team_id')
         technician_area = tech_result.get('area', '')
         
-        print(f"🔍 Technician {technician_id} belongs to team: {team_id}")
+        print(f" Technician {technician_id} belongs to team: {team_id}")
         
-        # ✅ If technician has no team, fallback to area-based
+        # If technician has no team, fallback to area-based
         if not team_id:
-            print(f"⚠️ Technician has no team, falling back to area-based: {technician_area}")
+            print(f" Technician has no team, falling back to area-based: {technician_area}")
             query = """
                 SELECT 
                     c.application_number, c.first_name, c.last_name, c.middle_name, 
@@ -17484,7 +17484,7 @@ def get_pending_customers_for_technician():
             """
             params = [technician_area]
         else:
-            # ✅ TEAM-BASED: Get customers assigned to this team
+            # TEAM-BASED: Get customers assigned to this team
             query = """
                 SELECT 
                     c.application_number, c.first_name, c.last_name, c.middle_name, 
@@ -17534,8 +17534,8 @@ def get_pending_customers_for_technician():
                 "installation_status": cust.get('installation_status'),
                 "assigned_team_id": cust.get('assigned_team_id'),
                 "installation_date": cust.get('installation_date'),
-                "latitude": cust.get('latitude'),      # ✅ IDINAGDAG
-                "longitude": cust.get('longitude'),    # ✅ IDINAGDAG
+                "latitude": cust.get('latitude'),      # IDINAGDAG
+                "longitude": cust.get('longitude'),    # IDINAGDAG
                 "plan_speed": cust.get('plan_speed'),
                 "preferred_napbox_id": cust.get('preferred_napbox_id'),
                 "preferred_napbox_name": cust.get('preferred_napbox_name'),
@@ -17549,7 +17549,7 @@ def get_pending_customers_for_technician():
                 } if cust.get('slot_id') else None
             })
         
-        print(f"✅ Found {len(customers_list)} customers for team {team_id or technician_area}")
+        print(f" Found {len(customers_list)} customers for team {team_id or technician_area}")
         
         return jsonify({
             "customers": customers_list,
@@ -17603,7 +17603,7 @@ def get_available_napboxes_for_technician():
         """
         napboxes = execute_query(query, (technician_area,), fetch=True) or []
         
-        print(f"📡 Found {len(napboxes)} NAP boxes in area: {technician_area}")
+        print(f" Found {len(napboxes)} NAP boxes in area: {technician_area}")
         for nb in napboxes:
             print(f"   - {nb.get('napbox_name')} | Barangay: {nb.get('barangay')} | Slots: {nb.get('available_slots')}")
         
@@ -17630,7 +17630,7 @@ def assign_slot_to_customer():
         technician_id = data.get("technician_id")
         
         print("=" * 60)
-        print("🔧 ASSIGN SLOT - START")
+        print(" ASSIGN SLOT - START")
         print(f"   Application: {application_number}")
         print(f"   Slot ID: {slot_id}")
         print(f"   Technician ID: {technician_id}")
@@ -17639,7 +17639,7 @@ def assign_slot_to_customer():
         if not application_number or not slot_id:
             return jsonify({"error": "Application number and slot ID are required"}), 400
         
-        # ✅ Get technician's team
+        # Get technician's team
         tech_query = "SELECT team_id FROM technicians WHERE technician_id = %s LIMIT 1"
         tech_result = execute_query(tech_query, (technician_id,), fetch_one=True)
         
@@ -17661,9 +17661,9 @@ def assign_slot_to_customer():
         
         customer_team_id = customer.get('assigned_team_id')
         
-        # ✅ Verify that technician's team matches customer's assigned team
+        # Verify that technician's team matches customer's assigned team
         if technician_team_id and customer_team_id and technician_team_id != customer_team_id:
-            print(f"⚠️ Team mismatch: Technician team={technician_team_id}, Customer team={customer_team_id}")
+            print(f" Team mismatch: Technician team={technician_team_id}, Customer team={customer_team_id}")
             return jsonify({"error": "You are not authorized to assign slots for this customer. This customer belongs to a different team."}), 403
         
         customer_name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip()
@@ -17671,10 +17671,10 @@ def assign_slot_to_customer():
         customer_city = customer.get('city', '')
         contract_number = customer.get('contract_number', '')
         
-        print(f"🔍 Customer Name: {customer_name}")
-        print(f"🔍 Customer Team: {customer_team_id}")
-        print(f"🔍 Technician Team: {technician_team_id}")
-        print(f"🔍 Contract Number: '{contract_number}'")
+        print(f" Customer Name: {customer_name}")
+        print(f" Customer Team: {customer_team_id}")
+        print(f" Technician Team: {technician_team_id}")
+        print(f" Contract Number: '{contract_number}'")
         
         # Check if slot is still available
         check_slot_query = """
@@ -17707,9 +17707,9 @@ def assign_slot_to_customer():
             installation_date or datetime.now().strftime("%Y-%m-%d"), 
             slot_id
         ))
-        print(f"✅ Slot {slot['slot_number']} assigned to {customer_name} (Contract: {contract_number})")
+        print(f" Slot {slot['slot_number']} assigned to {customer_name} (Contract: {contract_number})")
         
-        # ========== 🔥 UPDATE CUSTOMERS TABLE - Installation Status to "Slot Assigned" ==========
+        # ========== UPDATE CUSTOMERS TABLE - Installation Status to "Slot Assigned" ==========
         try:
             update_customer_query = """
                 UPDATE customers 
@@ -17717,12 +17717,12 @@ def assign_slot_to_customer():
                 WHERE application_number = %s
             """
             execute_query(update_customer_query, (application_number,))
-            print(f"✅ Customer {application_number} installation_status updated to 'Slot Assigned'")
+            print(f" Customer {application_number} installation_status updated to 'Slot Assigned'")
         except Exception as cust_err:
-            print(f"⚠️ Error updating customer installation_status: {cust_err}")
+            print(f" Error updating customer installation_status: {cust_err}")
             # Continue even if this fails - the slot assignment is the main action
         
-        # ========== 🔥 UPDATE APPLICATIONS TABLE ==========
+        # ========== UPDATE APPLICATIONS TABLE ==========
         try:
             update_app_query = """
                 UPDATE applications 
@@ -17730,13 +17730,13 @@ def assign_slot_to_customer():
                 WHERE application_number = %s
             """
             execute_query(update_app_query, (application_number,))
-            print(f"✅ Application {application_number} installation_status updated to 'Slot Assigned'")
+            print(f" Application {application_number} installation_status updated to 'Slot Assigned'")
         except Exception as app_err:
-            print(f"⚠️ Error updating application installation_status: {app_err}")
+            print(f" Error updating application installation_status: {app_err}")
         
         # ========== CREATE NOTIFICATION FOR ADMIN (by city/area) ==========
         try:
-            print(f"🔍 Looking for admin with area: '{customer_city}'")
+            print(f" Looking for admin with area: '{customer_city}'")
             
             admin_query = """
                 SELECT admin_id, username, area 
@@ -17745,15 +17745,15 @@ def assign_slot_to_customer():
                 LIMIT 1
             """
             city_admin = execute_query(admin_query, (customer_city,), fetch_one=True)
-            print(f"🔍 Admin found: {city_admin}")
+            print(f" Admin found: {city_admin}")
             
             if city_admin:
                 admin_id = city_admin.get('admin_id')
                 admin_username = city_admin.get('username')
                 admin_notification_id = int(datetime.now().timestamp() * 1000) + 1
                 
-                print(f"🔍 Creating admin notification for admin_id: {admin_id} ({admin_username})")
-                print(f"🔍 Admin area: {customer_city}")
+                print(f" Creating admin notification for admin_id: {admin_id} ({admin_username})")
+                print(f" Admin area: {customer_city}")
                 
                 admin_notif_query = """
                     INSERT INTO admin_notifications 
@@ -17774,13 +17774,13 @@ def assign_slot_to_customer():
                     customer_city,
                     application_number
                 ))
-                print(f"🔔 Admin notification created for {admin_id} in {customer_city}")
+                print(f" Admin notification created for {admin_id} in {customer_city}")
             else:
-                print(f"⚠️ No admin found for area: {customer_city}")
-                print(f"💡 Tip: Insert an admin with area = '{customer_city}' into admins table")
+                print(f" No admin found for area: {customer_city}")
+                print(f" Tip: Insert an admin with area = '{customer_city}' into admins table")
                 
         except Exception as admin_err:
-            print(f"⚠️ Admin notification error: {admin_err}")
+            print(f" Admin notification error: {admin_err}")
             import traceback
             traceback.print_exc()
         
@@ -17800,7 +17800,7 @@ def assign_slot_to_customer():
                 datetime.now().isoformat(),
                 0
             ))
-            print(f"🔔 Superadmin notification created")
+            print(f" Superadmin notification created")
         except Exception as notif_err:
             print(f"Notification error: {notif_err}")
         
@@ -17831,7 +17831,7 @@ def cancel_installation():
         reason = (data.get("reason") or "").strip()
 
         print("=" * 60)
-        print("🚫 CANCEL INSTALLATION - START")
+        print(" CANCEL INSTALLATION - START")
         print(f"   Application: {application_number}")
         print(f"   Technician ID: {technician_id}")
         print("=" * 60)
@@ -17839,7 +17839,7 @@ def cancel_installation():
         if not application_number or not technician_id:
             return jsonify({"error": "Application number and technician ID are required"}), 400
 
-        # ✅ Get technician's team
+        # Get technician's team
         tech_query = "SELECT team_id FROM technicians WHERE technician_id = %s LIMIT 1"
         tech_result = execute_query(tech_query, (technician_id,), fetch_one=True)
 
@@ -17861,7 +17861,7 @@ def cancel_installation():
 
         customer_team_id = customer.get('assigned_team_id')
 
-        # ✅ Same team check gaya ng assign-slot
+        # Same team check gaya ng assign-slot
         if technician_team_id and customer_team_id and technician_team_id != customer_team_id:
             return jsonify({"error": "You are not authorized to cancel this customer's installation. This customer belongs to a different team."}), 403
 
@@ -17870,16 +17870,16 @@ def cancel_installation():
         customer_city = customer.get('city', '')
         current_status = customer.get('installation_status', 'Pending')
 
-        # 🔒 Optional guard: huwag na ulit i-cancel kung Installed/completed na
+        # Optional guard: huwag na ulit i-cancel kung Installed/completed na
         if current_status == 'Installed':
             return jsonify({"error": "This installation is already completed and cannot be cancelled."}), 400
 
-        # 🔥 KUNIN ANG CURRENT DATETIME PARA SA CANCELLATION DATE
+        # KUNIN ANG CURRENT DATETIME PARA SA CANCELLATION DATE
         from datetime import datetime
         cancellation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cancellation_date_display = datetime.now().strftime("%B %d, %Y at %I:%M %p")
 
-        print(f"📅 Cancellation date: {cancellation_date}")
+        print(f" Cancellation date: {cancellation_date}")
 
         # ========== RELEASE THE SLOT (kung may naka-assign na) ==========
         try:
@@ -17904,9 +17904,9 @@ def cancel_installation():
                     WHERE id = %s
                 """
                 execute_query(release_slot_query, (occupied_slot['id'],))
-                print(f"✅ Slot {occupied_slot['slot_number']} released back to available")
+                print(f" Slot {occupied_slot['slot_number']} released back to available")
         except Exception as slot_err:
-            print(f"⚠️ Error releasing slot: {slot_err}")
+            print(f" Error releasing slot: {slot_err}")
             # Continue pa rin - hindi dapat mag-block sa cancellation
 
         # ========== UPDATE APPLICATIONS TABLE ==========
@@ -17919,7 +17919,7 @@ def cancel_installation():
             WHERE application_number = %s
         """
         execute_query(update_app_query, (reason if reason else 'Cancelled by technician', application_number))
-        print(f"✅ Application {application_number} status = Cancelled, is_archived = 1, reason = {reason}")
+        print(f" Application {application_number} status = Cancelled, is_archived = 1, reason = {reason}")
 
         # ========== UPDATE CUSTOMERS TABLE WITH date_cancelled ==========
         update_customer_query = """
@@ -17930,7 +17930,7 @@ def cancel_installation():
             WHERE application_number = %s
         """
         execute_query(update_customer_query, (cancellation_date, application_number))
-        print(f"✅ Customer {application_number} installation_status = Cancelled, date_cancelled = {cancellation_date}")
+        print(f" Customer {application_number} installation_status = Cancelled, date_cancelled = {cancellation_date}")
 
         # ========== NOTIFY ADMIN (by city/area) ==========
         try:
@@ -17966,7 +17966,7 @@ def cancel_installation():
                     application_number
                 ))
         except Exception as admin_err:
-            print(f"⚠️ Admin notification error: {admin_err}")
+            print(f" Admin notification error: {admin_err}")
 
         # ========== NOTIFY SUPERADMIN ==========
         try:
@@ -18068,7 +18068,7 @@ def technician_update_installation_status():
         if new_status not in ["Ongoing", "Installed"]:
             return jsonify({"error": "Invalid status. Allowed: Ongoing, Installed"}), 400
         
-        # ✅ Get technician's team
+        # Get technician's team
         tech_query = "SELECT team_id FROM technicians WHERE technician_id = %s LIMIT 1"
         tech_result = execute_query(tech_query, (technician_id,), fetch_one=True)
         
@@ -18093,9 +18093,9 @@ def technician_update_installation_status():
         
         customer_team_id = customer_data.get('assigned_team_id')
         
-        # ✅ Verify that technician's team matches customer's assigned team
+        # Verify that technician's team matches customer's assigned team
         if technician_team_id and customer_team_id and technician_team_id != customer_team_id:
-            print(f"⚠️ Team mismatch: Technician team={technician_team_id}, Customer team={customer_team_id}")
+            print(f" Team mismatch: Technician team={technician_team_id}, Customer team={customer_team_id}")
             return jsonify({"error": "You are not authorized to update this customer. This customer belongs to a different team."}), 403
         
         # For 'Ongoing' status, check if slot is assigned
@@ -18113,13 +18113,13 @@ def technician_update_installation_status():
             update_fields.append("date_installed = %s")
             params.append(current_time)
             # Awtomatikong i-update ang users table kapag Installed na (status Active / Connected)
-            # ✅ Kasama na rin ang pag-clear ng has_pending_reconnect at reconnect_requested_at
+            # Kasama na rin ang pag-clear ng has_pending_reconnect at reconnect_requested_at
             # dahil dito lang talaga natatapos ang buong reconnection process (may bagong
             # na-assign nang slot ang technician). Bago nito, may nakabinbing reconnect pa rin
             # ang user kahit na-approve na ng superadmin, kaya dapat naka-lock pa ang
             # "Request Reconnect" button sa user dashboard hanggang dito.
             try:
-                # ✅ Kunin muna ang user info AT ang dating status BAGO i-update,
+                # Kunin muna ang user info AT ang dating status BAGO i-update,
                 # para malaman natin kung ito ba ay "reconnect after slot
                 # reassignment" (dating Terminated) o normal na first-time
                 # install, at para may makuhang user_id/email/name para sa notif.
@@ -18138,9 +18138,9 @@ def technician_update_installation_status():
                        WHERE application_number = %s""",
                     (application_number,)
                 )
-                print(f"✅ User {application_number} status updated to Active / Connected, has_pending_reconnect cleared.")
+                print(f" User {application_number} status updated to Active / Connected, has_pending_reconnect cleared.")
 
-                # ========== 🔔 NOTIFY THE USER (reconnect after slot reassignment) ==========
+                # ========== NOTIFY THE USER (reconnect after slot reassignment) ==========
                 if user_before:
                     try:
                         was_terminated = user_before.get('status') == 'Terminated'
@@ -18174,20 +18174,20 @@ def technician_update_installation_status():
                             datetime.now().isoformat(),
                             0
                         ))
-                        print(f"🔔 User notification sent to {target_user_id} ({'reconnection' if was_terminated else 'installation'} complete)")
+                        print(f" User notification sent to {target_user_id} ({'reconnection' if was_terminated else 'installation'} complete)")
                     except Exception as user_notif_err:
-                        print(f"⚠️ Error creating user notification: {user_notif_err}")
+                        print(f" Error creating user notification: {user_notif_err}")
                         import traceback
                         traceback.print_exc()
 
             except Exception as user_act_err:
-                print(f"⚠️ Error activating user status on installation: {user_act_err}")
+                print(f" Error activating user status on installation: {user_act_err}")
 
         
         params.append(application_number)
         update_query = f"UPDATE customers SET {', '.join(update_fields)} WHERE application_number = %s"
         execute_query(update_query, params)
-        print(f"✅ Technician updated customer {application_number} to {new_status}")
+        print(f" Technician updated customer {application_number} to {new_status}")
         
         # Update applications table
         app_update_query = "UPDATE applications SET installation_status = %s WHERE application_number = %s"
@@ -18201,7 +18201,7 @@ def technician_update_installation_status():
         
         # ========== CREATE NOTIFICATION FOR ADMIN (by city/area) - FIXED ==========
         try:
-            print(f"🔍 Looking for admin with area: '{customer_city}'")
+            print(f" Looking for admin with area: '{customer_city}'")
             
             admin_query = """
                 SELECT admin_id, username, area 
@@ -18210,7 +18210,7 @@ def technician_update_installation_status():
                 LIMIT 1
             """
             city_admin = execute_query(admin_query, (customer_city,), fetch_one=True)
-            print(f"🔍 Admin found: {city_admin}")
+            print(f" Admin found: {city_admin}")
             
             if city_admin:
                 admin_id = city_admin.get('admin_id')
@@ -18235,12 +18235,12 @@ def technician_update_installation_status():
                     customer_city,
                     application_number
                 ))
-                print(f"🔔 Admin notification created for {admin_id} in {customer_city}")
+                print(f" Admin notification created for {admin_id} in {customer_city}")
             else:
-                print(f"⚠️ No admin found for area: {customer_city}")
+                print(f" No admin found for area: {customer_city}")
                 
         except Exception as admin_err:
-            print(f"⚠️ Admin notification error: {admin_err}")
+            print(f" Admin notification error: {admin_err}")
             import traceback
             traceback.print_exc()
         
@@ -18260,7 +18260,7 @@ def technician_update_installation_status():
                 datetime.now().isoformat(),
                 0
             ))
-            print(f"🔔 Superadmin notification created")
+            print(f" Superadmin notification created")
         except Exception as notif_err:
             print(f"Notification error: {notif_err}")
         
@@ -18300,11 +18300,11 @@ def create_technician_notification(technician_id, title, message, notif_type, re
             datetime.now().isoformat()
         ))
         
-        print(f"🔔 Technician notification created for {technician_id}: {title}")
+        print(f" Technician notification created for {technician_id}: {title}")
         return True
         
     except Exception as e:
-        print(f"❌ Error creating technician notification: {e}")
+        print(f" Error creating technician notification: {e}")
         return False
 
 
@@ -18317,10 +18317,10 @@ def create_technician_notifications_by_area(area, title, message, notif_type, re
         tech_query = "SELECT technician_id FROM technicians WHERE UPPER(area) = UPPER(%s) AND status = 'Active'"
         technicians = execute_query(tech_query, (area,), fetch=True) or []
         
-        print(f"🔍 Found {len(technicians)} technicians in area: {area}")
+        print(f" Found {len(technicians)} technicians in area: {area}")
         
         if not technicians:
-            print(f"⚠️ No active technicians found in area: {area}")
+            print(f" No active technicians found in area: {area}")
             return False
         
         success_count = 0
@@ -18342,11 +18342,11 @@ def create_technician_notifications_by_area(area, title, message, notif_type, re
                 ))
                 success_count += 1
         
-        print(f"🔔 Created {success_count} technician notifications in area: {area}")
+        print(f" Created {success_count} technician notifications in area: {area}")
         return True
         
     except Exception as e:
-        print(f"❌ Error creating technician notifications by area: {e}")
+        print(f" Error creating technician notifications by area: {e}")
         return False
 
 
@@ -18362,7 +18362,7 @@ def get_technician_notifications():
         if not technician_id:
             return jsonify({"error": "Technician ID required"}), 400
         
-        print(f"🔍 Fetching notifications for technician: {technician_id}")
+        print(f" Fetching notifications for technician: {technician_id}")
         
         query = """
             SELECT id, title, message, type, relatedId, application_number, 
@@ -18389,11 +18389,11 @@ def get_technician_notifications():
                 "created_at": str(n.get("created_at"))
             })
         
-        print(f"✅ Found {len(result)} notifications for technician {technician_id}")
+        print(f" Found {len(result)} notifications for technician {technician_id}")
         return jsonify(result)
         
     except Exception as e:
-        print(f"❌ Error fetching technician notifications: {e}")
+        print(f" Error fetching technician notifications: {e}")
         return jsonify([]), 500
 
 
@@ -18413,7 +18413,7 @@ def mark_technician_notification_read(notification_id):
         query = "UPDATE technician_notifications SET read_status = 1 WHERE id = %s AND read_status = 0"
         execute_query(query, (notification_id,))
         
-        print(f"✅ Technician {technician_id} marked notification {notification_id} as read")
+        print(f" Technician {technician_id} marked notification {notification_id} as read")
         return jsonify({"message": "Notification marked as read"})
     
     except Exception as e:
@@ -18437,7 +18437,7 @@ def mark_all_technician_notifications_read():
         query = "UPDATE technician_notifications SET read_status = 1 WHERE technician_id = %s AND read_status = 0"
         rows_affected = execute_query(query, (technician_id,))
         
-        print(f"✅ Technician {technician_id} marked {rows_affected} notifications as read")
+        print(f" Technician {technician_id} marked {rows_affected} notifications as read")
         return jsonify({"message": f"Marked {rows_affected} notifications as read", "count": rows_affected})
     
     except Exception as e:
@@ -18491,9 +18491,9 @@ def technician_update_slot():
         if not current_slot:
             return jsonify({"error": "Slot not found"}), 404
 
-        # ✅ CHECK: KUNG MAY CONTRACT NUMBER AT HINDI EMPTY
+        # CHECK: KUNG MAY CONTRACT NUMBER AT HINDI EMPTY
         if contract_number and contract_number.strip():
-            # ✅ CHECK KUNG MAY IBANG SLOT NA GAMIT ANG CONTRACT NUMBER NA ITO (EXCLUDING CURRENT SLOT)
+            # CHECK KUNG MAY IBANG SLOT NA GAMIT ANG CONTRACT NUMBER NA ITO (EXCLUDING CURRENT SLOT)
             check_query = """
                 SELECT id, slot_number, customer_name 
                 FROM napbox_slots 
@@ -18508,7 +18508,7 @@ def technician_update_slot():
 
         final_status = status if status is not None else ('occupied' if customer_name else 'available')
 
-        # ✅ Look up new owner's application_number from customers if contract_number is passed
+        # Look up new owner's application_number from customers if contract_number is passed
         app_num = data.get("application_number")
         if not app_num and contract_number and contract_number.strip():
             c_data = execute_query("SELECT application_number FROM customers WHERE contract_number = %s LIMIT 1", (contract_number.strip(),), fetch_one=True)
@@ -18528,7 +18528,7 @@ def technician_update_slot():
         execute_query(update_query, (customer_name, contract_number, customer_phone, app_num, final_status, slot_id))
 
 
-        print(f"✅ [Technician] Slot {slot_id} updated: Status={final_status.upper()}")
+        print(f" [Technician] Slot {slot_id} updated: Status={final_status.upper()}")
 
         return jsonify({
             "success": True,
@@ -18560,11 +18560,11 @@ def technician_check_contract_number():
         if not contract_number:
             return jsonify({'exists': False, 'error': 'Contract number is required'}), 400
         
-        # ✅ I-CONFIGURE ANG DATABASE CONNECTION
+        # I-CONFIGURE ANG DATABASE CONNECTION
         db = get_db()
         cursor = db.cursor(dictionary=True)
         
-        # ✅ CHECK IF CONTRACT NUMBER EXISTS (EXCLUDING CURRENT SLOT)
+        # CHECK IF CONTRACT NUMBER EXISTS (EXCLUDING CURRENT SLOT)
         if exclude_slot_id:
             query = """
                 SELECT id, slot_number, napbox_id, customer_name 
@@ -18596,7 +18596,7 @@ def technician_check_contract_number():
             return jsonify({'exists': False})
             
     except Exception as e:
-        print(f"❌ Error checking contract number: {e}")
+        print(f" Error checking contract number: {e}")
         return jsonify({'exists': False, 'error': str(e)}), 500
 
 
@@ -18622,7 +18622,7 @@ def technician_download_pdf(app_id):
         
         application_number = data.get("application_number")
         
-        # ✅ VERIFY: Technician has access to this application
+        # VERIFY: Technician has access to this application
         # Check if technician is assigned to this application or belongs to the same team
         has_access = False
         
@@ -18693,7 +18693,7 @@ def update_slot():
         if not slot_id:
             return jsonify({"error": "Slot ID required"}), 400
         
-        # 🔥 GET CURRENT SLOT DATA
+        # GET CURRENT SLOT DATA
         current_query = """
             SELECT customer_name, contract_number, customer_phone, status
             FROM napbox_slots 
@@ -18704,9 +18704,9 @@ def update_slot():
         if not current_slot:
             return jsonify({"error": "Slot not found"}), 404
         
-        # ✅ CHECK: KUNG MAY CONTRACT NUMBER AT HINDI EMPTY
+        # CHECK: KUNG MAY CONTRACT NUMBER AT HINDI EMPTY
         if contract_number and contract_number.strip():
-            # ✅ CHECK KUNG MAY IBANG SLOT NA GAMIT ANG CONTRACT NUMBER NA ITO (EXCLUDING CURRENT SLOT)
+            # CHECK KUNG MAY IBANG SLOT NA GAMIT ANG CONTRACT NUMBER NA ITO (EXCLUDING CURRENT SLOT)
             check_query = """
                 SELECT id, slot_number, customer_name 
                 FROM napbox_slots 
@@ -18719,7 +18719,7 @@ def update_slot():
                     "error": f"Contract number '{contract_number}' is already used in Slot #{existing_slot['slot_number']} (Customer: {existing_slot.get('customer_name', 'Unknown')})"
                 }), 400
         
-        # 🔥 DETERMINE FINAL STATUS
+        # DETERMINE FINAL STATUS
         if status is not None:
             final_status = status
         else:
@@ -18736,7 +18736,7 @@ def update_slot():
         """
         execute_query(update_query, (customer_name, contract_number, customer_phone, final_status, slot_id))
         
-        print(f"✅ Slot {slot_id} updated:")
+        print(f" Slot {slot_id} updated:")
         print(f"   Customer: {customer_name or '(empty)'}")
         print(f"   Contract: {contract_number or '(empty)'}")
         print(f"   Status: {final_status.upper()}")
@@ -18804,7 +18804,7 @@ def check_contract_number_exists():
             return jsonify({'exists': False})
             
     except Exception as e:
-        print(f"❌ Error checking contract number: {e}")
+        print(f" Error checking contract number: {e}")
         return jsonify({'exists': False, 'error': str(e)}), 500
 
 
@@ -18815,15 +18815,15 @@ def check_contract_number_exists():
 def clear_slot_data():
     """Clear all customer data from a slot (make it fully available)"""
     try:
-        # 👇 KUNIN ANG DATA MULA SA REQUEST
+        # KUNIN ANG DATA MULA SA REQUEST
         data = request.get_json()
         if not data:
             return jsonify({"error": "Invalid request data", "success": False}), 400
         
-        # 👇 KUNIN ANG TAB ID MULA SA REQUEST
+        # KUNIN ANG TAB ID MULA SA REQUEST
         tab_id = data.get("tab_id")
         
-        # 👇 KUNIN ANG TECHNICIAN ID
+        # KUNIN ANG TECHNICIAN ID
         technician_id = None
         
         # Paraan 1: Kung may tab_id, gamitin ito para makuha ang session
@@ -18831,35 +18831,35 @@ def clear_slot_data():
             tech_session = session.get(f"technician_{tab_id}")
             if tech_session:
                 technician_id = tech_session.get("technician_id")
-                print(f"🔍 Found technician via tab_id: {technician_id}")
+                print(f" Found technician via tab_id: {technician_id}")
             else:
                 # Subukan kunin mula sa session storage
                 tech_session = session.get("technician_session")
                 if tech_session:
                     technician_id = tech_session.get("technician_id")
-                    print(f"🔍 Found technician via technician_session: {technician_id}")
+                    print(f" Found technician via technician_session: {technician_id}")
         
         # Paraan 2: Direktang kunin mula sa session
         if not technician_id:
             technician_id = session.get("technician_id")
             if technician_id:
-                print(f"🔍 Found technician via session['technician_id']: {technician_id}")
+                print(f" Found technician via session['technician_id']: {technician_id}")
         
         # Paraan 3: Kunin mula sa request body (fallback)
         if not technician_id:
             technician_id = data.get("technician_id")
             if technician_id:
-                print(f"🔍 Found technician via request body: {technician_id}")
+                print(f" Found technician via request body: {technician_id}")
         
         # Kung wala pa rin, mag-error
         if not technician_id:
-            print("❌ No technician_id found in session or request")
+            print(" No technician_id found in session or request")
             return jsonify({
                 "error": "Invalid session. Please login again.",
                 "success": False
             }), 401
         
-        # 👇 KUNIN ANG SLOT ID
+        # KUNIN ANG SLOT ID
         slot_id = data.get("slot_id")
         
         if not slot_id:
@@ -18868,7 +18868,7 @@ def clear_slot_data():
                 "success": False
             }), 400
         
-        # 👇 I-VERIFY NA EXIST ANG SLOT
+        # I-VERIFY NA EXIST ANG SLOT
         verify_query = """
             SELECT ns.id, ns.napbox_id, ns.status, ns.customer_name, 
                    nb.area, nb.barangay
@@ -18884,14 +18884,14 @@ def clear_slot_data():
                 "success": False
             }), 404
         
-        # 👇 I-CHECK KUNG AVAILABLE ANG SLOT
+        # I-CHECK KUNG AVAILABLE ANG SLOT
         if slot_data.get('status') != 'available':
             return jsonify({
                 "error": "Slot is not available. Only available slots can be cleared.",
                 "success": False
             }), 400
         
-        # 👇 I-CLEAR ANG CUSTOMER DATA
+        # I-CLEAR ANG CUSTOMER DATA
         clear_query = """
             UPDATE napbox_slots 
             SET 
@@ -18905,7 +18905,7 @@ def clear_slot_data():
         """
         execute_query(clear_query, (slot_id,))
         
-        print(f"✅ Slot {slot_id} cleared by technician {technician_id}")
+        print(f" Slot {slot_id} cleared by technician {technician_id}")
         
         return jsonify({
             "success": True,
@@ -18913,7 +18913,7 @@ def clear_slot_data():
         })
         
     except Exception as e:
-        print(f"❌ Error clearing slot: {e}")
+        print(f" Error clearing slot: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -18945,13 +18945,13 @@ def verify_ga_code(secret, code):
     Verify Google Authenticator code with proper time sync handling
     """
     if not secret or not code:
-        print(f"❌ GA verify: Missing secret or code - secret: {bool(secret)}, code: {bool(code)}")
+        print(f" GA verify: Missing secret or code - secret: {bool(secret)}, code: {bool(code)}")
         return False
 
     try:
         code = ''.join(filter(str.isdigit, str(code)))
         if len(code) != 6:
-            print(f"❌ GA verify: Invalid code length - {len(code)}")
+            print(f" GA verify: Invalid code length - {len(code)}")
             return False
 
         secret = str(secret).strip().replace(" ", "").upper()
@@ -18980,7 +18980,7 @@ def verify_ga_code(secret, code):
         return False
 
     except Exception as e:
-        print(f"❌ GA verification error: {e}")
+        print(f" GA verification error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -18993,11 +18993,11 @@ def ensure_ga_columns(table_name):
 
         if "ga_secret" not in existing_fields:
             execute_query(f"ALTER TABLE {table_name} ADD COLUMN ga_secret VARCHAR(64) NULL")
-            print(f"✅ Added ga_secret column to {table_name}")
+            print(f" Added ga_secret column to {table_name}")
 
         if "ga_enabled" not in existing_fields:
             execute_query(f"ALTER TABLE {table_name} ADD COLUMN ga_enabled TINYINT(1) NOT NULL DEFAULT 0")
-            print(f"✅ Added ga_enabled column to {table_name}")
+            print(f" Added ga_enabled column to {table_name}")
 
     except Exception as e:
         print(f"Could not ensure Google Auth columns for {table_name}: {e}")
@@ -19011,7 +19011,7 @@ for table_name in ["superadmins", "admins", "technicians"]:
 def superadmin_enable_google_auth():
     """Enable Google Authenticator for superadmin"""
     print("=" * 60)
-    print("🔐 GA ENABLE - START")
+    print(" GA ENABLE - START")
     print("=" * 60)
     
     tab_id = request.args.get('tab_id') or request.form.get('tab_id')
@@ -19056,44 +19056,44 @@ def superadmin_enable_google_auth():
             "UPDATE superadmins SET ga_secret = %s WHERE username = %s", 
             (secret, username)
         )
-        print(f"🔐 Generated new secret, rows affected: {rows}")
+        print(f" Generated new secret, rows affected: {rows}")
 
     if not code:
         flash("Please enter the 6-digit code from Google Authenticator.", "danger")
         return redirect(url_for("superadmin_profile", toast="ga-missing"))
 
     is_valid = verify_ga_code(secret, code)
-    print(f"🔐 Verification result: {is_valid}")
+    print(f" Verification result: {is_valid}")
     
     if is_valid:
-        # ✅ I-STORE ANG RESULT NG UPDATE
+        # I-STORE ANG RESULT NG UPDATE
         rows_affected = execute_query(
             "UPDATE superadmins SET ga_secret = %s, ga_enabled = 1 WHERE username = %s", 
             (secret, username)
         )
-        print(f"🔐 Rows affected: {rows_affected}")
+        print(f" Rows affected: {rows_affected}")
         
-        # ✅ I-VERIFY KUNG NA-UPDATE
+        # I-VERIFY KUNG NA-UPDATE
         verify = execute_query(
             "SELECT ga_enabled FROM superadmins WHERE username = %s",
             (username,),
             fetch_one=True
         )
-        print(f"🔐 Verified ga_enabled: {verify.get('ga_enabled') if verify else 'N/A'}")
+        print(f" Verified ga_enabled: {verify.get('ga_enabled') if verify else 'N/A'}")
         
         if verify and verify.get('ga_enabled') == 1:
             session_data['ga_enabled'] = True
             session[f"admin_{tab_id}"] = session_data
-            flash("✅ Google Authenticator is now enabled!", "success")
-            print(f"✅ GA enabled for {username}")
+            flash(" Google Authenticator is now enabled!", "success")
+            print(f" GA enabled for {username}")
             return redirect(url_for("superadmin_profile", toast="ga-enabled"))
         else:
-            flash("❌ Failed to save GA settings. Please try again.", "danger")
-            print(f"❌ GA NOT saved to database!")
+            flash(" Failed to save GA settings. Please try again.", "danger")
+            print(f" GA NOT saved to database!")
             return redirect(url_for("superadmin_profile", toast="ga-invalid"))
         
     else:
-        flash("❌ Invalid code. Please try again.", "danger")
+        flash(" Invalid code. Please try again.", "danger")
         return redirect(url_for("superadmin_profile", toast="ga-invalid"))
 
 @app.route("/superadmin/ga/disable", methods=["POST"])
@@ -19118,12 +19118,12 @@ def superadmin_disable_google_auth():
         (username,)
     )
     
-    # ✅ I-UPDATE ANG SESSION
+    # I-UPDATE ANG SESSION
     session_data['ga_enabled'] = False
     session[f"admin_{tab_id}"] = session_data
     
     flash("Google Authenticator has been disabled.", "info")
-    print(f"✅ GA disabled for superadmin {username}")
+    print(f" GA disabled for superadmin {username}")
     
     return redirect(url_for("superadmin_profile", toast="ga-disabled"))
 

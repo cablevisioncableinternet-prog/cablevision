@@ -1,10 +1,10 @@
 // ===============================
-// 🗄️  MYSQL BACKEND - NO FIREBASE NEEDED
+//  MYSQL BACKEND - NO FIREBASE NEEDED
 // ===============================
-console.log("Application Connected to MySQL Backend ✅");
+console.log("Application Connected to MySQL Backend ");
 
 // ===============================
-// 🆔 GENERATE UNIQUE TAB ID
+// GENERATE UNIQUE TAB ID
 // ===============================
 function getOrCreateTabId() {
     let tabId = sessionStorage.getItem('tab_id');
@@ -77,7 +77,7 @@ function showToast(message, type = 'info') {
 }
 
 // ===============================
-// 🔐 LOGIN FORM - WITH TAB ID
+// LOGIN FORM - WITH TAB ID
 // ===============================
 const loginForm = document.getElementById("loginForm");
 const errorDiv = document.getElementById("error");
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tabIdHidden) {
         tabIdHidden.value = tabId;
     }
-    console.log('🆔 Tab ID:', tabId);
+    console.log(' Tab ID:', tabId);
 });
 
 if (loginForm) {
@@ -158,7 +158,7 @@ if (finalLoginForm) {
 
         const username = document.getElementById("username").value.trim();
         const password = document.getElementById("password").value.trim();
-        const tabId = getOrCreateTabId();  // 👈 KUNIN ANG TAB ID
+        const tabId = getOrCreateTabId();  // KUNIN ANG TAB ID
         
         if (finalErrorDiv) finalErrorDiv.innerText = "";
 
@@ -191,9 +191,9 @@ if (finalLoginForm) {
                 showToast(data.error || 'Login failed. Please try again.', 'error');
             }
 
-            // ✅ CHECK IF 2FA REQUIRED
+            // CHECK IF 2FA REQUIRED
             if (data.requires_2fa) {
-                console.log("🔐 2FA required for user:", data.user_id);
+                console.log(" 2FA required for user:", data.user_id);
                 gaPendingUserId = data.user_id || null;
                 gaPendingTabId = data.tab_id || tabId;
                 sessionStorage.setItem('tab_id', gaPendingTabId);
@@ -206,14 +206,14 @@ if (finalLoginForm) {
                 return;
             }
 
-            // ✅ SUCCESSFUL LOGIN
+            // SUCCESSFUL LOGIN
             if (response.ok && data.success) {
                 console.log("Login successful:", data);
                 
                 // Clear previous storage
                 sessionStorage.clear();
                 
-                // 👇 I-STORE ANG TAB ID
+                // I-STORE ANG TAB ID
                 sessionStorage.setItem('tab_id', data.tab_id || tabId);
                 
                 const userType = data.type;
@@ -254,7 +254,7 @@ if (finalLoginForm) {
                     window.SessionManager.createSession(userType, data.username || data.technician_id, data.area, data.tab_id || tabId);
                 }
                 
-                // 👇 REDIRECT WITH TAB ID
+                // REDIRECT WITH TAB ID
                 const separator = redirectUrl.includes('?') ? '&' : '?';
                 const finalUrl = redirectUrl + separator + 'tab_id=' + (data.tab_id || tabId);
                 
@@ -277,7 +277,7 @@ if (finalLoginForm) {
 }
 
 // ===============================
-// 🔑 FORGOT PASSWORD MODAL (6‑DIGIT BOXES)
+// FORGOT PASSWORD MODAL (6‑DIGIT BOXES)
 // ===============================
 const forgotModal = document.getElementById("forgotPasswordModal");
 if (forgotModal) {
@@ -304,7 +304,7 @@ if (forgotModal) {
         fpDigits.forEach((digit, idx) => {
             if (!digit) return;
             
-            // ✅ I-REMOVE ANG EXISTING LISTENER PARA MAIWASAN ANG DUPLICATE
+            // I-REMOVE ANG EXISTING LISTENER PARA MAIWASAN ANG DUPLICATE
             const newDigit = digit.cloneNode(true);
             digit.parentNode.replaceChild(newDigit, digit);
             fpDigits[idx] = newDigit;
@@ -324,7 +324,7 @@ if (forgotModal) {
                 }
             });
             
-            // ✅ ADD PASTE SUPPORT
+            // ADD PASTE SUPPORT
             newDigit.addEventListener("paste", function(e) {
                 e.preventDefault();
                 const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
@@ -339,7 +339,7 @@ if (forgotModal) {
 
     function getFpCode() {
         const code = fpDigits.map(d => d ? d.value : "").join("");
-        console.log("🔑 OTP Code from boxes:", code);
+        console.log(" OTP Code from boxes:", code);
         return code;
     }
 
@@ -353,7 +353,7 @@ if (forgotModal) {
         if (resendOtpBtn) resendOtpBtn.disabled = true;
         if (otpCountdown) clearInterval(otpCountdown);
 
-        // ✅ I-ENABLE ANG RESET BUTTON SA SIMULA
+        // I-ENABLE ANG RESET BUTTON SA SIMULA
         if (resetPasswordBtn) {
             resetPasswordBtn.disabled = false;
             resetPasswordBtn.textContent = "Reset Password";
@@ -446,7 +446,7 @@ if (forgotModal) {
 
     const resetPasswordBtn = document.getElementById("resetPasswordBtn");
     if (resetPasswordBtn) {
-        // ✅ I-REMOVE ANG EXISTING EVENT LISTENER PARA MAIWASAN ANG DUPLICATE
+        // I-REMOVE ANG EXISTING EVENT LISTENER PARA MAIWASAN ANG DUPLICATE
         const newResetBtn = resetPasswordBtn.cloneNode(true);
         resetPasswordBtn.parentNode.replaceChild(newResetBtn, resetPasswordBtn);
         
@@ -454,7 +454,7 @@ if (forgotModal) {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log("🔑 Reset password button clicked!");
+            console.log(" Reset password button clicked!");
             
             const code = getFpCode();
             const newPassword = document.getElementById("fpNewPassword")?.value.trim();
@@ -463,20 +463,20 @@ if (forgotModal) {
             const username = forgotModal.dataset.username || identifier;
             const tabId = getOrCreateTabId();
             
-            console.log("📝 Code:", code);
-            console.log("📝 New Password:", newPassword ? "***" : "empty");
-            console.log("📝 Confirm Password:", confirmPassword ? "***" : "empty");
-            console.log("📝 Identifier:", identifier);
-            console.log("📝 Username:", username);
-            console.log("📝 Tab ID:", tabId);
+            console.log(" Code:", code);
+            console.log(" New Password:", newPassword ? "***" : "empty");
+            console.log(" Confirm Password:", confirmPassword ? "***" : "empty");
+            console.log(" Identifier:", identifier);
+            console.log(" Username:", username);
+            console.log(" Tab ID:", tabId);
 
-            // ✅ I-CLEAR ANG PREVIOUS MESSAGE
+            // I-CLEAR ANG PREVIOUS MESSAGE
             if (fpMessage) {
                 fpMessage.textContent = "";
                 fpMessage.style.color = "";
             }
 
-            // ✅ VALIDATION: CODE
+            // VALIDATION: CODE
             if (code.length !== 6) {
                 if (fpMessage) {
                     fpMessage.style.color = "red";
@@ -486,7 +486,7 @@ if (forgotModal) {
                 return;
             }
             
-            // ✅ VALIDATION: NEW PASSWORD
+            // VALIDATION: NEW PASSWORD
             if (!newPassword) {
                 if (fpMessage) {
                     fpMessage.style.color = "red";
@@ -496,7 +496,7 @@ if (forgotModal) {
                 return;
             }
             
-            // ✅ VALIDATION: PASSWORD LENGTH
+            // VALIDATION: PASSWORD LENGTH
             if (newPassword.length < 8) {
                 if (fpMessage) {
                     fpMessage.style.color = "red";
@@ -506,7 +506,7 @@ if (forgotModal) {
                 return;
             }
             
-            // ✅ VALIDATION: CONFIRM PASSWORD
+            // VALIDATION: CONFIRM PASSWORD
             if (newPassword !== confirmPassword) {
                 if (fpMessage) {
                     fpMessage.style.color = "red";
@@ -516,12 +516,12 @@ if (forgotModal) {
                 return;
             }
 
-            // ✅ DISABLE BUTTON PARA MAIWASAN ANG DOUBLE CLICK
+            // DISABLE BUTTON PARA MAIWASAN ANG DOUBLE CLICK
             this.disabled = true;
             this.textContent = "Resetting...";
 
             try {
-                console.log("📤 Sending reset request...");
+                console.log(" Sending reset request...");
                 const res = await fetch("/api/admin/reset-password", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -535,7 +535,7 @@ if (forgotModal) {
                 });
                 
                 const data = await res.json();
-                console.log("📥 Response:", data);
+                console.log(" Response:", data);
 
                 if (res.ok) {
                     if (fpMessage) {
@@ -547,10 +547,10 @@ if (forgotModal) {
                     setTimeout(() => {
                         if (forgotModal) forgotModal.style.display = "none";
                         
-                        // ✅ I-PRINT ANG DATA PARA MA-DEBUG
-                        console.log("📥 Reset response data:", data);
+                        // I-PRINT ANG DATA PARA MA-DEBUG
+                        console.log(" Reset response data:", data);
                         
-                        // ✅ I-DIRECT NA GAMITIN ANG handleLoginSuccess
+                        // I-DIRECT NA GAMITIN ANG handleLoginSuccess
                         // Siguraduhin na complete ang data
                         const loginPayload = {
                             ...data,
@@ -561,33 +561,33 @@ if (forgotModal) {
                             technician_id: data.technician_id || data.user_id || data.username || username,
                             name: data.name || data.username || username,
                             area: data.area || '',
-                            redirect: data.redirect || null  // ✅ I-PRESERVE ANG REDIRECT
+                            redirect: data.redirect || null  // I-PRESERVE ANG REDIRECT
                         };
                         
-                        console.log("📤 Login payload:", loginPayload);
+                        console.log(" Login payload:", loginPayload);
                         handleLoginSuccess(loginPayload, tabId);
                     }, 2000);
                 } else {
-                    // ❌ ERROR
+                    // ERROR
                     if (fpMessage) {
                         fpMessage.style.color = "red";
                         fpMessage.textContent = data.error || "Failed to reset password";
                     }
                     showToast(data.error || "Failed to reset password", "error");
                     
-                    // ✅ I-ENABLE ANG BUTTON
+                    // I-ENABLE ANG BUTTON
                     this.disabled = false;
                     this.textContent = "Reset Password";
                 }
             } catch (err) {
-                console.error("❌ Reset error:", err);
+                console.error(" Reset error:", err);
                 if (fpMessage) {
                     fpMessage.style.color = "red";
                     fpMessage.textContent = "Server error. Please try again.";
                 }
                 showToast("Server error. Please try again.", "error");
                 
-                // ✅ I-ENABLE ANG BUTTON
+                // I-ENABLE ANG BUTTON
                 this.disabled = false;
                 this.textContent = "Reset Password";
             }
@@ -642,7 +642,7 @@ if (forgotModal) {
 }
 
 // ===============================
-// 📝 SESSION MANAGER (For MySQL Backend)
+// SESSION MANAGER (For MySQL Backend)
 // ===============================
 if (!window.SessionManager) {
     window.SessionManager = {
@@ -701,7 +701,7 @@ if (!window.SessionManager) {
 }
 
 // ===============================
-// 🚪 LOGOUT FUNCTION
+// LOGOUT FUNCTION
 // ===============================
 window.logout = async function() {
     if (window.SessionManager) {
@@ -711,7 +711,7 @@ window.logout = async function() {
     }
 };
 
-console.log("Login page initialized with MySQL backend ✅");
+console.log("Login page initialized with MySQL backend ");
 
 // ==================== ACCOUNT GUIDE MODAL ====================
 const guideBtn = document.getElementById('accountGuideBtn');
@@ -845,10 +845,10 @@ if (gaVerifyBtn) {
             return;
         }
 
-        // ✅ Get tab_id from sessionStorage
+        // Get tab_id from sessionStorage
         const tabId = sessionStorage.getItem('tab_id') || getOrCreateTabId();
 
-        // ✅ Submit login with GA code
+        // Submit login with GA code
         performLoginWithGA(code, tabId);
     });
 }
@@ -909,8 +909,8 @@ async function performLoginWithGA(code, tabId) {
 
 // ==================== HANDLE LOGIN SUCCESS ====================
 function handleLoginSuccess(data, tabId) {
-    console.log("📥 handleLoginSuccess called with data:", data);
-    console.log("📥 Tab ID:", tabId);
+    console.log(" handleLoginSuccess called with data:", data);
+    console.log(" Tab ID:", tabId);
     
     sessionStorage.clear();
     sessionStorage.setItem('tab_id', tabId);
@@ -918,7 +918,7 @@ function handleLoginSuccess(data, tabId) {
     const userType = data.type;
     let redirectUrl = "/";
     
-    console.log("👤 User Type:", userType);
+    console.log(" User Type:", userType);
     
     if (userType === "superadmin") {
         localStorage.setItem("userType", "superadmin");
@@ -940,7 +940,7 @@ function handleLoginSuccess(data, tabId) {
         
     } else if (userType === "technician") {
         localStorage.setItem("userType", "technician");
-        // ✅ GAMITIN ANG technician_id MULA SA DATA
+        // GAMITIN ANG technician_id MULA SA DATA
         const techId = data.technician_id || data.username || data.user_id;
         localStorage.setItem("technicianId", techId);
         localStorage.setItem("technicianName", data.name || data.username || techId);
@@ -954,7 +954,7 @@ function handleLoginSuccess(data, tabId) {
     sessionStorage.setItem("sessionStart", Date.now().toString());
     closeGaModal();
     
-    // ✅ GAMITIN ANG data.redirect KUNG MERON
+    // GAMITIN ANG data.redirect KUNG MERON
     if (data.redirect) {
         // Tignan kung may tab_id na sa redirect URL
         if (!data.redirect.includes('tab_id=')) {
@@ -968,6 +968,6 @@ function handleLoginSuccess(data, tabId) {
         redirectUrl = redirectUrl + separator + 'tab_id=' + tabId;
     }
     
-    console.log("🚀 Redirecting to:", redirectUrl);
+    console.log(" Redirecting to:", redirectUrl);
     window.location.replace(redirectUrl);
 }

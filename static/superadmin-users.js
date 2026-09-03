@@ -325,7 +325,7 @@ function setupBalanceInputValidation() {
         balanceField.appendChild(errorMsg);
     }
 
-    console.log('✅ Balance input validation setup complete');
+    console.log(' Balance input validation setup complete');
 }
 
 
@@ -357,7 +357,7 @@ function clearCache() {
 function checkForPendingUserCreation() {
   const pendingCreation = sessionStorage.getItem('pending_user_creation');
   if (pendingCreation === 'true') {
-    console.log("📢 Found pending user creation flag - forcing refresh");
+    console.log(" Found pending user creation flag - forcing refresh");
     sessionStorage.removeItem('pending_user_creation');
     return true;
   }
@@ -378,7 +378,7 @@ function setupCrossTabNotification() {
         const notification = JSON.parse(event.newValue);
         
         if (notification.type === 'USER_CREATED') {
-          console.log("📢 Received user creation notification from another tab!", notification);
+          console.log(" Received user creation notification from another tab!", notification);
           sessionStorage.setItem('pending_user_creation', 'true');
           
           const now = Date.now();
@@ -396,7 +396,7 @@ function setupCrossTabNotification() {
 
 function showRefreshNotification() {
   const notification = document.createElement('div');
-  notification.textContent = '🔄 Refreshing user list...';
+  notification.textContent = ' Refreshing user list...';
   notification.style.cssText = `
     position: fixed;
     top: 20px;
@@ -467,7 +467,7 @@ function showStatusModal(userId, currentStatus) {
   const balanceInput = document.getElementById("balanceInput");
   const confirmBtn = document.getElementById("confirmStatus");
   
-  // 🔥 DETERMINE NEW STATUS
+  // DETERMINE NEW STATUS
   let newStatus;
   let actionText;
   let showBalance = false;
@@ -479,7 +479,7 @@ function showStatusModal(userId, currentStatus) {
     newStatus = "Inactive";
     actionText = "Deactivate";
     showBalance = true;
-    iconClass = "fa-user-slash"; // 🔥 Pinalitan ng user-slash
+    iconClass = "fa-user-slash"; // Pinalitan ng user-slash
     iconBg = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
     isDeactivate = true;
   } else if (currentStatus === "Inactive") {
@@ -504,25 +504,25 @@ function showStatusModal(userId, currentStatus) {
   
   if (!modal || !title || !text || !icon) return;
   
-  // 🔥 REMOVE OLD THEME CLASSES
+  // REMOVE OLD THEME CLASSES
   if (modalContent) {
     modalContent.classList.remove('red-theme');
   }
   
-  // 🔥 ADD RED THEME IF DEACTIVATE
+  // ADD RED THEME IF DEACTIVATE
   if (isDeactivate) {
     modalContent.classList.add('red-theme');
   }
   
-  // 🔥 SET ICON
+  // SET ICON
   icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
   icon.style.background = iconBg;
   
-  // 🔥 SET TITLE & TEXT
+  // SET TITLE & TEXT
   title.textContent = `Confirm ${actionText}`;
   text.textContent = `Are you sure you want to ${actionText.toLowerCase()} this user?`;
   
-  // 🔥 SHOW/HIDE BALANCE
+  // SHOW/HIDE BALANCE
   if (showBalance) {
     balanceField.style.display = "block";
     balanceInput.value = "";
@@ -540,7 +540,7 @@ function showStatusModal(userId, currentStatus) {
 
   
   
-  // 🔥 UPDATE CONFIRM BUTTON TEXT AND STYLE
+  // UPDATE CONFIRM BUTTON TEXT AND STYLE
   if (confirmBtn) {
     confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${actionText}`;
     if (isDeactivate) {
@@ -561,7 +561,7 @@ function showStatusModal(userId, currentStatus) {
     isDeactivate: isDeactivate
   };
   
-  // ✅ SHOW MODAL
+  // SHOW MODAL
   modal.style.display = "flex";
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -587,7 +587,7 @@ function showConnectionModal(userId, currentConnection) {
     newValue: isConnected ? "Disconnected" : "Connected"
   };
   
-  // ✅ I-CENTER ANG MODAL - ITO ANG BAGO
+  // I-CENTER ANG MODAL - ITO ANG BAGO
   modal.style.display = "flex";
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -614,7 +614,7 @@ async function showRequestModal(userId) {
     document.getElementById("reqEmail").textContent = req.email || "N/A";
     document.getElementById("reqAddress").textContent = req.address || "N/A";
     
-    // ✅ I-DISPLAY ANG PLAN DETAILS
+    // I-DISPLAY ANG PLAN DETAILS
     const currentPlanEl = document.getElementById("reqCurrentPlan");
     const newPlanRow = document.getElementById("reqNewPlanRow");
     const newPlanEl = document.getElementById("reqNewPlan");
@@ -635,7 +635,7 @@ async function showRequestModal(userId) {
       currentPlanEl.textContent = "No active plan";
     }
     
-    // ✅ CHECK KUNG MAY PLAN CHANGE
+    // CHECK KUNG MAY PLAN CHANGE
     if (req.change_plan && req.new_plan_name) {
       newPlanRow.style.display = 'flex';
       noChangeRow.style.display = 'none';
@@ -797,8 +797,8 @@ async function executeConfirmAction() {
     
     showToast(
       action === 'approve' 
-        ? "✅ Request approved successfully!" 
-        : "✅ Request rejected successfully!",
+        ? " Request approved successfully!" 
+        : " Request rejected successfully!",
       "success"
     );
     
@@ -890,7 +890,7 @@ async function confirmAction() {
     
     const { type, id, newValue, currentStatus, isDeactivate } = pendingAction;
     
-    // 🔥 KUNIN ANG BALANCE GAMIT ANG VALIDATED FUNCTION
+    // KUNIN ANG BALANCE GAMIT ANG VALIDATED FUNCTION
     const balanceInput = document.getElementById("balanceInput");
     let balance = 0;
     
@@ -903,12 +903,12 @@ async function confirmAction() {
         }
     }
     
-    console.log(`📊 Balance: ${balance}`);
+    console.log(` Balance: ${balance}`);
     
     try {
         let response;
         if (type === "status") {
-            // 🔥 ISAMA ANG BALANCE SA REQUEST
+            // ISAMA ANG BALANCE SA REQUEST
             response = await fetch(`/api/superadmin/users/${id}/status`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -932,7 +932,7 @@ async function confirmAction() {
         
         const data = await response.json();
         
-        // 🔥 I-UPDATE ANG LOCAL DATA
+        // I-UPDATE ANG LOCAL DATA
         if (type === "status") {
             usersData = usersData.map(u => {
                 if (String(u.user_id) === String(id)) {
@@ -952,13 +952,13 @@ async function confirmAction() {
         setCache(usersData);
         applyCurrentFilters();
         
-        // ✅ REFRESH AGAD PARA MAG-UPDATE ANG CONNECTION STATUS
+        // REFRESH AGAD PARA MAG-UPDATE ANG CONNECTION STATUS
         await performFullRefresh(true, true);
         
         if (isDeactivate && balance > 0) {
-            showToast(`✅ User deactivated successfully. Remaining balance: ₱${balance.toFixed(2)}`, "success");
+            showToast(` User deactivated successfully. Remaining balance: ₱${balance.toFixed(2)}`, "success");
         } else if (isDeactivate) {
-            showToast("✅ User deactivated successfully", "success");
+            showToast(" User deactivated successfully", "success");
         } else {
             showToast(`${type === "status" ? "Status" : "Connection"} updated successfully`, "success");
         }
@@ -1029,7 +1029,7 @@ function renderUsers(data) {
   data.forEach(user => {
     let displayStatus = user.status;
     
-    // 🔥 TAMANG KULAY PARA SA ACTIVE AT INACTIVE
+    // TAMANG KULAY PARA SA ACTIVE AT INACTIVE
     let statusColor = "";
     let statusBg = "";
     let statusBorder = "";
@@ -1053,7 +1053,7 @@ function renderUsers(data) {
     let connBg = displayConnection === "Connected" ? "#e8f5e9" : "#ffebee";
     let connBorder = displayConnection === "Connected" ? "#c8e6c9" : "#ffcdd2";
     
-    // 🔥 BUTTON TEXT - "Deactivate" lang para sa Active users
+    // BUTTON TEXT - "Deactivate" lang para sa Active users
     let statusBtnText = "Deactivate";
     let statusBtnStyle = "background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:5px 12px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;";
     
@@ -1116,7 +1116,7 @@ function renderUsers(data) {
     fragment.appendChild(tr);
   });
 
-  // ✅ One DOM update instead of multiple
+  // One DOM update instead of multiple
   tbody.innerHTML = '';
   tbody.appendChild(fragment);
 
@@ -1249,7 +1249,7 @@ function renderTerminatedUsers(data) {
     fragment.appendChild(tr);
   });
 
-  // ✅ One DOM update instead of multiple
+  // One DOM update instead of multiple
   tbody.innerHTML = '';
   tbody.appendChild(fragment);
 
@@ -1266,7 +1266,7 @@ function renderTerminatedUsers(data) {
     });
   });
 
-  // 🔥 DELETE USER BUTTON EVENTS
+  // DELETE USER BUTTON EVENTS
   document.querySelectorAll("#terminatedUsersBody .terminated-delete-btn").forEach(btn => {
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
@@ -1345,7 +1345,7 @@ function setupModalEvents() {
   });
   
   document.addEventListener("keydown", (e) => {
-    // ✅ GAMITIN ANG classList.contains('show') IMBES NA style.display
+    // GAMITIN ANG classList.contains('show') IMBES NA style.display
     if (e.key === "Escape" && modal && modal.classList.contains('show')) {
       closeStatusModal();
     }
@@ -1449,7 +1449,7 @@ function applyCurrentFilters() {
   const userCountSpan = document.getElementById("userCount");
   if (userCountSpan) userCountSpan.textContent = activeInactiveFiltered.length;
   
-  // 🔥 I-RENDER ANG ACTIVE + INACTIVE SA IISANG TABLE
+  // I-RENDER ANG ACTIVE + INACTIVE SA IISANG TABLE
   renderUsers(activeInactiveFiltered);
   
   // ====== FILTER TERMINATED USERS (hiwalay na table) ======
@@ -1476,7 +1476,7 @@ function applyCurrentFilters() {
     `;
   }
   
-  // 🔥 I-RENDER ANG TERMINATED SA HIWALAY NA TABLE
+  // I-RENDER ANG TERMINATED SA HIWALAY NA TABLE
   renderTerminatedUsers(terminatedFiltered);
 }
 
@@ -1495,12 +1495,12 @@ function generateHash(data) {
 
 async function performFullRefresh(showToastMsg = true, isManual = false) {
     if (refreshInProgress) {
-        console.log('⏳ Refresh already in progress, skipping...');
+        console.log(' Refresh already in progress, skipping...');
         return;
     }
     
     refreshInProgress = true;
-    console.log(`🔄 ${isManual ? 'MANUAL' : 'AUTO'} refresh started...`);
+    console.log(` ${isManual ? 'MANUAL' : 'AUTO'} refresh started...`);
     
     try {
         // Clear cache para siguradong fresh data
@@ -1530,7 +1530,7 @@ async function performFullRefresh(showToastMsg = true, isManual = false) {
         // Re-render tables
         applyCurrentFilters();
         
-        console.log(`✅ ${isManual ? 'MANUAL' : 'AUTO'} refresh completed. Total users:`, usersData.length);
+        console.log(` ${isManual ? 'MANUAL' : 'AUTO'} refresh completed. Total users:`, usersData.length);
         
         if (showToastMsg && isManual) {
             showToast('User list updated successfully!', 'success');
@@ -1543,7 +1543,7 @@ async function performFullRefresh(showToastMsg = true, isManual = false) {
         }
     } finally {
         refreshInProgress = false;
-        console.log('🔄 Refresh completed');
+        console.log(' Refresh completed');
     }
 }
 
@@ -1558,20 +1558,20 @@ function startAutoRefresh() {
     autoRefreshInterval = setInterval(async function() {
         // Skip auto-refresh if manual refresh is in progress
         if (refreshInProgress) {
-            console.log('⏸️ Auto-refresh skipped (refresh in progress)');
+            console.log(' Auto-refresh skipped (refresh in progress)');
             return;
         }
         await autoRefreshUsers();
     }, 10000); // ← 10 seconds instead of 5
     
-    console.log('🔄 Auto-refresh started (every 10 seconds)');
+    console.log(' Auto-refresh started (every 10 seconds)');
 }
 
 function stopAutoRefresh() {
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
-        console.log('🔄 Auto-refresh stopped');
+        console.log(' Auto-refresh stopped');
     }
 }
 
@@ -1600,7 +1600,7 @@ async function autoRefreshUsers() {
         const newHash = generateHash(newUsersData);
         
         if (newHash !== lastDataHash) {
-            console.log("🔄 New data detected from auto-refresh! Updating table...");
+            console.log(" New data detected from auto-refresh! Updating table...");
             usersData = newUsersData;
             setCache(usersData);
             lastDataHash = newHash;
@@ -1614,7 +1614,7 @@ async function autoRefreshUsers() {
 
 // ==================== MANUAL REFRESH FUNCTION ====================
 window.refreshUsers = function(showToastMsg = true) {
-    console.log("🔄 Manual refresh triggered by user");
+    console.log(" Manual refresh triggered by user");
     performFullRefresh(showToastMsg, true);
 };
 
@@ -1626,7 +1626,7 @@ document.addEventListener("keydown", function(event) {
         const target = event.target;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
             event.preventDefault(); // Prevent browser default refresh
-            console.log('🔄 Ctrl+R detected - performing manual refresh');
+            console.log(' Ctrl+R detected - performing manual refresh');
             refreshUsers(true);
         }
     }
@@ -1634,18 +1634,18 @@ document.addEventListener("keydown", function(event) {
 
 // ================= OPTIMIZED INIT =================
 document.addEventListener("DOMContentLoaded", async () => {
-    // ✅ SESSION CHECK MUNA
+    // SESSION CHECK MUNA
     const isValid = await checkSession();
     if (!isValid) return;
     
-    console.log("🚀 Initializing Users page (optimized)...");
+    console.log(" Initializing Users page (optimized)...");
     
     const hasPendingCreation = checkForPendingUserCreation();
     const cached = getCache();
     
-    // ✅ OPTIMIZED: Load from cache FIRST for super fast initial render
+    // OPTIMIZED: Load from cache FIRST for super fast initial render
     if (cached && cached.length > 0 && !hasPendingCreation) {
-        console.log("⚡ Loading from cache (super fast!)");
+        console.log(" Loading from cache (super fast!)");
         usersData = cached;
         lastDataHash = generateHash(cached);
         
@@ -1653,9 +1653,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         applyCurrentFilters();
         showLoading(false);
         
-        // ✅ Background check for updates (non-blocking)
+        // Background check for updates (non-blocking)
         setTimeout(async () => {
-            console.log("🔄 Background check for updates...");
+            console.log(" Background check for updates...");
             try {
                 const res = await fetch("/api/superadmin/users?t=" + Date.now());
                 if (res.ok) {
@@ -1672,14 +1672,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     
                     const newHash = generateHash(newUsersData);
                     if (newHash !== lastDataHash) {
-                        console.log("🔄 Updates found in background! Updating table...");
+                        console.log(" Updates found in background! Updating table...");
                         usersData = newUsersData;
                         setCache(usersData);
                         lastDataHash = newHash;
                         applyCurrentFilters();
                         showToast("User list has been updated", "success");
                     } else {
-                        console.log("✅ No updates found");
+                        console.log(" No updates found");
                     }
                 }
             } catch (err) {
@@ -1687,11 +1687,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }, 100); // 100ms delay para maka-render muna ang UI
     } else {
-        // ❌ No cache or has pending creation - fetch from API
+        // No cache or has pending creation - fetch from API
         if (hasPendingCreation) {
-            console.log("📢 Pending user creation detected - forcing fresh data load");
+            console.log(" Pending user creation detected - forcing fresh data load");
         } else {
-            console.log("📦 No cache found, fetching from API");
+            console.log(" No cache found, fetching from API");
         }
         await fetchUsers(true);
         lastDataHash = generateHash(usersData);
@@ -1731,7 +1731,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (e.target === requestModal) closeRequestModal();
     });
     
-    // ✅ START AUTO-REFRESH (10 seconds)
+    // START AUTO-REFRESH (10 seconds)
     startAutoRefresh();
     
     if (window.NotificationSystem) {

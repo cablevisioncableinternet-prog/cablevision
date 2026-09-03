@@ -280,7 +280,7 @@ async function loadApplication() {
         }
 
         // ✅ SUCCESS - No error toast!
-        console.log("✅ Application loaded successfully!");
+        console.log("Application loaded successfully!");
 
     } catch (err) {
         console.error("Failed to load application:", err);
@@ -759,12 +759,12 @@ function initViewContractButton() {
                 e.preventDefault();
                 viewContract();
             });
-            console.log("✅ View Contract button event listener attached");
+            console.log("View Contract button event listener attached");
         } else {
-            console.warn("⚠️ View Contract button not found in DOM");
+            console.warn(" View Contract button not found in DOM");
         }
     } catch (err) {
-        console.warn("⚠️ Error initializing view contract button:", err);
+        console.warn(" Error initializing view contract button:", err);
         // Don't throw, just log
     }
 }

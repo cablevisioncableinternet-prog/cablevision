@@ -478,15 +478,15 @@ function updatePasswordStrengthUI(password) {
     
     switch(strength) {
         case 'too-short':
-            message = '⚠️ Password must be at least 8 characters';
+            message = ' Password must be at least 8 characters';
             className = 'weak';
             break;
         case 'all-uppercase':
-            message = '⚠️ Password must contain at least one lowercase letter';
+            message = ' Password must contain at least one lowercase letter';
             className = 'weak';
             break;
         case 'all-numbers':
-            message = '⚠️ Password cannot be all numbers';
+            message = ' Password cannot be all numbers';
             className = 'weak';
             break;
         case 'acceptable':

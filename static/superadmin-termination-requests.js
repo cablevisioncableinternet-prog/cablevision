@@ -335,12 +335,12 @@ function changePage(page) {
 // ==================== CORE REFRESH FUNCTION ====================
 async function performFullRefresh(showToastMsg = true, isManual = false) {
     if (refreshInProgress) {
-        console.log('⏳ Refresh already in progress, skipping...');
+        console.log(' Refresh already in progress, skipping...');
         return;
     }
     
     refreshInProgress = true;
-    console.log(`🔄 ${isManual ? 'MANUAL' : 'AUTO'} refresh started...`);
+    console.log(` ${isManual ? 'MANUAL' : 'AUTO'} refresh started...`);
     
     try {
         // Clear cache para siguradong fresh data
@@ -363,7 +363,7 @@ async function performFullRefresh(showToastMsg = true, isManual = false) {
         currentPage = 1;
         renderTable();
         
-        console.log(`✅ ${isManual ? 'MANUAL' : 'AUTO'} refresh completed. Total requests:`, currentRequests.length);
+        console.log(` ${isManual ? 'MANUAL' : 'AUTO'} refresh completed. Total requests:`, currentRequests.length);
         
         if (showToastMsg && isManual) {
             showToast('Termination requests updated successfully!', 'success');
@@ -376,7 +376,7 @@ async function performFullRefresh(showToastMsg = true, isManual = false) {
         }
     } finally {
         refreshInProgress = false;
-        console.log('🔄 Refresh completed');
+        console.log(' Refresh completed');
     }
 }
 
@@ -414,7 +414,7 @@ async function loadRequests(forceRefresh = false) {
         const cached = getCache();
         
         if (cached && cached.length > 0) {
-            console.log("⚡ Loading termination requests from cache (super fast!)");
+            console.log(" Loading termination requests from cache (super fast!)");
             currentRequests = cached;
             lastDataHash = generateHash(cached);
             updateStats();
@@ -423,7 +423,7 @@ async function loadRequests(forceRefresh = false) {
             
             // Background check for updates (non-blocking)
             setTimeout(async () => {
-                console.log("🔄 Background check for updates...");
+                console.log(" Background check for updates...");
                 try {
                     const response = await fetch('/api/superadmin/termination-requests?t=' + Date.now());
                     if (response.ok) {
@@ -431,7 +431,7 @@ async function loadRequests(forceRefresh = false) {
                         if (!requests.error) {
                             const newHash = generateHash(requests);
                             if (newHash !== lastDataHash) {
-                                console.log("🔄 Updates found in background! Updating table...");
+                                console.log(" Updates found in background! Updating table...");
                                 currentRequests = requests;
                                 setCache(requests);
                                 lastDataHash = newHash;
@@ -440,7 +440,7 @@ async function loadRequests(forceRefresh = false) {
                                 renderTable();
                                 showToast("New termination requests available", "info");
                             } else {
-                                console.log("✅ No updates found");
+                                console.log(" No updates found");
                             }
                         }
                     }
@@ -451,7 +451,7 @@ async function loadRequests(forceRefresh = false) {
             
         } else {
             // No cache - fetch from API
-            console.log("📦 No cache found, fetching from API");
+            console.log(" No cache found, fetching from API");
             const response = await fetch('/api/superadmin/termination-requests');
             const requests = await response.json();
             
@@ -485,7 +485,7 @@ function startAutoRefresh() {
     // Auto-refresh every 30 seconds (but uses cache check)
     autoRefreshInterval = setInterval(async function() {
         if (refreshInProgress) {
-            console.log('⏸️ Auto-refresh skipped (refresh in progress)');
+            console.log(' Auto-refresh skipped (refresh in progress)');
             return;
         }
         
@@ -496,7 +496,7 @@ function startAutoRefresh() {
                 if (!requests.error) {
                     const newHash = generateHash(requests);
                     if (newHash !== lastDataHash) {
-                        console.log("🔄 Auto-refresh: New data detected!");
+                        console.log(" Auto-refresh: New data detected!");
                         currentRequests = requests;
                         setCache(requests);
                         lastDataHash = newHash;
@@ -512,14 +512,14 @@ function startAutoRefresh() {
         }
     }, 30000);
     
-    console.log('🔄 Auto-refresh started (every 30 seconds)');
+    console.log(' Auto-refresh started (every 30 seconds)');
 }
 
 function stopAutoRefresh() {
     if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
-        console.log('🔄 Auto-refresh stopped');
+        console.log(' Auto-refresh stopped');
     }
 }
 
@@ -658,7 +658,7 @@ async function confirmApprove() {
         if (data.success) {
             showToast(data.message || 'Termination approved successfully!', 'success');
             
-            // ✅ INSTANT UI UPDATE - remove the request from list agad
+            // INSTANT UI UPDATE - remove the request from list agad
             const requestIndex = currentRequests.findIndex(r => r.id === requestId);
             if (requestIndex !== -1) {
                 currentRequests.splice(requestIndex, 1);  // ← Remove agad
@@ -672,9 +672,9 @@ async function confirmApprove() {
             closeApproveModal();
             closeViewModal();
             
-            // ✅ BACKGROUND REFRESH (para ma-sync sa database, non-blocking)
+            // BACKGROUND REFRESH (para ma-sync sa database, non-blocking)
             setTimeout(async () => {
-                console.log("🔄 Background sync after approve...");
+                console.log(" Background sync after approve...");
                 await performFullRefresh(false, false);  // Silent refresh
             }, 500);
             
@@ -771,7 +771,7 @@ async function confirmReject() {
         if (data.success) {
             showToast('Termination request has been rejected', 'success');
             
-            // ✅ INSTANT UI UPDATE - remove the request from list agad
+            // INSTANT UI UPDATE - remove the request from list agad
             const requestIndex = currentRequests.findIndex(r => r.id === requestId);
             if (requestIndex !== -1) {
                 currentRequests.splice(requestIndex, 1);  // ← Remove agad
@@ -785,9 +785,9 @@ async function confirmReject() {
             closeRejectModal();
             closeViewModal();
             
-            // ✅ BACKGROUND REFRESH (para ma-sync sa database, non-blocking)
+            // BACKGROUND REFRESH (para ma-sync sa database, non-blocking)
             setTimeout(async () => {
-                console.log("🔄 Background sync after reject...");
+                console.log(" Background sync after reject...");
                 await performFullRefresh(false, false);  // Silent refresh
             }, 500);
             
@@ -1047,7 +1047,7 @@ document.addEventListener("keydown", function(event) {
         const target = event.target;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
             event.preventDefault();
-            console.log('🔄 Ctrl+R detected - performing manual refresh');
+            console.log(' Ctrl+R detected - performing manual refresh');
             performFullRefresh(true, true);
         }
     }
@@ -1055,7 +1055,7 @@ document.addEventListener("keydown", function(event) {
 
 // ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", async () => {
-    // ✅ SESSION CHECK MUNA
+    // SESSION CHECK MUNA
     const isValid = await checkSession();
     if (!isValid) return;
     
@@ -1067,17 +1067,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupRejectReasonToggle();
     setupModalEventListeners();
     
-    // ✅ LOAD WITH CACHE
+    // LOAD WITH CACHE
     await loadRequests(false);
     
-    // ✅ INITIALIZE NOTIFICATION SYSTEM
+    // INITIALIZE NOTIFICATION SYSTEM
     if (window.NotificationSystem) {
         window.NotificationSystem.init();
-        console.log("🔔 Notification system initialized for termination-requests page");
+        console.log(" Notification system initialized for termination-requests page");
     } else {
-        console.warn("⚠️ NotificationSystem not found!");
+        console.warn(" NotificationSystem not found!");
     }
     
-    // ✅ START AUTO-REFRESH (30 seconds)
+    // START AUTO-REFRESH (30 seconds)
     startAutoRefresh();
 });

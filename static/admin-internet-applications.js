@@ -1322,7 +1322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ==================== VISIBILITY CHANGE - REFRESH ON TAB SWITCH ====================
 document.addEventListener('visibilitychange', async () => {
     if (!document.hidden) {
-        console.log('👁️ Tab became visible, refreshing applications...');
+        console.log(' Tab became visible, refreshing applications...');
         await refreshAdminInfo();
         clearApplicationsCache();
         fetchApplications(true);
