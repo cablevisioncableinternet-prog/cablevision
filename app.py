@@ -11422,6 +11422,32 @@ def superadmin_create_user_account():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# =============================== 
+# Generate Password Preview (for modal display)
+# ===============================    
+@app.route("/api/superadmin/generate-password-preview", methods=["POST"])
+def generate_password_preview():
+    """Generate a secure password for preview (does NOT save to database)"""
+    try:
+        data = request.get_json()
+        application_number = data.get("application_number")
+        
+        if not application_number:
+            return jsonify({"error": "Application number required"}), 400
+        
+        # ✅ GAMITIN ANG EXISTING generate_secure_password() FUNCTION
+        password = generate_secure_password(8)
+        
+        return jsonify({
+            "success": True,
+            "password": password,
+            "application_number": application_number
+        })
+        
+    except Exception as e:
+        print(f" Error generating password preview: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 def send_account_creation_email(to_email, user_id, password, first_name, contract_number, customer_data):
     """Send account creation email to customer using Brevo API"""

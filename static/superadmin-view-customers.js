@@ -365,34 +365,48 @@ function openCreateAccountModal(applicationId) {
     const errorDiv = contentDiv.querySelector('.error-message');
     if (errorDiv) errorDiv.remove();
     
+    // ✅ KUHAIN MUNA ANG CUSTOMER DATA
     fetch(`/api/superadmin/customer/${applicationId}`)
         .then(res => res.json())
         .then(customer => {
             if (customer.error) throw new Error(customer.error);
             
-            const randomNum = Math.floor(Math.random() * 9000) + 1000;
-            const generatedUserId = `CV-${randomNum}`;
-            currentGeneratedUserId = generatedUserId;
-            
-            document.getElementById('generatedUserId').textContent = generatedUserId;
-            document.getElementById('defaultPassword').textContent = '123456';
-            document.getElementById('accountFullName').textContent = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
-            document.getElementById('accountAppNumber').textContent = customer.application_number || 'N/A';
-            document.getElementById('accountContractNumber').textContent = customer.contract_number || 'N/A';
-            document.getElementById('accountEmail').textContent = customer.email || 'N/A';
-            document.getElementById('accountContact').textContent = customer.mobile || 'N/A';
-            
-            let fullAddress = [];
-            if (customer.address) fullAddress.push(customer.address);
-            if (customer.barangay) fullAddress.push(customer.barangay);
-            if (customer.city) fullAddress.push(customer.city);
-            if (customer.province) fullAddress.push(customer.province);
-            document.getElementById('accountAddress').textContent = fullAddress.join(', ') || 'N/A';
-            document.getElementById('accountPlan').textContent = customer.plan || 'N/A';
-            document.getElementById('accountBillingDate').textContent = customer.billing_date || 'N/A';
-            
-            loadingDiv.style.display = 'none';
-            contentDiv.style.display = 'block';
+            // ✅ NGAYON, KUHAIN ANG RANDOM PASSWORD MULA SA BACKEND
+            return fetch('/api/superadmin/generate-password-preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ application_number: applicationId })
+            })
+            .then(res => res.json())
+            .then(passwordData => {
+                if (passwordData.error) throw new Error(passwordData.error);
+                
+                const randomPassword = passwordData.password;
+                const randomNum = Math.floor(Math.random() * 9000) + 1000;
+                const generatedUserId = `CV-${randomNum}`;
+                currentGeneratedUserId = generatedUserId;
+                
+                document.getElementById('generatedUserId').textContent = generatedUserId;
+                // ✅ ITO ANG BAGONG PASSWORD - HINDI NA "123456"
+                document.getElementById('defaultPassword').textContent = randomPassword;
+                document.getElementById('accountFullName').textContent = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
+                document.getElementById('accountAppNumber').textContent = customer.application_number || 'N/A';
+                document.getElementById('accountContractNumber').textContent = customer.contract_number || 'N/A';
+                document.getElementById('accountEmail').textContent = customer.email || 'N/A';
+                document.getElementById('accountContact').textContent = customer.mobile || 'N/A';
+                
+                let fullAddress = [];
+                if (customer.address) fullAddress.push(customer.address);
+                if (customer.barangay) fullAddress.push(customer.barangay);
+                if (customer.city) fullAddress.push(customer.city);
+                if (customer.province) fullAddress.push(customer.province);
+                document.getElementById('accountAddress').textContent = fullAddress.join(', ') || 'N/A';
+                document.getElementById('accountPlan').textContent = customer.plan || 'N/A';
+                document.getElementById('accountBillingDate').textContent = customer.billing_date || 'N/A';
+                
+                loadingDiv.style.display = 'none';
+                contentDiv.style.display = 'block';
+            });
         })
         .catch(err => {
             console.error(err);
@@ -418,12 +432,17 @@ function createUserAccount() {
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Creating...';
     
+    // ✅ KUNIN ANG PASSWORD NA NAKALAGAY SA MODAL
+    const passwordDisplay = document.getElementById('defaultPassword');
+    const passwordToSend = passwordDisplay ? passwordDisplay.textContent : null;
+    
     fetch('/api/superadmin/create-user-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             application_number: currentCreateAccountCustomer,
-            user_id: currentGeneratedUserId
+            user_id: currentGeneratedUserId,
+            password: passwordToSend  // ✅ IPADALA ANG PASSWORD
         })
     })
     .then(res => res.json())
