@@ -11310,6 +11310,7 @@ def superadmin_create_user_account():
         data = request.get_json()
         application_number = data.get("application_number")
         provided_user_id = data.get("user_id")  # Get the user_id from frontend
+        provided_password = data.get("password")  # ✅ KUNIN ANG PASSWORD MULA SA FRONTEND
         
         if not application_number:
             return jsonify({"error": "Application number required"}), 400
@@ -11358,7 +11359,14 @@ def superadmin_create_user_account():
                 if not existing:
                     break
         
-        default_password = generate_secure_password(8)
+        # ✅ GAMITIN ANG PASSWORD MULA SA FRONTEND KUNG MERON
+        if provided_password and len(provided_password) == 8:
+            default_password = provided_password
+            print(f" Using password from frontend: {default_password}")
+        else:
+            default_password = generate_secure_password(8)
+            print(f" Generated fallback password: {default_password}")
+        
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Get data from customer record

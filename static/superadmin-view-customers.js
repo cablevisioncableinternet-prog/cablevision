@@ -418,12 +418,17 @@ function createUserAccount() {
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Creating...';
     
+    // ✅ KUNIN ANG PASSWORD NA NAKALAGAY SA MODAL
+    const passwordDisplay = document.getElementById('defaultPassword');
+    const passwordToSend = passwordDisplay ? passwordDisplay.textContent : null;
+    
     fetch('/api/superadmin/create-user-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             application_number: currentCreateAccountCustomer,
-            user_id: currentGeneratedUserId
+            user_id: currentGeneratedUserId,
+            password: passwordToSend  // ✅ IPADALA ANG PASSWORD!
         })
     })
     .then(res => res.json())
