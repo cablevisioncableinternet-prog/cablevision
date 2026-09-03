@@ -422,6 +422,8 @@ function createUserAccount() {
     const passwordDisplay = document.getElementById('defaultPassword');
     const passwordToSend = passwordDisplay ? passwordDisplay.textContent : null;
     
+    console.log("📤 Sending password to backend:", passwordToSend); // PARA MAKITA KUNG ANO ANG IPINAPADALA
+    
     fetch('/api/superadmin/create-user-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
