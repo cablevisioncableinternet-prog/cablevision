@@ -2264,7 +2264,9 @@ def create_admin():
 
         # Generate next available Admin ID
         admin_id = generate_next_admin_id()
-        default_password = "123456"
+        
+        # ✅ GUMAWA NG RANDOM PASSWORD (8 CHARACTERS - letters and numbers)
+        default_password = generate_secure_password(8)
         created_at = datetime.now().isoformat()
 
         # Insert into MySQL
@@ -2287,6 +2289,7 @@ def create_admin():
         execute_query(insert_query, params)
         
         print(f" Admin saved successfully: {admin_id}")
+        print(f" Password: {default_password}")
         
         # Send email (with plain password, not hashed)
         try:
@@ -2296,7 +2299,8 @@ def create_admin():
 
         return jsonify({
             "message": "Admin created successfully",
-            "admin_id": admin_id
+            "admin_id": admin_id,
+            "password": default_password  # ✅ I-RETURN ANG PASSWORD
         }), 201
 
     except Exception as e:
