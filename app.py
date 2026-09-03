@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 from flask_cors import CORS
 import requests
 import random
+import string
 import smtplib
 import traceback
 from email.mime.text import MIMEText
@@ -11277,7 +11278,25 @@ def get_single_customer(customer_id):
         return jsonify({"error": str(e)}), 500
 
 
-        
+
+# =============================== 
+# Generate User Password
+# =============================== 
+def generate_secure_password(length=8):
+    """Generate a secure random password with letters and numbers only"""
+    # Characters: uppercase, lowercase, and digits (no special characters para madaling i-type)
+    characters = string.ascii_letters + string.digits
+    # Ensure at least one letter and one number
+    while True:
+        password = ''.join(random.choice(characters) for _ in range(length))
+        # Make sure it has at least one letter and one number
+        if any(c.isalpha() for c in password) and any(c.isdigit() for c in password):
+            return password
+
+
+# =============================== 
+# Create User Account
+# ===============================    
 @app.route("/api/superadmin/create-user-account", methods=["POST"])
 def superadmin_create_user_account():
     """Create a user account for an installed customer and send email"""
@@ -11336,7 +11355,7 @@ def superadmin_create_user_account():
                 if not existing:
                     break
         
-        default_password = "123456"
+        default_password = generate_secure_password(8)
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Get data from customer record
