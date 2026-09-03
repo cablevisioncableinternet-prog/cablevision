@@ -3477,7 +3477,8 @@ def create_technician():
         # Generate technician_id
         technician_id = generate_next_technician_id(area)
         
-        default_password = "123456"
+        # ✅ GUMAWA NG RANDOM PASSWORD (8 CHARACTERS - letters and numbers)
+        default_password = generate_secure_password(8)
         created_at = datetime.now().isoformat()
 
         # Insert into MySQL
@@ -3500,6 +3501,7 @@ def create_technician():
         
         execute_query(insert_query, params)
         print(f" Technician saved successfully: {technician_id}")
+        print(f" Password: {default_password}")
         
         # Send email
         try:
@@ -3509,7 +3511,8 @@ def create_technician():
 
         return jsonify({
             "message": "Technician created successfully",
-            "technician_id": technician_id
+            "technician_id": technician_id,
+            "password": default_password  # ✅ I-RETURN ANG PASSWORD
         }), 201
 
     except Exception as e:
