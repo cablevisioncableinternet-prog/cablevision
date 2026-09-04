@@ -200,7 +200,11 @@
         <i class="fas fa-chevron-down"></i>
       </button>
       <ul class="dropdown-menu" id="profileMenu">
-        <li><a href="/superadmin/profile" id="profileLink"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li>
+            <a href="#" onclick="window.location.href='/superadmin/profile'; return false;" id="profileLink">
+                <i class="fas fa-user-circle"></i> Profile
+            </a>
+        </li>
          <li><a href="/superadmin/login-history" id="loginHistoryLink"><i class="fas fa-history"></i> Login History</a></li>
         <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
       </ul>
