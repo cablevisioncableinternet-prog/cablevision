@@ -419,14 +419,14 @@ if(logoutBtn && logoutModal){
     // Open modal
     logoutBtn.addEventListener("click", function(e) { 
         e.preventDefault(); 
-        logoutModal.classList.add('show');  // ITO ANG TAMA
+        logoutModal.classList.add('show');  // ✅ ITO ANG TAMA
         document.body.style.overflow = 'hidden';
     });
     
     // Close - X button
     if(closeBtn) {
         closeBtn.addEventListener("click", function() { 
-            logoutModal.classList.remove('show');  // ITO ANG TAMA
+            logoutModal.classList.remove('show');  // ✅ ITO ANG TAMA
             document.body.style.overflow = '';
         });
     }
@@ -434,7 +434,7 @@ if(logoutBtn && logoutModal){
     // Close - Cancel button
     if(cancelBtn) {
         cancelBtn.addEventListener("click", function() { 
-            logoutModal.classList.remove('show');  // ITO ANG TAMA
+            logoutModal.classList.remove('show');  // ✅ ITO ANG TAMA
             document.body.style.overflow = '';
         });
     }
@@ -457,7 +457,7 @@ if(logoutBtn && logoutModal){
     // Close on outside click
     window.addEventListener("click", function(e) { 
         if(e.target === logoutModal) {
-            logoutModal.classList.remove('show');  // ITO ANG TAMA
+            logoutModal.classList.remove('show');  // ✅ ITO ANG TAMA
             document.body.style.overflow = '';
         }
     });
@@ -559,7 +559,7 @@ function openViewInfoModal(technicianId) {
     fetch(`/api/superadmin/technicians/${technicianId}`)
         .then((res) => res.json())
         .then((technician) => {
-            console.log(" Technician data:", technician);
+            console.log("📋 Technician data:", technician);
             
             if (infoTechnicianId) infoTechnicianId.value = technician.technician_id || "";
             if (infoName) infoName.value = technician.name || "";
@@ -572,10 +572,10 @@ function openViewInfoModal(technicianId) {
                     // Find the team name from allTeams data
                     const team = allTeams.find(t => t.team_id === technician.team_id);
                     infoTeam.value = team ? team.team_name : technician.team_id;
-                    console.log(` Team found: ${infoTeam.value}`);
+                    console.log(`✅ Team found: ${infoTeam.value}`);
                 } else {
                     infoTeam.value = "Not assigned";
-                    console.log(` No team assigned`);
+                    console.log(`ℹ️ No team assigned`);
                 }
             }
 
@@ -586,7 +586,7 @@ function openViewInfoModal(technicianId) {
             }
         })
         .catch((error) => {
-            console.error(" Failed to load technician info:", error);
+            console.error("❌ Failed to load technician info:", error);
             showToast("Failed to load technician information", 'error');
             
             // Set error state
@@ -640,7 +640,7 @@ async function loadAreasForSelect() {
     const currentValues = {};
     validSelects.forEach(select => {
         currentValues[select.id] = select.value;
-        console.log(` Stored current value for ${select.id}: "${select.value}"`);
+        console.log(`📌 Stored current value for ${select.id}: "${select.value}"`);
     });
     
     validSelects.forEach(select => {
@@ -658,7 +658,7 @@ async function loadAreasForSelect() {
         const uniqueCities = [...new Set(areas.map(area => area.city))];
         uniqueCities.sort();
         
-        console.log(` Loaded ${uniqueCities.length} cities:`, uniqueCities);
+        console.log(`📋 Loaded ${uniqueCities.length} cities:`, uniqueCities);
         
         validSelects.forEach(select => {
             const selectId = select.id;
@@ -684,18 +684,18 @@ async function loadAreasForSelect() {
             if (currentValue) {
                 if (uniqueCities.includes(currentValue)) {
                     select.value = currentValue;
-                    console.log(` ${selectId}: Selected exact match: "${currentValue}"`);
+                    console.log(`✅ ${selectId}: Selected exact match: "${currentValue}"`);
                 } else {
                     const matched = uniqueCities.find(c => c.toLowerCase() === currentValue.toLowerCase());
                     if (matched) {
                         select.value = matched;
-                        console.log(` ${selectId}: Selected case-insensitive match: "${matched}" (from "${currentValue}")`);
+                        console.log(`✅ ${selectId}: Selected case-insensitive match: "${matched}" (from "${currentValue}")`);
                     } else {
-                        console.log(` ${selectId}: Area "${currentValue}" not found in options`);
+                        console.log(`⚠️ ${selectId}: Area "${currentValue}" not found in options`);
                     }
                 }
             } else {
-                console.log(` ${selectId}: No current value to select`);
+                console.log(`ℹ️ ${selectId}: No current value to select`);
             }
         });
         
@@ -761,10 +761,11 @@ function renderTechnicians(technicians) {
       // Find team in allTeams (which should be loaded)
       const team = allTeams.find(t => t.team_id === technician.team_id);
       teamName = team ? team.team_name : 'Unknown Team';
-      console.log(` Technician ${technician.technician_id} (${technician.name}) -> Team: ${technician.team_id} -> Name: ${teamName}`);
+      console.log(`🔍 Technician ${technician.technician_id} (${technician.name}) -> Team: ${technician.team_id} -> Name: ${teamName}`);
     }
     
     const tr = document.createElement("tr");
+    const needsAllow = hasActiveLoginLock(technician);
     tr.innerHTML = `
         <td><strong>${technician.technician_id}</strong><br><span style="font-size: 0.7rem; color: #666;">${technician.name}</span></td>
         <td>${technician.email}</td>
@@ -785,7 +786,8 @@ function renderTechnicians(technicians) {
         </span>
         </td>
       <td style="text-align: center;">
-        <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+            ${needsAllow ? '<small style="display:block;color:#dc2626;margin-bottom:6px;">Account locked</small>' : ''}
+        <div class="account-action-buttons" style="display: flex; gap: 10px; justify-content: center; align-items: center;">
           <button class="statusBtn"
               style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
               data-id="${technician.technician_id}"
@@ -806,6 +808,7 @@ function renderTechnicians(technicians) {
               data-name="${technician.name}">
               <i class="fas fa-trash"></i> Delete
           </button>
+          ${needsAllow ? `<button class="allowLoginBtn" style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;" data-id="${technician.technician_id}"><i class="fas fa-unlock"></i> Allow</button>` : ''}
         </div>
         </td>
     `;
@@ -822,6 +825,20 @@ function renderTechnicians(technicians) {
   document.querySelectorAll(".viewBtn").forEach((btn) => {
     btn.onclick = () => openViewInfoModal(btn.dataset.id);
   });
+    document.querySelectorAll(".allowLoginBtn").forEach((btn) => {
+        btn.onclick = async () => {
+            btn.disabled = true;
+            try {
+                const response = await fetch(`/api/superadmin/technicians/${btn.dataset.id}/unlock`, { method: "POST" });
+                const data = await response.json();
+                showToast(data.message || data.error || "Unable to allow login", response.ok ? "success" : "error");
+                if (response.ok) await loadTechnicians(true);
+            } catch (error) {
+                showToast("Network error. Please try again.", "error");
+                btn.disabled = false;
+            }
+        };
+    });
 }
 
 // ================= LOAD TECHNICIANS =================
@@ -830,7 +847,13 @@ async function loadTechnicians(forceRefresh = false) {
   if (!tbody) return;
 
   const cached = JSON.parse(sessionStorage.getItem("techniciansCache") || "null");
-  if (cached && !forceRefresh) {
+    const cacheHasLockoutFields = Array.isArray(cached) && (
+        cached.length === 0 || (
+            Object.prototype.hasOwnProperty.call(cached[0], "locked_until") &&
+            Object.prototype.hasOwnProperty.call(cached[0], "lock_level")
+        )
+    );
+    if (cached && cacheHasLockoutFields && !forceRefresh) {
     allTechnicians = cached;
     allTechniciansData = cached;
     
@@ -886,6 +909,13 @@ let allTeams = [];
 let allTeamsData = [];
 let allTechniciansData = [];
 let currentEditTeamId = null;
+
+function hasActiveLoginLock(account) {
+    if (Number(account.login_locked) === 1 || account.login_locked === true) return true;
+    if (Number(account.lock_level) > 0) return true;
+    const lockedUntil = account.locked_until ? new Date(String(account.locked_until).replace(' ', 'T')) : null;
+    return Boolean(lockedUntil && !Number.isNaN(lockedUntil.getTime()) && lockedUntil.getTime() > Date.now());
+}
 let allAvailableTechnicians = [];
 let pendingMembers = [];
 let removedMembers = [];
@@ -900,14 +930,14 @@ async function loadTeamsForSelect() {
     const areaInput = document.getElementById('technicianArea');
     
     try {
-        console.log(' Loading teams data...');
+        console.log('📡 Loading teams data...');
         const response = await fetch('/api/superadmin/teams');
         if (!response.ok) throw new Error('Failed to load teams');
         
         const teams = await response.json();
         allTeams = teams;
         allTeamsData = teams;
-        console.log(` Loaded ${teams.length} teams`);
+        console.log(`✅ Loaded ${teams.length} teams`);
         
         // Log teams for debugging
         teams.forEach(team => {
@@ -927,12 +957,12 @@ async function loadTeamsForSelect() {
             });
         }
         
-        // LOAD TECHNICIANS FOR LEADER DROPDOWN
+        // ✅ LOAD TECHNICIANS FOR LEADER DROPDOWN
         const techResponse = await fetch('/api/superadmin/technicians');
         const technicians = await techResponse.json();
         allTechniciansData = technicians;
         
-        // POPULATE LEADER DROPDOWN WITH ALL TECHNICIANS (will be filtered by area)
+        // ✅ POPULATE LEADER DROPDOWN WITH ALL TECHNICIANS (will be filtered by area)
         if (leaderSelect) {
             const currentValue = leaderSelect.value;
             // Show all technicians initially (but will be filtered by area selection)
@@ -940,7 +970,7 @@ async function loadTeamsForSelect() {
             // We'll populate properly when area is selected
         }
         
-        // SETUP AREA CHANGE EVENT FOR LEADER DROPDOWN
+        // ✅ SETUP AREA CHANGE EVENT FOR LEADER DROPDOWN
         const areaSelect = document.getElementById('teamArea');
         if (areaSelect) {
             // Remove existing listener to avoid duplicates
@@ -962,7 +992,7 @@ async function loadTeamsForSelect() {
         }
         
     } catch (error) {
-        console.error(' Error loading teams:', error);
+        console.error('❌ Error loading teams:', error);
         if (teamSelect) {
             teamSelect.innerHTML = '<option value="">Error loading teams</option>';
         }
@@ -972,13 +1002,13 @@ async function loadTeamsForSelect() {
     }
 }
 
-// NEW FUNCTION: Update leader dropdown based on selected area
+// ✅ NEW FUNCTION: Update leader dropdown based on selected area
 function updateLeaderDropdownByArea() {
     const areaSelect = document.getElementById('teamArea');
     const leaderSelect = document.getElementById('teamLeader');
     const selectedArea = areaSelect ? areaSelect.value : '';
     
-    console.log(` Updating leader dropdown for area: "${selectedArea}"`);
+    console.log(`🔍 Updating leader dropdown for area: "${selectedArea}"`);
     
     if (!leaderSelect) return;
     
@@ -992,7 +1022,7 @@ function updateLeaderDropdownByArea() {
         // No area selected - show message
         leaderSelect.innerHTML = '<option value="">Select area first</option>';
         leaderSelect.disabled = true;
-        console.log(' No area selected, leader dropdown disabled');
+        console.log('ℹ️ No area selected, leader dropdown disabled');
         return;
     }
     
@@ -1007,7 +1037,7 @@ function updateLeaderDropdownByArea() {
         return techArea === areaLower;
     });
     
-    console.log(` ${filteredTechnicians.length} technicians found in area "${selectedArea}"`);
+    console.log(`✅ ${filteredTechnicians.length} technicians found in area "${selectedArea}"`);
     
     // Add "No leader assigned" option
     leaderSelect.innerHTML = '<option value="">No leader assigned</option>';
@@ -1034,7 +1064,7 @@ function updateLeaderDropdownByArea() {
     }
     
     leaderSelect.disabled = false;
-    console.log(` Leader dropdown updated with ${filteredTechnicians.length} technicians`);
+    console.log(`✅ Leader dropdown updated with ${filteredTechnicians.length} technicians`);
 }
 
 // ==================== TEAMS TABLE ====================
@@ -1226,24 +1256,24 @@ async function openTeamEditModal(teamId) {
     // Show modal
     const modal = document.getElementById('teamEditModal');
     if (!modal) {
-        console.error(' teamEditModal element not found!');
+        console.error('❌ teamEditModal element not found!');
         return;
     }
     modal.classList.add('show');
     modal.style.display = 'flex';
     
     try {
-        console.log(' Loading technicians data...');
+        console.log('📥 Loading technicians data...');
         await loadAllTechnicians();
-        console.log(` Loaded ${allTechniciansData.length} technicians`);
+        console.log(`✅ Loaded ${allTechniciansData.length} technicians`);
         
-        console.log(` Loading team data for ${teamId}...`);
+        console.log(`📥 Loading team data for ${teamId}...`);
         await loadTeamData(teamId);
         
         // Get the current area value from the dropdown
         const areaSelect = document.getElementById('editTeamArea');
         const currentArea = areaSelect ? areaSelect.value : '';
-        console.log(` Current area value before loading areas: "${currentArea}"`);
+        console.log(`📍 Current area value before loading areas: "${currentArea}"`);
         
         // Now load areas (this will preserve the selected value)
         await loadAreasForSelect();
@@ -1254,14 +1284,14 @@ async function openTeamEditModal(teamId) {
             const match = options.find(opt => opt.value === currentArea);
             if (match) {
                 areaSelect.value = currentArea;
-                console.log(` Re-set area value after load: "${currentArea}"`);
+                console.log(`✅ Re-set area value after load: "${currentArea}"`);
             } else {
                 const matchCaseInsensitive = options.find(opt => 
                     opt.value.toLowerCase() === currentArea.toLowerCase()
                 );
                 if (matchCaseInsensitive) {
                     areaSelect.value = matchCaseInsensitive.value;
-                    console.log(` Re-set area value (case-insensitive): "${matchCaseInsensitive.value}"`);
+                    console.log(`✅ Re-set area value (case-insensitive): "${matchCaseInsensitive.value}"`);
                 }
             }
         }
@@ -1274,7 +1304,7 @@ async function openTeamEditModal(teamId) {
         }, 200);
         
     } catch (error) {
-        console.error(' Error opening team edit modal:', error);
+        console.error('❌ Error opening team edit modal:', error);
         showToast('Error loading team data', 'error');
     }
 }
@@ -1282,27 +1312,27 @@ async function openTeamEditModal(teamId) {
 // Load all technicians
 async function loadAllTechnicians() {
     try {
-        console.log(' Fetching technicians from API...');
+        console.log('📡 Fetching technicians from API...');
         const response = await fetch('/api/superadmin/technicians');
-        console.log(` Response status: ${response.status}`);
+        console.log(`📡 Response status: ${response.status}`);
         
         if (response.ok) {
             const data = await response.json();
             allTechniciansData = data;
-            console.log(` Loaded ${allTechniciansData.length} technicians`);
+            console.log(`✅ Loaded ${allTechniciansData.length} technicians`);
             
             // Log technicians with team_id
             const withTeam = data.filter(t => t.team_id);
-            console.log(` ${withTeam.length} technicians have team_id:`);
+            console.log(`📋 ${withTeam.length} technicians have team_id:`);
             withTeam.forEach(t => {
                 console.log(`   ${t.technician_id} (${t.name}) -> ${t.team_id}`);
             });
             
         } else {
-            console.error(' Failed to load technicians:', response.status);
+            console.error('❌ Failed to load technicians:', response.status);
         }
     } catch (error) {
-        console.error(' Error loading technicians:', error);
+        console.error('❌ Error loading technicians:', error);
     }
 }
 
@@ -1313,7 +1343,7 @@ async function loadTeamData(teamId) {
         if (!response.ok) throw new Error('Failed to load team data');
         
         const team = await response.json();
-        console.log(' Team data loaded:', team);
+        console.log('📋 Team data loaded:', team);
         
         // Store original team data for comparison
         originalTeamData = {
@@ -1332,20 +1362,20 @@ async function loadTeamData(teamId) {
         const areaSelect = document.getElementById('editTeamArea');
         if (areaSelect) {
             areaSelect.value = team.area || '';
-            console.log(` Area set directly: "${team.area}"`);
+            console.log(`📍 Area set directly: "${team.area}"`);
         }
         
         document.getElementById('editTeamLeader').value = team.team_leader_id || '';
         document.getElementById('editTeamStatus').value = team.status || 'Active';
         
-        console.log(` Team area: "${team.area}"`);
+        console.log(`📍 Team area: "${team.area}"`);
         
         // Load team members
-        console.log(` Loading members for team ${teamId}...`);
+        console.log(`📋 Loading members for team ${teamId}...`);
         loadTeamMembersDirect(teamId);
         
     } catch (error) {
-        console.error(' Error loading team data:', error);
+        console.error('❌ Error loading team data:', error);
         showToast('Failed to load team data', 'error');
     }
 }
@@ -1354,21 +1384,21 @@ async function loadTeamData(teamId) {
 function loadTeamMembersDirect(teamId) {
     const container = document.getElementById('teamMembersList');
     if (!container) {
-        console.error(' teamMembersList element not found!');
+        console.error('❌ teamMembersList element not found!');
         return;
     }
     
     // Make sure we have data
     if (!allTechniciansData || allTechniciansData.length === 0) {
-        console.log(' allTechniciansData is empty in loadTeamMembersDirect, reloading...');
+        console.log('📡 allTechniciansData is empty in loadTeamMembersDirect, reloading...');
         loadAllTechnicians().then(() => {
             loadTeamMembersDirect(teamId);
         });
         return;
     }
     
-    console.log(` Looking for members in team ${teamId}`);
-    console.log(` Total technicians in allTechniciansData: ${allTechniciansData.length}`);
+    console.log(`🔍 Looking for members in team ${teamId}`);
+    console.log(`📋 Total technicians in allTechniciansData: ${allTechniciansData.length}`);
     
     // Get current members from database
     const currentMembers = allTechniciansData.filter(tech => tech.team_id === teamId);
@@ -1392,7 +1422,7 @@ function loadTeamMembersDirect(teamId) {
     // Remove members that are marked for removal
     displayMembers = displayMembers.filter(m => !removedMembers.includes(m.technician_id));
     
-    console.log(` Displaying ${displayMembers.length} members (${currentMembers.length} original, +${pendingMembers.length} pending, -${removedMembers.length} removed)`);
+    console.log(`📋 Displaying ${displayMembers.length} members (${currentMembers.length} original, +${pendingMembers.length} pending, -${removedMembers.length} removed)`);
     
     // Update member count
     const memberCountSpan = document.getElementById('memberCount');
@@ -1480,40 +1510,40 @@ function toggleMember(technicianId) {
     const leaderSelect = document.getElementById('editTeamLeader');
     const currentLeader = leaderSelect ? leaderSelect.value : null;
     
-    // KUNIN ANG TEAM AREA PARA SA VALIDATION
+    // ✅ KUNIN ANG TEAM AREA PARA SA VALIDATION
     const teamArea = originalTeamData.area || '';
     
     if (isOriginalMember && !isPendingRemoval) {
         // Original member - mark for removal
         removedMembers.push(technicianId);
-        console.log(` Marked ${technicianId} for removal`);
+        console.log(`✅ Marked ${technicianId} for removal`);
         
         // If the removed member is the team leader, auto-set to "No leader assigned"
         if (currentLeader === technicianId) {
             if (leaderSelect) {
                 leaderSelect.value = '';
-                console.log(` Auto-set leader to "No leader assigned" because ${technicianId} was removed`);
+                console.log(`🔄 Auto-set leader to "No leader assigned" because ${technicianId} was removed`);
                 showToast('Team leader removed - automatically set to "No leader assigned"', 'info');
             }
         }
     } else if (isOriginalMember && isPendingRemoval) {
         // Original member - restore (remove from removal list)
         removedMembers = removedMembers.filter(id => id !== technicianId);
-        console.log(` Restored ${technicianId}`);
+        console.log(`✅ Restored ${technicianId}`);
         
         // If the restored member was the original leader, restore it
         if (originalMembers.includes(technicianId) && leaderSelect) {
             const originalLeader = originalTeamData.team_leader_id;
             if (originalLeader === technicianId) {
                 leaderSelect.value = technicianId;
-                console.log(` Restored leader to ${technicianId}`);
+                console.log(`🔄 Restored leader to ${technicianId}`);
             }
         }
     } else if (!isOriginalMember && !isPendingAddition) {
         // Not in team - mark for addition
         const tech = allTechniciansData.find(t => t.technician_id === technicianId);
         if (tech && tech.status === 'Active') {
-            // VALIDATE: DAPAT PAREHO ANG AREA
+            // ✅ VALIDATE: DAPAT PAREHO ANG AREA
             const techArea = (tech.area || '').toLowerCase().trim();
             const teamAreaLower = teamArea.toLowerCase().trim();
             
@@ -1525,7 +1555,7 @@ function toggleMember(technicianId) {
             pendingMembers.push(technicianId);
             // Also remove from available list if present
             allAvailableTechnicians = allAvailableTechnicians.filter(t => t.technician_id !== technicianId);
-            console.log(` Marked ${technicianId} for addition`);
+            console.log(`✅ Marked ${technicianId} for addition`);
         } else {
             showToast('Cannot add inactive technician', 'error');
             return;
@@ -1538,7 +1568,7 @@ function toggleMember(technicianId) {
         if (tech) {
             allAvailableTechnicians.push(tech);
         }
-        console.log(` Cancelled addition of ${technicianId}`);
+        console.log(`✅ Cancelled addition of ${technicianId}`);
     }
     
     // Refresh the members list and available dropdown
@@ -1552,16 +1582,16 @@ function updateAvailableTechniciansDropdown() {
     const select = document.getElementById('addMemberSelect');
     if (!select) return;
     
-    // KUNIN ANG AREA NG TEAM
+    // ✅ KUNIN ANG AREA NG TEAM
     const teamArea = originalTeamData.area || '';
-    console.log(` Updating available technicians for area: "${teamArea}"`);
+    console.log(`🔍 Updating available technicians for area: "${teamArea}"`);
     
     // Get all active technicians NOT in any team, with same area
     const available = allTechniciansData.filter(tech => {
         // Must be active
         if (tech.status !== 'Active') return false;
         
-        // MUST HAVE SAME AREA AS TEAM
+        // ✅ MUST HAVE SAME AREA AS TEAM
         const techArea = (tech.area || '').toLowerCase().trim();
         const teamAreaLower = teamArea.toLowerCase().trim();
         if (techArea !== teamAreaLower) return false;
@@ -1597,7 +1627,7 @@ function updateAvailableTechniciansDropdown() {
         });
     }
     
-    console.log(` ${available.length} available technicians matching area "${teamArea}"`);
+    console.log(`✅ ${available.length} available technicians matching area "${teamArea}"`);
 }
 
 // Add member to team
@@ -1649,21 +1679,21 @@ async function loadAvailableTechnicians(teamId) {
             }
         }
         
-        // KUNIN ANG AREA NG TEAM
+        // ✅ KUNIN ANG AREA NG TEAM
         const teamArea = originalTeamData.area || '';
-        console.log(` Team area: "${teamArea}"`);
+        console.log(`🔍 Team area: "${teamArea}"`);
         
-        console.log(` Filtering available technicians for team ${teamId} (Area: ${teamArea})`);
-        console.log(` Total technicians: ${allTechs.length}`);
+        console.log(`🔍 Filtering available technicians for team ${teamId} (Area: ${teamArea})`);
+        console.log(`📋 Total technicians: ${allTechs.length}`);
         
-        // I-FILTER BATAY SA AREA NG TEAM
+        // ✅ I-FILTER BATAY SA AREA NG TEAM
         const available = allTechs.filter(tech => {
             // Must be active
             if (tech.status !== 'Active') {
                 return false;
             }
             
-            // MUST HAVE SAME AREA AS TEAM
+            // ✅ MUST HAVE SAME AREA AS TEAM
             // I-normalize ang area para sa case-insensitive comparison
             const techArea = (tech.area || '').toLowerCase().trim();
             const teamAreaLower = teamArea.toLowerCase().trim();
@@ -1716,7 +1746,7 @@ async function loadAvailableTechnicians(teamId) {
             });
         }
         
-        console.log(` ${available.length} available technicians matching area "${teamArea}" for team ${teamId}`);
+        console.log(`✅ ${available.length} available technicians matching area "${teamArea}" for team ${teamId}`);
         
     } catch (error) {
         console.error('Error loading available technicians:', error);
@@ -1732,7 +1762,7 @@ async function loadTeamLeadersForEdit() {
     try {
         // Make sure we have data
         if (!allTechniciansData || allTechniciansData.length === 0) {
-            console.log(' allTechniciansData is empty, reloading...');
+            console.log('📡 allTechniciansData is empty, reloading...');
             await loadAllTechnicians();
         }
         
@@ -1778,7 +1808,7 @@ async function loadTeamLeadersForEdit() {
         // If the current leader was removed, auto-set to "No leader assigned"
         if (select.value && !currentMembers.find(m => m.technician_id === select.value)) {
             select.value = '';
-            console.log(` Auto-set leader to "No leader assigned" (leader was removed)`);
+            console.log(`🔄 Auto-set leader to "No leader assigned" (leader was removed)`);
         }
         
         console.log(` Loaded ${currentMembers.length} team members for leader selection`);
@@ -1807,7 +1837,7 @@ function openConfirmTeamChangesModal(changeDetails) {
     const content = document.getElementById('confirmTeamChangesContent');
     
     if (!modal || !content) {
-        console.error(' Confirm team changes modal elements not found!');
+        console.error('❌ Confirm team changes modal elements not found!');
         return;
     }
     
@@ -1842,13 +1872,13 @@ function openConfirmTeamChangesModal(changeDetails) {
         }
         
         if (changeDetails.areaChange) {
-            // IDAGDAG ANG WARNING KUNG AREA ANG NAGBAGO
+            // ✅ IDAGDAG ANG WARNING KUNG AREA ANG NAGBAGO
             html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
                 <span style="color: #64748b;">Area:</span>
                 <span><span style="color: #dc2626; text-decoration: line-through;">${escapeHtml(changeDetails.oldArea)}</span> → <span style="color: #16a34a; font-weight: 600;">${escapeHtml(changeDetails.newArea)}</span></span>
             </div>`;
             
-            // I-SHOW ANG WARNING NA MAG-U-UPDATE ANG AREA NG MGA MEMBERS
+            // ✅ I-SHOW ANG WARNING NA MAG-U-UPDATE ANG AREA NG MGA MEMBERS
             html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; background: #fef3c7; margin-top: 4px; padding: 8px 12px; border-radius: 6px;">
                 <span style="color: #92400e; font-weight: 600;"><i class="fas fa-exclamation-triangle"></i> Effect on Members:</span>
                 <span style="color: #92400e; font-weight: 600;">All ${changeDetails.memberCount || 0} members' area will be updated to "${escapeHtml(changeDetails.newArea)}"</span>
@@ -1883,7 +1913,7 @@ function openConfirmTeamChangesModal(changeDetails) {
         `;
         
         if (changeDetails.addedMembers && changeDetails.addedMembers.length > 0) {
-            html += `<div style="margin-bottom: 6px; color: #16a34a; font-weight: 600;"> Adding (${changeDetails.addedMembers.length}):</div>`;
+            html += `<div style="margin-bottom: 6px; color: #16a34a; font-weight: 600;">📥 Adding (${changeDetails.addedMembers.length}):</div>`;
             changeDetails.addedMembers.forEach(m => {
                 html += `<div style="padding: 3px 0 3px 16px; color: #16a34a;">+ ${escapeHtml(m.name)} (${escapeHtml(m.id)})</div>`;
             });
@@ -1893,7 +1923,7 @@ function openConfirmTeamChangesModal(changeDetails) {
             if (changeDetails.addedMembers && changeDetails.addedMembers.length > 0) {
                 html += `<div style="margin-top: 8px;"></div>`;
             }
-            html += `<div style="margin-bottom: 6px; color: #dc2626; font-weight: 600;"> Removing (${changeDetails.removedMembers.length}):</div>`;
+            html += `<div style="margin-bottom: 6px; color: #dc2626; font-weight: 600;">📤 Removing (${changeDetails.removedMembers.length}):</div>`;
             changeDetails.removedMembers.forEach(m => {
                 html += `<div style="padding: 3px 0 3px 16px; color: #dc2626;">- ${escapeHtml(m.name)} (${escapeHtml(m.id)})</div>`;
             });
@@ -2103,7 +2133,7 @@ async function saveTeamChanges(event) {
     const teamLeader = document.getElementById('editTeamLeader').value || null;
     const status = document.getElementById('editTeamStatus').value;
     
-    console.log(' SAVING TEAM CHANGES...');
+    console.log('🔄 SAVING TEAM CHANGES...');
     console.log(`Team ID: ${teamId}`);
     console.log(`Team Leader value: "${teamLeader}"`);
     console.log(`Original Team Leader: "${originalTeamData.team_leader_id}"`);
@@ -2156,7 +2186,7 @@ async function saveTeamChanges(event) {
         teamId: teamId,
         teamInfoChanges: hasTeamInfoChanges,
         memberChanges: hasMemberChanges,
-        memberCount: memberCount, // IDAGDAG ITO
+        memberCount: memberCount, // ✅ IDAGDAG ITO
         oldName: originalTeamData.team_name,
         newName: teamName,
         nameChange: teamName !== originalTeamData.team_name,
@@ -2367,7 +2397,7 @@ if (createTeamForm) {
             return;
         }
         
-        // VALIDATE: If leader is selected, check if area matches
+        // ✅ VALIDATE: If leader is selected, check if area matches
         if (team_leader_id) {
             const selectedLeader = allTechniciansData.find(t => t.technician_id === team_leader_id);
             if (selectedLeader) {
@@ -2696,18 +2726,18 @@ function renderSuperSlotsGrid() {
     }
     
     grid.innerHTML = filteredSlots.map(slot => {
-        // KUNIN ANG NAPBOX NAME
+        // ✅ KUNIN ANG NAPBOX NAME
         const napbox = superAllNapboxes.find(n => n.id === slot.napbox_id);
         const napboxName = napbox ? napbox.name : slot.napbox_name || 'N/A';
         // I-shorten ang napbox name kung masyadong mahaba
         const shortNapboxName = napboxName.length > 14 ? napboxName.substring(0, 12) + '...' : napboxName;
         
-        // AVAILABLE / OCCUPIED LABEL
+        // ✅ AVAILABLE / OCCUPIED LABEL
         const isAvailable = slot.status === 'available';
         const statusLabel = isAvailable ? 'AVAILABLE' : 'OCCUPIED';
         const statusClass = isAvailable ? 'available' : 'occupied';
         
-        // ACTIVE / INACTIVE LABEL
+        // ✅ ACTIVE / INACTIVE LABEL
         // ACTIVE: kapag OCCUPIED (may customer na naka-assign)
         // INACTIVE: kapag AVAILABLE (walang customer) - kahit may previous customer name
         const isActive = slot.status === 'occupied' && slot.customer_name && slot.customer_name !== '';
@@ -2716,7 +2746,7 @@ function renderSuperSlotsGrid() {
         
         const slotData = JSON.stringify(slot).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
         
-        // CUSTOMER NAME
+        // ✅ CUSTOMER NAME
         let customerDisplay = '';
         if (slot.customer_name) {
             const customerName = slot.customer_name;
@@ -3117,7 +3147,7 @@ function setupSuperEventListeners() {
         btn.style.color = 'white';
         superCurrentFilter = btn.dataset.filter;
         
-        // RENDER LANG - automatic 3 columns
+        // ✅ RENDER LANG - automatic 3 columns
         renderSuperSlotsGrid();
     });
 });
@@ -3143,7 +3173,7 @@ function setupSuperEventListeners() {
 
 // ==================== INITIALIZATION ====================
 (async function init() {
-    // SESSION CHECK MUNA
+    // ✅ SESSION CHECK MUNA
     const isValid = await checkSession();
     if (!isValid) return;
     
@@ -3162,12 +3192,12 @@ function setupSuperEventListeners() {
     loadSuperNapboxData();
     setupSuperEventListeners();
     
-    // IDAGDAG ITO - INITIALIZE NOTIFICATION SYSTEM
+    // ✅ IDAGDAG ITO - INITIALIZE NOTIFICATION SYSTEM
     if (window.NotificationSystem) {
         window.NotificationSystem.init();
-        console.log(" Notification system initialized for technicians page");
+        console.log("🔔 Notification system initialized for technicians page");
     } else {
-        console.warn(" NotificationSystem not found!");
+        console.warn("⚠️ NotificationSystem not found!");
     }
 })();
 
@@ -3188,3 +3218,8 @@ document.head.appendChild(style);
 window.showSuperSlotDetails = showSuperSlotDetails;
 window.closeSuperSlotModal = closeSuperSlotModal;
 window.escapeHtml = escapeHtml;
+
+window.addEventListener('focus', function() {
+    sessionStorage.removeItem('techniciansCache');
+    loadTechnicians(true);
+});

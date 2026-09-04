@@ -4552,3 +4552,29 @@ th:nth-child(3), th:nth-child(4), th:nth-child(5) {
         gap: 10px;
     }
 }
+
+/* Account actions */
+.account-action-buttons {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+}
+
+.account-action-buttons button {
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .account-action-buttons {
+    max-width: 220px;
+    gap: 6px !important;
+  }
+
+  .account-action-buttons button {
+    flex: 1 1 100px;
+    min-width: 100px;
+  }
+}

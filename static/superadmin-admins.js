@@ -130,6 +130,13 @@ function showToast(message, type = 'info') {
 let adminsCache = null;
 let allAdmins = []; // Store all admins for filtering
 
+function hasActiveLoginLock(account) {
+    if (Number(account.login_locked) === 1 || account.login_locked === true) return true;
+    if (Number(account.lock_level) > 0) return true;
+    const lockedUntil = account.locked_until ? new Date(String(account.locked_until).replace(' ', 'T')) : null;
+    return Boolean(lockedUntil && !Number.isNaN(lockedUntil.getTime()) && lockedUntil.getTime() > Date.now());
+}
+
 // ================= DISPLAY TABLE MESSAGE =================
 function displayTableMessage(message, isError = false) {
     const existingMessage = document.querySelector(".table-message");
@@ -657,6 +664,7 @@ function renderAdmins(admins) {
 
     admins.forEach((admin) => {
         const tr = document.createElement("tr");
+        const needsAllow = hasActiveLoginLock(admin);
         tr.innerHTML = `
             <td><strong>${admin.admin_id}</strong><br><span style="font-size: 0.7rem; color: #666;">${admin.username}</span></td>
             <td>${admin.area}</td>
@@ -675,7 +683,8 @@ function renderAdmins(admins) {
                 </span>
             </td>
             <td style="text-align: center;">
-                <div style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                ${needsAllow ? '<small style="display:block;color:#dc2626;margin-bottom:6px;">Account locked</small>' : ''}
+                <div class="account-action-buttons" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
                     <button class="statusBtn" 
                         style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
                         data-id="${admin.admin_id}" 
@@ -696,6 +705,7 @@ function renderAdmins(admins) {
                         data-username="${admin.username}">
                         <i class="fas fa-trash"></i> Delete
                     </button>
+                    ${needsAllow ? `<button class="allowLoginBtn" style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;" data-id="${admin.admin_id}"><i class="fas fa-unlock"></i> Allow</button>` : ''}
                 </div>
             </td>
         `;
@@ -712,6 +722,20 @@ function renderAdmins(admins) {
     document.querySelectorAll(".viewBtn").forEach((btn) => {
         btn.onclick = () => openViewInfoModal(btn.dataset.id);
     });
+    document.querySelectorAll(".allowLoginBtn").forEach((btn) => {
+        btn.onclick = async () => {
+            btn.disabled = true;
+            try {
+                const response = await fetch(`/api/superadmin/admins/${btn.dataset.id}/unlock`, { method: "POST" });
+                const data = await response.json();
+                showToast(data.message || data.error || "Unable to allow login", response.ok ? "success" : "error");
+                if (response.ok) await loadAdmins(true);
+            } catch (error) {
+                showToast("Network error. Please try again.", "error");
+                btn.disabled = false;
+            }
+        };
+    });
 }
 
 // ================= LOAD ADMINS =================
@@ -720,7 +744,13 @@ async function loadAdmins(forceRefresh = false) {
     if (!tbody) return;
 
     const cached = JSON.parse(sessionStorage.getItem("adminsCache") || "null");
-    if (cached && !forceRefresh) {
+    const cacheHasLockoutFields = Array.isArray(cached) && (
+        cached.length === 0 || (
+            Object.prototype.hasOwnProperty.call(cached[0], "locked_until") &&
+            Object.prototype.hasOwnProperty.call(cached[0], "lock_level")
+        )
+    );
+    if (cached && cacheHasLockoutFields && !forceRefresh) {
         allAdmins = cached;
         renderAdmins(cached);
         return;
@@ -903,4 +933,9 @@ window.addEventListener("load", function() {
     if (tbody && tbody.children.length === 0) {
         loadAdmins();
     }
+});
+
+window.addEventListener("focus", function() {
+    sessionStorage.removeItem("adminsCache");
+    loadAdmins(true);
 });

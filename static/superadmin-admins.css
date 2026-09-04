@@ -2220,3 +2220,28 @@ th:nth-child(3), th:nth-child(4) {
     display: none !important;
   }
 }
+
+/* Account actions */
+.account-action-buttons {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  justify-content: center !important;
+}
+
+.account-action-buttons button {
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .account-action-buttons {
+    max-width: 220px;
+    gap: 6px !important;
+  }
+
+  .account-action-buttons button {
+    flex: 1 1 100px;
+    min-width: 100px;
+  }
+}

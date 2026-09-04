@@ -24,6 +24,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from db_config import execute_query, get_db_connection
 import mysql.connector
 import os
+from datetime import datetime, timedelta
 
 
 from zoneinfo import ZoneInfo  # Python 3.9+ built-in na
@@ -200,6 +201,75 @@ def ensure_temp_reset_password_column():
 
 
 ensure_temp_reset_password_column()
+
+
+
+def ensure_login_lockout_columns():
+    table_columns = {
+        "admins": {
+            "failed_login_attempts": "INT NOT NULL DEFAULT 0",
+            "locked_until": "DATETIME NULL",
+            "lock_level": "INT NOT NULL DEFAULT 0",
+        },
+        "technicians": {
+            "failed_login_attempts": "INT NOT NULL DEFAULT 0",
+            "locked_until": "DATETIME NULL",
+            "lock_level": "INT NOT NULL DEFAULT 0",
+        },
+    }
+    for table, columns in table_columns.items():
+        try:
+            existing = execute_query(f"SHOW COLUMNS FROM {table}", fetch=True) or []
+            existing_names = {column.get("Field") for column in existing}
+            for column, definition in columns.items():
+                if column not in existing_names:
+                    execute_query(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+        except Exception as error:
+            print(f"Login lockout schema check failed for {table}: {error}")
+
+
+ensure_login_lockout_columns()
+
+
+def get_lockout_response(account):
+    locked_until = account.get("locked_until") if account else None
+    if locked_until and locked_until > datetime.now():
+        minutes = max(1, int((locked_until - datetime.now()).total_seconds() / 60))
+        return jsonify({
+            "error": f"Your account is locked. Please contact Super Admin. Try again in {minutes} minute(s).",
+            "account_locked": True,
+        }), 423
+    return None
+
+
+def record_failed_login(table, id_column, account_id):
+    account = execute_query(
+        f"SELECT failed_login_attempts, lock_level FROM {table} WHERE {id_column} = %s",
+        (account_id,), fetch_one=True,
+    ) or {}
+    attempts = int(account.get("failed_login_attempts") or 0) + 1
+    lock_level = int(account.get("lock_level") or 0)
+    if attempts >= 5:
+        lock_hours = 24 if lock_level >= 1 else 1
+        execute_query(
+            f"UPDATE {table} SET failed_login_attempts = 0, lock_level = %s, locked_until = %s WHERE {id_column} = %s",
+            (lock_level + 1, datetime.now() + timedelta(hours=lock_hours), account_id),
+        )
+        return lock_hours
+    execute_query(
+        f"UPDATE {table} SET failed_login_attempts = %s WHERE {id_column} = %s",
+        (attempts, account_id),
+    )
+    return None
+
+
+def reset_login_lockout(table, id_column, account_id):
+    execute_query(
+        f"UPDATE {table} SET failed_login_attempts = 0, lock_level = 0, locked_until = NULL WHERE {id_column} = %s",
+        (account_id,),
+    )
+
+    
 
 # ===============================
 # PASSWORD HASHING HELPERS
@@ -689,7 +759,7 @@ def login():
                 notification_id = int(datetime.now().timestamp() * 1000)
                 admin_name = user_row.get('username', 'Unknown Admin')
                 admin_area = user_row.get('area', 'Unknown Area')
-                login_time = ph_now().strftime('%Y-%m-%d %H:%M:%S')
+                login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 notif_query = """
                     INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -700,7 +770,7 @@ def login():
                     f"{admin_name} ({admin_area}) logged in at {login_time}",
                     "admin_login",
                     user_row.get('admin_id'),
-                    ph_now_iso(),
+                    datetime.now().isoformat(),
                     0
                 ))
 
@@ -813,7 +883,17 @@ def login():
             WHERE username = %s OR email = %s OR admin_id = %s
         """
         admin = execute_query(query, (identifier, identifier, identifier), fetch_one=True)
+        if admin:
+            lockout_response = get_lockout_response(admin)
+            if lockout_response:
+                return lockout_response
+            if not verify_password(admin.get('password'), password):
+                lock_hours = record_failed_login("admins", "admin_id", admin.get("admin_id"))
+                if lock_hours:
+                    return jsonify({"error": f"Your account is locked for {lock_hours} hour(s). Please contact Super Admin.", "account_locked": True}), 423
+                return jsonify({"error": "Invalid username/ID or password"}), 401
         if admin and verify_password(admin.get('password'), password):
+            reset_login_lockout("admins", "admin_id", admin.get("admin_id"))
             upgrade_password_if_needed(
                 "admins", "admin_id", admin.get('admin_id'),
                 admin.get('password'), password
@@ -850,7 +930,7 @@ def login():
             notification_id = int(datetime.now().timestamp() * 1000)
             admin_name = admin.get('username', 'Unknown Admin')
             admin_area = admin.get('area', 'Unknown Area')
-            login_time = ph_now().strftime('%Y-%m-%d %H:%M:%S')
+            login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             notif_query = """
                 INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -861,7 +941,7 @@ def login():
                 f"{admin_name} ({admin_area}) logged in at {login_time}",
                 "admin_login",
                 admin.get('admin_id'),
-                ph_now_iso(),
+                datetime.now().isoformat(),
                 0
             ))
 
@@ -884,7 +964,17 @@ def login():
             LIMIT 1
         """
         technician = execute_query(query, (identifier, identifier), fetch_one=True)
+        if technician:
+            lockout_response = get_lockout_response(technician)
+            if lockout_response:
+                return lockout_response
+            if not verify_password(technician.get('password'), password):
+                lock_hours = record_failed_login("technicians", "technician_id", technician.get("technician_id"))
+                if lock_hours:
+                    return jsonify({"error": f"Your account is locked for {lock_hours} hour(s). Please contact Super Admin.", "account_locked": True}), 423
+                return jsonify({"error": "Invalid username/ID or password"}), 401
         if technician and verify_password(technician.get('password'), password):
+            reset_login_lockout("technicians", "technician_id", technician.get("technician_id"))
             upgrade_password_if_needed(
                 "technicians", "technician_id", technician.get('technician_id'),
                 technician.get('password'), password
@@ -2734,13 +2824,15 @@ Sta. Cruz, Laguna, Philippines
 def list_admins():
     try:
         query = """
-            SELECT admin_id, username, email, area, status, created_at
+                 SELECT admin_id, username, email, area, status, created_at,
+                     failed_login_attempts, locked_until, lock_level,
+                     CASE WHEN locked_until > NOW() THEN 1 ELSE 0 END AS login_locked
             FROM admins 
             ORDER BY admin_id
         """
         admins_list = execute_query(query, fetch=True) or []
         
-        print(f" Listing {len(admins_list)} admins")
+        print(f"📋 Listing {len(admins_list)} admins")
         return jsonify(admins_list)
         
     except Exception as e:
@@ -2883,6 +2975,21 @@ def update_admin_status(admin_id):
         print(f"Error updating status: {e}")
         return jsonify({"error": str(e)}), 500
 
+
+
+# ===============================
+# unlock_admin 
+# ===============================
+@app.route("/api/superadmin/admins/<admin_id>/unlock", methods=["POST"])
+def unlock_admin(admin_id):
+    try:
+        admin = execute_query("SELECT username FROM admins WHERE admin_id = %s", (admin_id,), fetch_one=True)
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+        reset_login_lockout("admins", "admin_id", admin_id)
+        return jsonify({"message": f"Admin '{admin.get('username')}' is allowed to log in again"})
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
 
 
@@ -3334,14 +3441,16 @@ def get_all_technicians():
                 team_id, 
                 status, 
                 created_at,
-                profile_photo
+                profile_photo,
+                failed_login_attempts, locked_until, lock_level,
+                CASE WHEN locked_until > NOW() THEN 1 ELSE 0 END AS login_locked
             FROM technicians 
             ORDER BY created_at DESC
         """
         technicians = execute_query(query, fetch=True) or []
         return jsonify(technicians)
     except Exception as e:
-        print(f" Error getting technicians: {e}")
+        print(f"❌ Error getting technicians: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -4185,6 +4294,24 @@ def update_technician_status(technician_id):
     except Exception as e:
         print(f"Error updating status: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+
+# ===============================
+# Unlock Technician
+# ===============================
+@app.route("/api/superadmin/technicians/<technician_id>/unlock", methods=["POST"])
+def unlock_technician(technician_id):
+    try:
+        technician = execute_query("SELECT name FROM technicians WHERE technician_id = %s", (technician_id,), fetch_one=True)
+        if not technician:
+            return jsonify({"error": "Technician not found"}), 404
+        reset_login_lockout("technicians", "technician_id", technician_id)
+        return jsonify({"message": f"Technician '{technician.get('name')}' is allowed to log in again"})
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
+
+
 
 # ===============================
 # GET TECHNICIANS BY AREA
