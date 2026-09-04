@@ -3000,3 +3000,63 @@ body {
     margin: 0 5px;
 }
 
+
+/* ================= APPROVE CONFIRM BUTTON - SAME RADIUS AS CANCEL ================= */
+#approveModal .btn-approve-confirm {
+    border-radius: 40px;  /* Same as cancel button */
+    padding: 8px 20px;
+    font-weight: 600;
+    font-size: 12px;
+    height: 38px;
+    background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
+    color: #ffffff;
+    border: none;
+    transition: var(--transition);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#approveModal .btn-approve-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+
+#approveModal .btn-approve-confirm:active {
+    transform: translateY(0);
+}
+
+
+/* Medium screens */
+@media (max-width: 991px) and (min-width: 768px) {
+    #approveModal .btn-approve-confirm {
+        padding: 7px 16px;
+        font-size: 11px;
+        height: 34px;
+        border-radius: 40px;
+    }
+}
+
+/* Small screens */
+@media (max-width: 767px) and (min-width: 576px) {
+    #approveModal .btn-approve-confirm {
+        padding: 6px 14px;
+        font-size: 11px;
+        height: 32px;
+        border-radius: 40px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 575px) {
+    #approveModal .btn-approve-confirm {
+        width: 100%;
+        justify-content: center;
+        padding: 6px 12px;
+        font-size: 11px;
+        height: 32px;
+        border-radius: 40px;
+        order: 1;
+    }
+}
