@@ -4578,3 +4578,139 @@ th:nth-child(3), th:nth-child(4), th:nth-child(5) {
     min-width: 100px;
   }
 }
+
+
+/* ================= ACCOUNT ACTION BUTTONS (TECHNICIANS) ================= */
+/* Ginaya sa superadmin-admins.css */
+
+/* Container ng action buttons */
+.account-action-buttons {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  justify-content: center !important;
+  display: flex;
+  flex-direction: column;  /* Stack vertically */
+  gap: 6px;
+  align-items: center;
+}
+
+.account-action-buttons button {
+  min-width: 100px;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 180px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ===== HOVER EFFECTS ===== */
+.account-action-buttons button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Status/Deactivate button */
+.account-action-buttons .statusBtn {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.account-action-buttons .statusBtn:hover {
+  background: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+}
+
+/* View button */
+.account-action-buttons .viewBtn {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.account-action-buttons .viewBtn:hover {
+  background: #dbeafe !important;
+  border-color: #93c5fd !important;
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+}
+
+/* Delete button */
+.account-action-buttons .deleteBtn {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.account-action-buttons .deleteBtn:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+/* Allow Login button (kung meron) */
+.account-action-buttons .allowLoginBtn {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.account-action-buttons .allowLoginBtn:hover {
+  background: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
+  box-shadow: 0 2px 8px rgba(4, 120, 87, 0.2);
+}
+
+/* Edit/Update button (kung meron) */
+.account-action-buttons .editBtn {
+  background: #fefce8;
+  color: #a16207;
+  border: 1px solid #fde68a;
+}
+
+.account-action-buttons .editBtn:hover {
+  background: #fef9c3 !important;
+  border-color: #fcd34d !important;
+  box-shadow: 0 2px 8px rgba(161, 98, 7, 0.2);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 767px) {
+  .account-action-buttons {
+    max-width: 200px;
+    gap: 4px !important;
+  }
+
+  .account-action-buttons button {
+    flex: none;
+    min-width: 100px;
+    width: 100%;
+    max-width: 160px;
+    padding: 5px 12px;
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .account-action-buttons {
+    max-width: 180px;
+    gap: 3px !important;
+  }
+
+  .account-action-buttons button {
+    min-width: 80px;
+    max-width: 140px;
+    padding: 4px 10px;
+    font-size: 0.6rem;
+  }
+}
