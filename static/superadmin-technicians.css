@@ -4714,3 +4714,112 @@ th:nth-child(3), th:nth-child(4), th:nth-child(5) {
     font-size: 0.6rem;
   }
 }
+
+/* ================= TEAMS TABLE ACTION BUTTONS ================= */
+/* Same styling as technicians table */
+
+/* Container ng action buttons sa Teams table */
+.team-action-buttons {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  justify-content: center !important;
+  display: flex;
+  flex-direction: column;  /* Stack vertically */
+  gap: 6px;
+  align-items: center;
+}
+
+.team-action-buttons button {
+  min-width: 100px;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 180px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ===== HOVER EFFECTS ===== */
+.team-action-buttons button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Edit button */
+.team-action-buttons .editTeamBtn {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.team-action-buttons .editTeamBtn:hover {
+  background: #dbeafe !important;
+  border-color: #93c5fd !important;
+  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.2);
+}
+
+/* Delete button */
+.team-action-buttons .deleteTeamBtn {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.team-action-buttons .deleteTeamBtn:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+/* View button (kung meron) */
+.team-action-buttons .viewTeamBtn {
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.team-action-buttons .viewTeamBtn:hover {
+  background: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 767px) {
+  .team-action-buttons {
+    max-width: 200px;
+    gap: 4px !important;
+  }
+
+  .team-action-buttons button {
+    flex: none;
+    min-width: 100px;
+    width: 100%;
+    max-width: 160px;
+    padding: 5px 12px;
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .team-action-buttons {
+    max-width: 180px;
+    gap: 3px !important;
+  }
+
+  .team-action-buttons button {
+    min-width: 80px;
+    max-width: 140px;
+    padding: 4px 10px;
+    font-size: 0.6rem;
+  }
+}
