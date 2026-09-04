@@ -1787,7 +1787,7 @@ function initFilterButtonWithValidation() {
 
 
 // ============================================================
-// ✅ FIX: PREVENT PROFILE LINK FROM REDIRECTING TO /api/login
+// ✅ FIX: PROFILE LINK - PASS TAB_ID IN URL
 // ============================================================
 (function fixProfileLink() {
     if (document.readyState === 'loading') {
@@ -1800,12 +1800,20 @@ function initFilterButtonWithValidation() {
         const profileLink = document.getElementById('profileLink');
         if (!profileLink) return;
         
+        // Get tab_id from sessionStorage
+        const tabId = sessionStorage.getItem('tab_id') || '';
+        
+        // Clone to remove existing listeners
         const newProfileLink = profileLink.cloneNode(true);
         profileLink.parentNode.replaceChild(newProfileLink, profileLink);
-        newProfileLink.href = '/superadmin/profile';
         
+        // Add correct href with tab_id
         newProfileLink.addEventListener('click', function(e) {
-            console.log('✅ Navigating to /superadmin/profile');
+            e.preventDefault();
+            const tabId = sessionStorage.getItem('tab_id') || '';
+            const url = `/superadmin/profile${tabId ? `?tab_id=${tabId}` : ''}`;
+            console.log(`✅ Navigating to: ${url}`);
+            window.location.href = url;
         });
     }
 })();
