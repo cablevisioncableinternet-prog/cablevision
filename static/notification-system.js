@@ -60,7 +60,8 @@ async function updateNotificationBadge() {
             if (badge) {
                 if (unreadCount > 0) {
                     badge.style.display = 'flex';
-                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    // ✅ BAGO: 10+ kapag 10 pataas, hindi 99+
+                    badge.textContent = unreadCount >= 10 ? '10+' : unreadCount;
                 } else {
                     badge.style.display = 'none';
                 }
@@ -76,7 +77,8 @@ async function updateNotificationBadge() {
     if (badge) {
         if (unreadCount > 0) {
             badge.style.display = 'flex';
-            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            // ✅ BAGO: 10+ kapag 10 pataas, hindi 99+
+            badge.textContent = unreadCount >= 10 ? '10+' : unreadCount;
         } else {
             badge.style.display = 'none';
         }

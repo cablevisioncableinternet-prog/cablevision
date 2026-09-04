@@ -254,7 +254,8 @@ class AdminNotificationSystem {
         
         if (badge) {
             if (this.unreadCount > 0) {
-                badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
+                // ✅ BAGO: 10+ kapag 10 pataas
+                badge.textContent = this.unreadCount >= 10 ? '10+' : this.unreadCount;
                 badge.style.display = 'flex';
             } else {
                 badge.style.display = 'none';
