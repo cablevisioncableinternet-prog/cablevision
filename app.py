@@ -30,7 +30,16 @@ from zoneinfo import ZoneInfo  # Python 3.9+ built-in na
 
 PH_TZ = ZoneInfo("Asia/Manila")
 
+def ph_now():
+    """Timezone-aware datetime object, Philippine time."""
+    return datetime.now(PH_TZ)
+
+def ph_now_iso():
+    """Philippine time as ISO-format string."""
+    return datetime.now(PH_TZ).isoformat()
+
 def ph_now_str():
+    """Philippine time as 'YYYY-MM-DD HH:MM:SS' string."""
     return datetime.now(PH_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
@@ -680,7 +689,7 @@ def login():
                 notification_id = int(datetime.now().timestamp() * 1000)
                 admin_name = user_row.get('username', 'Unknown Admin')
                 admin_area = user_row.get('area', 'Unknown Area')
-                login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                login_time = ph_now().strftime('%Y-%m-%d %H:%M:%S')
                 notif_query = """
                     INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -691,7 +700,7 @@ def login():
                     f"{admin_name} ({admin_area}) logged in at {login_time}",
                     "admin_login",
                     user_row.get('admin_id'),
-                    datetime.now().isoformat(),
+                    ph_now_iso(),
                     0
                 ))
 
@@ -841,7 +850,7 @@ def login():
             notification_id = int(datetime.now().timestamp() * 1000)
             admin_name = admin.get('username', 'Unknown Admin')
             admin_area = admin.get('area', 'Unknown Area')
-            login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            login_time = ph_now().strftime('%Y-%m-%d %H:%M:%S')
             notif_query = """
                 INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -852,7 +861,7 @@ def login():
                 f"{admin_name} ({admin_area}) logged in at {login_time}",
                 "admin_login",
                 admin.get('admin_id'),
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             ))
 
@@ -2037,7 +2046,7 @@ def create_notification():
         data = request.json
         import time
         notification_id = int(time.time() * 1000)
-        timestamp = datetime.now().isoformat()
+        timestamp = ph_now_iso()
         
         query = """
             INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
@@ -2267,7 +2276,7 @@ def create_admin():
         
         # ✅ GUMAWA NG RANDOM PASSWORD (8 CHARACTERS - letters and numbers)
         default_password = generate_secure_password(8)
-        created_at = datetime.now().isoformat()
+        created_at = ph_now_iso()
 
         # Insert into MySQL
         insert_query = """
@@ -3483,7 +3492,7 @@ def create_technician():
         
         # ✅ GUMAWA NG RANDOM PASSWORD (8 CHARACTERS - letters and numbers)
         default_password = generate_secure_password(8)
-        created_at = datetime.now().isoformat()
+        created_at = ph_now_iso()
 
         # Insert into MySQL
         insert_query = """
@@ -4822,7 +4831,7 @@ def update_user_status(user_id):
                 user_email,
                 user_name,
                 conn_status,
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             ))
             print(f" Notification sent to user {user_id}")
@@ -4908,7 +4917,7 @@ def update_user_connection(user_id):
                 user_email,
                 user_name,
                 new_status,
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0  # unread
             ))
             print(f" Notification sent to user {user_id} about connection {new_status}")
@@ -5312,7 +5321,7 @@ def approve_reconnect_request(request_id):
             execute_query(notif_query, (
                 notification_id, title, message, "request_approved",
                 request_id, user_id, user_email, user_full_name,
-                user_connection_status_for_notif, datetime.now().isoformat(), 0
+                user_connection_status_for_notif, ph_now_iso(), 0
             ))
         except Exception as notif_error:
             print(f" Error creating notification: {notif_error}")
@@ -5392,7 +5401,7 @@ def reject_reconnect_request(request_id):
             execute_query(notif_query, (
                 notification_id, title, message, "request_rejected",
                 request_id, user_id, user_email, user_name,
-                "Disconnected", datetime.now().isoformat(), 0
+                "Disconnected", ph_now_iso(), 0
             ))
         except Exception as notif_error:
             print(f" Error creating notification: {notif_error}")
@@ -5621,7 +5630,7 @@ def superadmin_export_all_customers_excel():
         output.seek(0)
         
         # Generate filename
-        date_now = datetime.now().strftime("%Y%m%d_%H%M%S")
+        date_now = ph_now().strftime("%Y%m%d_%H%M%S")
         filename = f"customers_{area_name}_{date_now}.xlsx"
         
         from flask import send_file
@@ -6941,7 +6950,7 @@ def update_internet_application_status(app_id):
         if status == "Approved" and not contract_number:
             import random
             import string
-            date_part = datetime.now().strftime("%Y%m%d")
+            date_part = ph_now().strftime("%Y%m%d")
             random_part = ''.join(random.choices(string.digits, k=4))
             contract_number = f"CV-{date_part}-{random_part}"
             
@@ -6967,7 +6976,7 @@ def update_internet_application_status(app_id):
                 "Approved",
                 contract_number,
                 billing_date,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                ph_now().strftime("%Y-%m-%d %H:%M:%S"),
                 "Pending",
                 "",
                 assigned_team_id,
@@ -7054,8 +7063,8 @@ def update_internet_application_status(app_id):
                 "installation_status": "Pending",
                 "contract_number": contract_number,
                 "billing_date": billing_date,
-                "approval_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "date_pending": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "approval_date": ph_now().strftime("%Y-%m-%d %H:%M:%S"),
+                "date_pending": ph_now().strftime("%Y-%m-%d %H:%M:%S"),
                 "assigned_team_id": assigned_team_id,
                 "installation_date": installation_date,
                 "latitude": app_data.get("latitude"),
@@ -7148,7 +7157,7 @@ def update_internet_application_status(app_id):
                         billing_date,
                         app_data.get('date_submitted', ''),
                         "Active",
-                        datetime.now().isoformat(),
+                        ph_now_iso(),
                         1 if first_installment_date else 0,
                         first_installment_date,
                         last_installment_date,
@@ -7696,7 +7705,7 @@ def calculate_age(birthdate_str):
     try:
         from datetime import datetime
         birthdate = datetime.strptime(birthdate_str, '%Y-%m-%d')
-        today = datetime.now()
+        today = ph_now()
         age = today.year - birthdate.year
         if (today.month, today.day) < (birthdate.month, birthdate.day):
             age -= 1
@@ -7925,7 +7934,7 @@ def download_contract_pdf(app_id, contract_number):
         
         first_installment_formatted = format_month_year(first_installment)
         last_installment_formatted = format_month_year(last_installment)
-        approval_date = datetime.now().strftime('%B %d, %Y')
+        approval_date = ph_now().strftime('%B %d, %Y')
         
         # ========== 2. PDF SETUP ==========
         from reportlab.lib.pagesizes import LEGAL
@@ -8481,7 +8490,7 @@ def calculate_age(birthdate):
     try:
         from datetime import datetime
         birth = datetime.strptime(birthdate, "%Y-%m-%d")
-        today = datetime.now()
+        today = ph_now()
         age = today.year - birth.year
         if (today.month, today.day) < (birth.month, birth.day):
             age -= 1
@@ -10248,7 +10257,7 @@ def approve_request(req_id):
                 admin_notif_title,
                 admin_notif_message,
                 "request_approved",
-                app_id, req_id, datetime.now().isoformat(), 0,
+                app_id, req_id, ph_now_iso(), 0,
                 admin_id, admin_area, admin_city, requested_by, requested_status,
                 app_data.get('city', ''), "superadmin", "Approved"
             ))
@@ -10258,7 +10267,7 @@ def approve_request(req_id):
                 UPDATE approval_requests
                 SET status = 'Done', processed_at = %s
                 WHERE request_id = %s
-            """, (datetime.now().isoformat(), req_id))
+            """, (ph_now_iso(), req_id))
 
             conn.commit()
 
@@ -10273,7 +10282,7 @@ def approve_request(req_id):
             if not contract_number or contract_number.strip() == "":
                 import random
                 import string
-                date_part = datetime.now().strftime("%Y%m%d")
+                date_part = ph_now().strftime("%Y%m%d")
                 random_part = ''.join(random.choices(string.digits, k=4))
                 contract_number = f"CV-{date_part}-{random_part}"
                 print(f" Auto-generated contract number: {contract_number}")
@@ -10292,7 +10301,7 @@ def approve_request(req_id):
             update_fields.append("billing_date = %s")
             params.append(billing_date)
             update_fields.append("approval_date = %s")
-            params.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            params.append(ph_now().strftime("%Y-%m-%d %H:%M:%S"))
             update_fields.append("installation_status = %s")
             params.append("Pending")
             update_fields.append("assigned_team_id = %s")
@@ -10312,7 +10321,7 @@ def approve_request(req_id):
 
         # ========== 2. INSERT/UPDATE CUSTOMERS TABLE ==========
         if requested_status == "Approved":
-            current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            current_datetime = ph_now().strftime("%Y-%m-%d %H:%M:%S")
 
             customer_data = {
                 "application_number": app_data.get("application_number"),
@@ -10383,7 +10392,7 @@ def approve_request(req_id):
                 else:
                     date_submitted_str = str(date_submitted_val)
             else:
-                date_submitted_str = datetime.now().strftime("%Y-%m-%d")
+                date_submitted_str = ph_now().strftime("%Y-%m-%d")
 
             contract_data = {
                 "contract_number": contract_number,
@@ -10402,7 +10411,7 @@ def approve_request(req_id):
                 "billing_date": billing_date,
                 "date_submitted": date_submitted_str,
                 "status": "Active",
-                "created_at": datetime.now().isoformat(),
+                "created_at": ph_now_iso(),
                 "is_installment_plan": 1 if first_installment_date else 0,
                 "first_installment_date": first_installment_date,
                 "last_installment_date": last_installment_date,
@@ -10466,7 +10475,7 @@ def approve_request(req_id):
             admin_notif_title,
             admin_notif_message,
             "request_approved" if requested_status in ("Approved", "Pending") else "request_rejected",
-            app_id, req_id, datetime.now().isoformat(), 0,
+            app_id, req_id, ph_now_iso(), 0,
             admin_id, admin_area, admin_city, requested_by, requested_status,
             app_data.get('city', ''), "superadmin", action_status,
             contract_number if requested_status == "Approved" else None,
@@ -10513,7 +10522,7 @@ def approve_request(req_id):
                                 app_id,
                                 app_id,
                                 applicant_name,
-                                datetime.now().isoformat()
+                                ph_now_iso()
                             ))
                             success_count += 1
 
@@ -10527,7 +10536,7 @@ def approve_request(req_id):
                 traceback.print_exc()
 
         # ========== 6. MARK REQUEST AS DONE ==========
-        processed_at_str = datetime.now().isoformat()
+        processed_at_str = ph_now_iso()
         cursor.execute("""
             UPDATE approval_requests
             SET status = 'Done',
@@ -10556,7 +10565,7 @@ def approve_request(req_id):
             f"Superadmin {requested_status.upper()} {requested_by}'s request to {requested_status.lower()} {applicant_name}'s application ({application_number})",
             "superadmin_action",
             app_id,
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0
         ))
         print(f" General notification created")
@@ -10690,7 +10699,7 @@ def reject_request(req_id):
                 processed_at = %s 
             WHERE request_id = %s
         """, (
-            datetime.now().isoformat(),
+            ph_now_iso(),
             req_id
         ))
         
@@ -10729,7 +10738,7 @@ def reject_request(req_id):
             f"Request {requested_status if requested_status != 'Pending' else 'Restore'} Rejected",
             admin_notif_message,
             "request_rejected",
-            app_id, req_id, datetime.now().isoformat(), 0,
+            app_id, req_id, ph_now_iso(), 0,
             admin_id, admin_area, admin_city, requested_by, requested_status,
             application_city
         ))
@@ -10751,7 +10760,7 @@ def reject_request(req_id):
                 general_notification_id,
                 f"Admin Request Rejected",
                 f"Superadmin REJECTED {requested_by}'s request to {action_label} {applicant_name}'s application ({application_number})",
-                "superadmin_action", app_id, datetime.now().isoformat(), 0
+                "superadmin_action", app_id, ph_now_iso(), 0
             ))
         except Exception as gen_err:
             print(f" General notification note: {gen_err}")
@@ -11374,7 +11383,7 @@ def superadmin_create_user_account():
             default_password = generate_secure_password(8)
             print(f" Generated fallback password: {default_password}")
         
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = ph_now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Get data from customer record
         first_name = customer.get('first_name', '')
@@ -11783,7 +11792,7 @@ def create_announcement():
         if not title and not message and not image_url:
             return jsonify({"error": "Title, message, or image required"}), 400
         
-        now = datetime.now()
+        now = ph_now()
         
         # Insert into MySQL with Cloudinary URL
         insert_query = """
@@ -12159,7 +12168,7 @@ def approve_plan_request():
             "plan_change_processed",
             application_number,
             request_number,
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0,
             original_notif.get("admin_city") if original_notif else None,
             original_notif.get("application_city") if original_notif else None,
@@ -12231,7 +12240,7 @@ def approve_plan_request():
             user_email,
             user_name,
             "Active",
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0
         ))
         print(f" User notification created for {user_name} - Plan Change Approved")
@@ -12985,7 +12994,7 @@ def reject_plan_request():
             "plan_change_processed",
             application_number,
             request_number,
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0,
             original_notif.get("admin_city") if original_notif else None,
             original_notif.get("application_city") if original_notif else None,
@@ -13062,7 +13071,7 @@ def reject_plan_request():
             user_email,
             user_name,
             "Active",
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0
         ))
         print(f" User notification created for {user_name} (user_id: {actual_user_id}) - Plan Change Rejected")
@@ -13193,8 +13202,8 @@ def approve_termination_request():
         
         # KUNIN ANG CURRENT DATETIME PARA SA TERMINATION DATE
         from datetime import datetime
-        termination_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        termination_date_display = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+        termination_date = ph_now().strftime("%Y-%m-%d %H:%M:%S")
+        termination_date_display = ph_now().strftime("%B %d, %Y at %I:%M %p")
         
         print(f" Termination date: {termination_date}")
         print(f" Balance to save: {balance}")
@@ -13279,7 +13288,7 @@ def approve_termination_request():
             "termination_processed",
             application_number,
             request_number,
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0,
             original_notif.get("admin_city") if original_notif else termination_request.get("city"),
             original_notif.get("application_city") if original_notif else termination_request.get("city"),
@@ -13353,7 +13362,7 @@ def approve_termination_request():
             user_email,
             user_name,
             "Disconnected",
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0
         ))
         print(f" User notification created for {user_name} - Termination Approved with balance ₱{balance}")
@@ -13456,7 +13465,7 @@ def reject_termination_request():
             "termination_processed",
             application_number,
             request_number,
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0,
             original_notif.get("admin_city") if original_notif else termination_request.get("city"),
             original_notif.get("application_city") if original_notif else termination_request.get("city"),
@@ -13534,7 +13543,7 @@ def reject_termination_request():
             user_email,
             user_name,
             "Active",
-            datetime.now().isoformat(),
+            ph_now_iso(),
             0
         ))
         print(f" User notification created for {user_name} - Termination Rejected with balance ₱{balance}")
@@ -14803,7 +14812,7 @@ def admin_request_application(app_id):
                 admin_username,
                 status,
                 "Pending",
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                ph_now().strftime("%Y-%m-%d %H:%M:%S"),
                 admin_id,
                 admin_area,
                 admin_city,
@@ -14940,7 +14949,7 @@ def admin_request_application(app_id):
                 message,
                 "admin_request",
                 app_id,
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             )
         )
@@ -15508,7 +15517,7 @@ def admin_export_customers_excel():
         
         # Generate filename
         from datetime import datetime
-        date_now = datetime.now().strftime("%Y%m%d_%H%M%S")
+        date_now = ph_now().strftime("%Y%m%d_%H%M%S")
         filename = f"customers_{admin_area}_{date_now}.xlsx"
         
         return send_file(
@@ -16021,7 +16030,7 @@ def admin_update_installation_status(app_id):
         }
 
         # ADD DATE TRACKING
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = ph_now().strftime("%Y-%m-%d %H:%M:%S")
 
         if new_status == "Ongoing":
             update_data["date_ongoing"] = current_time
@@ -16321,7 +16330,7 @@ def create_advertisement():
             else:
                 return jsonify({"error": "Failed to save image. Make sure it's PNG format and under 2MB"}), 400
         
-        now = datetime.now()
+        now = ph_now()
         
         # Insert into MySQL with Cloudinary URL
         insert_query = """
@@ -17743,7 +17752,7 @@ def assign_slot_to_customer():
             customer_phone, 
             application_number, 
             contract_number,
-            installation_date or datetime.now().strftime("%Y-%m-%d"), 
+            installation_date or ph_now().strftime("%Y-%m-%d"), 
             slot_id
         ))
         print(f" Slot {slot['slot_number']} assigned to {customer_name} (Contract: {contract_number})")
@@ -17808,7 +17817,7 @@ def assign_slot_to_customer():
                     f"Slot #{slot['slot_number']} assigned to {customer_name} (Application: {application_number}, Contract: {contract_number})",
                     "slot_assigned",
                     application_number,
-                    datetime.now().isoformat(),
+                    ph_now_iso(),
                     0,
                     customer_city,
                     application_number
@@ -17836,7 +17845,7 @@ def assign_slot_to_customer():
                 f"Slot #{slot['slot_number']} has been assigned to {customer_name} (Application: {application_number}, Contract: {contract_number}). Installation scheduled.",
                 "slot_assigned",
                 application_number,
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             ))
             print(f" Superadmin notification created")
@@ -17915,8 +17924,8 @@ def cancel_installation():
 
         # KUNIN ANG CURRENT DATETIME PARA SA CANCELLATION DATE
         from datetime import datetime
-        cancellation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        cancellation_date_display = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+        cancellation_date = ph_now().strftime("%Y-%m-%d %H:%M:%S")
+        cancellation_date_display = ph_now().strftime("%B %d, %Y at %I:%M %p")
 
         print(f" Cancellation date: {cancellation_date}")
 
@@ -17999,7 +18008,7 @@ def cancel_installation():
                     msg,
                     "installation_cancelled",
                     application_number,
-                    datetime.now().isoformat(),
+                    ph_now_iso(),
                     0,
                     customer_city,
                     application_number
@@ -18023,7 +18032,7 @@ def cancel_installation():
                 msg,
                 "installation_cancelled",
                 application_number,
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             ))
         except Exception as notif_err:
@@ -18116,7 +18125,7 @@ def technician_update_installation_status():
         
         technician_team_id = tech_result.get('team_id')
         
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = ph_now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Check if customer exists and has a slot assigned
         customer_query = """
@@ -18210,7 +18219,7 @@ def technician_update_installation_status():
                             target_user_email,
                             target_user_name,
                             "Connected",
-                            datetime.now().isoformat(),
+                            ph_now_iso(),
                             0
                         ))
                         print(f" User notification sent to {target_user_id} ({'reconnection' if was_terminated else 'installation'} complete)")
@@ -18269,7 +18278,7 @@ def technician_update_installation_status():
                     f"Installation {status_text} for {customer_name} (Application: {application_number}) - Slot #{slot_number}",
                     "installation_update",
                     application_number,
-                    datetime.now().isoformat(),
+                    ph_now_iso(),
                     0,
                     customer_city,
                     application_number
@@ -18296,7 +18305,7 @@ def technician_update_installation_status():
                 f"Installation status for {customer_name} (Application: {application_number}) has been updated to {new_status}.",
                 "installation_update",
                 application_number,
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             ))
             print(f" Superadmin notification created")
@@ -18336,7 +18345,7 @@ def create_technician_notification(technician_id, title, message, notif_type, re
         execute_query(query, (
             notification_id, technician_id, technician_area, title, message, 
             notif_type, related_id, application_number, customer_name,
-            datetime.now().isoformat()
+            ph_now_iso()
         ))
         
         print(f" Technician notification created for {technician_id}: {title}")
@@ -18377,7 +18386,7 @@ def create_technician_notifications_by_area(area, title, message, notif_type, re
                 execute_query(query, (
                     notification_id, technician_id, area, title, message, 
                     notif_type, related_id, application_number, customer_name,
-                    datetime.now().isoformat()
+                    ph_now_iso()
                 ))
                 success_count += 1
         

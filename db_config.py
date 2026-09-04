@@ -32,6 +32,11 @@ def get_db_connection():
         )
 
         if connection.is_connected():
+            # Ensure all NOW()/CURRENT_TIMESTAMP calls use Philippine time
+            cursor = connection.cursor()
+            cursor.execute("SET time_zone = '+08:00'")
+            cursor.close()
+
             print(
                 f"[DB] Connected successfully "
                 f"→ {DB_CONFIG['host']}:{DB_CONFIG['port']}"
