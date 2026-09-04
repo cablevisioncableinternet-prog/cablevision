@@ -51,10 +51,13 @@ body {
 /* ================= HEADER ================= */
 .app-header {
   background: linear-gradient(
-        rgba(1,13,68,0.85),
-        rgba(36,85,158,0.85)
+        rgba(1, 13, 68, 0.6),    /* reduced opacity from 0.85 to 0.6 */
+        rgba(36, 85, 158, 0.6)   /* reduced opacity from 0.85 to 0.6 */
     ),
     url("/static/background.jpg");
+  background-size: cover;
+  background-position: center 20%;  /* shifted image upward (was 'center') */
+  background-repeat: no-repeat;
   padding: 100px 20px;
   text-align: center;
   color: #fff;
