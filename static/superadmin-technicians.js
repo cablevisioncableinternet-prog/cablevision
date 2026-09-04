@@ -1183,7 +1183,7 @@ function renderTeamsTable(teams) {
                     ${team.status}
                 </span>
             </td>
-            td style="text-align: center;">
+            <td style="text-align: center;">
                 <div class="team-action-buttons">
                     <button class="editTeamBtn"
                         data-team-id="${team.team_id}">
