@@ -5948,19 +5948,39 @@ def update_superadmin_profile():
 @app.route("/superadmin/profile")
 def superadmin_profile():
     """Render superadmin profile page with GA info"""
-    tab_id = request.args.get('tab_id') or session.get('active_tab')
     
-    if not tab_id:
-        flash("Invalid session.", "warning")
+    # ✅ PARAAN 1: Hanapin ang session sa lahat ng admin_ keys
+    session_data = None
+    username = None
+    
+    # Hanapin ang session sa lahat ng admin_ keys
+    for key, value in session.items():
+        if key.startswith('admin_') and isinstance(value, dict):
+            if value.get('user_type') == 'superadmin':
+                session_data = value
+                username = value.get('username')
+                break
+    
+    # ✅ PARAAN 2: Kung wala, subukan ang active_tab
+    if not session_data:
+        tab_id = session.get('active_tab')
+        if tab_id:
+            session_data = session.get(f"admin_{tab_id}")
+            if session_data:
+                username = session_data.get('username')
+    
+    # ✅ PARAAN 3: Kung wala pa rin, subukan ang URL parameter
+    if not session_data:
+        tab_id = request.args.get('tab_id')
+        if tab_id:
+            session_data = session.get(f"admin_{tab_id}")
+            if session_data:
+                username = session_data.get('username')
+    
+    # Kung wala talaga, redirect to login
+    if not session_data or not username:
+        flash("Please login again.", "warning")
         return redirect(url_for("login"))
-    
-    session_data = session.get(f"admin_{tab_id}")
-    
-    if not session_data or session_data.get('user_type') != 'superadmin':
-        flash("Unauthorized access.", "danger")
-        return redirect(url_for("login"))
-    
-    username = session_data.get('username')
     
     # Get GA info from database
     query = "SELECT ga_enabled, ga_secret FROM superadmins WHERE username = %s"
@@ -5983,6 +6003,7 @@ def superadmin_profile():
         ga_secret=ga_secret,
         ga_setup_uri=ga_setup_uri
     )
+
 
 import os
 from werkzeug.utils import secure_filename
