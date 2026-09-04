@@ -1183,15 +1183,13 @@ function renderTeamsTable(teams) {
                     ${team.status}
                 </span>
             </td>
-            <td style="text-align: center;">
-                <div style="display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap;">
+            td style="text-align: center;">
+                <div class="team-action-buttons">
                     <button class="editTeamBtn"
-                        style="background:#eff6ff;color:#0047ab;border:1px solid #bfdbfe;padding:6px 16px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
                         data-team-id="${team.team_id}">
                         <i class="fas fa-edit"></i> Edit
                     </button>
                     <button class="deleteTeamBtn"
-                        style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:6px 16px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
                         data-team-id="${team.team_id}"
                         data-team-name="${team.team_name}">
                         <i class="fas fa-trash"></i> Delete

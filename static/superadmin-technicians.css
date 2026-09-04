@@ -4780,19 +4780,6 @@ th:nth-child(3), th:nth-child(4), th:nth-child(5) {
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
 }
 
-/* View button (kung meron) */
-.team-action-buttons .viewTeamBtn {
-  background: #f0fdf4;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
-
-.team-action-buttons .viewTeamBtn:hover {
-  background: #d1fae5 !important;
-  border-color: #6ee7b7 !important;
-  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
-}
-
 /* ===== RESPONSIVE ===== */
 @media (max-width: 767px) {
   .team-action-buttons {
