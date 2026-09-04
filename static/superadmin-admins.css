@@ -2227,21 +2227,71 @@ th:nth-child(3), th:nth-child(4) {
   max-width: 430px;
   margin: 0 auto;
   justify-content: center !important;
+  display: flex;
+  flex-direction: column;  /* Change from row to column */
+  gap: 6px;  /* Add gap between buttons */
+  align-items: center;  /* Center buttons horizontally */
 }
 
 .account-action-buttons button {
-  min-width: 92px;
+  min-width: 100px;  /* Slightly wider for better appearance */
   white-space: nowrap;
+  width: 100%;  /* Make buttons take full width */
+  max-width: 180px;  /* Limit max width for better appearance */
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
+/* Responsive for mobile */
 @media (max-width: 767px) {
   .account-action-buttons {
-    max-width: 220px;
-    gap: 6px !important;
+    max-width: 200px;
+    gap: 4px !important;
   }
 
   .account-action-buttons button {
-    flex: 1 1 100px;
+    flex: none;
     min-width: 100px;
+    width: 100%;
+    max-width: 160px;
+    padding: 5px 12px;
+    font-size: 0.65rem;
   }
+}
+
+
+
+/* Optional: Add hover effects */
+.account-action-buttons button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.account-action-buttons .statusBtn:hover {
+  background: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
+}
+
+.account-action-buttons .viewBtn:hover {
+  background: #dbeafe !important;
+  border-color: #93c5fd !important;
+}
+
+.account-action-buttons .deleteBtn:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+}
+
+.account-action-buttons .allowLoginBtn:hover {
+  background: #d1fae5 !important;
+  border-color: #6ee7b7 !important;
 }
