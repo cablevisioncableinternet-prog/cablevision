@@ -1784,3 +1784,28 @@ function initFilterButtonWithValidation() {
     });
 }
 
+
+
+// ============================================================
+// ✅ FIX: PREVENT PROFILE LINK FROM REDIRECTING TO /api/login
+// ============================================================
+(function fixProfileLink() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fixProfileLinkHandler);
+    } else {
+        fixProfileLinkHandler();
+    }
+    
+    function fixProfileLinkHandler() {
+        const profileLink = document.getElementById('profileLink');
+        if (!profileLink) return;
+        
+        const newProfileLink = profileLink.cloneNode(true);
+        profileLink.parentNode.replaceChild(newProfileLink, profileLink);
+        newProfileLink.href = '/superadmin/profile';
+        
+        newProfileLink.addEventListener('click', function(e) {
+            console.log('✅ Navigating to /superadmin/profile');
+        });
+    }
+})();
