@@ -100,6 +100,28 @@ let currentSearchTerm = '';
 let currentSortOrder = 'newest';
 let autoRefreshInterval = null;
 
+
+// ==================== HELPER: FORMAT DATE TIME 12-HOUR (UTC) ====================
+function formatDateTime12Hour(dateString) {
+    if (!dateString) return 'N/A';
+    
+    // Parse the date string as UTC
+    const date = new Date(dateString + ' UTC');
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    
+    const options = {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC'  // Force UTC timezone
+    };
+    
+    return date.toLocaleString('en-US', options);
+}
+
 // ==================== TOAST NOTIFICATION ====================
 function showToast(message, type = 'info') {
     const LABELS = {
@@ -243,14 +265,8 @@ function renderTable() {
     paginatedRequests.forEach(req => {
         const row = document.createElement('tr');
         
-        const createdDate = req.created_at ? new Date(req.created_at) : new Date();
-        const formattedDate = createdDate.toLocaleString('en-PH', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        // Use UTC format for date
+        const formattedDate = formatDateTime12Hour(req.created_at);
         
         const displayRequestId = req.request_id || `TR-${req.id}`;
         
