@@ -12275,6 +12275,7 @@ def approve_plan_request():
         """
         execute_query(update_customer, (requested_plan, requested_speed, requested_price, application_number))
         
+        # UPDATE plan_change_requests status
         update_request = """
             UPDATE plan_change_requests 
             SET status = 'Approved', reviewed_at = %s, reviewed_by = 'superadmin'
