@@ -13400,13 +13400,15 @@ def approve_termination_request():
         execute_query(update_slot_query, (application_number, contract_number))
         print(f" NAP Box slot set to 'available' for application: {application_number}, contract: {contract_number}")
 
-        # UPDATE termination_requests status
+        # UPDATE termination_requests status with Philippine time
         update_request = """
             UPDATE termination_requests 
-            SET status = 'Approved', updated_at = NOW()
+            SET status = 'Approved', 
+                approved_at = %s, 
+                updated_at = %s
             WHERE id = %s
         """
-        execute_query(update_request, (request_id,))
+        execute_query(update_request, (ph_now_str(), ph_now_str(), request_id))
         
         # Kunin muna ang original admin notification para malaman ang city
         original_notif_query = """
@@ -13577,13 +13579,16 @@ def reject_termination_request():
         execute_query(update_user, (balance, application_number))
         print(f" User balance updated: {balance}")
         
-        # UPDATE termination_requests status
+        # UPDATE termination_requests status with Philippine time
         update_request = """
             UPDATE termination_requests 
-            SET status = 'Rejected', admin_notes = %s, updated_at = NOW()
+            SET status = 'Rejected', 
+                admin_notes = %s, 
+                rejected_at = %s, 
+                updated_at = %s
             WHERE id = %s
         """
-        execute_query(update_request, (reason, request_id))
+        execute_query(update_request, (reason, ph_now_str(), ph_now_str(), request_id))
         
         # Kunin muna ang original admin notification para malaman ang city
         original_notif_query = """
