@@ -12329,11 +12329,11 @@ def approve_plan_request():
         update_request = """
             UPDATE plan_change_requests 
             SET status = 'Approved', 
-                reviewed_at = CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila'), 
+                reviewed_at = %s, 
                 reviewed_by = 'superadmin'
             WHERE id = %s
         """
-        execute_query(update_request, (request_id,))
+        execute_query(update_request, (ph_now_str(), request_id))
                 
         # Kunin muna ang original admin notification para malaman ang city
         original_notif_query = """
@@ -13157,12 +13157,12 @@ def reject_plan_request():
         update_request = """
             UPDATE plan_change_requests 
             SET status = 'Rejected', 
-                reviewed_at = CONVERT_TZ(NOW(), 'UTC', 'Asia/Manila'), 
+                reviewed_at = %s, 
                 reviewed_by = 'superadmin', 
                 admin_notes = %s
             WHERE id = %s
         """
-        execute_query(update_request, (reason, request_id))
+        execute_query(update_request, (ph_now_str(), reason, request_id))
         
         # Kunin muna ang original admin notification para malaman ang city
         original_notif_query = """
