@@ -1449,7 +1449,7 @@ def reset_password():
 
     if user_type == "admin":
         lock_check_data = execute_query(
-            "SELECT locked_until FROM admins WHERE admin_id = %s LIMIT 1",
+            "SELECT locked_until FROM admins WHERE username = %s LIMIT 1",
             (actual_username,),
             fetch_one=True
         )
