@@ -101,7 +101,7 @@ body::before {
 }
 
 /* ICON */
-.input-group i {
+.input-group > i {
     position: absolute;
     left: 16px;
     top: 50%;
@@ -137,7 +137,7 @@ body::before {
 }
 
 /* ICON FOCUS EFFECT */
-.input-group:focus-within i {
+.input-group:focus-within > i {
     color: #003c77;
     transform: translateY(-50%) scale(1.1);
 }
@@ -717,7 +717,7 @@ body::before {
     margin-bottom: 14px;
 }
 
-.forgot-input-group i {
+.forgot-input-group > i {
     position: absolute;
     left: 15px;
     top: 50%;
