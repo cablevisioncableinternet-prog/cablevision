@@ -1456,3 +1456,46 @@ body::before {
 #gaVerificationModal #gaModalError.show {
     display: block !important;
 }
+
+
+/* ================= PASSWORD TOGGLE BUTTON (EYE ICON) ================= */
+.pw-toggle-group {
+    position: relative;
+}
+
+.pw-toggle-group input {
+    padding-right: 42px !important;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    height: auto;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #003c77;
+}
+
+.password-toggle-btn:focus {
+    outline: none;
+}
+
+.password-toggle-btn:focus-visible {
+    color: #003c77;
+}

@@ -136,7 +136,7 @@ document.addEventListener('click', function (event) {
     const toggleButton = event.target.closest('.password-toggle-btn');
     if (!toggleButton) return;
 
-    const passwordWrapper = toggleButton.closest('.password-wrapper');
+    const passwordWrapper = toggleButton.closest('.pw-toggle-group');
     const passwordInput = passwordWrapper?.querySelector('input[type="password"], input[type="text"]');
 
     if (!passwordInput) return;
