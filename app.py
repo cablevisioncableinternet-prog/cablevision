@@ -1440,6 +1440,56 @@ def reset_password():
         }), 400
 
     # ===============================
+    # CHECK IF ACCOUNT IS STILL LOCKED
+    # (Admins and Technicians only - Superadmin has no lockout)
+    # ===============================
+    is_still_locked = False
+    remaining_minutes = 0
+    locked_until_value = None
+
+    if user_type == "admin":
+        lock_check_data = execute_query(
+            "SELECT locked_until FROM admins WHERE admin_id = %s LIMIT 1",
+            (actual_username,),
+            fetch_one=True
+        )
+    elif user_type == "technician":
+        lock_check_data = execute_query(
+            "SELECT locked_until FROM technicians WHERE technician_id = %s LIMIT 1",
+            (actual_username,),
+            fetch_one=True
+        )
+    else:
+        lock_check_data = None
+
+    if lock_check_data:
+        locked_until_value = lock_check_data.get("locked_until")
+        if locked_until_value:
+            now_check = datetime.now()
+            if locked_until_value.tzinfo is None and now_check.tzinfo is not None:
+                locked_until_value = locked_until_value.replace(tzinfo=now_check.tzinfo)
+            if locked_until_value > now_check:
+                is_still_locked = True
+                remaining_seconds = max(1, int((locked_until_value - now_check).total_seconds()))
+                remaining_minutes = (remaining_seconds + 59) // 60
+
+    print(f" Lock check - user_type: {user_type}, is_still_locked: {is_still_locked}, remaining_minutes: {remaining_minutes}")
+
+    # ===============================
+    # KUNG NAKA-LOCK PA, HUWAG AUTO-LOGIN
+    # BABALIK SA LOGIN PAGE NA LANG MAY MESSAGE
+    # ===============================
+    if is_still_locked:
+        return jsonify({
+            "success": True,
+            "locked": True,
+            "message": f"Password updated successfully! However, your account is still locked due to multiple failed login attempts. Please wait {remaining_minutes} minute(s) before logging in.",
+            "remaining_minutes": remaining_minutes,
+            "type": user_type,
+            "username": actual_username
+        }), 200
+
+    # ===============================
     # AUTO-LOGIN AFTER RESET
     # ===============================
 

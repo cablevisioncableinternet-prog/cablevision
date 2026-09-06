@@ -541,6 +541,30 @@ if (forgotModal) {
                 const data = await res.json();
                 console.log("📥 Response:", data);
 
+                                if (res.ok && data.locked) {
+                    // ⛔ NAKA-LOCK PA ANG ACCOUNT - HUWAG MAG-AUTO-LOGIN
+                    // Babalik lang sa login page na may message
+                    if (fpMessage) {
+                        fpMessage.style.color = "orange";
+                        fpMessage.textContent = data.message || `Password updated. Please wait ${data.remaining_minutes} minute(s) - your account is still locked.`;
+                    }
+                    showToast(data.message || `Password updated. Please wait ${data.remaining_minutes} minute(s) - your account is still locked.`, "info");
+
+                    setTimeout(() => {
+                        if (forgotModal) forgotModal.style.display = "none";
+                        // Reset form fields, stay sa login page
+                        clearFpDigits();
+                        if (document.getElementById("fpNewPassword")) document.getElementById("fpNewPassword").value = "";
+                        if (document.getElementById("fpConfirmPassword")) document.getElementById("fpConfirmPassword").value = "";
+                        if (fpStep1) fpStep1.style.display = "block";
+                        if (fpStep2) fpStep2.style.display = "none";
+                    }, 2500);
+
+                    this.disabled = false;
+                    this.textContent = "Reset Password";
+                    return;
+                }
+
                 if (res.ok) {
                     if (fpMessage) {
                         fpMessage.style.color = "green";
