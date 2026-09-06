@@ -141,19 +141,34 @@
         <div class="password-row">
           <div class="form-field">
             <label><i class="fas fa-lock"></i> Current Password</label>
-            <input type="password" id="currentPassword" class="editable" placeholder="Enter your current password">
+            <div class="pw-toggle-group">
+              <input type="password" id="currentPassword" class="editable" placeholder="Enter your current password">
+              <button type="button" class="password-toggle-btn" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
             <span id="currentPasswordError" class="field-error"></span>
           </div>
 
           <div class="form-field">
             <label><i class="fas fa-lock"></i> Set Password</label>
-            <input type="password" id="password" class="editable" placeholder="Enter new password">
+            <div class="pw-toggle-group">
+              <input type="password" id="password" class="editable" placeholder="Enter new password">
+              <button type="button" class="password-toggle-btn" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
             <span id="passwordStrength" class="password-strength"></span>
           </div>
 
           <div class="form-field">
             <label><i class="fas fa-check-circle"></i> Confirm Password</label>
-            <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            <div class="pw-toggle-group">
+              <input type="password" id="confirmPassword" placeholder="Confirm new password">
+              <button type="button" class="password-toggle-btn" aria-label="Show password" onclick="togglePasswordVisibility(this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
             <span id="confirmPasswordError" class="field-error"></span>
           </div>
         </div>
@@ -261,8 +276,8 @@
 <script src="/static/device-monitor.js"></script>
 <script>
 function togglePasswordVisibility(button) {
-    const formField = button.closest('.form-field');
-    const input = formField ? formField.querySelector('input[type="password"], input[type="text"]') : null;
+    const wrapper = button.closest('.pw-toggle-group');
+    const input = wrapper ? wrapper.querySelector('input[type="password"], input[type="text"]') : null;
     const icon = button.querySelector('i');
     if (!input || !icon) return;
 
