@@ -1262,64 +1262,32 @@ function getCurrentYearMonth() {
 }
 
 // =========================
-// SETUP INSTALLMENT DATE INPUTS WITH AUTO-FILL FROM INSTALLATION DATE (READ-ONLY)
+// SETUP INSTALLMENT DATE INPUTS - MANUAL FIRST INSTALLMENT, AUTO-COMPUTED LAST INSTALLMENT
 // =========================
 function setupInstallmentDateInputs(installmentMonths) {
     const firstInstallmentInput = document.getElementById('firstInstallmentDate');
     const lastInstallmentInput = document.getElementById('lastInstallmentDate');
     const installmentErrorDiv = document.getElementById('installmentError');
-    const installationDateInput = document.getElementById('installationDate');
-    
+
     if (firstInstallmentInput) {
         const currentMonth = getCurrentYearMonth();
         firstInstallmentInput.setAttribute('min', currentMonth);
         firstInstallmentInput.value = '';
         firstInstallmentInput.classList.remove('is-invalid');
-        
-        // GAWING READ-ONLY ANG FIRST INSTALLMENT DATE
-        firstInstallmentInput.setAttribute('readonly', true);
-        firstInstallmentInput.style.cursor = 'not-allowed';
-        firstInstallmentInput.style.backgroundColor = '#f3f4f6';
-        firstInstallmentInput.title = 'Auto-filled from installation date';
-        
+
+        // MANUAL NA ANG PAG-SELECT NG FIRST INSTALLMENT DATE
+        firstInstallmentInput.removeAttribute('readonly');
+        firstInstallmentInput.style.cursor = 'pointer';
+        firstInstallmentInput.style.backgroundColor = '';
+        firstInstallmentInput.title = 'Select the first installment month';
+
         const newFirstInstallmentInput = firstInstallmentInput.cloneNode(true);
         firstInstallmentInput.parentNode.replaceChild(newFirstInstallmentInput, firstInstallmentInput);
-        
-        // AUTO-FILL FIRST INSTALLMENT DATE FROM INSTALLATION DATE
-        newFirstInstallmentInput.addEventListener('focus', function() {
-            // Check if installation date is selected and first installment is empty
-            if (installationDateInput && installationDateInput.value && !this.value) {
-                const installDate = new Date(installationDateInput.value);
-                if (!isNaN(installDate.getTime())) {
-                    const year = installDate.getFullYear();
-                    const month = String(installDate.getMonth() + 1).padStart(2, '0');
-                    const monthYear = `${year}-${month}`;
-                    
-                    // Check if month is not in the past
-                    if (monthYear >= currentMonth) {
-                        this.value = monthYear;
-                        console.log(` Auto-filled first installment: ${monthYear}`);
-                        
-                        // Trigger change event to compute last installment
-                        const changeEvent = new Event('change', { bubbles: true });
-                        this.dispatchEvent(changeEvent);
-                        
-                        // Show feedback
-                        this.style.borderColor = '#22c55e';
-                        this.style.background = '#f0fdf4';
-                        setTimeout(() => {
-                            this.style.borderColor = '';
-                            this.style.background = '#f3f4f6';
-                        }, 2000);
-                    }
-                }
-            }
-        });
-        
+
         newFirstInstallmentInput.addEventListener('change', function() {
             const selectedDate = this.value;
             const lastInstallmentInputElement = document.getElementById('lastInstallmentDate');
-            
+
             if (selectedDate && selectedDate < currentMonth) {
                 if (installmentErrorDiv) {
                     installmentErrorDiv.classList.remove('d-none');
@@ -1329,18 +1297,18 @@ function setupInstallmentDateInputs(installmentMonths) {
                 if (lastInstallmentInputElement) lastInstallmentInputElement.value = '';
                 return;
             }
-            
+
             if (selectedDate && installmentMonths > 0) {
                 const lastDate = calculateLastInstallmentDate(selectedDate, installmentMonths);
                 if (lastDate && lastInstallmentInputElement) {
                     lastInstallmentInputElement.value = lastDate;
                     const changeEvent = new Event('change', { bubbles: true });
                     lastInstallmentInputElement.dispatchEvent(changeEvent);
-                    
+
                     if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
-                    if (lastInstallmentInputElement) lastInstallmentInputElement.classList.remove('is-invalid');
+                    lastInstallmentInputElement.classList.remove('is-invalid');
                     this.classList.remove('is-invalid');
-                    
+
                     console.log(` Auto-computed last installment: ${lastDate}`);
                 }
             } else if (!selectedDate && lastInstallmentInputElement) {
@@ -1348,62 +1316,34 @@ function setupInstallmentDateInputs(installmentMonths) {
                 if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
             }
         });
-        
+
         newFirstInstallmentInput.addEventListener('input', function() {
             if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
             if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
         });
     }
-    
+
     if (lastInstallmentInput) {
         lastInstallmentInput.value = '';
         lastInstallmentInput.classList.remove('is-invalid');
-        
-        // GAWING READ-ONLY ANG LAST INSTALLMENT DATE
+
+        // AUTO-COMPUTED PA RIN, KAYA READ-ONLY PA RIN
         lastInstallmentInput.setAttribute('readonly', true);
         lastInstallmentInput.style.cursor = 'not-allowed';
         lastInstallmentInput.style.backgroundColor = '#f3f4f6';
         lastInstallmentInput.title = 'Auto-computed from first installment date';
-        
+
         const newLastInstallmentInput = lastInstallmentInput.cloneNode(true);
         lastInstallmentInput.parentNode.replaceChild(newLastInstallmentInput, lastInstallmentInput);
-        
+
         newLastInstallmentInput.addEventListener('change', function() {
             if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
             if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
         });
-        
+
         newLastInstallmentInput.addEventListener('input', function() {
             if (installmentErrorDiv) installmentErrorDiv.classList.add('d-none');
             if (this.classList.contains('is-invalid')) this.classList.remove('is-invalid');
-        });
-    }
-    
-    // AUTO-FILL WHEN INSTALLATION DATE CHANGES
-    if (installationDateInput) {
-        const newInstallationDateInput = installationDateInput.cloneNode(true);
-        installationDateInput.parentNode.replaceChild(newInstallationDateInput, installationDateInput);
-        
-        newInstallationDateInput.addEventListener('change', function() {
-            const firstInstallmentInputElement = document.getElementById('firstInstallmentDate');
-            if (firstInstallmentInputElement && this.value) {
-                const installDate = new Date(this.value);
-                if (!isNaN(installDate.getTime())) {
-                    const year = installDate.getFullYear();
-                    const month = String(installDate.getMonth() + 1).padStart(2, '0');
-                    const monthYear = `${year}-${month}`;
-                    const currentMonth = getCurrentYearMonth();
-                    
-                    if (monthYear >= currentMonth) {
-                        firstInstallmentInputElement.value = monthYear;
-                        console.log(` Auto-filled first installment from installation date: ${monthYear}`);
-                        
-                        // Trigger change event to compute last installment
-                        const changeEvent = new Event('change', { bubbles: true });
-                        firstInstallmentInputElement.dispatchEvent(changeEvent);
-                    }
-                }
-            }
         });
     }
 }
@@ -1539,7 +1479,7 @@ function showContractNumberModal() {
                         <div class="alert-content">
                             <strong>Installment Plan</strong>
                             <span>This application has an installment plan of <strong>${installmentMonths} month${installmentMonths > 1 ? 's' : ''}</strong> for the installation fee.</span>
-                            <span class="text-muted">First installment date will auto-fill from installation date (read-only).</span>
+                            <span class="text-muted">Please select the first installment month manually. The last installment month will be computed automatically.</span>
                         </div>
                     `;
                     alertDiv.classList.remove('alert-warning');
