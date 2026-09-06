@@ -771,22 +771,21 @@ function renderTechnicians(technicians) {
         <td>${technician.email}</td>
         <td>${technician.area}</td>
         <td style="text-align: center;">${teamName || '<span style="color: #999; font-size: 0.7rem;">Not assigned</span>'}</td>
-      <td style="text-align: center;">
+            <td style="text-align: center;">
         <span style="
             display: inline-block;
             padding: 4px 14px;
             border-radius: 40px;
             font-weight: 600;
             font-size: 0.7rem;
-            background: ${technician.status === "Active" ? "#e8f5e9" : "#ffebee"};
-            color: ${technician.status === "Active" ? "#27ae60" : "#c0392b"};
-            border: 1px solid ${technician.status === "Active" ? "#c8e6c9" : "#ffcdd2"};
+            background: ${needsAllow ? "#fef3c7" : (technician.status === "Active" ? "#e8f5e9" : "#ffebee")};
+            color: ${needsAllow ? "#b45309" : (technician.status === "Active" ? "#27ae60" : "#c0392b")};
+            border: 1px solid ${needsAllow ? "#fcd34d" : (technician.status === "Active" ? "#c8e6c9" : "#ffcdd2")};
         ">
-          ${technician.status}
+          ${needsAllow ? "Account Locked" : technician.status}
         </span>
         </td>
       <td style="text-align: center;">
-            ${needsAllow ? '<small style="display:block;color:#dc2626;margin-bottom:6px;">Account locked</small>' : ''}
         <div class="account-action-buttons" style="display: flex; gap: 10px; justify-content: center; align-items: center;">
           <button class="statusBtn"
               style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
