@@ -675,15 +675,14 @@ function renderAdmins(admins) {
                     border-radius: 40px;
                     font-weight: 600;
                     font-size: 0.7rem;
-                    background: ${admin.status === "Active" ? "#e8f5e9" : "#ffebee"};
-                    color: ${admin.status === "Active" ? "#27ae60" : "#c0392b"};
-                    border: 1px solid ${admin.status === "Active" ? "#c8e6c9" : "#ffcdd2"};
+                    background: ${needsAllow ? "#fef3c7" : (admin.status === "Active" ? "#e8f5e9" : "#ffebee")};
+                    color: ${needsAllow ? "#b45309" : (admin.status === "Active" ? "#27ae60" : "#c0392b")};
+                    border: 1px solid ${needsAllow ? "#fcd34d" : (admin.status === "Active" ? "#c8e6c9" : "#ffcdd2")};
                 ">
-                    ${admin.status}
+                    ${needsAllow ? "Account Locked" : admin.status}
                 </span>
             </td>
             <td style="text-align: center;">
-                ${needsAllow ? '<small style="display:block;color:#dc2626;margin-bottom:6px;">Account locked</small>' : ''}
                 <div class="account-action-buttons" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
                     <button class="statusBtn" 
                         style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:6px 14px;border-radius:30px;font-size:0.7rem;font-weight:500;cursor:pointer;"
