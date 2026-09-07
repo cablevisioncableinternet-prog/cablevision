@@ -4509,18 +4509,12 @@ function showEditSlotModalTech(slot) {
     }
     document.getElementById('editContractNumberTech').value = contractValue;
 
-    // SIGURADUHIN NA MAXLENGTH AY 6
-    const contractInput = document.getElementById('editContractNumberTech');
-    if (contractInput) {
-        contractInput.setAttribute('maxlength', '6');
-    }
-
     const nameInput = document.getElementById('editCustomerNameTech');
-    const contractInputEl = document.getElementById('editContractNumberTech');
+    const contractInput = document.getElementById('editContractNumberTech');
     const nameError = document.getElementById('editNameErrorTech');
     const contractError = document.getElementById('editContractErrorTech');
     nameInput.className = 'form-input';
-    contractInputEl.className = 'form-input';
+    contractInput.className = 'form-input';
     if (nameError) nameError.style.display = 'none';
     if (contractError) contractError.style.display = 'none';
 
@@ -4883,6 +4877,7 @@ function setupEditSlotModalListenersTech() {
             // REMOVE NON-NUMERIC CHARACTERS
             numberPart = numberPart.replace(/[^0-9]/g, '');
             
+            
             // LIMIT TO 6 DIGITS ONLY
             if (numberPart.length > 6) {
                 numberPart = numberPart.substring(0, 6);
@@ -4933,7 +4928,7 @@ function setupEditSlotModalListenersTech() {
             }
         });
 
-        // PASTE EVENT - LIMIT TO 6 DIGITS
+        // PASTE EVENT - LIMIT TO 4 DIGITS
         newContractInput.addEventListener('paste', function(e) {
             e.preventDefault();
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
