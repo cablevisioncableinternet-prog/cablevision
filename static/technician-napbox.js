@@ -4651,16 +4651,16 @@ async function saveEditSlotTech() {
         showToast('Status changed to AVAILABLE because fields are empty', 'info');
     }
 
-    // VALIDATE: CONTRACT NUMBER LENGTH (4 DIGITS ONLY)
+    // VALIDATE: CONTRACT NUMBER LENGTH (6 DIGITS ONLY)
     if (cleanContractNumber) {
         const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
-        if (numberPart.length !== 4) {
+        if (numberPart.length !== 6) {
             contractInput.className = 'form-input input-error';
             if (contractError) {
-                contractError.textContent = 'Contract number must be exactly 4 digits (e.g., 0001, 0123, 1234)';
+                contractError.textContent = 'Contract number must be exactly 6 digits (e.g., 000001, 001234, 123456)';
                 contractError.style.display = 'flex';
             }
-            showToast('Contract number must be exactly 4 digits', 'error');
+            showToast('Contract number must be exactly 6 digits', 'error');
             contractInput.focus();
             return;
         }
@@ -4824,9 +4824,9 @@ function setupEditSlotModalListenersTech() {
                 }
             }
             numberPart = numberPart.replace(/[^0-9-]/g, '');
-            // LIMIT TO 4 DIGITS
-            if (numberPart.length > 4) {
-                numberPart = numberPart.substring(0, 4);
+            // LIMIT TO 6 DIGITS
+            if (numberPart.length > 6) {
+                numberPart = numberPart.substring(0, 6);
             }
             contractInputEl.value = prefix + numberPart;
         }
@@ -4900,8 +4900,8 @@ function setupEditSlotModalListenersTech() {
             }
             if (!value.startsWith(prefix)) {
                 const numberPart = value.replace(/^[A-Z]+-/i, '');
-                // LIMIT TO 4 DIGITS
-                const cleanNumber = numberPart.replace(/[^0-9]/g, '').substring(0, 4);
+                // LIMIT TO 6 DIGITS
+                const cleanNumber = numberPart.replace(/[^0-9]/g, '').substring(0, 6);
                 this.value = cleanNumber ? prefix + cleanNumber : prefix;
             }
         });
@@ -4912,8 +4912,8 @@ function setupEditSlotModalListenersTech() {
             const currentValue = this.value;
             const numberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // IF ALREADY 4 DIGITS, PREVENT ADDING MORE
-            if (numberPart.length >= 4) {
+            // IF ALREADY 6 DIGITS, PREVENT ADDING MORE
+            if (numberPart.length >= 6) {
                 // Allow: backspace, delete, tab, escape, enter, arrow keys, home, end
                 const allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40];
                 if (!allowedKeys.includes(e.keyCode) && 
@@ -4922,7 +4922,7 @@ function setupEditSlotModalListenersTech() {
                     !(e.keyCode === 86 && e.ctrlKey) && // Ctrl+V
                     !(e.keyCode === 88 && e.ctrlKey)) { // Ctrl+X
                     e.preventDefault();
-                    // showToast('Contract number already has 4 digits', 'warning');
+                    // showToast('Contract number already has 6 digits', 'warning');
                 }
             }
         });

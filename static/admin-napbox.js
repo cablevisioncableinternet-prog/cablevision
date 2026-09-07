@@ -1301,16 +1301,16 @@ async function saveEditSlot() {
             errorMessages.push('Customer Name');
         }
         
-        // VALIDATE: CHECK IF CONTRACT NUMBER IS EXACTLY 4 DIGITS
+        // VALIDATE: CHECK IF CONTRACT NUMBER IS EXACTLY 6 DIGITS
         if (cleanContractNumber) {
             const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
-            if (numberPart.length !== 4) {
+            if (numberPart.length !== 6) {
                 contractInput.className = 'form-input input-error';
                 if (contractError) {
-                    contractError.textContent = 'Contract number must be exactly 4 digits (e.g., 0001, 0123, 1234)';
+                    contractError.textContent = 'Contract number must be exactly 6 digits (e.g., 000001, 001234, 123456)';
                     contractError.style.display = 'flex';
                 }
-                showToast('Contract number must be exactly 4 digits', 'error');
+                showToast('Contract number must be exactly 6 digits', 'error');
                 contractInput.focus();
                 return;
             }
@@ -2573,6 +2573,9 @@ setupEditStatusToggle();
                 }
             }
             numberPart = numberPart.replace(/[^0-9-]/g, '');
+            if (numberPart.length > 6) {
+                numberPart = numberPart.substring(0, 6);
+            }
             contractInputEl.value = prefix + numberPart;
         }
     }
@@ -2640,9 +2643,9 @@ document.addEventListener('keydown', (e) => {
             // REMOVE NON-NUMERIC CHARACTERS
             numberPart = numberPart.replace(/[^0-9]/g, '');
             
-            // LIMIT TO 4 DIGITS ONLY (SILENT)
-            if (numberPart.length > 4) {
-                numberPart = numberPart.substring(0, 4);
+            // LIMIT TO 6 DIGITS (SILENT, NO TOAST)
+            if (numberPart.length > 6) {
+                numberPart = numberPart.substring(0, 6);
             }
             
             this.value = prefix + numberPart;
@@ -2661,7 +2664,7 @@ document.addEventListener('keydown', (e) => {
             
             if (!value.startsWith(prefix)) {
                 const numberPart = value.replace(/^[A-Z]+-/i, '');
-                const cleanNumber = numberPart.replace(/[^0-9]/g, '').substring(0, 4);
+                const cleanNumber = numberPart.replace(/[^0-9]/g, '').substring(0, 6);
                 this.value = cleanNumber ? prefix + cleanNumber : prefix;
             }
         });
@@ -2672,8 +2675,8 @@ document.addEventListener('keydown', (e) => {
             const currentValue = this.value;
             const numberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // IF ALREADY 4 DIGITS, PREVENT ADDING MORE (SILENTLY - NO TOAST)
-            if (numberPart.length >= 4) {
+            // IF ALREADY 6 DIGITS, PREVENT ADDING MORE (SILENTLY - NO TOAST)
+            if (numberPart.length >= 6) {
                 const allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40];
                 if (!allowedKeys.includes(e.keyCode) && 
                     !(e.keyCode === 65 && e.ctrlKey) && // Ctrl+A
@@ -2696,7 +2699,7 @@ document.addEventListener('keydown', (e) => {
             const currentValue = this.value;
             const currentNumberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            const availableSpace = 4 - currentNumberPart.length;
+            const availableSpace = 6 - currentNumberPart.length;
             if (availableSpace <= 0) {
                 // WALANG TOAST DITO
                 return;
