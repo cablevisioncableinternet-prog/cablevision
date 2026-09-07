@@ -4883,10 +4883,10 @@ function setupEditSlotModalListenersTech() {
             // REMOVE NON-NUMERIC CHARACTERS
             numberPart = numberPart.replace(/[^0-9]/g, '');
             
-            // LIMIT TO 4 DIGITS ONLY
-            if (numberPart.length > 4) {
-                numberPart = numberPart.substring(0, 4);
-                showToast('Contract number limited to 4 digits', 'warning');
+            // LIMIT TO 6 DIGITS ONLY
+            if (numberPart.length > 6) {
+                numberPart = numberPart.substring(0, 6);
+                showToast('Contract number limited to 6 digits', 'warning');
             }
             
             // UPDATE VALUE
@@ -4933,7 +4933,7 @@ function setupEditSlotModalListenersTech() {
             }
         });
 
-        // PASTE EVENT - LIMIT TO 4 DIGITS
+        // PASTE EVENT - LIMIT TO 6 DIGITS
         newContractInput.addEventListener('paste', function(e) {
             e.preventDefault();
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -4943,10 +4943,10 @@ function setupEditSlotModalListenersTech() {
             const currentValue = this.value;
             const currentNumberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // GET AVAILABLE SPACE (4 - current length)
-            const availableSpace = 4 - currentNumberPart.length;
+            // GET AVAILABLE SPACE (6 - current length)
+            const availableSpace = 6 - currentNumberPart.length;
             if (availableSpace <= 0) {
-                showToast('Contract number already has 4 digits', 'warning');
+                showToast('Contract number already has 6 digits', 'warning');
                 return;
             }
             
