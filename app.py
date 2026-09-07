@@ -6915,7 +6915,8 @@ def download_pdf(application_number):
     ])
 
     civil_status = data.get("civil_status", "")
-    if civil_status and civil_status.lower() in ["married", "Married"]:
+    spouse_required_statuses = ["married", "separated", "widow", "widower"]
+    if civil_status and civil_status.lower() in spouse_required_statuses:
         draw_section_title("V. SPOUSE INFORMATION")
         draw_two_columns([
             ("Spouse Full Name", data.get("spouse_name")),
