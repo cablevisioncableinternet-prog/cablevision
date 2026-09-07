@@ -189,7 +189,7 @@ function setupContractNumberInput(contractInput, city, barangay = null) {
     contractInput = newInput;
 
     contractInput.value = '';
-    contractInput.setAttribute('maxlength', '4');
+    contractInput.setAttribute('maxlength', '6');
     contractInput.setAttribute('data-prefix', prefix);
 
     if (badge) badge.textContent = prefix;
@@ -228,8 +228,8 @@ function setupContractNumberInput(contractInput, city, barangay = null) {
 
     contractInput.addEventListener('input', function() {
         let numberPart = this.value.replace(/\D/g, '');
-        if (numberPart.length > 4) {
-            numberPart = numberPart.substring(0, 4);
+        if (numberPart.length > 6) {
+            numberPart = numberPart.substring(0, 6);
         }
         this.value = numberPart;
     });
@@ -245,7 +245,7 @@ function setupContractNumberInput(contractInput, city, barangay = null) {
     contractInput.addEventListener('paste', function(e) {
         e.preventDefault();
         const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-        const numbersOnly = pastedText.replace(/\D/g, '').substring(0, 4);
+        const numbersOnly = pastedText.replace(/\D/g, '').substring(0, 6);
         this.value = numbersOnly;
     });
 

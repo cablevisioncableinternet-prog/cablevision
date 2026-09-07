@@ -8113,6 +8113,24 @@ def download_contract_pdf(app_id, contract_number):
         civil_status = contract_data.get('civil_status', '') or application_data.get('civil_status', '')
         address = contract_data.get('address', '') or f"{application_data.get('barangay', '')}, {application_data.get('city', '')}, {application_data.get('province', '')}".strip(', ')
         billing_date = contract_data.get('billing_date', '') or application_data.get('billing_date', '')
+        # ========== HELPER FUNCTION FOR ORDINAL SUFFIX ==========
+        def get_ordinal_suffix(day):
+            """Get ordinal suffix for a day number (1-31)"""
+            try:
+                day_num = int(day)
+                if 4 <= day_num <= 20 or 24 <= day_num <= 30:
+                    return f"{day_num}th"
+                else:
+                    suffixes = {1: 'st', 2: 'nd', 3: 'rd'}
+                    return f"{day_num}{suffixes.get(day_num % 10, 'th')}"
+            except:
+                return str(day)
+
+        # Format billing date with ordinal suffix
+        if billing_date:
+            ordinal_billing = get_ordinal_suffix(billing_date)
+        else:
+            ordinal_billing = billing_date or '_____________'
         date_submitted = contract_data.get('date_submitted', '') or application_data.get('date_submitted', '')
         plan_name = contract_data.get('plan', '') or application_data.get('plan', '')
         plan_speed = contract_data.get('plan_speed', '') or application_data.get('plan_speed', '')
@@ -8411,12 +8429,12 @@ def download_contract_pdf(app_id, contract_number):
         ))
         story.append(Spacer(1, 4))
         
-        # Payment
+        # Payment (using ordinal_billing with suffix)
         payment_text = (
             f"<strong>Payment:</strong> The subscriber shall pay a Non-Refundable connection fee of P 1800 and "
             f"cable in excess of 100 meters at P10.00 per meter. For CABLE/INTERNET BUNDLE subscriber, a one (1) "
             f"month subscription fee of P800 shall be paid upon installation and activation of the service. "
-            f"Succeeding monthly subscription fee is due and payable every <strong>{billing_date}</strong> of each month. "
+            f"Succeeding monthly subscription fee is due and payable every <strong>{ordinal_billing}</strong> of each month. "
             f"Failure to pay the monthly subscription fee on due date and after the grace period of 7 days will mean "
             f"automatic disconnection of cable/internet service. "
             f"<strong>For CABLE SUBSCRIBER ONLY</strong>, subscriber shall pay a monthly subscription fee of P per month "
