@@ -6919,10 +6919,7 @@ def download_pdf(application_number):
     if civil_status and civil_status.lower() in spouse_required_statuses:
         draw_section_title("V. SPOUSE INFORMATION")
         draw_two_columns([
-            ("Spouse Full Name", data.get("spouse_name")),
-            ("Spouse Occupation", data.get("spouse_occupation")),
-            ("Spouse Employer", data.get("spouse_employer")),
-            ("Spouse Phone", data.get("spouse_phone")),
+            ("Spouse Full Name", data.get("spouse_name"))
         ])
 
     draw_section_title("VI. SERVICE PLAN")
