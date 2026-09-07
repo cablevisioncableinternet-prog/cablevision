@@ -6914,13 +6914,14 @@ def download_pdf(application_number):
         ("", ""),
     ])
 
-    civil_status = data.get("civil_status", "")
-    spouse_required_statuses = ["married", "separated", "widow", "widower"]
-    if civil_status and civil_status.lower() in spouse_required_statuses:
-        draw_section_title("V. SPOUSE INFORMATION")
-        draw_two_columns([
-            ("Spouse Full Name", data.get("spouse_name"))
-        ])
+    # Always show SPOUSE INFORMATION
+    draw_section_title("V. SPOUSE INFORMATION")
+    spouse_name = data.get("spouse_name")
+    if not spouse_name or spouse_name == "-" or spouse_name == "none":
+        spouse_name = "___________________"  # Blank line like other fields
+    draw_two_columns([
+        ("Spouse Full Name", spouse_name)
+    ])
 
     draw_section_title("VI. SERVICE PLAN")
     draw_two_columns([
