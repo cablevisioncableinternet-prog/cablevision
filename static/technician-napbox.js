@@ -4509,12 +4509,18 @@ function showEditSlotModalTech(slot) {
     }
     document.getElementById('editContractNumberTech').value = contractValue;
 
-    const nameInput = document.getElementById('editCustomerNameTech');
+    // SIGURADUHIN NA MAXLENGTH AY 6
     const contractInput = document.getElementById('editContractNumberTech');
+    if (contractInput) {
+        contractInput.setAttribute('maxlength', '6');
+    }
+
+    const nameInput = document.getElementById('editCustomerNameTech');
+    const contractInputEl = document.getElementById('editContractNumberTech');
     const nameError = document.getElementById('editNameErrorTech');
     const contractError = document.getElementById('editContractErrorTech');
     nameInput.className = 'form-input';
-    contractInput.className = 'form-input';
+    contractInputEl.className = 'form-input';
     if (nameError) nameError.style.display = 'none';
     if (contractError) contractError.style.display = 'none';
 
