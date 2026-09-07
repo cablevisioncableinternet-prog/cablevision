@@ -4209,7 +4209,7 @@ def get_technician(technician_id):
     """Get a single technician by ID"""
     try:
         query = """
-            SELECT technician_id, name, email, area, team_id, status, created_at
+            SELECT technician_id, name, email, contact_number, area, team_id, status, created_at
             FROM technicians 
             WHERE technician_id = %s
         """
@@ -4217,6 +4217,10 @@ def get_technician(technician_id):
         
         if not technician_data:
             return jsonify({"error": "Technician not found"}), 404
+        
+        # Convert None to "Not provided" for contact_number
+        if 'contact_number' in technician_data and (technician_data['contact_number'] is None or technician_data['contact_number'] == ''):
+            technician_data['contact_number'] = "Not provided"
         
         return jsonify(technician_data)
         

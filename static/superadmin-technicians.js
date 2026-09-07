@@ -538,6 +538,7 @@ function openViewInfoModal(technicianId) {
     // Show loading state
     const infoName = document.getElementById("infoName");
     const infoEmail = document.getElementById("infoEmail");
+    const infoContactNumber = document.getElementById("infoContactNumber"); // ✅ BAGO
     const infoArea = document.getElementById("infoArea");
     const infoTeam = document.getElementById("infoTeam");
     const infoStatus = document.getElementById("infoStatus");
@@ -547,6 +548,7 @@ function openViewInfoModal(technicianId) {
     if (infoTechnicianId) infoTechnicianId.value = "Loading...";
     if (infoName) infoName.value = "Loading...";
     if (infoEmail) infoEmail.value = "Loading...";
+    if (infoContactNumber) infoContactNumber.value = "Loading..."; // ✅ BAGO
     if (infoArea) infoArea.value = "Loading...";
     if (infoTeam) infoTeam.value = "Loading...";
     
@@ -564,6 +566,7 @@ function openViewInfoModal(technicianId) {
             if (infoTechnicianId) infoTechnicianId.value = technician.technician_id || "";
             if (infoName) infoName.value = technician.name || "";
             if (infoEmail) infoEmail.value = technician.email || "";
+            if (infoContactNumber) infoContactNumber.value = technician.contact_number || "Not provided"; // ✅ BAGO
             if (infoArea) infoArea.value = technician.area || "";
 
             // Get team name from team_id
