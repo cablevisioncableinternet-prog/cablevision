@@ -342,16 +342,20 @@ if (confirmDelete) {
             });
             if (res.ok) {
                 showToast(`Admin "${adminToDeleteUsername}" (${adminToDeleteId}) deleted successfully!`, 'success');
+                // ✅ I-REFRESH ANG PAGE PAGKATAPOS MAG-DELETE
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000); // 1 second delay para makita ang toast message
             } else {
                 const data = await res.json();
                 showToast(data.error || "Failed to delete admin", 'error');
+                // Hindi na magre-refresh kung may error
             }
         } catch (error) {
             showToast("Network error. Please try again.", 'error');
         }
 
         sessionStorage.removeItem("adminsCache");
-        await loadAdmins(true);
         closeDeleteModal();
     };
 }
@@ -529,7 +533,7 @@ function openViewInfoModal(adminId) {
             if (infoUsername) infoUsername.value = admin.username || "";
             if (infoName) infoName.value = admin.username || "";
             if (infoEmail) infoEmail.value = admin.email || "";
-            if (infoContact) infoContact.value = admin.contact || "Not provided";
+            if (infoContact) infoContact.value = admin.mobile || "Not provided"; // ✅ Gamitin ang mobile
             if (infoArea) infoArea.value = admin.area || "";
 
             if (infoStatus) {

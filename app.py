@@ -2896,7 +2896,7 @@ def list_admins():
 def get_admin(admin_id):
     try:
         query = """
-            SELECT admin_id, username, email, area, status, created_at
+            SELECT admin_id, username, email, mobile, area, status, created_at
             FROM admins 
             WHERE admin_id = %s
         """
@@ -2904,6 +2904,10 @@ def get_admin(admin_id):
         
         if not admin_data:
             return jsonify({"error": "Admin not found"}), 404
+        
+        # Convert None to "Not provided" for mobile
+        if 'mobile' in admin_data and (admin_data['mobile'] is None or admin_data['mobile'] == ''):
+            admin_data['mobile'] = "Not provided"
         
         # Don't return password for security
         if 'password' in admin_data:
@@ -2914,6 +2918,7 @@ def get_admin(admin_id):
     except Exception as e:
         print(f"Error getting admin: {e}")
         return jsonify({"error": str(e)}), 500
+    
 
 # ===============================
 # UPDATE ADMIN (PUT) - CONVERTED TO MYSQL
