@@ -1186,6 +1186,7 @@ function showEditSlotModal(slot) {
     
     document.getElementById('editContractNumber').value = contractValue;
     
+    
     // Reset error states
     const nameInput = document.getElementById('editCustomerName');
     const contractInput = document.getElementById('editContractNumber');
