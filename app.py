@@ -6754,17 +6754,17 @@ def download_pdf(application_number):
     # ================= UPDATED: Two columns with consistent alignment =================
     def draw_two_columns(fields):
         nonlocal y
-        col1_x = 50
-        col2_x = 300
-        label_width = 100
-        value_x = col1_x + label_width + 5
-        value2_x = col2_x + label_width + 5
+        col1_label_x = 50
+        col2_label_x = 300
+        label_width = 100  # Consistent label width
+        col1_value_x = col1_label_x + label_width + 5
+        col2_value_x = col2_label_x + label_width + 5
         
         for i in range(0, len(fields), 2):
             ensure_space(22)
             label1, value1 = fields[i]
             p.setFont("Helvetica-Bold", 9)
-            p.drawString(col1_x, y, f"{label1}:")
+            p.drawString(col1_label_x, y, f"{label1}:")
             p.setFont("Helvetica", 9)
             
             if value1 and value1 != "-" and value1 != "none" and str(value1).strip():
@@ -6772,14 +6772,14 @@ def download_pdf(application_number):
             else:
                 val1_str = "___________________"
             
-            if len(val1_str) > 40:
-                val1_str = val1_str[:37] + "..."
-            p.drawString(value_x, y, val1_str)
+            if len(val1_str) > 35:
+                val1_str = val1_str[:32] + "..."
+            p.drawString(col1_value_x, y, val1_str)
             
             if i + 1 < len(fields):
                 label2, value2 = fields[i + 1]
                 p.setFont("Helvetica-Bold", 9)
-                p.drawString(col2_x, y, f"{label2}:")
+                p.drawString(col2_label_x, y, f"{label2}:")
                 p.setFont("Helvetica", 9)
                 
                 if value2 and value2 != "-" and value2 != "none" and str(value2).strip():
@@ -6789,7 +6789,7 @@ def download_pdf(application_number):
                 
                 if len(val2_str) > 30:
                     val2_str = val2_str[:27] + "..."
-                p.drawString(value2_x, y, val2_str)
+                p.drawString(col2_value_x, y, val2_str)
             
             y -= 20
         y -= 5
@@ -6810,7 +6810,6 @@ def download_pdf(application_number):
         
         ensure_space(22)
         for idx, (label, value) in enumerate(fields):
-            # Determine column position for label
             if idx == 0:
                 label_x = col1_label_x
                 value_x = col1_value_x
@@ -6831,8 +6830,7 @@ def download_pdf(application_number):
                 else:
                     val_str = "___________________"
                 
-                # Truncate if too long based on available space
-                max_chars = 22
+                max_chars = 20
                 if len(val_str) > max_chars:
                     val_str = val_str[:max_chars-3] + "..."
                 p.drawString(value_x, y, val_str)
@@ -6857,7 +6855,7 @@ def download_pdf(application_number):
         col4_label_x = 455
         
         # Fixed value positions - lahat ng values aligned
-        label_width = 75  # Consistent label width for all columns
+        label_width = 100  # SAME label width as two and three columns!
         col1_value_x = col1_label_x + label_width + 5
         col2_value_x = col2_label_x + label_width + 5
         col3_value_x = col3_label_x + label_width + 5
@@ -6865,7 +6863,6 @@ def download_pdf(application_number):
         
         ensure_space(22)
         for idx, (label, value) in enumerate(fields):
-            # Determine column position
             if idx == 0:
                 label_x = col1_label_x
                 value_x = col1_value_x
@@ -6889,8 +6886,7 @@ def download_pdf(application_number):
                 else:
                     val_str = "___________________"
                 
-                # Truncate if too long
-                max_chars = 14
+                max_chars = 12
                 if len(val_str) > max_chars:
                     val_str = val_str[:max_chars-3] + "..."
                 p.drawString(value_x, y, val_str)
@@ -6970,25 +6966,21 @@ def download_pdf(application_number):
     # ================= PAGE 1: PERSONAL INFORMATION =================
     draw_section_title("I. PERSONAL INFORMATION")
     
-    # NAME - First, Middle, Last in one row (no suffix)
     first_name = data.get("first_name", "")
     middle_name = data.get("middle_name", "")
     last_name = data.get("last_name", "")
     
-    # Name row: Last Name, First Name, Middle Name
     draw_three_columns([
         ("Last Name", last_name if last_name else ""),
         ("First Name", first_name if first_name else ""),
         ("Middle Name", middle_name if middle_name else "")
     ])
     
-    # BIRTHDATE and PLACE OF BIRTH in one row (2 columns)
     draw_two_columns([
         ("Birthdate", data.get("birthdate")),
         ("Place of Birth", data.get("place_of_birth")),
     ])
     
-    # SEX, CIVIL STATUS, CITIZENSHIP, OCCUPATION in one row (4 columns)
     draw_four_columns([
         ("Sex", data.get("sex")),
         ("Civil Status", data.get("civil_status")),
@@ -6999,20 +6991,19 @@ def download_pdf(application_number):
     # ================= FAMILY DETAILS =================
     draw_section_title("II. FAMILY DETAILS")
     
-    # Mother and Father in two columns with better spacing
     draw_two_columns([
         ("Mother's Maiden Name", data.get("mother_maiden_name")),
         ("Father's Name", data.get("father_name")),
     ])
     
-    # ================= SPOUSE INFORMATION (below family details) =================
+    # ================= SPOUSE INFORMATION =================
     draw_section_title("III. SPOUSE INFORMATION")
     spouse_name = data.get("spouse_name")
     if not spouse_name or spouse_name == "-" or spouse_name == "none" or not str(spouse_name).strip():
         spouse_name = "___________________"
     draw_two_columns([
         ("Spouse Full Name", spouse_name),
-        ("", ""),  # Empty second column to maintain layout
+        ("", ""),
     ])
 
     # ================= CONTACT & ADDRESS =================
@@ -7114,19 +7105,17 @@ def download_pdf(application_number):
         y -= 14
     y -= 5
 
-    # ================= TV SET DETAILS - FIXED =================
+    # ================= TV SET DETAILS =================
     tv_qty = data.get("tv_qty", [])
     tv_brand = data.get("tv_brand", [])
     tv_type = data.get("tv_type", [])
     
-    # Check if there are valid entries
     valid_entries = []
     for i in range(len(tv_qty)):
         qty = str(tv_qty[i]).strip() if i < len(tv_qty) else ""
         brand = str(tv_brand[i]).strip() if i < len(tv_brand) else ""
         tv_t = str(tv_type[i]).strip() if i < len(tv_type) else ""
         
-        # Only include if QTY is not empty and not "0"
         if qty and qty != "0" and qty != "-" and qty != "none":
             valid_entries.append({
                 'qty': qty,
@@ -7138,14 +7127,12 @@ def download_pdf(application_number):
         draw_section_title("VII. TV SET DETAILS")
         ensure_space(40)
         
-        # Headers
         p.setFont("Helvetica-Bold", 9)
         p.drawString(50, y, "QTY")
         p.drawString(120, y, "BRAND / MODEL")
         p.drawString(320, y, "TYPE (HD/REGULAR)")
         y -= 15
         
-        # Draw each valid entry
         p.setFont("Helvetica", 9)
         for entry in valid_entries:
             if y < 120:
@@ -7155,7 +7142,6 @@ def download_pdf(application_number):
             brand = entry['brand'] if entry['brand'] else "-"
             tv_t = entry['type'] if entry['type'] else "-"
             
-            # Truncate long brand names
             if len(brand) > 25:
                 brand = brand[:22] + "..."
             if len(tv_t) > 15:
@@ -7282,7 +7268,6 @@ def download_pdf(application_number):
     last_name = data.get("last_name", "").strip()
     suffix = data.get("suffix", "").strip()
     
-    # Build full name for filename
     name_parts = []
     if first_name:
         name_parts.append(first_name)
@@ -7294,8 +7279,6 @@ def download_pdf(application_number):
         name_parts.append(suffix)
     
     full_name_for_file = " ".join(name_parts) if name_parts else "Unknown"
-    
-    # Create filename: "Juan Dela Cruz - Application Form.pdf"
     filename = f"{full_name_for_file} - Application Form.pdf"
     
     return send_file(
