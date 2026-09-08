@@ -6489,12 +6489,15 @@ def superadmin_download_pdf(app_id):
         print(f"PDF download error: {e}")
         return str(e), 500
     
+
+
 @app.route('/download/pdf/<application_number>')
 def download_pdf(application_number):
     import io, base64, os
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.utils import ImageReader
+    from reportlab.pdfbase.pdfmetrics import stringWidth
     from flask import send_file
     import requests
     import json
@@ -6508,35 +6511,35 @@ def download_pdf(application_number):
         WHERE application_number = %s
     """
     data = execute_query(query, (application_number,), fetch_one=True)
-    
+
     if not data:
         return "Application not found", 404
-    
+
     # ================= GET APPLICATION NUMBER AS FOLDER NAME =================
     app_folder = str(application_number)
-    
+
     # Parse JSON fields
-    if data.get('tv_qty'):
-        try:
-            data['tv_qty'] = json.loads(data['tv_qty'])
-        except:
-            data['tv_qty'] = []
-    
-    if data.get('tv_brand'):
-        try:
-            data['tv_brand'] = json.loads(data['tv_brand'])
-        except:
-            data['tv_brand'] = []
-    
-    if data.get('tv_type'):
-        try:
-            data['tv_type'] = json.loads(data['tv_type'])
-        except:
-            data['tv_type'] = []
+    for json_field in ('tv_qty', 'tv_brand', 'tv_type'):
+        if data.get(json_field):
+            try:
+                data[json_field] = json.loads(data[json_field])
+            except Exception:
+                data[json_field] = []
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+
+    # ================= LAYOUT CONSTANTS (NEW) =================
+    MARGIN_LEFT = 50
+    MARGIN_RIGHT = 50
+    USABLE_WIDTH = width - MARGIN_LEFT - MARGIN_RIGHT
+    COLUMN_GAP = 15        # horizontal gap between columns
+    LABEL_VALUE_GAP = 6    # gap between a label and the start of its value
+    LINE_HEIGHT = 13
+    FONT_SIZE = 9
+    LABEL_FONT = "Helvetica-Bold"
+    VALUE_FONT = "Helvetica"
 
     # ================= DEBUG: Print image info =================
     print("=" * 80)
@@ -6548,15 +6551,14 @@ def download_pdf(application_number):
     print(f"proof_billing: {data.get('proof_billing', 'None')}")
     print("=" * 80)
 
-    # ================= FIXED: Get image from Cloudinary =================
+    # ================= Get image from Cloudinary =================
     def get_image_from_cloudinary(image_path):
         """Get image from Cloudinary URL or local path"""
         if not image_path:
             return None
-        
-        # Convert to Cloudinary URL
+
         cloudinary_url = get_cloudinary_url(image_path)
-        
+
         if cloudinary_url and cloudinary_url.startswith('http'):
             try:
                 print(f" Downloading from Cloudinary: {cloudinary_url}")
@@ -6568,49 +6570,42 @@ def download_pdf(application_number):
                     print(f" Cloudinary download failed: {response.status_code}")
             except Exception as e:
                 print(f" Error downloading from Cloudinary: {e}")
-        
-        # Fallback: Try local path (for development)
+
         SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
-        
-        # Extract filename from path
         filename = os.path.basename(image_path)
-        
-        # Try to find in application_uploads folder
+
         full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
         if os.path.exists(full_path):
             print(f" Found locally: {full_path}")
             with open(full_path, 'rb') as f:
                 return f.read()
-        
-        # Try alternative paths
+
         alt_paths = [
             os.path.join(SHARED_UPLOADS_BASE, filename),
             os.path.join(SHARED_UPLOADS_BASE, image_path.lstrip('/'))
         ]
-        
+
         for alt_path in alt_paths:
             if os.path.exists(alt_path):
                 print(f" Found locally: {alt_path}")
                 with open(alt_path, 'rb') as f:
                     return f.read()
-        
+
         print(f" Image not found: {image_path}")
         return None
 
-    # ================= HELPER: Load and convert image =================
+    # ================= Load and convert image =================
     def load_and_convert_image(image_data):
         """Load image and convert to RGB format for PDF"""
         if not image_data:
-            print(f" No image data provided")
+            print(" No image data provided")
             return None
-        
+
         img_bytes = None
-        
-        # Try to get from Cloudinary
+
         if isinstance(image_data, str):
             img_bytes = get_image_from_cloudinary(image_data)
-        
-        # Try base64 decoding if file loading failed
+
         if not img_bytes and isinstance(image_data, str):
             if 'base64,' in image_data or 'data:image' in image_data:
                 try:
@@ -6620,39 +6615,38 @@ def download_pdf(application_number):
                         match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_data)
                         if match:
                             image_data = match.group(2)
-                    
+
                     image_data = image_data.strip()
                     img_bytes = base64.b64decode(image_data)
                     print(f" Decoded base64 image ({len(img_bytes)} bytes)")
                 except Exception as e:
                     print(f" Error decoding base64: {e}")
-        
+
         if not img_bytes:
-            print(f" No image bytes loaded")
+            print(" No image bytes loaded")
             return None
-        
-        # Convert image to RGB format using PIL
+
         try:
             img = Image.open(io.BytesIO(img_bytes))
             print(f" Image opened: {img.format}, {img.size}, {img.mode}")
-            
+
             if img.mode != 'RGB':
                 img = img.convert('RGB')
-                print(f" Converted to RGB")
-            
+                print(" Converted to RGB")
+
             output = io.BytesIO()
             img.save(output, format='JPEG', quality=90)
             output.seek(0)
-            
+
             print(f" Converted to JPEG ({output.getbuffer().nbytes} bytes)")
             return output.getvalue()
-            
+
         except Exception as e:
             print(f" Error converting image: {e}")
             return img_bytes
 
-    # ================= HELPER: Draw image safely =================
-    def draw_image_safe(p, image_data, x, y, width, height, label="Image"):
+    # ================= Draw image safely =================
+    def draw_image_safe(p, image_data, x, y_pos, w, h, label="Image"):
         """Safely draw an image on the PDF"""
         try:
             print(f" Drawing {label}...")
@@ -6662,10 +6656,10 @@ def download_pdf(application_number):
                     tmp_file.write(img_bytes)
                     tmp_path = tmp_file.name
                     print(f" Temp file: {tmp_path}")
-                
+
                 try:
                     img = ImageReader(tmp_path)
-                    p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
+                    p.drawImage(img, x, y_pos, w, h, preserveAspectRatio=True, mask='auto')
                     print(f" Drew {label} successfully")
                     return True
                 except Exception as e:
@@ -6675,7 +6669,7 @@ def download_pdf(application_number):
                     try:
                         os.unlink(tmp_path)
                         print(f" Deleted temp file: {tmp_path}")
-                    except:
+                    except Exception:
                         pass
             else:
                 print(f" No image bytes for {label}")
@@ -6695,7 +6689,7 @@ def download_pdf(application_number):
         try:
             logo = ImageReader("static/logo1.png")
             p.drawImage(logo, 40, height - 90, width=60, height=60, mask='auto')
-        except:
+        except Exception:
             pass
 
         p.setFont("Helvetica-Bold", 16)
@@ -6751,170 +6745,119 @@ def download_pdf(application_number):
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
-    # ================= Two columns =================
-    def draw_two_columns(fields):
-        nonlocal y
-        col1_label_x = 50
-        col2_label_x = 300
-        label_width = 100
-        col1_value_x = col1_label_x + label_width + 5
-        col2_value_x = col2_label_x + label_width + 5
-        
-        for i in range(0, len(fields), 2):
-            ensure_space(22)
-            label1, value1 = fields[i]
-            p.setFont("Helvetica-Bold", 9)
-            p.drawString(col1_label_x, y, f"{label1}:")
-            p.setFont("Helvetica", 9)
-            
-            if value1 and value1 != "-" and value1 != "none" and str(value1).strip():
-                val1_str = str(value1)
-            else:
-                val1_str = "___________________"
-            
-            if len(val1_str) > 35:
-                val1_str = val1_str[:32] + "..."
-            p.drawString(col1_value_x, y, val1_str)
-            
-            if i + 1 < len(fields):
-                label2, value2 = fields[i + 1]
-                p.setFont("Helvetica-Bold", 9)
-                p.drawString(col2_label_x, y, f"{label2}:")
-                p.setFont("Helvetica", 9)
-                
-                if value2 and value2 != "-" and value2 != "none" and str(value2).strip():
-                    val2_str = str(value2)
-                else:
-                    val2_str = "___________________"
-                
-                if len(val2_str) > 30:
-                    val2_str = val2_str[:27] + "..."
-                p.drawString(col2_value_x, y, val2_str)
-            
-            y -= 20
-        y -= 5
+    # ================= TEXT HELPERS (NEW) =================
+    def clean_value(value):
+        """Normalize a value; blank/placeholder values become an underline."""
+        if value is not None and str(value).strip() and str(value) not in ("-", "none", "None"):
+            return str(value)
+        return "___________________"
 
-    # ================= Three columns =================
-    def draw_three_columns(fields):
-        nonlocal y
-        col1_label_x = 50
-        col2_label_x = 195
-        col3_label_x = 340
-        
-        label_width = 100
-        col1_value_x = col1_label_x + label_width + 5
-        col2_value_x = col2_label_x + label_width + 5
-        col3_value_x = col3_label_x + label_width + 5
-        
-        ensure_space(22)
-        for idx, (label, value) in enumerate(fields):
-            if idx == 0:
-                label_x = col1_label_x
-                value_x = col1_value_x
-            elif idx == 1:
-                label_x = col2_label_x
-                value_x = col2_value_x
+    def wrap_text(text, font, size, max_width):
+        """Word-wrap `text` to fit within max_width, hard-breaking a single
+        word that is still too long on its own (e.g. a very long email)."""
+        words = str(text).split()
+        if not words:
+            return [""]
+        lines = []
+        current = ""
+        for word in words:
+            candidate = f"{current} {word}".strip()
+            if stringWidth(candidate, font, size) <= max_width:
+                current = candidate
             else:
-                label_x = col3_label_x
-                value_x = col3_value_x
-            
-            if label:
-                p.setFont("Helvetica-Bold", 9)
-                p.drawString(label_x, y, f"{label}:")
-                p.setFont("Helvetica", 9)
-                
-                if value and value != "-" and value != "none" and str(value).strip():
-                    val_str = str(value)
-                else:
-                    val_str = "___________________"
-                
-                max_chars = 20
-                if len(val_str) > max_chars:
-                    val_str = val_str[:max_chars-3] + "..."
-                p.drawString(value_x, y, val_str)
-            else:
-                p.setFont("Helvetica", 9)
-                if value and value != "-" and value != "none" and str(value).strip():
-                    val_str = str(value)
-                else:
-                    val_str = "___________________"
-                p.drawString(value_x, y, val_str)
-        
-        y -= 20
-        y -= 5
+                if current:
+                    lines.append(current)
+                # hard-break an overlong single word/token
+                while stringWidth(word, font, size) > max_width and len(word) > 1:
+                    cut = len(word)
+                    while cut > 1 and stringWidth(word[:cut], font, size) > max_width:
+                        cut -= 1
+                    lines.append(word[:cut])
+                    word = word[cut:]
+                current = word
+        if current:
+            lines.append(current)
+        return lines or [""]
 
-    # ================= Four columns - FLEXIBLE spacing =================
-    def draw_four_columns(fields):
+    def truncate_to_width(text, font, size, max_width):
+        """Single-line ellipsis truncation sized to the actual pixel width
+        available (used for the TV table, which stays single-line)."""
+        text = str(text)
+        if stringWidth(text, font, size) <= max_width:
+            return text
+        while text and stringWidth(text + "...", font, size) > max_width:
+            text = text[:-1]
+        return (text + "...") if text else "..."
+
+    # ================= DYNAMIC ROW / GRID DRAWING (NEW) =================
+    # Replaces the old draw_two_columns / draw_three_columns / draw_four_columns,
+    # each of which used fixed x-positions, a fixed 100px label gutter, and
+    # "..." truncation past a fixed character count regardless of actual width.
+    def draw_row(fields, num_columns):
+        """
+        Draw one row of up to `num_columns` (label, value) pairs.
+        - Usable page width is split evenly across the columns.
+        - Each label's real width is measured, so the value always starts
+          right after it (no wasted/insufficient gutter space).
+        - Any value too wide for its column wraps onto extra lines instead
+          of being cut off.
+        - Row height grows to fit the tallest wrapped column.
+        """
         nonlocal y
-        # Column positions for labels
-        col1_label_x = 50
-        col2_label_x = 175
-        col3_label_x = 300
-        col4_label_x = 425
-        
-        # Different label widths per column para magkasya ang values
-        label_widths = [80, 80, 80, 80]  # Each column has its own label width
-        
-        # Calculate value positions per column
-        col1_value_x = col1_label_x + label_widths[0] + 5
-        col2_value_x = col2_label_x + label_widths[1] + 5
-        col3_value_x = col3_label_x + label_widths[2] + 5
-        col4_value_x = col4_label_x + label_widths[3] + 5
-        
-        ensure_space(22)
-        
-        # Draw each field in its column
-        for idx, (label, value) in enumerate(fields):
-            if idx == 0:
-                label_x = col1_label_x
-                value_x = col1_value_x
-                max_chars = 15
-            elif idx == 1:
-                label_x = col2_label_x
-                value_x = col2_value_x
-                max_chars = 15
-            elif idx == 2:
-                label_x = col3_label_x
-                value_x = col3_value_x
-                max_chars = 18  # More space for Citizenship
-            else:
-                label_x = col4_label_x
-                value_x = col4_value_x
-                max_chars = 18  # More space for Occupation
-            
-            if label:
-                p.setFont("Helvetica-Bold", 9)
-                p.drawString(label_x, y, f"{label}:")
-                p.setFont("Helvetica", 9)
-                
-                if value and value != "-" and value != "none" and str(value).strip():
-                    val_str = str(value)
-                else:
-                    val_str = "___________________"
-                
-                # Truncate only if too long for the column
-                if len(val_str) > max_chars:
-                    val_str = val_str[:max_chars-3] + "..."
-                p.drawString(value_x, y, val_str)
-            else:
-                p.setFont("Helvetica", 9)
-                if value and value != "-" and value != "none" and str(value).strip():
-                    val_str = str(value)
-                else:
-                    val_str = "___________________"
-                p.drawString(value_x, y, val_str)
-        
-        y -= 20
-        y -= 5
+        col_width = (USABLE_WIDTH - COLUMN_GAP * (num_columns - 1)) / num_columns
+
+        prepared = []
+        max_lines = 1
+        for idx in range(num_columns):
+            col_x = MARGIN_LEFT + idx * (col_width + COLUMN_GAP)
+            if idx >= len(fields):
+                prepared.append(None)
+                continue
+            label, value = fields[idx]
+            if not label and not value:
+                prepared.append(None)
+                continue
+
+            label_w = stringWidth(f"{label}:", LABEL_FONT, FONT_SIZE) if label else 0
+            value_x = col_x + (label_w + LABEL_VALUE_GAP if label else 0)
+            available = max(col_width - (label_w + LABEL_VALUE_GAP if label else 0), 40)
+
+            lines = wrap_text(clean_value(value), VALUE_FONT, FONT_SIZE, available)
+            max_lines = max(max_lines, len(lines))
+
+            prepared.append({"label": label, "col_x": col_x, "value_x": value_x, "lines": lines})
+
+        ensure_space(max_lines * LINE_HEIGHT + 8)
+
+        for col in prepared:
+            if col is None:
+                continue
+            line_y = y
+            if col["label"]:
+                p.setFont(LABEL_FONT, FONT_SIZE)
+                p.drawString(col["col_x"], line_y, f"{col['label']}:")
+            p.setFont(VALUE_FONT, FONT_SIZE)
+            for line in col["lines"]:
+                p.drawString(col["value_x"], line_y, line)
+                line_y -= LINE_HEIGHT
+
+        y -= max_lines * LINE_HEIGHT + 6
+
+    def draw_field_grid(fields, num_columns):
+        """Chunk a flat list of (label, value) pairs into rows of
+        `num_columns` and draw each row. Drop-in replacement for
+        draw_two_columns([...]) -> draw_field_grid([...], 2), etc."""
+        for i in range(0, len(fields), num_columns):
+            draw_row(fields[i:i + num_columns], num_columns)
 
     def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
         nonlocal y
-        
+
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width / 2, y, label1)
         y -= 22
-        
+
         if draw_image_safe(p, img1_data, (width - img_width) / 2, y - img_height, img_width, img_height, label1):
             y -= img_height + 35
         else:
@@ -6923,12 +6866,12 @@ def download_pdf(application_number):
             p.drawCentredString(width / 2, y, "No image provided")
             p.setFillColorRGB(0, 0, 0)
             y -= 25
-        
+
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width / 2, y, label2)
         y -= 22
-        
+
         if draw_image_safe(p, img2_data, (width - img_width) / 2, y - img_height, img_width, img_height, label2):
             y -= img_height + 35
         else:
@@ -6940,12 +6883,12 @@ def download_pdf(application_number):
 
     def draw_signature_section(signature_img, full_name):
         nonlocal y
-        
+
         y -= 15
-        
+
         sig_width = 250
         sig_height = 85
-        
+
         if draw_image_safe(p, signature_img, (width - sig_width) / 2, y - sig_height, sig_width, sig_height, "Signature"):
             y -= sig_height + 20
         else:
@@ -6954,11 +6897,11 @@ def download_pdf(application_number):
             p.drawCentredString(width / 2, y, "No signature provided")
             p.setFillColorRGB(0, 0, 0)
             y -= 25
-        
+
         p.setFont("Helvetica", 10)
         p.drawCentredString(width / 2, y, full_name if full_name else "_________________________")
         y -= 20
-        
+
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.4, 0.4, 0.4)
         p.drawCentredString(width / 2, y, "signature over printed name")
@@ -6971,200 +6914,135 @@ def download_pdf(application_number):
 
     # ================= PAGE 1: PERSONAL INFORMATION =================
     draw_section_title("I. PERSONAL INFORMATION")
-    
+
     first_name = data.get("first_name", "")
     middle_name = data.get("middle_name", "")
     last_name = data.get("last_name", "")
-    
-    draw_three_columns([
-        ("Last Name", last_name if last_name else ""),
-        ("First Name", first_name if first_name else ""),
-        ("Middle Name", middle_name if middle_name else "")
-    ])
-    
-    draw_two_columns([
+
+    draw_field_grid([
+        ("Last Name", last_name),
+        ("First Name", first_name),
+        ("Middle Name", middle_name)
+    ], 3)
+
+    draw_field_grid([
         ("Birthdate", data.get("birthdate")),
         ("Place of Birth", data.get("place_of_birth")),
-    ])
-    
-    # ===== FOUR COLUMNS - FLEXIBLE SPACING =====
-    draw_four_columns([
+    ], 2)
+
+    draw_field_grid([
         ("Sex", data.get("sex")),
         ("Civil Status", data.get("civil_status")),
         ("Citizenship", data.get("citizenship")),
         ("Occupation", data.get("occupation"))
-    ])
+    ], 4)
 
     # ================= FAMILY DETAILS =================
     draw_section_title("II. FAMILY DETAILS")
-    
-    draw_two_columns([
+
+    draw_field_grid([
         ("Mother's Maiden Name", data.get("mother_maiden_name")),
         ("Father's Name", data.get("father_name")),
-    ])
-    
+    ], 2)
+
     # ================= SPOUSE INFORMATION =================
     draw_section_title("III. SPOUSE INFORMATION")
-    spouse_name = data.get("spouse_name")
-    if not spouse_name or spouse_name == "-" or spouse_name == "none" or not str(spouse_name).strip():
-        spouse_name = "___________________"
-    draw_two_columns([
-        ("Spouse Full Name", spouse_name),
+    draw_field_grid([
+        ("Spouse Full Name", data.get("spouse_name")),
         ("", ""),
-    ])
+    ], 2)
 
     # ================= CONTACT & ADDRESS =================
     draw_section_title("IV. CONTACT & ADDRESS")
-    draw_two_columns([
+    draw_field_grid([
         ("Mobile Number", data.get("mobile")),
         ("Email Address", data.get("email")),
         ("Home Ownership", data.get("home_ownership")),
         ("House No./Unit", data.get("house_number")),
         ("Nearest Landmark", data.get("landmark")),
         ("Street/Village", data.get("address")),
-    ])
+    ], 2)
 
-    # Billing Address
-    p.setFont("Helvetica-Bold", 9)
-    label_width_billing = 100
-    p.drawString(50, y, "Billing Address:")
-    p.setFont("Helvetica", 9)
-    
-    billing_address = data.get("billing_address", "")
-    if not billing_address or billing_address == "-" or billing_address == "none" or not str(billing_address).strip():
-        billing_address = "___________________"
-    
-    from reportlab.pdfbase.pdfmetrics import stringWidth
-    max_width = 450
-    words = billing_address.split()
-    lines = []
-    current_line = ""
-    
-    for word in words:
-        test_line = current_line + (" " if current_line else "") + word
-        if stringWidth(test_line, "Helvetica", 9) <= max_width:
-            current_line = test_line
-        else:
-            lines.append(current_line)
-            current_line = word
-    
-    if current_line:
-        lines.append(current_line)
-    
-    billing_x = 50 + label_width_billing + 5
-    for line in lines:
-        p.drawString(billing_x, y, line)
-        y -= 14
-    y -= 5
+    # Billing Address (was a hand-rolled wrap loop; now uses the same dynamic helper)
+    draw_field_grid([("Billing Address", data.get("billing_address"))], 1)
 
     draw_section_title("V. EMPLOYMENT DETAILS")
-    draw_two_columns([
+    draw_field_grid([
         ("Employer / Company", data.get("employer")),
         ("Business Phone", data.get("business_phone")),
         ("Business Address", data.get("business_address")),
         ("", ""),
-    ])
+    ], 2)
 
     draw_section_title("VI. SERVICE PLAN")
-    draw_two_columns([
+    draw_field_grid([
         ("Service Type / Plan", data.get("service_type")),
         ("Installation Fee", data.get("installation_fee")),
-    ])
+    ], 2)
 
-    # Installation Phone
-    p.setFont("Helvetica-Bold", 9)
-    label_width_phone = 100
-    p.drawString(50, y, "Installation Phone:")
-    p.setFont("Helvetica", 9)
-    installation_phone = data.get("installation_phone", "")
-    if not installation_phone or installation_phone == "-" or installation_phone == "none" or not str(installation_phone).strip():
-        installation_phone = "___________________"
-    p.drawString(50 + label_width_phone + 5, y, installation_phone)
-    y -= 18
-    y -= 5
-
-    # Installation Address
-    p.setFont("Helvetica-Bold", 9)
-    p.drawString(50, y, "Installation Address:")
-    p.setFont("Helvetica", 9)
-    
-    installation_address = data.get("installation_address", "")
-    if not installation_address or installation_address == "-" or installation_address == "none" or not str(installation_address).strip():
-        installation_address = "___________________"
-    
-    words = installation_address.split()
-    lines = []
-    current_line = ""
-    
-    for word in words:
-        test_line = current_line + (" " if current_line else "") + word
-        if stringWidth(test_line, "Helvetica", 9) <= max_width:
-            current_line = test_line
-        else:
-            lines.append(current_line)
-            current_line = word
-    
-    if current_line:
-        lines.append(current_line)
-    
-    for line in lines:
-        p.drawString(50 + label_width_phone + 5, y, line)
-        y -= 14
-    y -= 5
+    # Installation Phone / Installation Address (same simplification as billing address above)
+    draw_field_grid([("Installation Phone", data.get("installation_phone"))], 1)
+    draw_field_grid([("Installation Address", data.get("installation_address"))], 1)
 
     # ================= TV SET DETAILS =================
     tv_qty = data.get("tv_qty", [])
     tv_brand = data.get("tv_brand", [])
     tv_type = data.get("tv_type", [])
-    
+
     valid_entries = []
     for i in range(len(tv_qty)):
         qty = str(tv_qty[i]).strip() if i < len(tv_qty) else ""
         brand = str(tv_brand[i]).strip() if i < len(tv_brand) else ""
         tv_t = str(tv_type[i]).strip() if i < len(tv_type) else ""
-        
+
         if qty and qty != "0" and qty != "-" and qty != "none":
             valid_entries.append({
                 'qty': qty,
                 'brand': brand if brand and brand != "-" and brand != "none" else "",
                 'type': tv_t if tv_t and tv_t != "-" and tv_t != "none" else ""
             })
-    
+
     if valid_entries:
         draw_section_title("VII. TV SET DETAILS")
         ensure_space(40)
-        
+
+        TV_COL_QTY_X = 50
+        TV_COL_BRAND_X = 120
+        TV_COL_TYPE_X = 320
+        TV_BRAND_MAX_WIDTH = TV_COL_TYPE_X - TV_COL_BRAND_X - 10
+        TV_TYPE_MAX_WIDTH = (width - MARGIN_RIGHT) - TV_COL_TYPE_X - 5
+
         p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, y, "QTY")
-        p.drawString(120, y, "BRAND / MODEL")
-        p.drawString(320, y, "TYPE (HD/REGULAR)")
+        p.drawString(TV_COL_QTY_X, y, "QTY")
+        p.drawString(TV_COL_BRAND_X, y, "BRAND / MODEL")
+        p.drawString(TV_COL_TYPE_X, y, "TYPE (HD/REGULAR)")
         y -= 15
-        
+
         p.setFont("Helvetica", 9)
         for entry in valid_entries:
-            if y < 120:
+            if not ensure_space(16):
                 break
-            
+
             qty = entry['qty']
             brand = entry['brand'] if entry['brand'] else "-"
             tv_t = entry['type'] if entry['type'] else "-"
-            
-            if len(brand) > 25:
-                brand = brand[:22] + "..."
-            if len(tv_t) > 15:
-                tv_t = tv_t[:12] + "..."
-            
-            p.drawString(50, y, qty)
-            p.drawString(120, y, brand)
-            p.drawString(320, y, tv_t)
+
+            # Truncate to the actual pixel width available in each column,
+            # instead of a fixed character count.
+            brand = truncate_to_width(brand, "Helvetica", 9, TV_BRAND_MAX_WIDTH)
+            tv_t = truncate_to_width(tv_t, "Helvetica", 9, TV_TYPE_MAX_WIDTH)
+
+            p.drawString(TV_COL_QTY_X, y, qty)
+            p.drawString(TV_COL_BRAND_X, y, brand)
+            p.drawString(TV_COL_TYPE_X, y, tv_t)
             y -= 16
         y -= 5
 
     draw_section_title("VIII. SUBMISSION DETAILS")
-    draw_two_columns([
+    draw_field_grid([
         ("Date Submitted", data.get("date_submitted")),
         ("Time Submitted", data.get("time_submitted")),
-    ])
+    ], 2)
 
     full_name = f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
     draw_signature_section(data.get("signature"), full_name)
@@ -7183,10 +7061,10 @@ def download_pdf(application_number):
         if lat and lng:
             lat = float(lat)
             lng = float(lng)
-            
+
             google_maps_url = f"https://www.google.com/maps?q={lat},{lng}"
             google_maps_direction_url = f"https://www.google.com/maps/dir//{lat},{lng}"
-            
+
             map_url = f"https://maps.locationiq.com/v3/staticmap?key=pk.0fdad07272d959e4de881139988b0883&center={lat},{lng}&zoom=17&size=600x400&markers=icon:large-red-cutout|{lat},{lng}"
             response = requests.get(map_url, timeout=10)
             if response.status_code == 200:
@@ -7194,12 +7072,12 @@ def download_pdf(application_number):
     except Exception as e:
         print("Map error:", e)
 
-    draw_two_columns([
+    draw_field_grid([
         ("Street/Village", data.get("address")),
         ("Barangay/City", f"{data.get('barangay', '-')}, {data.get('city', '-')}"),
         ("Latitude", lat if lat else "-"),
         ("Longitude", lng if lng else "-"),
-    ])
+    ], 2)
 
     if google_maps_direction_url:
         ensure_space(25)
@@ -7210,7 +7088,7 @@ def download_pdf(application_number):
         p.linkURL(google_maps_direction_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 12), relative=0)
         p.setFillColorRGB(0, 0, 0)
         y -= 20
-        
+
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.5, 0.5, 0.5)
         p.drawCentredString(width / 2, y, " Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
@@ -7233,19 +7111,19 @@ def download_pdf(application_number):
         x_center = (width - img_width) / 2
         p.drawImage(map_img, x_center, y - img_height, img_width, img_height)
         y -= img_height + 20
-        
+
         p.setFont("Helvetica", 8)
         p.setFillColorRGB(0.5, 0.5, 0.5)
         p.drawCentredString(width / 2, y, " Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
         p.setFillColorRGB(0, 0, 0)
         y -= 15
     else:
-        draw_two_columns([("Map Status", "Not available")])
+        draw_field_grid([("Map Status", "Not available")], 1)
 
     # ================= PAGE 3: FRONT AND BACK ID =================
     new_page()
     draw_section_title_centered("VALID IDENTIFICATION")
-    
+
     draw_images_top_bottom(
         "VALID ID (FRONT)", data.get("id_front"),
         "VALID ID (BACK)", data.get("id_back"),
@@ -7255,7 +7133,7 @@ def download_pdf(application_number):
     # ================= PAGE 4: PROOF OF BILLING =================
     new_page()
     draw_section_title_centered("PROOF OF BILLING")
-    
+
     proof = data.get("proof_billing")
     if draw_image_safe(p, proof, (width - 500) / 2, y - 580, 500, 580, "Proof of Billing"):
         y -= 580 + 30
@@ -7268,13 +7146,13 @@ def download_pdf(application_number):
 
     p.save()
     buffer.seek(0)
-    
+
     # ================= BUILD FILENAME =================
     first_name = data.get("first_name", "").strip()
     middle_name = data.get("middle_name", "").strip()
     last_name = data.get("last_name", "").strip()
     suffix = data.get("suffix", "").strip()
-    
+
     name_parts = []
     if first_name:
         name_parts.append(first_name)
@@ -7284,14 +7162,14 @@ def download_pdf(application_number):
         name_parts.append(last_name)
     if suffix:
         name_parts.append(suffix)
-    
+
     full_name_for_file = " ".join(name_parts) if name_parts else "Unknown"
     filename = f"{full_name_for_file} - Application Form.pdf"
-    
+
     return send_file(
-        buffer, 
-        mimetype='application/pdf', 
-        as_attachment=True, 
+        buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
         download_name=filename
     )
 
