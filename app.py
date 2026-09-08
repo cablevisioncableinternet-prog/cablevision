@@ -6751,17 +6751,17 @@ def download_pdf(application_number):
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
-    # ================= UPDATED: Two columns with consistent alignment =================
+    # ================= Two columns =================
     def draw_two_columns(fields):
         nonlocal y
         col1_label_x = 50
-        col2_label_x = 300
-        label_width = 100  # Consistent label width
+        col2_label_x = 280
+        label_width = 75  # BINABAWASAN: 100 -> 75
         col1_value_x = col1_label_x + label_width + 5
         col2_value_x = col2_label_x + label_width + 5
         
         for i in range(0, len(fields), 2):
-            ensure_space(22)
+            ensure_space(20)
             label1, value1 = fields[i]
             p.setFont("Helvetica-Bold", 9)
             p.drawString(col1_label_x, y, f"{label1}:")
@@ -6772,8 +6772,8 @@ def download_pdf(application_number):
             else:
                 val1_str = "___________________"
             
-            if len(val1_str) > 35:
-                val1_str = val1_str[:32] + "..."
+            if len(val1_str) > 30:
+                val1_str = val1_str[:27] + "..."
             p.drawString(col1_value_x, y, val1_str)
             
             if i + 1 < len(fields):
@@ -6787,38 +6787,39 @@ def download_pdf(application_number):
                 else:
                     val2_str = "___________________"
                 
-                if len(val2_str) > 30:
-                    val2_str = val2_str[:27] + "..."
+                if len(val2_str) > 25:
+                    val2_str = val2_str[:22] + "..."
                 p.drawString(col2_value_x, y, val2_str)
             
-            y -= 20
+            y -= 18
         y -= 5
 
-    # ================= UPDATED: Three columns with consistent alignment =================
+    # ================= Three columns =================
     def draw_three_columns(fields):
         nonlocal y
-        # Fixed column positions - lahat ng labels aligned
         col1_label_x = 50
-        col2_label_x = 195
-        col3_label_x = 340
+        col2_label_x = 180
+        col3_label_x = 310
         
-        # Fixed value positions - lahat ng values aligned
-        label_width = 100  # Consistent label width for all columns
+        label_width = 75  # BINABAWASAN: 100 -> 75
         col1_value_x = col1_label_x + label_width + 5
         col2_value_x = col2_label_x + label_width + 5
         col3_value_x = col3_label_x + label_width + 5
         
-        ensure_space(22)
+        ensure_space(20)
         for idx, (label, value) in enumerate(fields):
             if idx == 0:
                 label_x = col1_label_x
                 value_x = col1_value_x
+                max_chars = 18
             elif idx == 1:
                 label_x = col2_label_x
                 value_x = col2_value_x
+                max_chars = 18
             else:
                 label_x = col3_label_x
                 value_x = col3_value_x
+                max_chars = 18
             
             if label:
                 p.setFont("Helvetica-Bold", 9)
@@ -6830,7 +6831,6 @@ def download_pdf(application_number):
                 else:
                     val_str = "___________________"
                 
-                max_chars = 20
                 if len(val_str) > max_chars:
                     val_str = val_str[:max_chars-3] + "..."
                 p.drawString(value_x, y, val_str)
@@ -6842,39 +6842,44 @@ def download_pdf(application_number):
                     val_str = "___________________"
                 p.drawString(value_x, y, val_str)
         
-        y -= 20
+        y -= 18
         y -= 5
 
-    # ================= UPDATED: Four columns with consistent alignment =================
+    # ================= Four columns - COMPACT spacing =================
     def draw_four_columns(fields):
         nonlocal y
-        # Fixed column positions - lahat ng labels aligned
+        # Column positions for labels - mas malapit para compact
         col1_label_x = 50
-        col2_label_x = 185
-        col3_label_x = 320
-        col4_label_x = 455
+        col2_label_x = 165
+        col3_label_x = 280
+        col4_label_x = 395
         
-        # Fixed value positions - lahat ng values aligned
-        label_width = 100  # SAME label width as two and three columns!
+        # Smaller label width para mas malapit ang value sa label
+        label_width = 70  # BINABAWASAN: 80 -> 70
         col1_value_x = col1_label_x + label_width + 5
         col2_value_x = col2_label_x + label_width + 5
         col3_value_x = col3_label_x + label_width + 5
         col4_value_x = col4_label_x + label_width + 5
         
-        ensure_space(22)
+        ensure_space(20)
+        
         for idx, (label, value) in enumerate(fields):
             if idx == 0:
                 label_x = col1_label_x
                 value_x = col1_value_x
+                max_chars = 12
             elif idx == 1:
                 label_x = col2_label_x
                 value_x = col2_value_x
+                max_chars = 14
             elif idx == 2:
                 label_x = col3_label_x
                 value_x = col3_value_x
+                max_chars = 16
             else:
                 label_x = col4_label_x
                 value_x = col4_value_x
+                max_chars = 16
             
             if label:
                 p.setFont("Helvetica-Bold", 9)
@@ -6886,7 +6891,6 @@ def download_pdf(application_number):
                 else:
                     val_str = "___________________"
                 
-                max_chars = 12
                 if len(val_str) > max_chars:
                     val_str = val_str[:max_chars-3] + "..."
                 p.drawString(value_x, y, val_str)
@@ -6898,7 +6902,7 @@ def download_pdf(application_number):
                     val_str = "___________________"
                 p.drawString(value_x, y, val_str)
         
-        y -= 20
+        y -= 18
         y -= 5
 
     def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
@@ -7019,7 +7023,7 @@ def download_pdf(application_number):
 
     # Billing Address
     p.setFont("Helvetica-Bold", 9)
-    label_width_billing = 100
+    label_width_billing = 75
     p.drawString(50, y, "Billing Address:")
     p.setFont("Helvetica", 9)
     
@@ -7028,7 +7032,7 @@ def download_pdf(application_number):
         billing_address = "___________________"
     
     from reportlab.pdfbase.pdfmetrics import stringWidth
-    max_width = 450
+    max_width = 480
     words = billing_address.split()
     lines = []
     current_line = ""
@@ -7066,7 +7070,7 @@ def download_pdf(application_number):
 
     # Installation Phone
     p.setFont("Helvetica-Bold", 9)
-    label_width_phone = 100
+    label_width_phone = 75
     p.drawString(50, y, "Installation Phone:")
     p.setFont("Helvetica", 9)
     installation_phone = data.get("installation_phone", "")
