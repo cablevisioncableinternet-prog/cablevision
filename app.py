@@ -6530,12 +6530,12 @@ def download_pdf(application_number):
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # ================= LAYOUT CONSTANTS (NEW) =================
+    # ================= LAYOUT CONSTANTS =================
     MARGIN_LEFT = 50
     MARGIN_RIGHT = 50
     USABLE_WIDTH = width - MARGIN_LEFT - MARGIN_RIGHT
-    COLUMN_GAP = 15        # horizontal gap between columns
-    LABEL_VALUE_GAP = 6    # gap between a label and the start of its value
+    COLUMN_GAP = 15
+    LABEL_VALUE_GAP = 6
     LINE_HEIGHT = 13
     FONT_SIZE = 9
     LABEL_FONT = "Helvetica-Bold"
@@ -6745,7 +6745,7 @@ def download_pdf(application_number):
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
-    # ================= TEXT HELPERS (NEW) =================
+    # ================= TEXT HELPERS =================
     def clean_value(value):
         """Normalize a value; blank/placeholder values become an underline."""
         if value is not None and str(value).strip() and str(value) not in ("-", "none", "None"):
@@ -6779,26 +6779,10 @@ def download_pdf(application_number):
             lines.append(current)
         return lines or [""]
 
-    def truncate_to_width(text, font, size, max_width):
-        """Single-line ellipsis truncation sized to the actual pixel width
-        available (used for the TV table, which stays single-line)."""
-        text = str(text)
-        if stringWidth(text, font, size) <= max_width:
-            return text
-        while text and stringWidth(text + "...", font, size) > max_width:
-            text = text[:-1]
-        return (text + "...") if text else "..."
-
-    # ================= DYNAMIC ROW / GRID DRAWING (NEW) =================
+    # ================= DYNAMIC ROW / GRID DRAWING =================
     def draw_row(fields, num_columns):
         """
         Draw one row of up to `num_columns` (label, value) pairs.
-        - Usable page width is split evenly across the columns.
-        - Each label's real width is measured, so the value always starts
-          right after it (no wasted/insufficient gutter space).
-        - Any value too wide for its column wraps onto extra lines instead
-          of being cut off.
-        - Row height grows to fit the tallest wrapped column.
         """
         nonlocal y
         col_width = (USABLE_WIDTH - COLUMN_GAP * (num_columns - 1)) / num_columns
@@ -6842,41 +6826,47 @@ def download_pdf(application_number):
 
     def draw_field_grid(fields, num_columns):
         """Chunk a flat list of (label, value) pairs into rows of
-        `num_columns` and draw each row. Drop-in replacement for
-        draw_two_columns([...]) -> draw_field_grid([...], 2), etc."""
+        `num_columns` and draw each row."""
         for i in range(0, len(fields), num_columns):
             draw_row(fields[i:i + num_columns], num_columns)
 
-    def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
+    # ================= NEW: Draw images side by side =================
+    def draw_images_side_by_side(label1, img1_data, label2, img2_data, img_width=240, img_height=170):
+        """Draw two images side by side with labels above each."""
         nonlocal y
-
+        
+        # Calculate spacing
+        total_img_width = img_width * 2 + 30  # 30px gap between images
+        start_x = (width - total_img_width) / 2
+        
+        # Draw label for first image
         ensure_space(img_height + 60)
         p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width / 2, y, label1)
+        p.drawCentredString(start_x + img_width/2, y, label1)
+        
+        # Draw label for second image
+        p.drawCentredString(start_x + img_width + 30 + img_width/2, y, label2)
         y -= 22
-
-        if draw_image_safe(p, img1_data, (width - img_width) / 2, y - img_height, img_width, img_height, label1):
-            y -= img_height + 35
+        
+        # Draw first image
+        if draw_image_safe(p, img1_data, start_x, y - img_height, img_width, img_height, label1):
+            pass
         else:
             p.setFont("Helvetica", 9)
             p.setFillColorRGB(0.5, 0.5, 0.5)
-            p.drawCentredString(width / 2, y, "No image provided")
+            p.drawCentredString(start_x + img_width/2, y - img_height/2, "No image provided")
             p.setFillColorRGB(0, 0, 0)
-            y -= 25
-
-        ensure_space(img_height + 60)
-        p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width / 2, y, label2)
-        y -= 22
-
-        if draw_image_safe(p, img2_data, (width - img_width) / 2, y - img_height, img_width, img_height, label2):
-            y -= img_height + 35
+        
+        # Draw second image
+        if draw_image_safe(p, img2_data, start_x + img_width + 30, y - img_height, img_width, img_height, label2):
+            pass
         else:
             p.setFont("Helvetica", 9)
             p.setFillColorRGB(0.5, 0.5, 0.5)
-            p.drawCentredString(width / 2, y, "No image provided")
+            p.drawCentredString(start_x + img_width + 30 + img_width/2, y - img_height/2, "No image provided")
             p.setFillColorRGB(0, 0, 0)
-            y -= 25
+        
+        y -= img_height + 35
 
     def draw_signature_section(signature_img, full_name):
         nonlocal y
@@ -6952,16 +6942,13 @@ def download_pdf(application_number):
     # ================= CONTACT & ADDRESS =================
     draw_section_title("IV. CONTACT & ADDRESS")
     
-    # MODIFIED: Removed House No./Unit and Street/Village
-    # Added Residential Address (formerly Installation Address from VI) ABOVE billing address
     draw_field_grid([
         ("Mobile Number", data.get("mobile")),
         ("Email Address", data.get("email")),
         ("Home Ownership", data.get("home_ownership")),
-        ("Residential Address", data.get("installation_address")),  # Renamed and moved from VI
+        ("Residential Address", data.get("installation_address")),
     ], 2)
     
-    # Billing Address stays here (below Residential Address)
     draw_field_grid([("Billing Address", data.get("billing_address"))], 1)
 
     draw_section_title("V. EMPLOYMENT DETAILS")
@@ -6975,8 +6962,6 @@ def download_pdf(application_number):
     # ================= SERVICE PLAN =================
     draw_section_title("VI. SERVICE PLAN")
     
-    # MODIFIED: Removed Installation Address from here (moved to IV as Residential Address)
-    # Added TV Qty here
     tv_qty = data.get("tv_qty", [])
     tv_qty_value = ", ".join([str(qty) for qty in tv_qty if qty and str(qty).strip() not in ("", "0", "-", "none")]) if tv_qty else ""
     
@@ -6985,7 +6970,6 @@ def download_pdf(application_number):
         ("Installation Fee", data.get("installation_fee")),
     ], 2)
     
-    # Installation Phone and TV Qty in one row
     draw_field_grid([
         ("Installation Phone", data.get("installation_phone")),
         ("TV Qty", tv_qty_value if tv_qty_value else "0"),
@@ -7074,23 +7058,24 @@ def download_pdf(application_number):
     else:
         draw_field_grid([("Map Status", "Not available")], 1)
 
-    # ================= PAGE 3: FRONT AND BACK ID =================
+    # ================= PAGE 3: FRONT AND BACK ID (Side by Side) =================
     new_page()
     draw_section_title_centered("VALID IDENTIFICATION")
 
-    draw_images_top_bottom(
+    # Draw front and back ID side by side with smaller size
+    draw_images_side_by_side(
         "VALID ID (FRONT)", data.get("id_front"),
         "VALID ID (BACK)", data.get("id_back"),
-        img_width=320, img_height=220
+        img_width=240, img_height=170  # Smaller size para hindi ma-cut
     )
 
-    # ================= PAGE 4: PROOF OF BILLING =================
-    new_page()
+    # ================= PAGE 4: PROOF OF BILLING (Below ID) =================
     draw_section_title_centered("PROOF OF BILLING")
 
     proof = data.get("proof_billing")
-    if draw_image_safe(p, proof, (width - 500) / 2, y - 580, 500, 580, "Proof of Billing"):
-        y -= 580 + 30
+    # Mas maliit na size para kasya sa page
+    if draw_image_safe(p, proof, (width - 450) / 2, y - 500, 450, 500, "Proof of Billing"):
+        y -= 500 + 30
     else:
         p.setFont("Helvetica", 9)
         p.setFillColorRGB(0.5, 0.5, 0.5)
