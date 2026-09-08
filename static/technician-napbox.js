@@ -4654,13 +4654,14 @@ async function saveEditSlotTech() {
     // VALIDATE: CONTRACT NUMBER LENGTH (6 DIGITS ONLY)
     if (cleanContractNumber) {
         const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
-        if (numberPart.length !== 6) {
+        // PALITAN: FROM exactly 6 digits TO 4-6 digits
+        if (numberPart.length < 4 || numberPart.length > 6) {
             contractInput.className = 'form-input input-error';
             if (contractError) {
-                contractError.textContent = 'Contract number must be exactly 6 digits (e.g., 000001, 001234, 123456)';
+                contractError.textContent = 'Contract number must be 4 to 6 digits (e.g., 0001, 001234, 123456)';
                 contractError.style.display = 'flex';
             }
-            showToast('Contract number must be exactly 6 digits', 'error');
+            showToast('Contract number must be 4 to 6 digits', 'error');
             contractInput.focus();
             return;
         }
@@ -4856,6 +4857,7 @@ function setupEditSlotModalListenersTech() {
         });
 
         // INPUT EVENT - LIMIT TO 4 DIGITS
+        // PALITAN ANG LIMIT FROM 6 TO MAXIMUM 6
         newContractInput.addEventListener('input', function() {
             const prefix = getTechnicianContractPrefix();
             let value = this.value;
@@ -4877,11 +4879,10 @@ function setupEditSlotModalListenersTech() {
             // REMOVE NON-NUMERIC CHARACTERS
             numberPart = numberPart.replace(/[^0-9]/g, '');
             
-            
-            // LIMIT TO 6 DIGITS ONLY
+            // PALITAN: LIMIT TO 6 DIGITS MAXIMUM (hindi exactly 6)
             if (numberPart.length > 6) {
                 numberPart = numberPart.substring(0, 6);
-                showToast('Contract number limited to 6 digits', 'warning');
+                showToast('Contract number limited to 6 digits maximum', 'warning');
             }
             
             // UPDATE VALUE
@@ -4901,7 +4902,7 @@ function setupEditSlotModalListenersTech() {
             }
             if (!value.startsWith(prefix)) {
                 const numberPart = value.replace(/^[A-Z]+-/i, '');
-                // LIMIT TO 6 DIGITS
+                // PALITAN: MAXIMUM 6 DIGITS (hindi exactly)
                 const cleanNumber = numberPart.replace(/[^0-9]/g, '').substring(0, 6);
                 this.value = cleanNumber ? prefix + cleanNumber : prefix;
             }
@@ -4913,7 +4914,7 @@ function setupEditSlotModalListenersTech() {
             const currentValue = this.value;
             const numberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // IF ALREADY 6 DIGITS, PREVENT ADDING MORE
+            // PALITAN: IF ALREADY 6 DIGITS MAXIMUM, PREVENT ADDING MORE
             if (numberPart.length >= 6) {
                 // Allow: backspace, delete, tab, escape, enter, arrow keys, home, end
                 const allowedKeys = [8, 9, 27, 13, 35, 36, 37, 38, 39, 40];
@@ -4923,12 +4924,12 @@ function setupEditSlotModalListenersTech() {
                     !(e.keyCode === 86 && e.ctrlKey) && // Ctrl+V
                     !(e.keyCode === 88 && e.ctrlKey)) { // Ctrl+X
                     e.preventDefault();
-                    // showToast('Contract number already has 6 digits', 'warning');
+                    // Palitan ang mensahe
+                    showToast('Contract number already has 6 digits maximum', 'warning');
                 }
             }
         });
 
-        // PASTE EVENT - LIMIT TO 4 DIGITS
         newContractInput.addEventListener('paste', function(e) {
             e.preventDefault();
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -4938,10 +4939,10 @@ function setupEditSlotModalListenersTech() {
             const currentValue = this.value;
             const currentNumberPart = currentValue.replace(new RegExp(`^${prefix}`, 'i'), '');
             
-            // GET AVAILABLE SPACE (6 - current length)
+            // PALITAN: GET AVAILABLE SPACE (6 - current length)
             const availableSpace = 6 - currentNumberPart.length;
             if (availableSpace <= 0) {
-                showToast('Contract number already has 6 digits', 'warning');
+                showToast('Contract number already has 6 digits maximum', 'warning');
                 return;
             }
             
