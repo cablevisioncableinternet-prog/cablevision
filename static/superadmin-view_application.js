@@ -3189,10 +3189,25 @@ function showRejectionReason(status, reason) {
     if (status && (status.toLowerCase() === "rejected" || status.toLowerCase() === "cancelled") && reason && reason.trim() !== "") {
         const reasonDiv = document.createElement("div");
         reasonDiv.className = "rejection-reason-display";
-        const icon = status.toLowerCase() === "cancelled" ? "fa-ban" : "fa-exclamation-circle";
+        
+        // Tamang label base sa status
+        let label = "";
+        let icon = "";
+        
+        if (status.toLowerCase() === "rejected") {
+            label = "Rejection";
+            icon = "fa-exclamation-circle";
+        } else if (status.toLowerCase() === "cancelled") {
+            label = "Cancellation";
+            icon = "fa-ban";
+        }
+        
+        // I-capitalize ang unang letter ng reason
+        const formattedReason = reason.charAt(0).toUpperCase() + reason.slice(1);
+        
         reasonDiv.innerHTML = `
             <i class="fas ${icon}"></i>
-            <strong>Reason for ${status}:</strong> ${escapeHtml(reason)}
+            <strong>Reason for ${label}:</strong> ${escapeHtml(formattedReason)}
         `;
         appNumberDiv.appendChild(reasonDiv);
     }
