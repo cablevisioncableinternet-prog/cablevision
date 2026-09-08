@@ -6790,9 +6790,6 @@ def download_pdf(application_number):
         return (text + "...") if text else "..."
 
     # ================= DYNAMIC ROW / GRID DRAWING (NEW) =================
-    # Replaces the old draw_two_columns / draw_three_columns / draw_four_columns,
-    # each of which used fixed x-positions, a fixed 100px label gutter, and
-    # "..." truncation past a fixed character count regardless of actual width.
     def draw_row(fields, num_columns):
         """
         Draw one row of up to `num_columns` (label, value) pairs.
@@ -6954,16 +6951,17 @@ def download_pdf(application_number):
 
     # ================= CONTACT & ADDRESS =================
     draw_section_title("IV. CONTACT & ADDRESS")
+    
+    # MODIFIED: Removed House No./Unit and Street/Village
+    # Added Residential Address (formerly Installation Address from VI) ABOVE billing address
     draw_field_grid([
         ("Mobile Number", data.get("mobile")),
         ("Email Address", data.get("email")),
         ("Home Ownership", data.get("home_ownership")),
-        ("House No./Unit", data.get("house_number")),
-        ("Nearest Landmark", data.get("landmark")),
-        ("Street/Village", data.get("address")),
+        ("Residential Address", data.get("installation_address")),  # Renamed and moved from VI
     ], 2)
-
-    # Billing Address (was a hand-rolled wrap loop; now uses the same dynamic helper)
+    
+    # Billing Address stays here (below Residential Address)
     draw_field_grid([("Billing Address", data.get("billing_address"))], 1)
 
     draw_section_title("V. EMPLOYMENT DETAILS")
@@ -6974,71 +6972,27 @@ def download_pdf(application_number):
         ("", ""),
     ], 2)
 
+    # ================= SERVICE PLAN =================
     draw_section_title("VI. SERVICE PLAN")
+    
+    # MODIFIED: Removed Installation Address from here (moved to IV as Residential Address)
+    # Added TV Qty here
+    tv_qty = data.get("tv_qty", [])
+    tv_qty_value = ", ".join([str(qty) for qty in tv_qty if qty and str(qty).strip() not in ("", "0", "-", "none")]) if tv_qty else ""
+    
     draw_field_grid([
         ("Service Type / Plan", data.get("service_type")),
         ("Installation Fee", data.get("installation_fee")),
     ], 2)
+    
+    # Installation Phone and TV Qty in one row
+    draw_field_grid([
+        ("Installation Phone", data.get("installation_phone")),
+        ("TV Qty", tv_qty_value if tv_qty_value else "0"),
+    ], 2)
 
-    # Installation Phone / Installation Address (same simplification as billing address above)
-    draw_field_grid([("Installation Phone", data.get("installation_phone"))], 1)
-    draw_field_grid([("Installation Address", data.get("installation_address"))], 1)
-
-    # ================= TV SET DETAILS =================
-    tv_qty = data.get("tv_qty", [])
-    tv_brand = data.get("tv_brand", [])
-    tv_type = data.get("tv_type", [])
-
-    valid_entries = []
-    for i in range(len(tv_qty)):
-        qty = str(tv_qty[i]).strip() if i < len(tv_qty) else ""
-        brand = str(tv_brand[i]).strip() if i < len(tv_brand) else ""
-        tv_t = str(tv_type[i]).strip() if i < len(tv_type) else ""
-
-        if qty and qty != "0" and qty != "-" and qty != "none":
-            valid_entries.append({
-                'qty': qty,
-                'brand': brand if brand and brand != "-" and brand != "none" else "",
-                'type': tv_t if tv_t and tv_t != "-" and tv_t != "none" else ""
-            })
-
-    if valid_entries:
-        draw_section_title("VII. TV SET DETAILS")
-        ensure_space(40)
-
-        TV_COL_QTY_X = 50
-        TV_COL_BRAND_X = 120
-        TV_COL_TYPE_X = 320
-        TV_BRAND_MAX_WIDTH = TV_COL_TYPE_X - TV_COL_BRAND_X - 10
-        TV_TYPE_MAX_WIDTH = (width - MARGIN_RIGHT) - TV_COL_TYPE_X - 5
-
-        p.setFont("Helvetica-Bold", 9)
-        p.drawString(TV_COL_QTY_X, y, "QTY")
-        p.drawString(TV_COL_BRAND_X, y, "BRAND / MODEL")
-        p.drawString(TV_COL_TYPE_X, y, "TYPE (HD/REGULAR)")
-        y -= 15
-
-        p.setFont("Helvetica", 9)
-        for entry in valid_entries:
-            if not ensure_space(16):
-                break
-
-            qty = entry['qty']
-            brand = entry['brand'] if entry['brand'] else "-"
-            tv_t = entry['type'] if entry['type'] else "-"
-
-            # Truncate to the actual pixel width available in each column,
-            # instead of a fixed character count.
-            brand = truncate_to_width(brand, "Helvetica", 9, TV_BRAND_MAX_WIDTH)
-            tv_t = truncate_to_width(tv_t, "Helvetica", 9, TV_TYPE_MAX_WIDTH)
-
-            p.drawString(TV_COL_QTY_X, y, qty)
-            p.drawString(TV_COL_BRAND_X, y, brand)
-            p.drawString(TV_COL_TYPE_X, y, tv_t)
-            y -= 16
-        y -= 5
-
-    draw_section_title("VIII. SUBMISSION DETAILS")
+    # ================= SUBMISSION DETAILS =================
+    draw_section_title("VII. SUBMISSION DETAILS")
     draw_field_grid([
         ("Date Submitted", data.get("date_submitted")),
         ("Time Submitted", data.get("time_submitted")),
