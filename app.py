@@ -6491,11 +6491,10 @@ def superadmin_download_pdf(app_id):
     
 @app.route('/download/pdf/<application_number>')
 def download_pdf(application_number):
-    import io, base64, os, traceback
+    import io, base64, os
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.utils import ImageReader
-    from reportlab.pdfbase.pdfmetrics import stringWidth
     from flask import send_file
     import requests
     import json
@@ -6503,705 +6502,614 @@ def download_pdf(application_number):
     from PIL import Image
     import tempfile
 
-    try:
-        # Get application data from MySQL
-        query = """
-            SELECT * FROM applications 
-            WHERE application_number = %s
-        """
-        data = execute_query(query, (application_number,), fetch_one=True)
+    # Get application data from MySQL
+    query = """
+        SELECT * FROM applications 
+        WHERE application_number = %s
+    """
+    data = execute_query(query, (application_number,), fetch_one=True)
+    
+    if not data:
+        return "Application not found", 404
+    
+    # ================= GET APPLICATION NUMBER AS FOLDER NAME =================
+    app_folder = str(application_number)
+    
+    # Parse JSON fields
+    if data.get('tv_qty'):
+        try:
+            data['tv_qty'] = json.loads(data['tv_qty'])
+        except:
+            data['tv_qty'] = []
+    
+    if data.get('tv_brand'):
+        try:
+            data['tv_brand'] = json.loads(data['tv_brand'])
+        except:
+            data['tv_brand'] = []
+    
+    if data.get('tv_type'):
+        try:
+            data['tv_type'] = json.loads(data['tv_type'])
+        except:
+            data['tv_type'] = []
 
-        if not data:
-            return "Application not found", 404
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
 
-        # ================= GET APPLICATION NUMBER AS FOLDER NAME =================
-        app_folder = str(application_number)
+    # ================= DEBUG: Print image info =================
+    print("=" * 80)
+    print(" IMAGE DATA FROM DATABASE:")
+    print(f"Application Number (folder): {app_folder}")
+    print(f"id_front: {data.get('id_front', 'None')}")
+    print(f"id_back: {data.get('id_back', 'None')}")
+    print(f"signature: {data.get('signature', 'None')}")
+    print(f"proof_billing: {data.get('proof_billing', 'None')}")
+    print("=" * 80)
 
-        # ================= BULLETPROOF TV FIELD PARSING =================
-        def parse_tv_field(raw_value):
-            """Laging nagbabalik ng list, kahit ano pa ang laman ng column (None, '', 'null', sirang JSON, single value)"""
-            if raw_value is None:
-                return []
-            if isinstance(raw_value, (bytes, bytearray)):
-                try:
-                    raw_value = raw_value.decode('utf-8', errors='ignore')
-                except Exception:
-                    return []
-            if isinstance(raw_value, list):
-                return raw_value
-            if isinstance(raw_value, str):
-                raw_value = raw_value.strip()
-                if not raw_value or raw_value.lower() == 'null':
-                    return []
-                try:
-                    parsed = json.loads(raw_value)
-                    if isinstance(parsed, list):
-                        return parsed
-                    elif parsed is None:
-                        return []
-                    else:
-                        return [parsed]
-                except Exception:
-                    return []
-            return []
-
-        data['tv_qty'] = parse_tv_field(data.get('tv_qty'))
-        data['tv_brand'] = parse_tv_field(data.get('tv_brand'))
-        data['tv_type'] = parse_tv_field(data.get('tv_type'))
-
-        buffer = io.BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
-        width, height = letter
-
-        print("=" * 80)
-        print(" IMAGE DATA FROM DATABASE:")
-        print(f"Application Number (folder): {app_folder}")
-        print(f"id_front: {data.get('id_front', 'None')}")
-        print(f"id_back: {data.get('id_back', 'None')}")
-        print(f"signature: {data.get('signature', 'None')}")
-        print(f"proof_billing: {data.get('proof_billing', 'None')}")
-        print("=" * 80)
-
-        # ================= GET IMAGE FROM CLOUDINARY =================
-        def get_image_from_cloudinary(image_path):
-            """Get image from Cloudinary URL or local path"""
-            if not image_path:
-                return None
-
-            if not image_path.startswith('http'):
-                cloudinary_url = get_cloudinary_url(image_path)
-            else:
-                cloudinary_url = image_path
-
-            if cloudinary_url and cloudinary_url.startswith('http'):
-                try:
-                    print(f" Downloading from Cloudinary: {cloudinary_url[:80]}...")
-                    response = requests.get(cloudinary_url, timeout=30)
-                    if response.status_code == 200:
-                        print(f" Downloaded {len(response.content)} bytes")
-                        return response.content
-                    else:
-                        print(f" Cloudinary download failed: {response.status_code}")
-                        return None
-                except Exception as e:
-                    print(f" Error downloading from Cloudinary: {e}")
-                    return None
-
-            SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
-            filename = os.path.basename(image_path)
-            full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
-            if os.path.exists(full_path):
-                print(f" Found locally: {full_path}")
-                with open(full_path, 'rb') as f:
-                    return f.read()
-
-            alt_paths = [
-                os.path.join(SHARED_UPLOADS_BASE, filename),
-                os.path.join(SHARED_UPLOADS_BASE, image_path.lstrip('/'))
-            ]
-
-            for alt_path in alt_paths:
-                if os.path.exists(alt_path):
-                    print(f" Found locally: {alt_path}")
-                    with open(alt_path, 'rb') as f:
-                        return f.read()
-
-            print(f" Image not found: {image_path}")
+    # ================= FIXED: Get image from Cloudinary =================
+    def get_image_from_cloudinary(image_path):
+        """Get image from Cloudinary URL or local path"""
+        if not image_path:
             return None
-
-        # ================= HELPER: Load and convert image =================
-        def load_and_convert_image(image_data):
-            """Load image and convert to RGB format for PDF"""
-            if not image_data:
-                print(f" No image data provided")
-                return None
-
-            img_bytes = None
-
-            if isinstance(image_data, str):
-                img_bytes = get_image_from_cloudinary(image_data)
-
-            if not img_bytes and isinstance(image_data, str):
-                if 'base64,' in image_data or 'data:image' in image_data:
-                    try:
-                        if 'base64,' in image_data:
-                            image_data = image_data.split('base64,')[1]
-                        elif 'data:image' in image_data:
-                            match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_data)
-                            if match:
-                                image_data = match.group(2)
-
-                        image_data = image_data.strip()
-                        img_bytes = base64.b64decode(image_data)
-                        print(f" Decoded base64 image ({len(img_bytes)} bytes)")
-                    except Exception as e:
-                        print(f" Error decoding base64: {e}")
-
-            if not img_bytes:
-                print(f" No image bytes loaded")
-                return None
-
+        
+        # Convert to Cloudinary URL
+        cloudinary_url = get_cloudinary_url(image_path)
+        
+        if cloudinary_url and cloudinary_url.startswith('http'):
             try:
-                img = Image.open(io.BytesIO(img_bytes))
-                print(f" Image opened: {img.format}, {img.size}, {img.mode}")
-
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                    print(f" Converted to RGB")
-
-                output = io.BytesIO()
-                img.save(output, format='JPEG', quality=90)
-                output.seek(0)
-
-                print(f" Converted to JPEG ({output.getbuffer().nbytes} bytes)")
-                return output.getvalue()
-
-            except Exception as e:
-                print(f" Error converting image: {e}")
-                return img_bytes
-
-        # ================= HELPER: Draw image safely =================
-        def draw_image_safe(p, image_data, x, y, width, height, label="Image"):
-            """Safely draw an image on the PDF"""
-            try:
-                print(f" Drawing {label}...")
-                img_bytes = load_and_convert_image(image_data)
-                if img_bytes:
-                    with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
-                        tmp_file.write(img_bytes)
-                        tmp_path = tmp_file.name
-                        print(f" Temp file: {tmp_path}")
-
-                    try:
-                        img = ImageReader(tmp_path)
-                        p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
-                        print(f" Drew {label} successfully")
-                        return True
-                    except Exception as e:
-                        print(f" Error in drawImage for {label}: {e}")
-                        return False
-                    finally:
-                        try:
-                            os.unlink(tmp_path)
-                            print(f" Deleted temp file: {tmp_path}")
-                        except:
-                            pass
+                print(f" Downloading from Cloudinary: {cloudinary_url}")
+                response = requests.get(cloudinary_url, timeout=30)
+                if response.status_code == 200:
+                    print(f" Downloaded {len(response.content)} bytes")
+                    return response.content
                 else:
-                    print(f" No image bytes for {label}")
-                    return False
+                    print(f" Cloudinary download failed: {response.status_code}")
             except Exception as e:
-                print(f" Error drawing {label}: {e}")
-                return False
+                print(f" Error downloading from Cloudinary: {e}")
+        
+        # Fallback: Try local path (for development)
+        SHARED_UPLOADS_BASE = r"C:\xampp\htdocs\cablevision_uploads"
+        
+        # Extract filename from path
+        filename = os.path.basename(image_path)
+        
+        # Try to find in application_uploads folder
+        full_path = os.path.join(SHARED_UPLOADS_BASE, 'application_uploads', app_folder, filename)
+        if os.path.exists(full_path):
+            print(f" Found locally: {full_path}")
+            with open(full_path, 'rb') as f:
+                return f.read()
+        
+        # Try alternative paths
+        alt_paths = [
+            os.path.join(SHARED_UPLOADS_BASE, filename),
+            os.path.join(SHARED_UPLOADS_BASE, image_path.lstrip('/'))
+        ]
+        
+        for alt_path in alt_paths:
+            if os.path.exists(alt_path):
+                print(f" Found locally: {alt_path}")
+                with open(alt_path, 'rb') as f:
+                    return f.read()
+        
+        print(f" Image not found: {image_path}")
+        return None
 
-        # ================= SAFE TEXT (blob/None-proof) =================
-        def safe_text(value):
-            """Safely convert any DB value (None, blob, str, etc.) into a display-safe string"""
-            if value is None:
-                return None
-            if isinstance(value, (bytes, bytearray)):
+    # ================= HELPER: Load and convert image =================
+    def load_and_convert_image(image_data):
+        """Load image and convert to RGB format for PDF"""
+        if not image_data:
+            print(f" No image data provided")
+            return None
+        
+        img_bytes = None
+        
+        # Try to get from Cloudinary
+        if isinstance(image_data, str):
+            img_bytes = get_image_from_cloudinary(image_data)
+        
+        # Try base64 decoding if file loading failed
+        if not img_bytes and isinstance(image_data, str):
+            if 'base64,' in image_data or 'data:image' in image_data:
                 try:
-                    value = value.decode('utf-8', errors='ignore')
-                except Exception:
-                    value = str(value)
-            value = str(value).strip()
-            return value
+                    if 'base64,' in image_data:
+                        image_data = image_data.split('base64,')[1]
+                    elif 'data:image' in image_data:
+                        match = re.search(r'data:image/(png|jpeg|jpg|gif);base64,(.+)', image_data)
+                        if match:
+                            image_data = match.group(2)
+                    
+                    image_data = image_data.strip()
+                    img_bytes = base64.b64decode(image_data)
+                    print(f" Decoded base64 image ({len(img_bytes)} bytes)")
+                except Exception as e:
+                    print(f" Error decoding base64: {e}")
+        
+        if not img_bytes:
+            print(f" No image bytes loaded")
+            return None
+        
+        # Convert image to RGB format using PIL
+        try:
+            img = Image.open(io.BytesIO(img_bytes))
+            print(f" Image opened: {img.format}, {img.size}, {img.mode}")
+            
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+                print(f" Converted to RGB")
+            
+            output = io.BytesIO()
+            img.save(output, format='JPEG', quality=90)
+            output.seek(0)
+            
+            print(f" Converted to JPEG ({output.getbuffer().nbytes} bytes)")
+            return output.getvalue()
+            
+        except Exception as e:
+            print(f" Error converting image: {e}")
+            return img_bytes
 
-        def clean_value(value):
-            """Ibalik ang value kung meron, o None kung wala/blangko/'none'/'-' """
-            v = safe_text(value)
-            if not v or v == "-" or v.lower() == "none":
-                return None
-            return v
-
-        # ================= MAX PAGES =================
-        MAX_PAGES = 6
-        current_page = 1
-        y = height - 130
-
-        # ================= HEADER (mimics physical form letterhead) =================
-        def draw_header():
-            nonlocal y
-            try:
-                logo = ImageReader("static/logo1.png")
-                p.drawImage(logo, 40, height - 95, width=55, height=68, mask='auto')
-            except:
-                pass
-
-            p.setFont("Helvetica-Bold", 15)
-            p.drawCentredString(width / 2, height - 50, "APPLICATION FORM")
-
-            p.setFont("Helvetica-Bold", 10)
-            p.drawCentredString(width / 2, height - 64, "CABLE TELEVISION SERVICE")
-
-            p.setFont("Helvetica-Bold", 8)
-            p.drawCentredString(width / 2, height - 78,
-                                 "Sitio Sampaguita, Brgy. Pagsawitan, Santa Cruz, 4009 Laguna")
-            p.drawCentredString(width / 2, height - 89,
-                                 "(63)(049) 501-1495  FAX (63)(049) 501-0229  CELLULAR # (0917) 501-0341")
-
-            p.setFont("Helvetica-Bold", 9)
-            p.drawRightString(width - 45, height - 50, f"App. No: {application_number}")
-
-            p.setLineWidth(1)
-            p.line(40, height - 98, width - 40, height - 98)
-
-            y = height - 118
-
-        def draw_page_number():
-            p.setFont("Helvetica-Bold", 10)
-            p.setFillColorRGB(0.4, 0.4, 0.4)
-            p.drawRightString(width - 25, 20, str(current_page))
-            p.setFillColorRGB(0, 0, 0)
-
-        def new_page():
-            nonlocal y, current_page
-            if current_page >= MAX_PAGES:
+    # ================= HELPER: Draw image safely =================
+    def draw_image_safe(p, image_data, x, y, width, height, label="Image"):
+        """Safely draw an image on the PDF"""
+        try:
+            print(f" Drawing {label}...")
+            img_bytes = load_and_convert_image(image_data)
+            if img_bytes:
+                with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp_file:
+                    tmp_file.write(img_bytes)
+                    tmp_path = tmp_file.name
+                    print(f" Temp file: {tmp_path}")
+                
+                try:
+                    img = ImageReader(tmp_path)
+                    p.drawImage(img, x, y, width, height, preserveAspectRatio=True, mask='auto')
+                    print(f" Drew {label} successfully")
+                    return True
+                except Exception as e:
+                    print(f" Error in drawImage for {label}: {e}")
+                    return False
+                finally:
+                    try:
+                        os.unlink(tmp_path)
+                        print(f" Deleted temp file: {tmp_path}")
+                    except:
+                        pass
+            else:
+                print(f" No image bytes for {label}")
                 return False
-            p.showPage()
-            current_page += 1
-            draw_header()
-            draw_page_number()
-            return True
+        except Exception as e:
+            print(f" Error drawing {label}: {e}")
+            return False
 
-        def ensure_space(required):
-            nonlocal y
-            if y - required < 50:
-                return new_page()
-            return True
+    # ================= MAX PAGES =================
+    MAX_PAGES = 5
+    current_page = 1
+    y = height - 120
 
-        def draw_section_title(title):
-            nonlocal y
-            ensure_space(30)
-            p.setFillColorRGB(0, 0.4, 0.6)
-            p.rect(48, y - 4, 4, 12, fill=1, stroke=0)
-            p.setFont("Helvetica-Bold", 11)
-            p.drawString(58, y, title)
+    # ================= HEADER =================
+    def draw_header():
+        nonlocal y
+        try:
+            logo = ImageReader("static/logo1.png")
+            p.drawImage(logo, 40, height - 90, width=60, height=60, mask='auto')
+        except:
+            pass
+
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(110, height - 60, "APPLICATION FORM")
+
+        p.setFont("Helvetica-Bold", 10)
+        p.drawRightString(width - 50, height - 60, f"Application No: {application_number}")
+
+        p.setFont("Helvetica", 8)
+        p.drawString(110, height - 75, "Sitio Sampaguita, Brgy. Pagsawitan, Santa Cruz, 4009 Laguna")
+        p.drawString(110, height - 87, "Tel: (049) 501-1495 | Fax: (049) 501-0229 | Mobile: 0917 501 0341")
+
+        y = height - 110
+
+    def draw_page_number():
+        p.setFont("Helvetica-Bold", 10)
+        p.setFillColorRGB(0.4, 0.4, 0.4)
+        p.drawRightString(width - 25, 20, str(current_page))
+        p.setFillColorRGB(0, 0, 0)
+
+    def new_page():
+        nonlocal y, current_page
+        if current_page >= MAX_PAGES:
+            return False
+        p.showPage()
+        current_page += 1
+        draw_header()
+        draw_page_number()
+        y = height - 110
+        return True
+
+    def ensure_space(required):
+        nonlocal y
+        if y - required < 50:
+            return new_page()
+        return True
+
+    def draw_section_title(title):
+        nonlocal y
+        ensure_space(30)
+        p.setFont("Helvetica-Bold", 12)
+        p.setFillColorRGB(0, 0.4, 0.6)
+        p.drawString(50, y, title)
+        p.setFillColorRGB(0, 0, 0)
+        y -= 22
+
+    def draw_section_title_centered(title):
+        nonlocal y
+        ensure_space(30)
+        p.setFont("Helvetica-Bold", 14)
+        p.setFillColorRGB(0, 0.4, 0.6)
+        p.drawCentredString(width / 2, y, title)
+        p.setFillColorRGB(0, 0, 0)
+        y -= 25
+
+    def draw_two_columns(fields):
+        nonlocal y
+        col1_x = 50
+        col2_x = 310
+        label_width = 120
+        value_x = col1_x + label_width + 5
+        
+        for i in range(0, len(fields), 2):
+            ensure_space(20)
+            label1, value1 = fields[i]
+            p.setFont("Helvetica-Bold", 9)
+            p.drawString(col1_x, y, f"{label1}:")
+            p.setFont("Helvetica", 9)
+            val1_str = str(value1) if value1 and value1 != "-" and value1 != "none" else "___________________"
+            if len(val1_str) > 35:
+                val1_str = val1_str[:32] + "..."
+            p.drawString(value_x, y, val1_str)
+            
+            if i + 1 < len(fields):
+                label2, value2 = fields[i + 1]
+                p.setFont("Helvetica-Bold", 9)
+                p.drawString(col2_x, y, f"{label2}:")
+                p.setFont("Helvetica", 9)
+                val2_str = str(value2) if value2 and value2 != "-" and value2 != "none" else "___________________"
+                if len(val2_str) > 30:
+                    val2_str = val2_str[:27] + "..."
+                p.drawString(col2_x + label_width + 5, y, val2_str)
+            
+            y -= 18
+        y -= 5
+
+    def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
+        nonlocal y
+        
+        ensure_space(img_height + 60)
+        p.setFont("Helvetica-Bold", 11)
+        p.drawCentredString(width / 2, y, label1)
+        y -= 22
+        
+        if draw_image_safe(p, img1_data, (width - img_width) / 2, y - img_height, img_width, img_height, label1):
+            y -= img_height + 35
+        else:
+            p.setFont("Helvetica", 9)
+            p.setFillColorRGB(0.5, 0.5, 0.5)
+            p.drawCentredString(width / 2, y, "No image provided")
             p.setFillColorRGB(0, 0, 0)
-            y -= 20
-
-        def draw_section_title_centered(title):
-            nonlocal y
-            ensure_space(30)
-            p.setFont("Helvetica-Bold", 14)
-            p.setFillColorRGB(0, 0.4, 0.6)
-            p.drawCentredString(width / 2, y, title)
+            y -= 25
+        
+        ensure_space(img_height + 60)
+        p.setFont("Helvetica-Bold", 11)
+        p.drawCentredString(width / 2, y, label2)
+        y -= 22
+        
+        if draw_image_safe(p, img2_data, (width - img_width) / 2, y - img_height, img_width, img_height, label2):
+            y -= img_height + 35
+        else:
+            p.setFont("Helvetica", 9)
+            p.setFillColorRGB(0.5, 0.5, 0.5)
+            p.drawCentredString(width / 2, y, "No image provided")
             p.setFillColorRGB(0, 0, 0)
             y -= 25
 
-        def draw_field_row(fields):
-            """Ilang fields sa isang linya, gaya ng 'SURNAME  FIRST NAME  MIDDLE NAME' sa physical form.
-               fields: list of (label, value) tuples — hanggang 3 pwede sa isang row."""
-            nonlocal y
-            ensure_space(30)
-            n = len(fields)
-            col_width = (width - 100) / n
-            for idx, (label, value) in enumerate(fields):
-                x = 50 + idx * col_width
-                val = clean_value(value) or ""
-                p.setFont("Helvetica", 9)
-                display_val = val if val else "_" * 28
-                p.drawString(x, y, display_val)
-                p.setFont("Helvetica-Bold", 6.5)
-                p.setFillColorRGB(0.35, 0.35, 0.35)
-                p.drawString(x, y - 9, label.upper())
-                p.setFillColorRGB(0, 0, 0)
-            y -= 26
-
-        def draw_two_columns(fields):
-            nonlocal y
-            col1_x = 50
-            col2_x = 310
-            label_width = 120
-            value_x = col1_x + label_width + 5
-
-            for i in range(0, len(fields), 2):
-                ensure_space(20)
-                label1, value1 = fields[i]
-                value1 = safe_text(value1)
-                p.setFont("Helvetica-Bold", 9)
-                p.drawString(col1_x, y, f"{label1}:")
-                p.setFont("Helvetica", 9)
-                val1_str = value1 if value1 and value1 != "-" and value1.lower() != "none" else "___________________"
-                if len(val1_str) > 35:
-                    val1_str = val1_str[:32] + "..."
-                p.drawString(value_x, y, val1_str)
-
-                if i + 1 < len(fields):
-                    label2, value2 = fields[i + 1]
-                    value2 = safe_text(value2)
-                    p.setFont("Helvetica-Bold", 9)
-                    p.drawString(col2_x, y, f"{label2}:")
-                    p.setFont("Helvetica", 9)
-                    val2_str = value2 if value2 and value2 != "-" and value2.lower() != "none" else "___________________"
-                    if len(val2_str) > 30:
-                        val2_str = val2_str[:27] + "..."
-                    p.drawString(col2_x + label_width + 5, y, val2_str)
-
-                y -= 18
-            y -= 5
-
-        def draw_wrapped_field(label, value, indent=170, max_w=400):
-            """Isang buong-lapad na field gaya ng 'Billing Address' / 'Installation Address' sa physical form."""
-            nonlocal y
-            ensure_space(20)
-            p.setFont("Helvetica-Bold", 9)
-            p.drawString(50, y, f"{label}:")
+    def draw_signature_section(signature_img, full_name):
+        nonlocal y
+        
+        y -= 15
+        
+        sig_width = 250
+        sig_height = 85
+        
+        if draw_image_safe(p, signature_img, (width - sig_width) / 2, y - sig_height, sig_width, sig_height, "Signature"):
+            y -= sig_height + 20
+        else:
             p.setFont("Helvetica", 9)
-
-            text = clean_value(value)
-            if not text:
-                p.drawString(indent, y, "_________________________")
-                y -= 18
-                return
-
-            words = text.split()
-            lines = []
-            current_line = ""
-            for word in words:
-                test_line = current_line + (" " if current_line else "") + word
-                if stringWidth(test_line, "Helvetica", 9) <= max_w:
-                    current_line = test_line
-                else:
-                    lines.append(current_line)
-                    current_line = word
-            if current_line:
-                lines.append(current_line)
-
-            for i, line in enumerate(lines):
-                ensure_space(16)
-                p.drawString(indent, y, line)
-                y -= 14
-            y -= 4
-
-        def draw_checkbox_option(label, checked):
-            """Isang checkbox + label, gaya ng RESIDENTIAL / BUSINESS sa physical form."""
-            box_size = 9
-            x = p._checkbox_x
-            box_y = y - 1
-            p.rect(x, box_y, box_size, box_size, stroke=1, fill=0)
-            if checked:
-                p.setFont("Helvetica-Bold", 8)
-                p.drawCentredString(x + box_size / 2, box_y + 1.5, "X")
-            p.setFont("Helvetica", 9)
-            p.drawString(x + box_size + 5, y, label)
-            p._checkbox_x = x + box_size + 5 + stringWidth(label, "Helvetica", 9) + 25
-
-        def draw_classification_row(selected_service_type):
-            nonlocal y
-            ensure_space(22)
-            p.setFont("Helvetica-Bold", 9)
-            p.drawString(50, y, "Classification of Service:")
-            p._checkbox_x = 210
-            selected = (selected_service_type or "").strip().lower()
-            draw_checkbox_option("Residential", selected == "residential")
-            draw_checkbox_option("Business", selected == "business")
-            y -= 22
-
-        def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
-            nonlocal y
-
-            ensure_space(img_height + 60)
-            p.setFont("Helvetica-Bold", 11)
-            p.drawCentredString(width / 2, y, label1)
-            y -= 22
-
-            if draw_image_safe(p, img1_data, (width - img_width) / 2, y - img_height, img_width, img_height, label1):
-                y -= img_height + 35
-            else:
-                p.setFont("Helvetica", 9)
-                p.setFillColorRGB(0.5, 0.5, 0.5)
-                p.drawCentredString(width / 2, y, "No image provided")
-                p.setFillColorRGB(0, 0, 0)
-                y -= 25
-
-            ensure_space(img_height + 60)
-            p.setFont("Helvetica-Bold", 11)
-            p.drawCentredString(width / 2, y, label2)
-            y -= 22
-
-            if draw_image_safe(p, img2_data, (width - img_width) / 2, y - img_height, img_width, img_height, label2):
-                y -= img_height + 35
-            else:
-                p.setFont("Helvetica", 9)
-                p.setFillColorRGB(0.5, 0.5, 0.5)
-                p.drawCentredString(width / 2, y, "No image provided")
-                p.setFillColorRGB(0, 0, 0)
-                y -= 25
-
-        def draw_signature_section(signature_img, full_name):
-            nonlocal y
-
-            y -= 15
-
-            sig_width = 250
-            sig_height = 85
-
-            if draw_image_safe(p, signature_img, (width - sig_width) / 2, y - sig_height, sig_width, sig_height, "Signature"):
-                y -= sig_height + 20
-            else:
-                p.setFont("Helvetica", 9)
-                p.setFillColorRGB(0.5, 0.5, 0.5)
-                p.drawCentredString(width / 2, y, "No signature provided")
-                p.setFillColorRGB(0, 0, 0)
-                y -= 25
-
-            p.setFont("Helvetica", 10)
-            p.drawCentredString(width / 2, y, full_name if full_name else "_________________________")
-            y -= 20
-
-            p.setFont("Helvetica", 8)
-            p.setFillColorRGB(0.4, 0.4, 0.4)
-            p.drawCentredString(width / 2, y, "SUBSCRIBER (SIGNATURE OVER PRINTED NAME)")
+            p.setFillColorRGB(0.5, 0.5, 0.5)
+            p.drawCentredString(width / 2, y, "No signature provided")
             p.setFillColorRGB(0, 0, 0)
-            y -= 30
+            y -= 25
+        
+        p.setFont("Helvetica", 10)
+        p.drawCentredString(width / 2, y, full_name if full_name else "_________________________")
+        y -= 20
+        
+        p.setFont("Helvetica", 8)
+        p.setFillColorRGB(0.4, 0.4, 0.4)
+        p.drawCentredString(width / 2, y, "signature over printed name")
+        p.setFillColorRGB(0, 0, 0)
+        y -= 30
 
-        # ================= START BUILDING =================
-        draw_header()
-        draw_page_number()
+    # ================= START BUILDING =================
+    draw_header()
+    draw_page_number()
 
-        # ================= PERSONAL CIRCUMSTANCES (mimics physical form) =================
-        draw_section_title("PERSONAL CIRCUMSTANCES")
+    # ================= PAGE 1: PERSONAL INFORMATION =================
+    draw_section_title("I. PERSONAL INFORMATION")
+    draw_two_columns([
+        ("Last Name", data.get("last_name")),
+        ("First Name", data.get("first_name")),
+        ("Middle Name", data.get("middle_name")),
+        ("Suffix", data.get("suffix")),
+        ("Date of Birth", data.get("birthdate")),
+        ("Place of Birth", data.get("place_of_birth")),
+        ("Sex", data.get("sex")),
+        ("Civil Status", data.get("civil_status")),
+        ("Citizenship", data.get("citizenship")),
+        ("Occupation", data.get("occupation")),
+    ])
 
-        draw_field_row([
-            ("Surname", data.get("last_name")),
-            ("First Name", data.get("first_name")),
-            ("Middle Name", data.get("middle_name")),
-        ])
-        draw_field_row([
-            ("Date of Birth", data.get("birthdate")),
-            ("Place of Birth", data.get("place_of_birth")),
-            ("Mother's Full Maiden Name", data.get("mother_maiden_name")),
-        ])
-        draw_field_row([
-            ("Sex", data.get("sex")),
-            ("Civil Status", data.get("civil_status")),
-            ("Citizenship", data.get("citizenship")),
-        ])
-        draw_field_row([
-            ("Occupation", data.get("occupation")),
-            ("Home Ownership", data.get("home_ownership")),
-            ("Suffix", data.get("suffix")),
-        ])
+    draw_section_title("II. FAMILY DETAILS")
+    draw_two_columns([
+        ("Mother's Maiden Name", data.get("mother_maiden_name")),
+        ("Father's Name", data.get("father_name")),
+    ])
 
-        draw_wrapped_field("Billing Address", data.get("billing_address"))
-        draw_wrapped_field("Residential Address / Street", data.get("address"))
-        draw_two_columns([
-            ("Phone", data.get("phone") or data.get("mobile")),
-            ("Email", data.get("email")),
-        ])
-        draw_two_columns([
-            ("House No./Unit", data.get("house_number")),
-            ("Nearest Landmark", data.get("landmark")),
-        ])
-        draw_two_columns([
-            ("Barangay", data.get("barangay")),
-            ("City/Municipality", data.get("city")),
-        ])
+    draw_section_title("III. CONTACT & ADDRESS")
+    draw_two_columns([
+        ("Mobile Number", data.get("mobile")),
+        ("Email Address", data.get("email")),
+        ("Home Ownership", data.get("home_ownership")),
+        ("House No./Unit", data.get("house_number")),
+        ("Nearest Landmark", data.get("landmark")),
+        ("Street/Village", data.get("address")),
+    ])
 
-        draw_wrapped_field("Company / Employer", data.get("employer"))
-        draw_wrapped_field("Business Address", data.get("business_address"))
-        draw_two_columns([
-            ("Business Phone", data.get("business_phone")),
-            ("", ""),
-        ])
-
-        # Spouse info
-        spouse_name = clean_value(data.get("spouse_name")) or "___________________"
-        draw_two_columns([
-            ("Name of Spouse", spouse_name),
-            ("Occupation", data.get("spouse_occupation")),
-        ])
-        draw_two_columns([
-            ("Company/Employer", data.get("spouse_employer")),
-            ("Phone", data.get("spouse_phone")),
-        ])
-
-        draw_two_columns([
-            ("Name of Father", data.get("father_name")),
-            ("", ""),
-        ])
-
-        # ================= CLASSIFICATION OF SERVICE =================
-        draw_section_title("CLASSIFICATION OF SERVICE")
-        draw_classification_row(data.get("service_type"))
-
-        # ================= NUMBER OF T.V. SET(S) TO BE CONNECTED =================
-        tv_qty = data.get("tv_qty", []) or []
-        tv_brand = data.get("tv_brand", []) or []
-        tv_type = data.get("tv_type", []) or []
-
-        def safe_str(value):
-            if value is None:
-                return "-"
-            s = str(value).strip()
-            return s if s and s.lower() != "none" else "-"
-
-        max_rows = max(len(tv_qty), len(tv_brand), len(tv_type))
-        has_tv_data = any(
-            safe_str(v) != "-"
-            for arr in (tv_qty, tv_brand, tv_type)
-            for v in arr
-        )
-
-        draw_section_title("NUMBER OF T.V. SET(S) TO BE CONNECTED TO OUR CATV SERVICE")
-        ensure_space(40)
-
-        p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, y, "QUANTITY")
-        p.drawString(150, y, "BRAND NAME/MODEL")
-        p.drawString(370, y, "B&W OR COLORED")
-        y -= 6
-        p.setLineWidth(0.5)
-        p.line(50, y, width - 50, y)
+    # Billing Address
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(50, y, "Billing Address:")
+    p.setFont("Helvetica", 9)
+    
+    billing_address = data.get("billing_address", "")
+    if not billing_address or billing_address == "-" or billing_address == "none":
+        billing_address = "_________________________"
+    
+    from reportlab.pdfbase.pdfmetrics import stringWidth
+    max_width = 400
+    words = billing_address.split()
+    lines = []
+    current_line = ""
+    
+    for word in words:
+        test_line = current_line + (" " if current_line else "") + word
+        if stringWidth(test_line, "Helvetica", 9) <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+    
+    if current_line:
+        lines.append(current_line)
+    
+    for line in lines:
+        p.drawString(170, y, line)
         y -= 14
+    y -= 5
 
-        if has_tv_data:
-            p.setFont("Helvetica", 9)
-            for i in range(min(max_rows, 5)):
-                if y < 120:
-                    break
-                qty = safe_str(tv_qty[i]) if i < len(tv_qty) else "-"
-                brand = safe_str(tv_brand[i]) if i < len(tv_brand) else "-"
-                if len(brand) > 30:
-                    brand = brand[:27] + "..."
-                tv_t = safe_str(tv_type[i]) if i < len(tv_type) else "-"
+    draw_section_title("IV. EMPLOYMENT DETAILS")
+    draw_two_columns([
+        ("Employer / Company", data.get("employer")),
+        ("Business Phone", data.get("business_phone")),
+        ("Business Address", data.get("business_address")),
+        ("", ""),
+    ])
 
-                p.drawString(50, y, qty)
-                p.drawString(150, y, brand)
-                p.drawString(370, y, tv_t)
-                y -= 16
+    # Always show SPOUSE INFORMATION
+    draw_section_title("V. SPOUSE INFORMATION")
+    spouse_name = data.get("spouse_name")
+    if not spouse_name or spouse_name == "-" or spouse_name == "none":
+        spouse_name = "___________________"  # Blank line like other fields
+    draw_two_columns([
+        ("Spouse Full Name", spouse_name)
+    ])
+
+    draw_section_title("VI. SERVICE PLAN")
+    draw_two_columns([
+        ("Service Type / Plan", data.get("service_type")),
+        ("Installation Fee", data.get("installation_fee")),
+    ])
+
+    # Installation Phone
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(50, y, "Installation Phone:")
+    p.setFont("Helvetica", 9)
+    installation_phone = data.get("installation_phone", "")
+    if not installation_phone or installation_phone == "-" or installation_phone == "none":
+        installation_phone = "_________________________"
+    p.drawString(170, y, installation_phone)
+    y -= 18
+    y -= 5
+
+    # Installation Address
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(50, y, "Installation Address:")
+    p.setFont("Helvetica", 9)
+    
+    installation_address = data.get("installation_address", "")
+    if not installation_address or installation_address == "-" or installation_address == "none":
+        installation_address = "_________________________"
+    
+    words = installation_address.split()
+    lines = []
+    current_line = ""
+    
+    for word in words:
+        test_line = current_line + (" " if current_line else "") + word
+        if stringWidth(test_line, "Helvetica", 9) <= max_width:
+            current_line = test_line
         else:
-            p.setFont("Helvetica", 9)
-            p.setFillColorRGB(0.5, 0.5, 0.5)
-            p.drawString(50, y, "No T.V. set details provided")
-            p.setFillColorRGB(0, 0, 0)
+            lines.append(current_line)
+            current_line = word
+    
+    if current_line:
+        lines.append(current_line)
+    
+    for line in lines:
+        p.drawString(170, y, line)
+        y -= 14
+    y -= 5
+
+    # TV SET DETAILS
+    tv_qty = data.get("tv_qty", [])
+    tv_brand = data.get("tv_brand", [])
+    tv_type = data.get("tv_type", [])
+    
+    if tv_qty and any(tv_qty):
+        draw_section_title("VII. TV SET DETAILS")
+        ensure_space(40)
+        
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(50, y, "QTY")
+        p.drawString(120, y, "BRAND / MODEL")
+        p.drawString(320, y, "TYPE (HD/REGULAR)")
+        y -= 15
+        
+        p.setFont("Helvetica", 9)
+        for i in range(min(len(tv_qty), 5)):
+            if y < 120:
+                break
+            qty = str(tv_qty[i]) if i < len(tv_qty) else "-"
+            brand = tv_brand[i] if i < len(tv_brand) else "-"
+            if len(brand) > 25:
+                brand = brand[:22] + "..."
+            tv_t = tv_type[i] if i < len(tv_type) else "-"
+            
+            p.drawString(50, y, qty)
+            p.drawString(120, y, brand)
+            p.drawString(320, y, tv_t)
             y -= 16
-        y -= 10
+        y -= 5
 
-        # ================= INSTALLATION DETAILS =================
-        draw_section_title("INSTALLATION DETAILS")
-        draw_wrapped_field("Installation Address", data.get("installation_address"))
-        draw_two_columns([
-            ("Installation Phone", data.get("installation_phone")),
-            ("Installation Fee", data.get("installation_fee")),
-        ])
+    draw_section_title("VIII. SUBMISSION DETAILS")
+    draw_two_columns([
+        ("Date Submitted", data.get("date_submitted")),
+        ("Time Submitted", data.get("time_submitted")),
+    ])
 
-        # ================= SUBMISSION DETAILS =================
-        draw_section_title("SUBMISSION DETAILS")
-        draw_two_columns([
-            ("Date Submitted", data.get("date_submitted")),
-            ("Time Submitted", data.get("time_submitted")),
-        ])
+    full_name = f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
+    draw_signature_section(data.get("signature"), full_name)
 
-        # ================= SIGNATURE (digital e-signature ng subscriber) =================
-        full_name = f"{clean_value(data.get('first_name')) or ''} {clean_value(data.get('last_name')) or ''}".strip()
-        ensure_space(180)
-        draw_signature_section(data.get("signature"), full_name)
+    # ================= PAGE 2: MAP =================
+    new_page()
+    draw_section_title_centered("INSTALLATION LOCATION MAP")
 
-        # ================= PAGE: MAP =================
-        new_page()
-        draw_section_title_centered("INSTALLATION LOCATION MAP")
+    lat = data.get("latitude")
+    lng = data.get("longitude")
+    google_maps_url = None
+    google_maps_direction_url = None
+    map_img = None
 
-        lat = data.get("latitude")
-        lng = data.get("longitude")
-        google_maps_url = None
-        google_maps_direction_url = None
-        map_img = None
-
-        try:
-            if lat and lng:
-                lat = float(lat)
-                lng = float(lng)
-
-                google_maps_url = f"https://www.google.com/maps?q={lat},{lng}"
-                google_maps_direction_url = f"https://www.google.com/maps/dir//{lat},{lng}"
-
-                map_url = f"https://maps.locationiq.com/v3/staticmap?key=pk.0fdad07272d959e4de881139988b0883&center={lat},{lng}&zoom=17&size=600x400&markers=icon:large-red-cutout|{lat},{lng}"
-                response = requests.get(map_url, timeout=10)
-                if response.status_code == 200:
-                    map_img = ImageReader(io.BytesIO(response.content))
-        except Exception as e:
-            print("Map error:", e)
-
-        draw_two_columns([
-            ("Street/Village", data.get("address")),
-            ("Barangay/City", f"{clean_value(data.get('barangay')) or '-'}, {clean_value(data.get('city')) or '-'}"),
-            ("Latitude", lat if lat else "-"),
-            ("Longitude", lng if lng else "-"),
-        ])
-
-        if google_maps_direction_url:
-            ensure_space(25)
-            p.setFont("Helvetica-Bold", 12)
-            p.setFillColorRGB(0, 0.5, 0)
-            p.drawCentredString(width / 2, y, " GET DIRECTIONS from your current location to this address")
-            text_width = p.stringWidth(" GET DIRECTIONS from your current location to this address", "Helvetica-Bold", 12)
-            p.linkURL(google_maps_direction_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 12), relative=0)
-            p.setFillColorRGB(0, 0, 0)
-            y -= 20
-
-            p.setFont("Helvetica", 8)
-            p.setFillColorRGB(0.5, 0.5, 0.5)
-            p.drawCentredString(width / 2, y, " Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
-            p.setFillColorRGB(0, 0, 0)
-            y -= 20
-
-        if google_maps_url:
-            p.setFont("Helvetica", 9)
-            p.setFillColorRGB(0, 0, 1)
-            p.drawCentredString(width / 2, y, "Or click here to view location on Google Maps")
-            text_width = p.stringWidth("Or click here to view location on Google Maps", "Helvetica", 9)
-            p.linkURL(google_maps_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 8), relative=0)
-            p.setFillColorRGB(0, 0, 0)
-            y -= 30
-
-        if map_img:
-            ensure_space(380)
-            img_width = 500
-            img_height = 320
-            x_center = (width - img_width) / 2
-            p.drawImage(map_img, x_center, y - img_height, img_width, img_height)
-            y -= img_height + 20
-
-            p.setFont("Helvetica", 8)
-            p.setFillColorRGB(0.5, 0.5, 0.5)
-            p.drawCentredString(width / 2, y, " Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
-            p.setFillColorRGB(0, 0, 0)
-            y -= 15
-        else:
-            draw_two_columns([("Map Status", "Not available")])
-
-        # ================= PAGE: FRONT AND BACK ID =================
-        new_page()
-        draw_section_title_centered("VALID IDENTIFICATION")
-
-        draw_images_top_bottom(
-            "VALID ID (FRONT)", data.get("id_front"),
-            "VALID ID (BACK)", data.get("id_back"),
-            img_width=320, img_height=220
-        )
-
-        # ================= PAGE: PROOF OF BILLING =================
-        new_page()
-        draw_section_title_centered("PROOF OF BILLING")
-
-        proof = data.get("proof_billing")
-        if draw_image_safe(p, proof, (width - 500) / 2, y - 580, 500, 580, "Proof of Billing"):
-            y -= 580 + 30
-        else:
-            p.setFont("Helvetica", 9)
-            p.setFillColorRGB(0.5, 0.5, 0.5)
-            p.drawCentredString(width / 2, y, "No proof of billing provided")
-            p.setFillColorRGB(0, 0, 0)
-            y -= 30
-
-        p.save()
-        buffer.seek(0)
-        return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
-
+    try:
+        if lat and lng:
+            lat = float(lat)
+            lng = float(lng)
+            
+            google_maps_url = f"https://www.google.com/maps?q={lat},{lng}"
+            google_maps_direction_url = f"https://www.google.com/maps/dir//{lat},{lng}"
+            
+            map_url = f"https://maps.locationiq.com/v3/staticmap?key=pk.0fdad07272d959e4de881139988b0883&center={lat},{lng}&zoom=17&size=600x400&markers=icon:large-red-cutout|{lat},{lng}"
+            response = requests.get(map_url, timeout=10)
+            if response.status_code == 200:
+                map_img = ImageReader(io.BytesIO(response.content))
     except Exception as e:
-        traceback.print_exc()
-        return f"PDF generation error: {e}", 500
+        print("Map error:", e)
+
+    draw_two_columns([
+        ("Street/Village", data.get("address")),
+        ("Barangay/City", f"{data.get('barangay', '-')}, {data.get('city', '-')}"),
+        ("Latitude", lat if lat else "-"),
+        ("Longitude", lng if lng else "-"),
+    ])
+
+    if google_maps_direction_url:
+        ensure_space(25)
+        p.setFont("Helvetica-Bold", 12)
+        p.setFillColorRGB(0, 0.5, 0)
+        p.drawCentredString(width / 2, y, " GET DIRECTIONS from your current location to this address")
+        text_width = p.stringWidth(" GET DIRECTIONS from your current location to this address", "Helvetica-Bold", 12)
+        p.linkURL(google_maps_direction_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 12), relative=0)
+        p.setFillColorRGB(0, 0, 0)
+        y -= 20
+        
+        p.setFont("Helvetica", 8)
+        p.setFillColorRGB(0.5, 0.5, 0.5)
+        p.drawCentredString(width / 2, y, " Click above to see distance from YOUR location, travel time, and turn-by-turn directions")
+        p.setFillColorRGB(0, 0, 0)
+        y -= 20
+
+    if google_maps_url:
+        p.setFont("Helvetica", 9)
+        p.setFillColorRGB(0, 0, 1)
+        p.drawCentredString(width / 2, y, "Or click here to view location on Google Maps")
+        text_width = p.stringWidth("Or click here to view location on Google Maps", "Helvetica", 9)
+        p.linkURL(google_maps_url, ((width - text_width) / 2, y - 2, (width + text_width) / 2, y + 8), relative=0)
+        p.setFillColorRGB(0, 0, 0)
+        y -= 30
+
+    if map_img:
+        ensure_space(380)
+        img_width = 500
+        img_height = 320
+        x_center = (width - img_width) / 2
+        p.drawImage(map_img, x_center, y - img_height, img_width, img_height)
+        y -= img_height + 20
+        
+        p.setFont("Helvetica", 8)
+        p.setFillColorRGB(0.5, 0.5, 0.5)
+        p.drawCentredString(width / 2, y, " Tip: Click the green 'GET DIRECTIONS' link above to see distance from your current location")
+        p.setFillColorRGB(0, 0, 0)
+        y -= 15
+    else:
+        draw_two_columns([("Map Status", "Not available")])
+
+    # ================= PAGE 3: FRONT AND BACK ID =================
+    new_page()
+    draw_section_title_centered("VALID IDENTIFICATION")
+    
+    draw_images_top_bottom(
+        "VALID ID (FRONT)", data.get("id_front"),
+        "VALID ID (BACK)", data.get("id_back"),
+        img_width=320, img_height=220
+    )
+
+    # ================= PAGE 4: PROOF OF BILLING =================
+    new_page()
+    draw_section_title_centered("PROOF OF BILLING")
+    
+    proof = data.get("proof_billing")
+    if draw_image_safe(p, proof, (width - 500) / 2, y - 580, 500, 580, "Proof of Billing"):
+        y -= 580 + 30
+    else:
+        p.setFont("Helvetica", 9)
+        p.setFillColorRGB(0.5, 0.5, 0.5)
+        p.drawCentredString(width / 2, y, "No proof of billing provided")
+        p.setFillColorRGB(0, 0, 0)
+        y -= 30
+
+    p.save()
+    buffer.seek(0)
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
+
 
 
 
