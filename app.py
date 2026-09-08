@@ -6830,26 +6830,17 @@ def download_pdf(application_number):
         for i in range(0, len(fields), num_columns):
             draw_row(fields[i:i + num_columns], num_columns)
 
-    # ================= NEW: Draw images side by side =================
-    def draw_images_side_by_side(label1, img1_data, label2, img2_data, img_width=240, img_height=170):
-        """Draw two images side by side with labels above each."""
+    # ================= MODIFIED: Draw images side by side without labels =================
+    def draw_images_side_by_side(img1_data, img2_data, img_width=200, img_height=150):
+        """Draw two images side by side without labels."""
         nonlocal y
         
         # Calculate spacing
         total_img_width = img_width * 2 + 30  # 30px gap between images
         start_x = (width - total_img_width) / 2
         
-        # Draw label for first image
-        ensure_space(img_height + 60)
-        p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(start_x + img_width/2, y, label1)
-        
-        # Draw label for second image
-        p.drawCentredString(start_x + img_width + 30 + img_width/2, y, label2)
-        y -= 22
-        
         # Draw first image
-        if draw_image_safe(p, img1_data, start_x, y - img_height, img_width, img_height, label1):
+        if draw_image_safe(p, img1_data, start_x, y - img_height, img_width, img_height, "Front ID"):
             pass
         else:
             p.setFont("Helvetica", 9)
@@ -6858,7 +6849,7 @@ def download_pdf(application_number):
             p.setFillColorRGB(0, 0, 0)
         
         # Draw second image
-        if draw_image_safe(p, img2_data, start_x + img_width + 30, y - img_height, img_width, img_height, label2):
+        if draw_image_safe(p, img2_data, start_x + img_width + 30, y - img_height, img_width, img_height, "Back ID"):
             pass
         else:
             p.setFont("Helvetica", 9)
@@ -7058,24 +7049,41 @@ def download_pdf(application_number):
     else:
         draw_field_grid([("Map Status", "Not available")], 1)
 
-    # ================= PAGE 3: FRONT AND BACK ID (Side by Side) =================
+    # ================= PAGE 3: FRONT AND BACK ID (Side by Side, No Labels) =================
     new_page()
     draw_section_title_centered("VALID IDENTIFICATION")
+    
+    # Space after title
+    y -= 15
 
-    # Draw front and back ID side by side with smaller size
+    # Draw front and back ID side by side with smaller size (no labels)
     draw_images_side_by_side(
-        "VALID ID (FRONT)", data.get("id_front"),
-        "VALID ID (BACK)", data.get("id_back"),
-        img_width=240, img_height=170  # Smaller size para hindi ma-cut
+        data.get("id_front"),
+        data.get("id_back"),
+        img_width=200,  # Smaller width
+        img_height=150  # Smaller height
     )
 
-    # ================= PAGE 4: PROOF OF BILLING (Below ID) =================
+    # ================= PROOF OF BILLING (On same page, below ID) =================
     draw_section_title_centered("PROOF OF BILLING")
-
+    
+    # Space after title
+    y -= 15
+    
     proof = data.get("proof_billing")
-    # Mas maliit na size para kasya sa page
-    if draw_image_safe(p, proof, (width - 450) / 2, y - 500, 450, 500, "Proof of Billing"):
-        y -= 500 + 30
+    # Smaller size para siguradong kasya sa page at hindi maoccupy ang footer
+    proof_width = 400
+    proof_height = 450
+    
+    # Ensure we don't go below footer (reserve at least 50px for footer)
+    if y - proof_height < 50:
+        # If not enough space, start new page
+        new_page()
+        draw_section_title_centered("PROOF OF BILLING")
+        y -= 15
+    
+    if draw_image_safe(p, proof, (width - proof_width) / 2, y - proof_height, proof_width, proof_height, "Proof of Billing"):
+        y -= proof_height + 30
     else:
         p.setFont("Helvetica", 9)
         p.setFillColorRGB(0.5, 0.5, 0.5)
