@@ -6751,13 +6751,14 @@ def download_pdf(application_number):
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
-    # ================= UPDATED: Two columns with better spacing =================
+    # ================= UPDATED: Two columns with consistent alignment =================
     def draw_two_columns(fields):
         nonlocal y
         col1_x = 50
         col2_x = 300
         label_width = 100
         value_x = col1_x + label_width + 5
+        value2_x = col2_x + label_width + 5
         
         for i in range(0, len(fields), 2):
             ensure_space(22)
@@ -6772,7 +6773,6 @@ def download_pdf(application_number):
             else:
                 val1_str = "___________________"
             
-            # No truncation for important fields, use full value
             # Only truncate if it's extremely long
             if len(val1_str) > 40:
                 val1_str = val1_str[:37] + "..."
@@ -6791,35 +6791,99 @@ def download_pdf(application_number):
                 
                 if len(val2_str) > 30:
                     val2_str = val2_str[:27] + "..."
-                p.drawString(col2_x + label_width + 5, y, val2_str)
+                p.drawString(value2_x, y, val2_str)
             
             y -= 20
         y -= 5
 
-    # ================= NEW: Four columns for status fields =================
+    # ================= UPDATED: Three columns with consistent alignment =================
+    def draw_three_columns(fields):
+        nonlocal y
+        # Fixed column positions - lahat ng labels aligned
+        col1_label_x = 50
+        col2_label_x = 195
+        col3_label_x = 340
+        
+        # Fixed value positions - lahat ng values aligned
+        label_width = 100  # Consistent label width for all columns
+        col1_value_x = col1_label_x + label_width + 5
+        col2_value_x = col2_label_x + label_width + 5
+        col3_value_x = col3_label_x + label_width + 5
+        
+        ensure_space(22)
+        for idx, (label, value) in enumerate(fields):
+            # Determine column position for label
+            if idx == 0:
+                label_x = col1_label_x
+                value_x = col1_value_x
+            elif idx == 1:
+                label_x = col2_label_x
+                value_x = col2_value_x
+            else:
+                label_x = col3_label_x
+                value_x = col3_value_x
+            
+            if label:
+                p.setFont("Helvetica-Bold", 9)
+                p.drawString(label_x, y, f"{label}:")
+                p.setFont("Helvetica", 9)
+                
+                if value and value != "-" and value != "none" and str(value).strip():
+                    val_str = str(value)
+                else:
+                    val_str = "___________________"
+                
+                # Truncate if too long based on available space
+                max_chars = 22
+                if len(val_str) > max_chars:
+                    val_str = val_str[:max_chars-3] + "..."
+                p.drawString(value_x, y, val_str)
+            else:
+                p.setFont("Helvetica", 9)
+                if value and value != "-" and value != "none" and str(value).strip():
+                    val_str = str(value)
+                else:
+                    val_str = "___________________"
+                p.drawString(value_x, y, val_str)
+        
+        y -= 20
+        y -= 5
+
+    # ================= UPDATED: Four columns with consistent alignment =================
     def draw_four_columns(fields):
         nonlocal y
-        col1_x = 50
-        col2_x = 185
-        col3_x = 320
-        col4_x = 455
-        label_width = 70
+        # Fixed column positions - lahat ng labels aligned
+        col1_label_x = 50
+        col2_label_x = 185
+        col3_label_x = 320
+        col4_label_x = 455
+        
+        # Fixed value positions - lahat ng values aligned
+        label_width = 75  # Consistent label width for all columns
+        col1_value_x = col1_label_x + label_width + 5
+        col2_value_x = col2_label_x + label_width + 5
+        col3_value_x = col3_label_x + label_width + 5
+        col4_value_x = col4_label_x + label_width + 5
         
         ensure_space(22)
         for idx, (label, value) in enumerate(fields):
             # Determine column position
             if idx == 0:
-                x_pos = col1_x
+                label_x = col1_label_x
+                value_x = col1_value_x
             elif idx == 1:
-                x_pos = col2_x
+                label_x = col2_label_x
+                value_x = col2_value_x
             elif idx == 2:
-                x_pos = col3_x
+                label_x = col3_label_x
+                value_x = col3_value_x
             else:
-                x_pos = col4_x
+                label_x = col4_label_x
+                value_x = col4_value_x
             
             if label:
                 p.setFont("Helvetica-Bold", 9)
-                p.drawString(x_pos, y, f"{label}:")
+                p.drawString(label_x, y, f"{label}:")
                 p.setFont("Helvetica", 9)
                 
                 if value and value != "-" and value != "none" and str(value).strip():
@@ -6828,64 +6892,17 @@ def download_pdf(application_number):
                     val_str = "___________________"
                 
                 # Truncate if too long
-                if len(val_str) > 12:
-                    val_str = val_str[:9] + "..."
-                p.drawString(x_pos + label_width + 3, y, val_str)
+                max_chars = 14
+                if len(val_str) > max_chars:
+                    val_str = val_str[:max_chars-3] + "..."
+                p.drawString(value_x, y, val_str)
             else:
                 p.setFont("Helvetica", 9)
                 if value and value != "-" and value != "none" and str(value).strip():
                     val_str = str(value)
                 else:
                     val_str = "___________________"
-                p.drawString(x_pos, y, val_str)
-        
-        y -= 20
-        y -= 5
-
-    # ================= UPDATED: Three columns with better spacing =================
-    def draw_three_columns(fields):
-        nonlocal y
-        col1_x = 50
-        col2_x = 195
-        col3_x = 340
-        label_width = 85
-        
-        ensure_space(22)
-        for idx, (label, value) in enumerate(fields):
-            # Determine column position
-            if idx == 0:
-                x_pos = col1_x
-            elif idx == 1:
-                x_pos = col2_x
-            else:
-                x_pos = col3_x
-            
-            if label:
-                p.setFont("Helvetica-Bold", 9)
-                p.drawString(x_pos, y, f"{label}:")
-                p.setFont("Helvetica", 9)
-                
-                if value and value != "-" and value != "none" and str(value).strip():
-                    val_str = str(value)
-                else:
-                    val_str = "___________________"
-                
-                # No truncation for Place of Birth - show full value
-                if idx == 1:  # Place of Birth
-                    # Allow more characters, only truncate if extremely long
-                    if len(val_str) > 50:
-                        val_str = val_str[:47] + "..."
-                else:
-                    if len(val_str) > 18:
-                        val_str = val_str[:15] + "..."
-                p.drawString(x_pos + label_width + 3, y, val_str)
-            else:
-                p.setFont("Helvetica", 9)
-                if value and value != "-" and value != "none" and str(value).strip():
-                    val_str = str(value)
-                else:
-                    val_str = "___________________"
-                p.drawString(x_pos, y, val_str)
+                p.drawString(value_x, y, val_str)
         
         y -= 20
         y -= 5
