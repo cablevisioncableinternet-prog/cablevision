@@ -6751,11 +6751,12 @@ def download_pdf(application_number):
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
+    # ================= UPDATED: Two columns with closer spacing =================
     def draw_two_columns(fields):
         nonlocal y
         col1_x = 50
-        col2_x = 310
-        label_width = 120
+        col2_x = 290  # Binawasan mula 310
+        label_width = 80  # Binawasan mula 120
         value_x = col1_x + label_width + 5
         
         for i in range(0, len(fields), 2):
@@ -6782,34 +6783,36 @@ def download_pdf(application_number):
             y -= 18
         y -= 5
 
-    # ================= NEW: Draw 3-column row =================
+    # ================= UPDATED: Three columns with closer spacing =================
     def draw_three_columns(fields):
         nonlocal y
         col1_x = 50
-        col2_x = 220
-        col3_x = 390
-        label_width = 100
+        col2_x = 200   # Binawasan mula 220
+        col3_x = 350   # Binawasan mula 390
+        label_width = 70  # Binawasan mula 100
         
         ensure_space(20)
-        for label, value in fields:
+        for idx, (label, value) in enumerate(fields):
+            # Determine column position
+            if idx == 0:
+                x_pos = col1_x
+            elif idx == 1:
+                x_pos = col2_x
+            else:
+                x_pos = col3_x
+            
             if label:  # May label
                 p.setFont("Helvetica-Bold", 9)
-                p.drawString(col1_x if fields.index((label, value)) == 0 else 
-                             col2_x if fields.index((label, value)) == 1 else col3_x, 
-                             y, f"{label}:")
+                p.drawString(x_pos, y, f"{label}:")
                 p.setFont("Helvetica", 9)
                 val_str = str(value) if value and value != "-" and value != "none" else "___________________"
-                if len(val_str) > 20:
-                    val_str = val_str[:17] + "..."
-                p.drawString((col1_x + label_width + 5) if fields.index((label, value)) == 0 else
-                             (col2_x + label_width + 5) if fields.index((label, value)) == 1 else
-                             (col3_x + label_width + 5), y, val_str)
+                if len(val_str) > 18:
+                    val_str = val_str[:15] + "..."
+                p.drawString(x_pos + label_width + 3, y, val_str)
             else:  # Walang label (blank)
                 p.setFont("Helvetica", 9)
                 val_str = str(value) if value and value != "-" and value != "none" else "___________________"
-                p.drawString(col1_x if fields.index((label, value)) == 0 else 
-                             col2_x if fields.index((label, value)) == 1 else col3_x, 
-                             y, val_str)
+                p.drawString(x_pos, y, val_str)
         
         y -= 18
         y -= 5
@@ -6884,16 +6887,6 @@ def download_pdf(application_number):
     middle_name = data.get("middle_name", "")
     last_name = data.get("last_name", "")
     
-    # Build display name
-    name_parts = []
-    if last_name:
-        name_parts.append(last_name)
-    if first_name:
-        name_parts.append(first_name)
-    if middle_name:
-        name_parts.append(middle_name)
-    display_name = ", ".join(name_parts) if name_parts else "___________________"
-    
     # Name row: Last Name, First Name, Middle Name
     draw_three_columns([
         ("Last Name", last_name if last_name else ""),
@@ -6945,8 +6938,9 @@ def download_pdf(application_number):
         ("Street/Village", data.get("address")),
     ])
 
-    # Billing Address
+    # Billing Address - Updated with closer label
     p.setFont("Helvetica-Bold", 9)
+    label_width_billing = 80  # Binawasan mula sa dating 120
     p.drawString(50, y, "Billing Address:")
     p.setFont("Helvetica", 9)
     
@@ -6955,7 +6949,7 @@ def download_pdf(application_number):
         billing_address = "_________________________"
     
     from reportlab.pdfbase.pdfmetrics import stringWidth
-    max_width = 400
+    max_width = 450  # Dinagdagan para mas mahaba ang pwedeng ilagay
     words = billing_address.split()
     lines = []
     current_line = ""
@@ -6971,8 +6965,10 @@ def download_pdf(application_number):
     if current_line:
         lines.append(current_line)
     
+    # Adjusted starting x position
+    billing_x = 50 + label_width_billing + 5  # 50 + 80 + 5 = 135
     for line in lines:
-        p.drawString(170, y, line)
+        p.drawString(billing_x, y, line)
         y -= 14
     y -= 5
 
@@ -6990,18 +6986,19 @@ def download_pdf(application_number):
         ("Installation Fee", data.get("installation_fee")),
     ])
 
-    # Installation Phone
+    # Installation Phone - Updated with closer label
     p.setFont("Helvetica-Bold", 9)
+    label_width_phone = 80
     p.drawString(50, y, "Installation Phone:")
     p.setFont("Helvetica", 9)
     installation_phone = data.get("installation_phone", "")
     if not installation_phone or installation_phone == "-" or installation_phone == "none":
         installation_phone = "_________________________"
-    p.drawString(170, y, installation_phone)
+    p.drawString(50 + label_width_phone + 5, y, installation_phone)
     y -= 18
     y -= 5
 
-    # Installation Address
+    # Installation Address - Updated with closer label
     p.setFont("Helvetica-Bold", 9)
     p.drawString(50, y, "Installation Address:")
     p.setFont("Helvetica", 9)
@@ -7026,7 +7023,7 @@ def download_pdf(application_number):
         lines.append(current_line)
     
     for line in lines:
-        p.drawString(170, y, line)
+        p.drawString(50 + label_width_phone + 5, y, line)
         y -= 14
     y -= 5
 
