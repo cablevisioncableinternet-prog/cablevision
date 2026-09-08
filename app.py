@@ -6782,6 +6782,38 @@ def download_pdf(application_number):
             y -= 18
         y -= 5
 
+    # ================= NEW: Draw 3-column row =================
+    def draw_three_columns(fields):
+        nonlocal y
+        col1_x = 50
+        col2_x = 220
+        col3_x = 390
+        label_width = 100
+        
+        ensure_space(20)
+        for label, value in fields:
+            if label:  # May label
+                p.setFont("Helvetica-Bold", 9)
+                p.drawString(col1_x if fields.index((label, value)) == 0 else 
+                             col2_x if fields.index((label, value)) == 1 else col3_x, 
+                             y, f"{label}:")
+                p.setFont("Helvetica", 9)
+                val_str = str(value) if value and value != "-" and value != "none" else "___________________"
+                if len(val_str) > 20:
+                    val_str = val_str[:17] + "..."
+                p.drawString((col1_x + label_width + 5) if fields.index((label, value)) == 0 else
+                             (col2_x + label_width + 5) if fields.index((label, value)) == 1 else
+                             (col3_x + label_width + 5), y, val_str)
+            else:  # Walang label (blank)
+                p.setFont("Helvetica", 9)
+                val_str = str(value) if value and value != "-" and value != "none" else "___________________"
+                p.drawString(col1_x if fields.index((label, value)) == 0 else 
+                             col2_x if fields.index((label, value)) == 1 else col3_x, 
+                             y, val_str)
+        
+        y -= 18
+        y -= 5
+
     def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
         nonlocal y
         
@@ -6846,26 +6878,64 @@ def download_pdf(application_number):
 
     # ================= PAGE 1: PERSONAL INFORMATION =================
     draw_section_title("I. PERSONAL INFORMATION")
-    draw_two_columns([
-        ("Last Name", data.get("last_name")),
-        ("First Name", data.get("first_name")),
-        ("Middle Name", data.get("middle_name")),
-        ("Suffix", data.get("suffix")),
-        ("Date of Birth", data.get("birthdate")),
+    
+    # NAME - First, Middle, Last in one row (no suffix)
+    first_name = data.get("first_name", "")
+    middle_name = data.get("middle_name", "")
+    last_name = data.get("last_name", "")
+    
+    # Build display name
+    name_parts = []
+    if last_name:
+        name_parts.append(last_name)
+    if first_name:
+        name_parts.append(first_name)
+    if middle_name:
+        name_parts.append(middle_name)
+    display_name = ", ".join(name_parts) if name_parts else "___________________"
+    
+    # Name row: Last Name, First Name, Middle Name
+    draw_three_columns([
+        ("Last Name", last_name if last_name else ""),
+        ("First Name", first_name if first_name else ""),
+        ("Middle Name", middle_name if middle_name else "")
+    ])
+    
+    # BIRTHDATE, PLACE OF BIRTH, SEX in one row
+    draw_three_columns([
+        ("Birthdate", data.get("birthdate")),
         ("Place of Birth", data.get("place_of_birth")),
-        ("Sex", data.get("sex")),
+        ("Sex", data.get("sex"))
+    ])
+    
+    # CIVIL STATUS, CITIZENSHIP, OCCUPATION in one row
+    draw_three_columns([
         ("Civil Status", data.get("civil_status")),
         ("Citizenship", data.get("citizenship")),
-        ("Occupation", data.get("occupation")),
+        ("Occupation", data.get("occupation"))
     ])
 
+    # ================= FAMILY DETAILS =================
     draw_section_title("II. FAMILY DETAILS")
+    
+    # Mother and Father in two columns
     draw_two_columns([
         ("Mother's Maiden Name", data.get("mother_maiden_name")),
         ("Father's Name", data.get("father_name")),
     ])
+    
+    # ================= SPOUSE INFORMATION (below family details) =================
+    draw_section_title("III. SPOUSE INFORMATION")
+    spouse_name = data.get("spouse_name")
+    if not spouse_name or spouse_name == "-" or spouse_name == "none":
+        spouse_name = "___________________"
+    draw_two_columns([
+        ("Spouse Full Name", spouse_name),
+        ("", ""),  # Empty second column to maintain layout
+    ])
 
-    draw_section_title("III. CONTACT & ADDRESS")
+    # ================= CONTACT & ADDRESS =================
+    draw_section_title("IV. CONTACT & ADDRESS")
     draw_two_columns([
         ("Mobile Number", data.get("mobile")),
         ("Email Address", data.get("email")),
@@ -6906,21 +6976,12 @@ def download_pdf(application_number):
         y -= 14
     y -= 5
 
-    draw_section_title("IV. EMPLOYMENT DETAILS")
+    draw_section_title("V. EMPLOYMENT DETAILS")
     draw_two_columns([
         ("Employer / Company", data.get("employer")),
         ("Business Phone", data.get("business_phone")),
         ("Business Address", data.get("business_address")),
         ("", ""),
-    ])
-
-    # Always show SPOUSE INFORMATION
-    draw_section_title("V. SPOUSE INFORMATION")
-    spouse_name = data.get("spouse_name")
-    if not spouse_name or spouse_name == "-" or spouse_name == "none":
-        spouse_name = "___________________"  # Blank line like other fields
-    draw_two_columns([
-        ("Spouse Full Name", spouse_name)
     ])
 
     draw_section_title("VI. SERVICE PLAN")
@@ -7108,7 +7169,35 @@ def download_pdf(application_number):
 
     p.save()
     buffer.seek(0)
-    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name="Application_Form.pdf")
+    
+    # ================= BUILD FILENAME =================
+    first_name = data.get("first_name", "").strip()
+    middle_name = data.get("middle_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    suffix = data.get("suffix", "").strip()
+    
+    # Build full name for filename
+    name_parts = []
+    if first_name:
+        name_parts.append(first_name)
+    if middle_name:
+        name_parts.append(middle_name)
+    if last_name:
+        name_parts.append(last_name)
+    if suffix:
+        name_parts.append(suffix)
+    
+    full_name_for_file = " ".join(name_parts) if name_parts else "Unknown"
+    
+    # Create filename: "Juan Dela Cruz - Application Form.pdf"
+    filename = f"{full_name_for_file} - Application Form.pdf"
+    
+    return send_file(
+        buffer, 
+        mimetype='application/pdf', 
+        as_attachment=True, 
+        download_name=filename
+    )
 
 
 
