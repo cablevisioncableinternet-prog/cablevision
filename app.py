@@ -6751,23 +6751,31 @@ def download_pdf(application_number):
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
-    # ================= UPDATED: Two columns with closer spacing =================
+    # ================= UPDATED: Two columns with dynamic spacing =================
     def draw_two_columns(fields):
         nonlocal y
         col1_x = 50
-        col2_x = 290  # Binawasan mula 310
-        label_width = 80  # Binawasan mula 120
+        col2_x = 290
+        label_width = 95  # Dinagdagan para sa mahabang labels
         value_x = col1_x + label_width + 5
         
         for i in range(0, len(fields), 2):
-            ensure_space(20)
+            ensure_space(22)
             label1, value1 = fields[i]
             p.setFont("Helvetica-Bold", 9)
             p.drawString(col1_x, y, f"{label1}:")
             p.setFont("Helvetica", 9)
-            val1_str = str(value1) if value1 and value1 != "-" and value1 != "none" else "___________________"
-            if len(val1_str) > 35:
-                val1_str = val1_str[:32] + "..."
+            
+            # Handle value
+            if value1 and value1 != "-" and value1 != "none" and str(value1).strip():
+                val1_str = str(value1)
+            else:
+                val1_str = "___________________"
+            
+            # Dynamic truncation based on available space
+            max_chars = 28
+            if len(val1_str) > max_chars:
+                val1_str = val1_str[:max_chars-3] + "..."
             p.drawString(value_x, y, val1_str)
             
             if i + 1 < len(fields):
@@ -6775,23 +6783,28 @@ def download_pdf(application_number):
                 p.setFont("Helvetica-Bold", 9)
                 p.drawString(col2_x, y, f"{label2}:")
                 p.setFont("Helvetica", 9)
-                val2_str = str(value2) if value2 and value2 != "-" and value2 != "none" else "___________________"
-                if len(val2_str) > 30:
-                    val2_str = val2_str[:27] + "..."
+                
+                if value2 and value2 != "-" and value2 != "none" and str(value2).strip():
+                    val2_str = str(value2)
+                else:
+                    val2_str = "___________________"
+                
+                if len(val2_str) > 25:
+                    val2_str = val2_str[:22] + "..."
                 p.drawString(col2_x + label_width + 5, y, val2_str)
             
-            y -= 18
+            y -= 20
         y -= 5
 
-    # ================= UPDATED: Three columns with closer spacing =================
+    # ================= UPDATED: Three columns with dynamic spacing =================
     def draw_three_columns(fields):
         nonlocal y
         col1_x = 50
-        col2_x = 200   # Binawasan mula 220
-        col3_x = 350   # Binawasan mula 390
-        label_width = 70  # Binawasan mula 100
+        col2_x = 195
+        col3_x = 340
+        label_width = 80
         
-        ensure_space(20)
+        ensure_space(22)
         for idx, (label, value) in enumerate(fields):
             # Determine column position
             if idx == 0:
@@ -6801,20 +6814,34 @@ def download_pdf(application_number):
             else:
                 x_pos = col3_x
             
-            if label:  # May label
+            if label:
                 p.setFont("Helvetica-Bold", 9)
                 p.drawString(x_pos, y, f"{label}:")
                 p.setFont("Helvetica", 9)
-                val_str = str(value) if value and value != "-" and value != "none" else "___________________"
-                if len(val_str) > 18:
-                    val_str = val_str[:15] + "..."
+                
+                if value and value != "-" and value != "none" and str(value).strip():
+                    val_str = str(value)
+                else:
+                    val_str = "___________________"
+                
+                # Dynamic truncation - mas mahaba ang pwede sa 3rd column
+                if idx == 2:
+                    max_chars = 22
+                else:
+                    max_chars = 18
+                    
+                if len(val_str) > max_chars:
+                    val_str = val_str[:max_chars-3] + "..."
                 p.drawString(x_pos + label_width + 3, y, val_str)
-            else:  # Walang label (blank)
+            else:
                 p.setFont("Helvetica", 9)
-                val_str = str(value) if value and value != "-" and value != "none" else "___________________"
+                if value and value != "-" and value != "none" and str(value).strip():
+                    val_str = str(value)
+                else:
+                    val_str = "___________________"
                 p.drawString(x_pos, y, val_str)
         
-        y -= 18
+        y -= 20
         y -= 5
 
     def draw_images_top_bottom(label1, img1_data, label2, img2_data, img_width=280, img_height=190):
@@ -6920,7 +6947,7 @@ def download_pdf(application_number):
     # ================= SPOUSE INFORMATION (below family details) =================
     draw_section_title("III. SPOUSE INFORMATION")
     spouse_name = data.get("spouse_name")
-    if not spouse_name or spouse_name == "-" or spouse_name == "none":
+    if not spouse_name or spouse_name == "-" or spouse_name == "none" or not str(spouse_name).strip():
         spouse_name = "___________________"
     draw_two_columns([
         ("Spouse Full Name", spouse_name),
@@ -6938,18 +6965,18 @@ def download_pdf(application_number):
         ("Street/Village", data.get("address")),
     ])
 
-    # Billing Address - Updated with closer label
+    # Billing Address
     p.setFont("Helvetica-Bold", 9)
-    label_width_billing = 80  # Binawasan mula sa dating 120
+    label_width_billing = 95
     p.drawString(50, y, "Billing Address:")
     p.setFont("Helvetica", 9)
     
     billing_address = data.get("billing_address", "")
-    if not billing_address or billing_address == "-" or billing_address == "none":
-        billing_address = "_________________________"
+    if not billing_address or billing_address == "-" or billing_address == "none" or not str(billing_address).strip():
+        billing_address = "___________________"
     
     from reportlab.pdfbase.pdfmetrics import stringWidth
-    max_width = 450  # Dinagdagan para mas mahaba ang pwedeng ilagay
+    max_width = 460
     words = billing_address.split()
     lines = []
     current_line = ""
@@ -6965,8 +6992,7 @@ def download_pdf(application_number):
     if current_line:
         lines.append(current_line)
     
-    # Adjusted starting x position
-    billing_x = 50 + label_width_billing + 5  # 50 + 80 + 5 = 135
+    billing_x = 50 + label_width_billing + 5
     for line in lines:
         p.drawString(billing_x, y, line)
         y -= 14
@@ -6986,26 +7012,26 @@ def download_pdf(application_number):
         ("Installation Fee", data.get("installation_fee")),
     ])
 
-    # Installation Phone - Updated with closer label
+    # Installation Phone
     p.setFont("Helvetica-Bold", 9)
-    label_width_phone = 80
+    label_width_phone = 95
     p.drawString(50, y, "Installation Phone:")
     p.setFont("Helvetica", 9)
     installation_phone = data.get("installation_phone", "")
-    if not installation_phone or installation_phone == "-" or installation_phone == "none":
-        installation_phone = "_________________________"
+    if not installation_phone or installation_phone == "-" or installation_phone == "none" or not str(installation_phone).strip():
+        installation_phone = "___________________"
     p.drawString(50 + label_width_phone + 5, y, installation_phone)
     y -= 18
     y -= 5
 
-    # Installation Address - Updated with closer label
+    # Installation Address
     p.setFont("Helvetica-Bold", 9)
     p.drawString(50, y, "Installation Address:")
     p.setFont("Helvetica", 9)
     
     installation_address = data.get("installation_address", "")
-    if not installation_address or installation_address == "-" or installation_address == "none":
-        installation_address = "_________________________"
+    if not installation_address or installation_address == "-" or installation_address == "none" or not str(installation_address).strip():
+        installation_address = "___________________"
     
     words = installation_address.split()
     lines = []
@@ -7027,30 +7053,52 @@ def download_pdf(application_number):
         y -= 14
     y -= 5
 
-    # TV SET DETAILS
+    # ================= TV SET DETAILS - FIXED =================
     tv_qty = data.get("tv_qty", [])
     tv_brand = data.get("tv_brand", [])
     tv_type = data.get("tv_type", [])
     
-    if tv_qty and any(tv_qty):
+    # Check if there are valid entries
+    valid_entries = []
+    for i in range(len(tv_qty)):
+        qty = str(tv_qty[i]).strip() if i < len(tv_qty) else ""
+        brand = str(tv_brand[i]).strip() if i < len(tv_brand) else ""
+        tv_t = str(tv_type[i]).strip() if i < len(tv_type) else ""
+        
+        # Only include if QTY is not empty and not "0"
+        if qty and qty != "0" and qty != "-" and qty != "none":
+            valid_entries.append({
+                'qty': qty,
+                'brand': brand if brand and brand != "-" and brand != "none" else "",
+                'type': tv_t if tv_t and tv_t != "-" and tv_t != "none" else ""
+            })
+    
+    if valid_entries:
         draw_section_title("VII. TV SET DETAILS")
         ensure_space(40)
         
+        # Headers
         p.setFont("Helvetica-Bold", 9)
         p.drawString(50, y, "QTY")
         p.drawString(120, y, "BRAND / MODEL")
         p.drawString(320, y, "TYPE (HD/REGULAR)")
         y -= 15
         
+        # Draw each valid entry
         p.setFont("Helvetica", 9)
-        for i in range(min(len(tv_qty), 5)):
+        for entry in valid_entries:
             if y < 120:
                 break
-            qty = str(tv_qty[i]) if i < len(tv_qty) else "-"
-            brand = tv_brand[i] if i < len(tv_brand) else "-"
+            
+            qty = entry['qty']
+            brand = entry['brand'] if entry['brand'] else "-"
+            tv_t = entry['type'] if entry['type'] else "-"
+            
+            # Truncate long brand names
             if len(brand) > 25:
                 brand = brand[:22] + "..."
-            tv_t = tv_type[i] if i < len(tv_type) else "-"
+            if len(tv_t) > 15:
+                tv_t = tv_t[:12] + "..."
             
             p.drawString(50, y, qty)
             p.drawString(120, y, brand)
