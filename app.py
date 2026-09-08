@@ -6767,13 +6767,11 @@ def download_pdf(application_number):
             p.drawString(col1_x, y, f"{label1}:")
             p.setFont("Helvetica", 9)
             
-            # Handle value - show full value if available
             if value1 and value1 != "-" and value1 != "none" and str(value1).strip():
                 val1_str = str(value1)
             else:
                 val1_str = "___________________"
             
-            # Only truncate if it's extremely long
             if len(val1_str) > 40:
                 val1_str = val1_str[:37] + "..."
             p.drawString(value_x, y, val1_str)
