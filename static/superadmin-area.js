@@ -600,7 +600,7 @@ function renderTableWithPagination() {
                 <td>${escapeHtml(properBarangay)}</td>
                 <td>
                     <button onclick="deleteArea('${area.id}')" class="btn-delete" id="deleteBtn-${area.id}">
-                        <i class="fas fa-trash"></i> Delete
+                        <i class="fas fa-trash"></i> 
                     </button>
                 </td>
             </tr>
@@ -701,42 +701,100 @@ function renderPaginationControls(totalPages, totalItems) {
 }
 
 // =========================
-// DELETE AREA
+// DELETE AREA - WITH CONFIRMATION MODAL (FIXED)
 // =========================
-window.deleteArea = async function(id) {
-    const deleteBtn = document.getElementById(`deleteBtn-${id}`);
-    if (!deleteBtn) return;
+let areaToDelete = null;
+
+/**
+ * Opens the delete confirmation modal with area details
+ */
+window.deleteArea = function(id) {
+    // ✅ Convert id to number para match sa allAreas
+    const numericId = parseInt(id, 10);
+    const area = allAreas.find(a => a.id === numericId);
+    if (!area) {
+        showToast("Area not found", "error");
+        return;
+    }
     
-    if (!confirm("Delete this area?")) return;
+    areaToDelete = numericId;  // Store as number
+    
+    // Display area info in modal
+    const deleteAreaInfo = document.getElementById("deleteAreaInfo");
+    if (deleteAreaInfo) {
+        const properProvince = toProperCase(area.province);
+        const properCity = toProperCase(area.city);
+        const properBarangay = toProperCase(area.barangay);
+        deleteAreaInfo.textContent = `${properBarangay}, ${properCity}, ${properProvince}`;
+    }
+    
+    // Show modal
+    const deleteModal = document.getElementById("deleteModal");
+    if (deleteModal) {
+        deleteModal.classList.add("show");
+        document.body.style.overflow = "hidden";
+    }
+};
 
-    const originalText = deleteBtn.innerHTML;
-    deleteBtn.disabled = true;
-    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+/**
+ * Closes the delete confirmation modal
+ */
+function closeDeleteModal() {
+    const deleteModal = document.getElementById("deleteModal");
+    if (deleteModal) {
+        deleteModal.classList.remove("show");
+        document.body.style.overflow = "";
+    }
+    areaToDelete = null;
+}
 
+/**
+ * Executes the actual delete after confirmation
+ */
+async function confirmDeleteArea() {
+    if (!areaToDelete) {
+        closeDeleteModal();
+        return;
+    }
+    
+    const confirmBtn = document.getElementById("confirmDelete");
+    const originalText = confirmBtn ? confirmBtn.innerHTML : '';
+    
+    // Show loading state on button
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    }
+    
     try {
-        const response = await fetch(`/api/superadmin/area/${id}`, {
+        const response = await fetch(`/api/superadmin/area/${areaToDelete}`, {
             method: "DELETE"
         });
-
+        
         if (response.ok) {
-            showToast("Area deleted successfully");
+            showToast("Area deleted successfully", "success");
             clearAreasCache();
             await loadAreas();
             currentPage = 1;
             applyFilters();
+            closeDeleteModal();
         } else {
             const result = await response.json();
             showToast(result.error || "Failed to delete area", "error");
-            deleteBtn.disabled = false;
-            deleteBtn.innerHTML = originalText;
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            }
         }
     } catch (error) {
         console.error("Error deleting area:", error);
         showToast("Error deleting area", "error");
-        deleteBtn.disabled = false;
-        deleteBtn.innerHTML = originalText;
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+        }
     }
-};
+}
 
 // =========================
 // POPULATE FILTER DROPDOWN
@@ -883,8 +941,32 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (window.NotificationSystem) {
         window.NotificationSystem.init();
     }
-});
 
+    // ======================== DELETE MODAL EVENT LISTENERS ========================
+    const closeDeleteModalBtn = document.getElementById("closeDeleteModal");
+    if (closeDeleteModalBtn) {
+        closeDeleteModalBtn.addEventListener("click", closeDeleteModal);
+    }
+
+    const cancelDeleteBtn = document.getElementById("cancelDelete");
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener("click", closeDeleteModal);
+    }
+
+    const confirmDeleteBtn = document.getElementById("confirmDelete");
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", confirmDeleteArea);
+    }
+
+    const deleteModal = document.getElementById("deleteModal");
+    if (deleteModal) {
+        deleteModal.addEventListener("click", function(e) {
+            if (e.target === deleteModal) {
+                closeDeleteModal();
+            }
+        });
+    }
+});
 // ==================== PROFILE DROPDOWN CHEVRON ====================
 (function() {
     const profileBtn = document.getElementById('profileBtn');

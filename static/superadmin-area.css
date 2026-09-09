@@ -1006,14 +1006,14 @@ body {
   padding: 6px 16px;
   font-size: 0.7rem;
   font-weight: 600;
-  border-radius: 40px;
+  border-radius: 5px;
   cursor: pointer;
   transition: var(--transition);
   display: inline-flex;
   align-items: center;
   gap: 5px;
   border: none;
-  background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+  background: #dc2626 ;
   color: #fff;
 }
 
