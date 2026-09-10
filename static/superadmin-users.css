@@ -2780,9 +2780,9 @@ table {
     min-width: 1000px;
 }
 
-/* === GRADIENT HEADER === */
+/* === SOLID HEADER — WALANG GRADIENT === */
 th {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    background: var(--primary-dark);
     color: #ffffff;
     font-weight: 700;
     font-family: 'Inter', sans-serif;
@@ -2921,8 +2921,10 @@ tbody td span[style*="min-width: 95px"]::before {
 }
 
 /* Terminated table th override */
+/* Terminated table th override — SOLID RED */
 .terminated-card th {
-    background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+    background: #7f1d1d;
+    color: #ffffff;
 }
 
 /* ============================================================
