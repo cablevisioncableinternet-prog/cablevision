@@ -523,19 +523,39 @@ function openViewInfoModal(adminId) {
     fetch(`/api/superadmin/admins/${adminId}`)
         .then((res) => res.json())
         .then((admin) => {
-            const infoUsername = document.getElementById("infoUsername");
-            const infoName = document.getElementById("infoName");
-            const infoEmail = document.getElementById("infoEmail");
-            const infoContact = document.getElementById("infoContact");
-            const infoArea = document.getElementById("infoArea");
-            const infoStatus = document.getElementById("infoStatus");
-            
-            if (infoUsername) infoUsername.value = admin.username || "";
-            if (infoName) infoName.value = admin.username || "";
-            if (infoEmail) infoEmail.value = admin.email || "";
-            if (infoContact) infoContact.value = admin.mobile || "Not provided"; // ✅ Gamitin ang mobile
-            if (infoArea) infoArea.value = admin.area || "";
+            // Helper: set text content safely
+            const setText = (id, value, fallback = '—') => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = value && value !== 'none' && value !== 'null' ? value : fallback;
+                }
+            };
 
+            // Helper: set HTML content safely (para sa may fallback na HTML)
+            const setTextHTML = (id, value, fallback = '—') => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = value && value !== 'none' && value !== 'null' ? value : fallback;
+                }
+            };
+
+            // === PROFILE HEADER ===
+            setText('infoAdminId', admin.admin_id);
+            setText('infoName', admin.username);
+            setText('infoEmail', admin.email);
+            setText('infoContact', admin.mobile || 'Not provided');
+
+            // === PERSONAL INFORMATION SECTION ===
+            setText('infoUsername', admin.username);
+            setText('infoEmail2', admin.email);
+            setText('infoContact2', admin.mobile || 'Not provided');
+
+            // === ACCOUNT INFORMATION SECTION ===
+            setText('infoAdminId2', admin.admin_id);
+            setText('infoArea', admin.area);
+
+            // === STATUS BADGE ===
+            const infoStatus = document.getElementById("infoStatus");
             if (infoStatus) {
                 const statusText = admin.status || "Inactive";
                 infoStatus.textContent = statusText;

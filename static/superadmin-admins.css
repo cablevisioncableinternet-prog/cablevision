@@ -2295,3 +2295,231 @@ th:nth-child(3), th:nth-child(4) {
   background: #d1fae5 !important;
   border-color: #6ee7b7 !important;
 }
+
+
+/* ============================================================
+   ADMIN PROFILE HEADER SA INFO MODAL (ID + Name + Email + Contact)
+   ============================================================ */
+.admin-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 22px;
+    background: linear-gradient(135deg, #001a33 0%, #0047ab 100%);
+    border-radius: 18px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 24px rgba(0, 26, 51, 0.18);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-profile-header::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    right: -10%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0, 123, 255, 0.25) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.admin-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(6px);
+}
+
+.admin-avatar i {
+    font-size: 30px;
+    color: #ffffff;
+}
+
+.admin-profile-info {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.admin-id-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    padding: 4px 14px;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 8px;
+}
+
+.admin-full-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.3px;
+    word-break: break-word;
+}
+
+.admin-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+}
+
+.admin-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    word-break: break-word;
+    min-width: 0;
+}
+
+.admin-meta-item i {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   INFO VALUE (para sa mga span sa info-card)
+   ============================================================ */
+.info-value {
+    display: block;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    padding: 4px 0 2px;
+    word-break: break-word;
+    border-bottom: 1px solid #f1f5f9;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+    .admin-profile-header {
+        padding: 18px 16px;
+        gap: 14px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .admin-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .admin-avatar i {
+        font-size: 24px;
+    }
+
+    .admin-full-name {
+        font-size: 1.15rem;
+    }
+
+    .admin-meta-row {
+        justify-content: center;
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .admin-meta-item {
+        font-size: 0.75rem;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE (≤576px)
+   ============================================================ */
+@media (max-width: 576px) {
+    .admin-profile-header {
+        padding: 16px 14px;
+        border-radius: 14px;
+        margin-bottom: 16px;
+    }
+
+    .admin-avatar {
+        width: 54px;
+        height: 54px;
+    }
+
+    .admin-avatar i {
+        font-size: 22px;
+    }
+
+    .admin-id-badge {
+        font-size: 0.62rem;
+        padding: 3px 10px;
+        letter-spacing: 0.8px;
+    }
+
+    .admin-full-name {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+
+    .admin-meta-item {
+        font-size: 0.7rem;
+        gap: 5px;
+    }
+
+    .admin-meta-item i {
+        font-size: 11px;
+    }
+
+    .info-value {
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE — SMALL MOBILE (≤400px)
+   ============================================================ */
+@media (max-width: 400px) {
+    .admin-profile-header {
+        padding: 14px 12px;
+        border-radius: 12px;
+    }
+
+    .admin-avatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .admin-avatar i {
+        font-size: 20px;
+    }
+
+    .admin-full-name {
+        font-size: 0.92rem;
+    }
+
+    .admin-meta-item {
+        font-size: 0.65rem;
+    }
+
+    .info-value {
+        font-size: 0.8rem;
+    }
+}
