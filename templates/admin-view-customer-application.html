@@ -17,7 +17,7 @@
     .signature-img, .doc-img { max-width: 100%; cursor: pointer; }
     .billing { max-height: 400px; }
 
-    /* ENHANCED CARD STYLES */
+    /* ============ DETAIL GRID (PANATILIHIN) ============ */
     .detail-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -61,33 +61,6 @@
         font-style: italic;
     }
 
-    .section-title {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 16px;
-        padding-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: var(--primary-dark);
-        border-bottom: 2px solid #eef2f6;
-    }
-
-    .section-title i {
-        color: var(--primary-blue);
-        font-size: 18px;
-    }
-
-    .section-title .badge-count {
-        font-size: 11px;
-        background: #eef2f6;
-        color: #64748b;
-        padding: 2px 10px;
-        border-radius: 20px;
-        font-weight: 600;
-        margin-left: auto;
-    }
-
     @media (max-width: 768px) {
         .detail-grid {
             grid-template-columns: 1fr;
@@ -118,331 +91,367 @@
 
 <body>
 
-<!-- ================= HEADER ================= -->
-<header class="app-header">
-    <div class="header-overlay">
-        <h1>Customer Application</h1>
-        <p>Viewing approved customer details</p>
+<!-- ================= HERO HEADER — SUCCESS PAGE STYLE ================= -->
+<section class="success-hero-modern">
+    <div class="hero-bg-pattern"></div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-top-row">
+                <a href="/admin/view-customers" class="hero-back-link">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                <span class="section-label">Customer Application</span>
+            </div>
+            <h1>View <span class="accent">Customer</span></h1>
+            <p>Viewing approved customer details. Review the information below and take the necessary action.</p>
 
-        <div class="app-number">
-            Application Number: <strong id="application_number"></strong>
+            <div class="hero-header-actions">
+                <button id="downloadPdfBtn" class="btn-hero-primary">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+                <button id="viewContractBtn" class="btn-hero-outline">
+                    <i class="fas fa-file-contract"></i> View Contract
+                </button>
+            </div>
         </div>
 
-        <div class="header-actions">
-            <button id="downloadPdfBtn" class="btn btn-success">
-                <i class="fas fa-download"></i> Download PDF
-            </button>
-            <button id="viewContractBtn" class="btn btn-info">
-                <i class="fas fa-file-contract"></i> View Contract
-            </button>
-            <a href="/admin/view-customers" class="btn btn-light">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
+        <div class="hero-visual">
+            <div class="success-hero-card">
+                <div class="success-icon-badge"><i class="fas fa-user-check"></i></div>
+                <div class="app-number-display">Application Number</div>
+                <!-- Panatilihin ang .app-number wrapper para sa JS -->
+                <div class="app-number">
+                    <div class="app-number-value" id="application_number">—</div>
+                </div>
+            </div>
         </div>
     </div>
-</header>
+</section>
 
 <!-- ================= CONTENT ================= -->
-<div class="container app-container">
+<div class="application-main-section">
+    <div class="container app-container">
 
-    <!-- ===== PLAN INFORMATION & PROFILE PHOTO (Combined) ===== -->
-    <div class="card app-card">
-        <div class="row g-0">
-            <!-- LEFT: Plan Information -->
-            <div class="col-md-8">
-                <div class="card-body" style="padding: 20px 24px;">
-                    <h4 class="section-title" style="border-bottom: none; margin-bottom: 12px; padding-bottom: 0;">
-                        <i class="fas fa-wifi"></i> Plan Information
-                    </h4>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-tag"></i> Plan</span>
-                            <span class="value" id="plan">--</span>
+        <!-- ===== PLAN INFORMATION & PROFILE PHOTO (Combined) ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-wifi"></i></div>
+                <h4 class="form-card-title">Plan Information</h4>
+            </div>
+            <div class="form-card-body">
+                <div class="row g-0 align-items-center">
+                    <div class="col-md-8">
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-tag"></i> Plan</span>
+                                <span class="value" id="plan">--</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-concierge-bell"></i> Service Type</span>
+                                <span class="value" id="service_type">--</span>
+                            </div>
                         </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-concierge-bell"></i> Service Type</span>
-                            <span class="value" id="service_type">--</span>
-                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <img id="profile_photo" class="profile-img" alt="Profile Photo">
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- RIGHT: Profile Photo -->
-            <div class="col-md-4" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 1px solid #eef2f6;">
-                <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 16px 20px; min-height: 150px;">
-                    <h4 class="section-title" style="border-bottom: none; margin-bottom: 8px; padding-bottom: 0; font-size: 14px; width: 100%; text-align: center;">
-                        <i class="fas fa-user-circle"></i> Profile Photo
-                    </h4>
-                    <img id="profile_photo" class="profile-img"
-                        style="max-width: 120px; height: auto; border-radius: 12px; display: block; margin: 0 auto; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <!-- ===== CONTACT DETAILS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-address-book"></i></div>
+                <h4 class="form-card-title">Contact Details</h4>
+            </div>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-envelope"></i> Email</span>
+                        <span class="value" id="email">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-phone"></i> Mobile</span>
+                        <span class="value" id="mobile">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-phone-alt"></i> Secondary Mobile</span>
+                        <span class="value" id="secondary_mobile">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-phone"></i> Landline</span>
+                        <span class="value" id="phone">--</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== CONTACT DETAILS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-address-book"></i> Contact Details
-            <span class="badge-count">Contact Information</span>
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-envelope"></i> Email</span>
-                <span class="value" id="email">--</span>
+        <!-- ===== PERSONAL INFORMATION ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-user"></i></div>
+                <h4 class="form-card-title">Personal Information</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-phone"></i> Mobile</span>
-                <span class="value" id="mobile">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-phone-alt"></i> Secondary Mobile</span>
-                <span class="value" id="secondary_mobile">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-phone"></i> Landline</span>
-                <span class="value" id="phone">--</span>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-user"></i> Full Name</span>
+                        <span class="value" id="full_name">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-calendar-alt"></i> Birthdate</span>
+                        <span class="value" id="birthdate">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-map-pin"></i> Place of Birth</span>
+                        <span class="value" id="place_of_birth">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-venus-mars"></i> Sex</span>
+                        <span class="value" id="sex">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-ring"></i> Civil Status</span>
+                        <span class="value" id="civil_status">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-flag"></i> Citizenship</span>
+                        <span class="value" id="citizenship">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-briefcase"></i> Occupation</span>
+                        <span class="value" id="occupation">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-home"></i> Home Ownership</span>
+                        <span class="value" id="home_ownership">--</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== PERSONAL INFORMATION ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-user"></i> Personal Information
-            <span class="badge-count">Customer Details</span>
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-user"></i> Full Name</span>
-                <span class="value" id="full_name">--</span>
+        <!-- ===== ADDRESS INFORMATION ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <h4 class="form-card-title">Address Information</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-calendar-alt"></i> Birthdate</span>
-                <span class="value" id="birthdate">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-map-pin"></i> Place of Birth</span>
-                <span class="value" id="place_of_birth">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-venus-mars"></i> Sex</span>
-                <span class="value" id="sex">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-ring"></i> Civil Status</span>
-                <span class="value" id="civil_status">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-flag"></i> Citizenship</span>
-                <span class="value" id="citizenship">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-briefcase"></i> Occupation</span>
-                <span class="value" id="occupation">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-home"></i> Home Ownership</span>
-                <span class="value" id="home_ownership">--</span>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-road"></i> Street/Village</span>
+                        <span class="value" id="address">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-file-invoice"></i> Billing Address</span>
+                        <span class="value" id="billing_address">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-hashtag"></i> House Number</span>
+                        <span class="value" id="house_number">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-flag"></i> Landmark</span>
+                        <span class="value" id="landmark">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-map-pin"></i> Barangay</span>
+                        <span class="value" id="barangay">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-city"></i> City</span>
+                        <span class="value" id="city">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-map"></i> Province</span>
+                        <span class="value" id="province">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-mail-bulk"></i> Zip Code</span>
+                        <span class="value" id="zip">--</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== ADDRESS INFORMATION ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-map-marker-alt"></i> Address Information
-            <span class="badge-count">Location Details</span>
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-road"></i> Street/Village</span>
-                <span class="value" id="address">--</span>
+        <!-- ===== EMPLOYMENT DETAILS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-briefcase"></i></div>
+                <h4 class="form-card-title">Employment Details</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-file-invoice"></i> Billing Address</span>
-                <span class="value" id="billing_address">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-hashtag"></i> House Number</span>
-                <span class="value" id="house_number">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-flag"></i> Landmark</span>
-                <span class="value" id="landmark">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-map-pin"></i> Barangay</span>
-                <span class="value" id="barangay">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-city"></i> City</span>
-                <span class="value" id="city">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-map"></i> Province</span>
-                <span class="value" id="province">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-mail-bulk"></i> Zip Code</span>
-                <span class="value" id="zip">--</span>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-building"></i> Employer</span>
+                        <span class="value" id="employer">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-map-pin"></i> Business Address</span>
+                        <span class="value" id="business_address">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-phone"></i> Business Phone</span>
+                        <span class="value" id="business_phone">--</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== EMPLOYMENT DETAILS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-briefcase"></i> Employment Details
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-building"></i> Employer</span>
-                <span class="value" id="employer">--</span>
+        <!-- ===== SPOUSE INFORMATION ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-user-friends"></i></div>
+                <h4 class="form-card-title">Spouse Information</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-map-pin"></i> Business Address</span>
-                <span class="value" id="business_address">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-phone"></i> Business Phone</span>
-                <span class="value" id="business_phone">--</span>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-user"></i> Name</span>
+                        <span class="value" id="spouse_name">--</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== SPOUSE INFORMATION ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-user-friends"></i> Spouse Information
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-user"></i> Name</span>
-                <span class="value" id="spouse_name">--</span>
+        <!-- ===== FAMILY DETAILS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-users"></i></div>
+                <h4 class="form-card-title">Family Details</h4>
+            </div>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-user"></i> Father's Name</span>
+                        <span class="value" id="father_name">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-user"></i> Mother's Maiden Name</span>
+                        <span class="value" id="mother_maiden_name">--</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== FAMILY DETAILS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-users"></i> Family Details
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-user"></i> Father's Name</span>
-                <span class="value" id="father_name">--</span>
+        <!-- ===== TV SET DETAILS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-tv"></i></div>
+                <h4 class="form-card-title">TV Set Details</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-user"></i> Mother's Maiden Name</span>
-                <span class="value" id="mother_maiden_name">--</span>
+            <div class="form-card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Quantity</th>
+                                <th>Brand / Model</th>
+                                <th>B&W / Colored</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tvTableBody">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No TV details provided</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== TV SET DETAILS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-tv"></i> TV Set Details
-            <span class="badge-count">Television Information</span>
-        </h4>
-        <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-                <thead>
-                    <tr>
-                        <th>Quantity</th>
-                        <th>Brand / Model</th>
-                        <th>B&W / Colored</th>
-                    </tr>
-                </thead>
-                <tbody id="tvTableBody">
-                    <tr>
-                        <td colspan="3" class="text-center text-muted">No TV details provided</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ===== INSTALLATION DETAILS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-tools"></i> Installation Details
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-map-pin"></i> Installation Address</span>
-                <span class="value" id="installation_address">--</span>
+        <!-- ===== INSTALLATION DETAILS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-tools"></i></div>
+                <h4 class="form-card-title">Installation Details</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-phone"></i> Installation Phone</span>
-                <span class="value" id="installation_phone">--</span>
-            </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-money-bill-wave"></i> Installation Fee</span>
-                <span class="value" id="installation_fee">--</span>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-map-pin"></i> Installation Address</span>
+                        <span class="value" id="installation_address">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-phone"></i> Installation Phone</span>
+                        <span class="value" id="installation_phone">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-money-bill-wave"></i> Installation Fee</span>
+                        <span class="value" id="installation_fee">--</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== SIGNATURE ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-pen"></i> Signature
-        </h4>
-        <div style="text-align: center;">
-            <img id="signature" class="signature-img" style="max-width: 400px; max-height: 150px; object-fit: contain;">
-        </div>
-    </div>
-
-    <!-- ===== DOCUMENTS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-file-alt"></i> Uploaded Documents
-            <span class="badge-count">ID &amp; Proof</span>
-        </h4>
-        <div class="row text-center">
-            <div class="col-md-4 mb-3">
-                <p><strong><i class="fas fa-id-card"></i> ID Front</strong></p>
-                <img id="id_front" class="doc-img" style="width: 100%; max-width: 250px; height: auto; max-height: 180px; object-fit: cover;">
+        <!-- ===== SIGNATURE ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-pen"></i></div>
+                <h4 class="form-card-title">Signature</h4>
             </div>
-            <div class="col-md-4 mb-3">
-                <p><strong><i class="fas fa-id-card"></i> ID Back</strong></p>
-                <img id="id_back" class="doc-img" style="width: 100%; max-width: 250px; height: auto; max-height: 180px; object-fit: cover;">
-            </div>
-            <div class="col-md-4 mb-3">
-                <p><strong><i class="fas fa-file-invoice"></i> Proof of Billing</strong></p>
-                <img id="proof_billing" class="doc-img billing" style="width: 100%; max-width: 250px; height: auto; max-height: 200px; object-fit: cover;">
+            <div class="form-card-body text-center-modern">
+                <img id="signature" class="signature-img">
             </div>
         </div>
-    </div>
 
-    <!-- ===== SUBMISSION DETAILS ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-clock"></i> Submission Details
-        </h4>
-        <div class="detail-grid">
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-calendar-day"></i> Date Submitted</span>
-                <span class="value" id="date_submitted">--</span>
+        <!-- ===== DOCUMENTS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-file-alt"></i></div>
+                <h4 class="form-card-title">Uploaded Documents</h4>
             </div>
-            <div class="detail-item">
-                <span class="label"><i class="fas fa-clock"></i> Time Submitted</span>
-                <span class="value" id="time_submitted">--</span>
+            <div class="form-card-body">
+                <div class="document-grid-view">
+                    <div class="document-view-item">
+                        <p class="document-view-label"><i class="fas fa-id-card"></i> ID Front</p>
+                        <img id="id_front" class="doc-img">
+                    </div>
+                    <div class="document-view-item">
+                        <p class="document-view-label"><i class="fas fa-id-card"></i> ID Back</p>
+                        <img id="id_back" class="doc-img">
+                    </div>
+                    <div class="document-view-item">
+                        <p class="document-view-label"><i class="fas fa-file-invoice"></i> Proof of Billing</p>
+                        <img id="proof_billing" class="doc-img billing">
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- ===== MAP ===== -->
-    <div class="card app-card">
-        <h4 class="section-title">
-            <i class="fas fa-map-marked-alt"></i> Pinned Location Preview
-        </h4>
-        <div id="map" style="height: 300px; width: 100%; border-radius: 12px;"></div>
-    </div>
+        <!-- ===== SUBMISSION DETAILS ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-clock"></i></div>
+                <h4 class="form-card-title">Submission Details</h4>
+            </div>
+            <div class="form-card-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-calendar-day"></i> Date Submitted</span>
+                        <span class="value" id="date_submitted">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"><i class="fas fa-clock"></i> Time Submitted</span>
+                        <span class="value" id="time_submitted">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- ===== MAP ===== -->
+        <div class="form-card-modern">
+            <div class="form-card-header">
+                <div class="form-card-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <h4 class="form-card-title">Pinned Location Preview</h4>
+            </div>
+            <div class="form-card-body">
+                <div id="map"></div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <!-- IMAGE MODAL -->
