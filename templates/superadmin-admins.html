@@ -358,28 +358,7 @@
 
       <!-- Body -->
       <div class="info-modal-body">
-        <!-- ============ PROFILE HEADER (ID + Name) ============ -->
-        <div class="admin-profile-header">
-          <div class="admin-avatar">
-            <i class="fas fa-user-shield"></i>
-          </div>
-          <div class="admin-profile-info">
-            <div class="admin-id-badge" id="infoAdminId">ACV-0000</div>
-            <h2 class="admin-full-name" id="infoName">—</h2>
-            <div class="admin-meta-row">
-              <span class="admin-meta-item">
-                <i class="fas fa-envelope"></i>
-                <span id="infoEmail">—</span>
-              </span>
-              <span class="admin-meta-item">
-                <i class="fas fa-phone"></i>
-                <span id="infoContact">—</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============ PERSONAL INFORMATION ============ -->
+        <!-- Personal Information Section -->
         <div class="info-section">
           <div class="info-section-header">
             <i class="fas fa-user-circle"></i>
@@ -388,11 +367,20 @@
           <div class="info-grid">
             <div class="info-card">
               <div class="info-card-icon">
-                <i class="fas fa-user-tag"></i>
+                <i class="fas fa-id-badge"></i>
               </div>
               <div class="info-card-content">
-                <label>Username</label>
-                <span class="info-value" id="infoUsername">—</span>
+                <label>Admin ID</label>
+                <input type="text" id="infoAdminId" class="info-input" readonly>
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="info-card-content">
+                <label>Full Name</label>
+                <input type="text" id="infoName" class="info-input" readonly>
               </div>
             </div>
             <div class="info-card">
@@ -401,7 +389,7 @@
               </div>
               <div class="info-card-content">
                 <label>Email Address</label>
-                <span class="info-value" id="infoEmail2">—</span>
+                <input type="text" id="infoEmail" class="info-input" readonly>
               </div>
             </div>
             <div class="info-card">
@@ -410,13 +398,13 @@
               </div>
               <div class="info-card-content">
                 <label>Contact Number</label>
-                <span class="info-value" id="infoContact2">—</span>
+                <input type="text" id="infoContact" class="info-input" readonly>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- ============ ACCOUNT INFORMATION ============ -->
+        <!-- Account Information Section -->
         <div class="info-section">
           <div class="info-section-header">
             <i class="fas fa-laptop"></i>
@@ -425,20 +413,11 @@
           <div class="info-grid">
             <div class="info-card">
               <div class="info-card-icon">
-                <i class="fas fa-id-badge"></i>
-              </div>
-              <div class="info-card-content">
-                <label>Admin ID</label>
-                <span class="info-value" id="infoAdminId2">—</span>
-              </div>
-            </div>
-            <div class="info-card">
-              <div class="info-card-icon">
                 <i class="fas fa-map-marker-alt"></i>
               </div>
               <div class="info-card-content">
                 <label>Area Assignment</label>
-                <span class="info-value" id="infoArea">—</span>
+                <input type="text" id="infoArea" class="info-input" readonly>
               </div>
             </div>
             <div class="info-card">
