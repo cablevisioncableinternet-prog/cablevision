@@ -591,8 +591,9 @@ function renderApplications(data) {
         activeCount++;
     });
 
+    // ✅ COUNT BADGE - dapat total filtered data, hindi lang current page
     const appCountSpan = document.getElementById("applicationCount");
-    if (appCountSpan) appCountSpan.textContent = activeCount;
+    if (appCountSpan) appCountSpan.textContent = filteredActiveData.length;
 
     if (mainTable) {
         if (activeCount === 0) {
@@ -643,9 +644,10 @@ function renderRejectedApplications(data) {
         return;
     }
     
-    // I-show ang card at table
+     // I-show ang card at table
     if (rejectedCard) rejectedCard.style.display = "block";
-    if (rejectedCountSpan) rejectedCountSpan.textContent = nonArchivedRejected.length;
+    // ✅ COUNT BADGE - dapat total filtered rejected data, hindi lang current page
+    if (rejectedCountSpan) rejectedCountSpan.textContent = filteredRejectedData.length;
     
     const rejectedTable = document.getElementById("rejectedApplicationsTable");
     if (rejectedTable) rejectedTable.style.display = "table";
