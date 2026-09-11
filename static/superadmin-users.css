@@ -1360,21 +1360,21 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
 
 /* ================= TERMINATED CARD ================= */
 .terminated-card {
-  border-color: #fecaca;
+  border-color: var(--border-gray);
   margin-top: 24px;
 }
 
 .terminated-card .card-header {
-  border-bottom-color: #dc2626;
+  border-bottom-color: #eef2f6;
   background: #ffffff;
 }
 
 .terminated-card .card-header h2 {
-  color: #dc2626;
+  color: var(--primary-dark);
 }
 
 .terminated-card .card-header h2 i {
-  color: #dc2626;
+  color: var(--primary-dark);
 }
 
 .terminated-card .stats-badge {
