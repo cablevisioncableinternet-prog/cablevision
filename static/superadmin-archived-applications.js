@@ -459,8 +459,9 @@ function renderArchivedApplications(data) {
     }
 
     if (card) card.style.display = "block";
+    // ✅ COUNT BADGE - dapat total filtered archived data, hindi lang current page
     const countSpan = document.getElementById("archivedCount");
-    if (countSpan) countSpan.textContent = data.length;
+    if (countSpan) countSpan.textContent = filteredArchivedData.length;
 
     data.forEach(app => {
         const status = app.status || "Rejected";

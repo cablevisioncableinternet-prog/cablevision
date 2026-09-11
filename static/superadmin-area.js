@@ -82,7 +82,9 @@ function getZipCodeByCity(cityName) {
 // =========================
 function toProperCase(str) {
     if (!str) return '';
-    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    return str
+        .toLowerCase()
+        .replace(/(^|[\s\-'.])(\p{L})/gu, (_, sep, letter) => sep + letter.toUpperCase());
 }
 
 // =========================
