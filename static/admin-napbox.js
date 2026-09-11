@@ -3156,7 +3156,7 @@ const ADMIN_CONTRACT_PREFIXES = {
     "Santa Cruz": "FS-",
     "Pagsanjan": "FP-",
     "Pila": "GIF-",
-    "Magdalena": "CVM-"
+    "Magdalena": "MI-"
 };
 
 function getAdminContractPrefix() {
@@ -3179,7 +3179,7 @@ function getAdminContractPrefix() {
         } else if (lowerArea.includes('pila')) {
             prefix = adminSelectedContractPrefix || "GIF-";
         } else if (lowerArea.includes('magdalena')) {
-            prefix = "CVM-";
+            prefix = "MI-";
         } else {
             prefix = "CV-";
         }

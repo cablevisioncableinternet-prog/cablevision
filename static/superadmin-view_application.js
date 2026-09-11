@@ -127,7 +127,7 @@ function formatMonthYearForDisplay(dateStr) {
 function getContractPrefix(city, barangay = null) {
     const cityPrefixes = {
         'pila': 'GIF-',
-        'magdalena': 'CVM-',
+        'magdalena': 'MI-',
         'pagsanjan': 'FP-',
         'santa cruz': 'FS-',
         'liliw': 'LWV-',

@@ -4432,7 +4432,7 @@ const TECH_CONTRACT_PREFIXES = {
     "Santa Cruz": "FS-",
     "Pagsanjan": "FP-",
     "Pila": "GIF-",
-    "Magdalena": "CVM-"
+    "Magdalena": "MI-"
 };
 
 function getTechnicianContractPrefix() {
@@ -4449,7 +4449,7 @@ function getTechnicianContractPrefix() {
         if (lowerArea.includes('santa') || lowerArea.includes('sta')) prefix = "FS-";
         else if (lowerArea.includes('pagsanjan')) prefix = "FP-";
         else if (lowerArea.includes('pila')) prefix = technicianSelectedContractPrefix || "GIF-";
-        else if (lowerArea.includes('magdalena')) prefix = "CVM-";
+        else if (lowerArea.includes('magdalena')) prefix = "MI-";
         else prefix = "CV-";
     }
     return prefix;
