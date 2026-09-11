@@ -705,8 +705,9 @@ function renderApplications(data) {
         activeCount++;
     });
 
+    // ✅ COUNT BADGE - dapat total filtered data, hindi lang current page
     const appCountSpan = document.getElementById("applicationCount");
-    if (appCountSpan) appCountSpan.textContent = activeCount;
+    if (appCountSpan) appCountSpan.textContent = filteredActiveData.length;
 
     showTable();
     attachButtonEvents();
@@ -752,8 +753,9 @@ function renderRejectedApplications(data) {
     const noRejectedDataEl = document.getElementById("noRejectedData");
     if (noRejectedDataEl) noRejectedDataEl.style.display = "none";
     
+    // ✅ COUNT BADGE - dapat total filtered rejected data, hindi lang current page
     const rejectedCountSpan = document.getElementById("rejectedCount");
-    if (rejectedCountSpan) rejectedCountSpan.textContent = data.length;
+    if (rejectedCountSpan) rejectedCountSpan.textContent = filteredRejectedData.length;
 
     // I-render ang data
     data.forEach(app => {
