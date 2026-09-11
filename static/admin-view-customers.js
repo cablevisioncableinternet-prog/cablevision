@@ -1,8 +1,23 @@
 // ===================== ADMIN VIEW CUSTOMERS JS - WITH TAB ID SUPPORT =====================
 
-// ==================== GET TAB ID HELPER ====================
-function getTabId() {
-    return sessionStorage.getItem('tab_id') || '';
+// ==================== PROPER CASE HELPER (Unicode-aware para sa ñ, é, etc.) ====================
+function toProperCase(str) {
+    if (!str) return '';
+    return String(str)
+        .toLowerCase()
+        .replace(/(^|[\s\-'.])(\p{L})/gu, (_, sep, letter) => sep + letter.toUpperCase());
+}
+
+// ==================== GET FULL NAME IN PROPER CASE ====================
+function getProperFullName(firstName, lastName) {
+    const parts = [];
+    if (firstName && firstName !== 'none' && String(firstName).trim() !== '') {
+        parts.push(toProperCase(firstName));
+    }
+    if (lastName && lastName !== 'none' && String(lastName).trim() !== '') {
+        parts.push(toProperCase(lastName));
+    }
+    return parts.join(' ') || 'N/A';
 }
 
 // ==================== GET ADMIN USERNAME FROM FLASK SESSION ====================
@@ -466,7 +481,7 @@ function renderTable(data) {
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
             <td><span class="contract-number">${contractNumber}</span></td>
-            <td>${app.first_name || ""} ${app.last_name || ""}</td>
+            <td>${getProperFullName(app.first_name, app.last_name)}</td>
             <td>${email}</td>
             <td>${plan}</td>
             <td>${speed}</td>

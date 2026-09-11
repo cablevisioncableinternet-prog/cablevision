@@ -7,32 +7,22 @@ let currentLastInstallmentDate = null;
 let isInstallmentPlan = false;
 
 // =========================
-// HELPER FUNCTION TO CONVERT TO PROPER CASE (Unicode-aware, para sa ñ, é, etc.)
-// =========================
-function toProperCase(str) {
-    if (!str) return '';
-    return str
-        .toLowerCase()
-        .replace(/(^|[\s\-'.])(\p{L})/gu, (_, sep, letter) => sep + letter.toUpperCase());
-}
-
-// =========================
 // HELPER FUNCTION TO GET CLEAN NAME (FILTER OUT "none")
 // =========================
 function getCleanFullName(firstName, middleName, lastName, suffix) {
     const nameParts = [];
     
     if (firstName && firstName !== 'none' && firstName.trim() !== '') {
-        nameParts.push(toProperCase(firstName));
+        nameParts.push(firstName);
     }
     if (middleName && middleName !== 'none' && middleName.trim() !== '') {
-        nameParts.push(toProperCase(middleName));
+        nameParts.push(middleName);
     }
     if (lastName && lastName !== 'none' && lastName.trim() !== '') {
-        nameParts.push(toProperCase(lastName));
+        nameParts.push(lastName);
     }
     if (suffix && suffix !== 'none' && suffix.trim() !== '') {
-        nameParts.push(toProperCase(suffix));
+        nameParts.push(suffix);
     }
     
     return nameParts.join(' ') || 'Not provided';
