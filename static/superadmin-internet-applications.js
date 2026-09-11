@@ -1471,19 +1471,29 @@ function toProperCase(str) {
     if (typeof str !== 'string') return str;
     
     // Handle special cases like "Dela Cruz", "De Jesus", "Macapagal"
-    const exceptions = ['del', 'de', 'la', 'las', 'los', 'san', 'santa', 'santo', 'dela', 'de la'];
+    // NOTE: 'san' at 'santa' ay tinanggal dito dahil dapat silang naka-capitalize
+    // kapag ginamit sa lugar/barangay tulad ng "Santa Cruz" o "San Isidro"
+    const exceptions = ['del', 'de', 'la', 'las', 'los', 'dela', 'de la'];
     
-    return str.toLowerCase().split(' ').map(word => {
+    return str.toLowerCase().split(' ').map((word, index) => {
+        const lowerWord = word.toLowerCase();
+        
         // Check if word is in exceptions list
-        if (exceptions.includes(word.toLowerCase())) {
-            return word.toLowerCase();
+        if (exceptions.includes(lowerWord)) {
+            // Kapag first word, i-capitalize pa rin (halimbawa: "Dela Cruz" bilang simula)
+            if (index === 0) {
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }
+            return lowerWord;
         }
-        // Handle hyphenated names like "María-Jose"
+        
+        // Handle hyphenated names like "María-Jose" or "Sto. Niño"
         if (word.includes('-')) {
             return word.split('-').map(part => 
                 part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
             ).join('-');
         }
+        
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }).join(' ');
 }
