@@ -9038,6 +9038,21 @@ def generate_application_pdf(application_number, application_data=None, contract
         p.setFillColorRGB(0, 0, 0)
         y -= 25
 
+    def format_date_long(value):
+        """Convert YYYY-MM-DD (or datetime/date obj) to 'Month D, YYYY'."""
+        from datetime import datetime, date
+        if value is None or str(value).strip() in ("", "-", "none", "None"):
+            return value
+        try:
+            if isinstance(value, (datetime, date)):
+                dt = value
+            else:
+                s = str(value).strip().split(" ")[0]
+                dt = datetime.strptime(s, "%Y-%m-%d")
+            return dt.strftime("%B %d, %Y").replace(" 0", " ")
+        except Exception:
+            return value
+
     # Two-column field drawer
     def draw_two_columns(fields):
         nonlocal y
@@ -9145,7 +9160,7 @@ def generate_application_pdf(application_number, application_data=None, contract
         ("First Name", application_data.get("first_name")),
         ("Middle Name", application_data.get("middle_name")),
         ("Suffix", application_data.get("suffix")),
-        ("Date of Birth", application_data.get("birthdate")),
+        ("Date of Birth", format_date_long(application_data.get("birthdate"))),
         ("Place of Birth", application_data.get("place_of_birth")),
         ("Sex", application_data.get("sex")),
         ("Civil Status", application_data.get("civil_status")),
