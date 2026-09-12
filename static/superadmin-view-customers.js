@@ -99,8 +99,8 @@ async function checkSession() {
 }
 
 // ==================== PAGINATION VARIABLES ====================
-let currentPage = 1;
-const rowsPerPage = 3;
+let currentPage = 1;    
+const rowsPerPage = 10;
 let paginatedData = [];
 const paginationContainer = document.getElementById("paginationControls");
 
