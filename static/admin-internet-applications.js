@@ -117,7 +117,7 @@ let filteredActiveData = [];
 let filteredRejectedData = [];
 let currentPage = 1;
 let currentRejectedPage = 1;
-const rowsPerPage = 10;
+const rowsPerPage = 4;
 const rejectedRowsPerPage = 10;
 
 // Sort variables
