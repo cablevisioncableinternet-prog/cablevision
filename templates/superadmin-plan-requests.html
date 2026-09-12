@@ -75,7 +75,7 @@
     <circle cx="12" cy="8" r="4"/>
     <path d="M4 20a8 8 0 0 1 16 0"/>
   </svg>
-  <span class="menu-text">View Customers</span>
+  <span class="menu-text">View Subscribers</span>
 </a></li>
 
 <li><a href="/superadmin/internet-applications">
@@ -232,7 +232,7 @@
       <div class="card-header">
         <div class="header-title-section">
           <h2>Plan Change Requests</h2>
-          <p class="header-subtitle">Review and process customer plan change requests</p>
+          <p class="header-subtitle">Review and process subscriber plan change requests</p>
         </div>
         <div class="stats-badge">
           <span id="pendingCount">0</span> Pending Requests
@@ -263,7 +263,7 @@
             <thead>
               <tr>
                 <th>Request ID</th>
-                <th>Customer Name</th>
+                <th>Subscriber Name</th>
                 <th>Email</th>
                 <th>Current Plan</th>
                 <th>Requested Plan</th>
@@ -319,7 +319,7 @@
       <div id="approvePlanSummary" class="plan-change-summary"></div>
       <p>Are you sure you want to <strong style="color: #22c55e;">APPROVE</strong> this plan change request?</p>
       <div class="warning-text">
-        <i class="fas fa-info-circle"></i> This will update the customer's plan immediately. The customer will receive a notification.
+        <i class="fas fa-info-circle"></i> This will update the subscriber's plan immediately. The subscriber will receive a notification.
       </div>
       <div class="modal-buttons">
         <button id="confirmApproveBtn" class="btn-confirm">Yes, Approve</button>
@@ -353,7 +353,7 @@
       </div>
       
       <div class="warning-text">
-        <i class="fas fa-exclamation-triangle"></i> The customer will be notified of this rejection.
+        <i class="fas fa-exclamation-triangle"></i> The subscriber will be notified of this rejection.
       </div>
       <div class="modal-buttons">
         <button id="confirmRejectBtn" class="btn-confirm">Yes, Reject</button>
@@ -372,17 +372,17 @@
           <i class="fas fa-file-alt"></i>
         </div>
         <h2>Plan Change Request Details</h2>
-        <p class="view-subtitle">Review the customer's plan change request</p>
+        <p class="view-subtitle">Review the subscriber's plan change request</p>
       </div>
 
       <!-- CUSTOMER INFORMATION -->
       <div class="view-section">
         <div class="section-title">
-          <i class="fas fa-user-circle"></i> Customer Information
+          <i class="fas fa-user-circle"></i> Subscriber Information
         </div>
         <div class="info-grid" id="viewCustomerInfo">
           <div class="info-item">
-            <span class="info-label">Customer Name</span>
+            <span class="info-label">Subscriber Name</span>
             <span class="info-value" id="viewCustomerName">Loading...</span>
           </div>
           <div class="info-item">

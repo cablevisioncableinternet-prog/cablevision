@@ -75,7 +75,7 @@
     <circle cx="12" cy="8" r="4"/>
     <path d="M4 20a8 8 0 0 1 16 0"/>
   </svg>
-  <span class="menu-text">View Customers</span>
+  <span class="menu-text">View Subscribers</span>
 </a></li>
 
 <li><a href="/superadmin/internet-applications">
@@ -228,7 +228,7 @@
       <div class="card-header">
         <div class="header-title-section">
           <h2>Termination Requests</h2>
-          <p class="header-subtitle">Review and process customer termination requests</p>
+          <p class="header-subtitle">Review and process subscriber's termination requests</p>
         </div>
         <div class="stats-badge">
           <span id="pendingCount">0</span> Pending Requests
@@ -259,7 +259,7 @@
             <thead>
               <tr>
                 <th>Request ID</th>
-                <th>Customer Name</th>
+                <th>Subscriber Name</th>
                 <th>Email</th>
                 <th>Current Plan</th>
                 <th>Request Date</th>
@@ -302,17 +302,17 @@
         <i class="fas fa-file-alt"></i>
       </div>
       <h2>Termination Request Details</h2>
-      <p class="view-subtitle">Review the customer's termination request</p>
+      <p class="view-subtitle">Review the subscriber's termination request</p>
     </div>
 
     <!-- CUSTOMER INFORMATION -->
     <div class="view-section">
       <div class="section-title">
-        <i class="fas fa-user-circle"></i> Customer Information
+        <i class="fas fa-user-circle"></i> Subscriber Information
       </div>
       <div class="info-grid" id="viewCustomerInfo">
         <div class="info-item">
-          <span class="info-label">Customer Name</span>
+          <span class="info-label">Subscriber Name</span>
           <span class="info-value" id="viewCustomerName">Loading...</span>
         </div>
         <div class="info-item">
@@ -404,12 +404,12 @@
         <span id="approveBalanceDisplay" style="font-size: 20px; font-weight: 700; color: #dc2626;">₱0.00</span>
       </div>
       <small style="display: block; margin-top: 4px; color: #15803d; font-size: 12px;">
-        <i class="fas fa-check-circle"></i> This balance will be recorded on the customer's account
+        <i class="fas fa-check-circle"></i> This balance will be recorded on the subscriber's account
       </small>
     </div>
     <p>Are you sure you want to <strong style="color: #22c55e;">APPROVE</strong> this termination request?</p>
     <div class="warning-text">
-      <i class="fas fa-exclamation-triangle"></i> This will permanently deactivate the customer's account. This action cannot be undone.
+      <i class="fas fa-exclamation-triangle"></i> This will permanently deactivate the subscriber's account. This action cannot be undone.
     </div>
     <div class="modal-buttons">
       <button id="confirmApproveBtn" class="btn-confirm">Yes, Approve</button>
@@ -433,7 +433,7 @@
         <span id="rejectBalanceDisplay" style="font-size: 20px; font-weight: 700; color: #dc2626;">₱0.00</span>
       </div>
       <small style="display: block; margin-top: 4px; color: #991b1b; font-size: 12px;">
-        <i class="fas fa-info-circle"></i> This balance will be recorded on the customer's account
+        <i class="fas fa-info-circle"></i> This balance will be recorded on the subscriber's account
       </small>
     </div>
     <div class="reject-reason-section">
@@ -448,7 +448,7 @@
       <textarea id="rejectCustomReason" placeholder="Enter custom reason..." rows="2" style="margin-top: 8px; display: none;"></textarea>
     </div>
     <div class="warning-text">
-      <i class="fas fa-exclamation-triangle"></i> The customer will be notified of this rejection.
+      <i class="fas fa-exclamation-triangle"></i> The subscriber will be notified of this rejection.
     </div>
     <div class="modal-buttons">
       <button id="confirmRejectBtn" class="btn-confirm">Yes, Reject</button>
