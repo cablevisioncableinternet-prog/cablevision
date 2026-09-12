@@ -47,7 +47,7 @@
     <circle cx="12" cy="8" r="4"/>
     <path d="M4 20a8 8 0 0 1 16 0"/>
   </svg>
-  <span class="menu-text">View Customers</span>
+  <span class="menu-text">View Subscribers</span>
 </a></li>
 
 <li><a href="/admin/internet-applications">
@@ -359,7 +359,7 @@
         <div class="edit-modal-header">
             <div class="edit-modal-header-left">
                 <i class="fas fa-pencil-alt"></i>
-                <h2>Edit Slot <small>Update customer information</small></h2>
+                <h2>Edit Slot <small>Update Subscriber information</small></h2>
             </div>
             <button class="edit-modal-close" id="closeEditModalBtn">
                 <i class="fas fa-times"></i>
@@ -379,11 +379,11 @@
             <!-- Customer Name -->
             <div class="edit-form-group">
                 <label for="editCustomerName">
-                    <i class="fas fa-user"></i> Customer Name <span class="required-star">*</span>
+                    <i class="fas fa-user"></i> Subscriber's Name <span class="required-star">*</span>
                 </label>
-                <input type="text" id="editCustomerName" class="form-input" placeholder="Enter customer name" required>
+                <input type="text" id="editCustomerName" class="form-input" placeholder="Enter subscriber's name" required>
                 <div id="editNameError" class="edit-error-message">
-                    <i class="fas fa-exclamation-circle"></i> Customer name is required when slot is OCCUPIED
+                    <i class="fas fa-exclamation-circle"></i> Subscriber's name is required when slot is OCCUPIED
                 </div>
             </div>
 
@@ -405,9 +405,9 @@
             <!-- Customer Phone -->
             <div class="edit-form-group">
                 <label for="editCustomerPhone">
-                    <i class="fas fa-phone"></i> Customer Phone <span style="color: #94a3b8; font-weight: 400; text-transform: none;">(Optional)</span>
+                    <i class="fas fa-phone"></i> Subscriber's Phone <span style="color: #94a3b8; font-weight: 400; text-transform: none;">(Optional)</span>
                 </label>
-                <input type="text" id="editCustomerPhone" class="form-input" placeholder="Enter customer phone">
+                <input type="text" id="editCustomerPhone" class="form-input" placeholder="Enter subscriber's phone">
             </div>
 
             <!-- Slot Status -->
@@ -427,7 +427,7 @@
                 </div>
                 <div class="edit-hint-text">
                     <i class="fas fa-info-circle"></i>
-                    <span>Changing to "Available" will keep customer data but mark slot as free</span>
+                    <span>Changing to "Available" will keep subscriber's data but mark slot as free</span>
                 </div>
             </div>
 
@@ -436,7 +436,7 @@
                 <div style="display: flex; align-items: flex-start; gap: 10px;">
                     <i class="fas fa-exclamation-triangle" style="color: #92400e; font-size: 16px; margin-top: 1px;"></i>
                     <div style="font-size: 12px; color: #92400e; line-height: 1.5;">
-                        <strong>Important:</strong> Editing this slot will update the customer information immediately.
+                        <strong>Important:</strong> Editing this slot will update the subscriber's information immediately.
                     </div>
                 </div>
             </div>
@@ -639,7 +639,7 @@
                 <span class="clear-value" id="clearNapboxName">---</span>
             </div>
             <div class="clear-slot-detail">
-                <span class="clear-label">Customer:</span>
+                <span class="clear-label">Subscriber:</span>
                 <span class="clear-value" id="clearCustomerName">---</span>
             </div>
         </div>
@@ -649,7 +649,7 @@
             <i class="fas fa-skull"></i>
             <div>
                 <strong>This action CANNOT be undone!</strong>
-                <p>This will permanently remove customer name, phone, application number, contract number, and installation date from this slot.</p>
+                <p>This will permanently remove subscriber's name, phone, application number, contract number, and installation date from this slot.</p>
             </div>
         </div>
         
