@@ -5,6 +5,16 @@ function getTabId() {
     return sessionStorage.getItem('tab_id') || '';
 }
 
+// ==================== PROPER CASE HELPER ====================
+function toProperCase(str) {
+    if (!str) return "";
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
 // ==================== GET ADMIN USERNAME FROM FLASK SESSION ====================
 async function getAdminUsername() {
     const tabId = getTabId();
@@ -466,7 +476,7 @@ function renderTable(data) {
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
             <td><span class="contract-number">${contractNumber}</span></td>
-            <td>${app.first_name || ""} ${app.last_name || ""}</td>
+            <td>${toProperCase(app.first_name)} ${toProperCase(app.last_name)}</td>
             <td>${email}</td>
             <td>${plan}</td>
             <td>${speed}</td>
