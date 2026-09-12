@@ -124,16 +124,16 @@
         <div class="dashboard-header-card">
             <div class="dashboard-header-left">
                 <h1>Installation Management</h1>
-                <p>Manage customer installations - assign slots and update installation status</p>
+                <p>Manage subscriber installations - assign slots and update installation status</p>
             </div>
         </div>
 
         <!-- Customers Card -->
         <div class="card">
             <div class="card-header">
-                <h2><i class="fas fa-users"></i> Customer Installations</h2>
+                <h2><i class="fas fa-users"></i> Subscriber Installations</h2>
                 <div class="stats-badge">
-                    <span id="customerCount">0</span> total customers
+                    <span id="customerCount">0</span> total subscribers
                 </div>
             </div>
             <div class="card-body">
@@ -155,7 +155,7 @@
                             <tr>
                                 <th>Application No.</th>
                                 <th>Contract No.</th>
-                                <th>Customer Name</th>
+                                <th>Subscriber Name</th>
                                 <th>Contact</th>
                                 <th>Plan</th>
                                 <th>Barangay</th>
@@ -202,7 +202,7 @@
                 <div id="preferredNapboxInfo"></div>
                 <div id="assignModalNotice" class="napbox-setup-banner" style="display:none; margin-bottom:12px; align-items:flex-start; justify-content:flex-start; background:#fff7ed; color:#9a2c00; border-color:#fdba74;">
                     <div id="assignModalNoticeText" style="flex:1;">
-                        <strong>Notice:</strong>&nbsp;This customer's pinned location currently has no NAP box in the area yet. Add a NAP box first so you can assign a slot.
+                        <strong>Notice:</strong>&nbsp;This subscriber's pinned location currently has no NAP box in the area yet. Add a NAP box first so you can assign a slot.
                     </div>
                     <button id="goToNapboxBtn" class="napbox-setup-btn" type="button">Go to NAP Box Page</button>
                 </div>
@@ -213,7 +213,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Customer:</label>
+                    <label>Subscriber:</label>
                     <input type="text" id="modalCustomerName" readonly>
                 </div>
                 
@@ -246,7 +246,7 @@
                     <input type="date" id="installationDate" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
                     <small style="color:#64748b; display:block; margin-top:4px;">
                         <i class="fas fa-info-circle"></i> 
-                        Installation date is set from the customer's record.
+                        Installation date is set from the subscriber's record.
                     </small>
                 </div>
             </div>
@@ -269,12 +269,12 @@
                 <i class="fas fa-ban"></i>
             </div>
             <h3>Cancel Installation</h3>
-            <p>This will cancel and archive this customer's application. This action cannot be undone from here.</p>
+            <p>This will cancel and archive this subscriber's application. This action cannot be undone from here.</p>
         </div>
 
         <div class="confirm-status-info">
             <div class="confirm-status-detail">
-                <span class="confirm-label">Customer:</span>
+                <span class="confirm-label">Subscriber:</span>
                 <span class="confirm-value" id="cancelInstallCustomerName">---</span>
             </div>
             <div class="confirm-status-detail">
@@ -286,7 +286,7 @@
         <div class="modal-body" style="padding-top:10px;">
             <div class="form-group">
                 <label>Reason (optional):</label>
-                <input type="text" id="cancelInstallReason" placeholder="e.g. Customer requested cancellation">
+                <input type="text" id="cancelInstallReason" placeholder="e.g. Subscriber requested cancellation">
             </div>
         </div>
 
@@ -313,13 +313,13 @@
                 <i class="fas fa-play"></i>
             </div>
             <h3 id="confirmStatusTitle">Start Installation</h3>
-            <p id="confirmStatusText">You are about to start the installation for this customer.</p>
+            <p id="confirmStatusText">You are about to start the installation for this subscriber.</p>
         </div>
         
         <!-- Customer Details -->
         <div class="confirm-status-info" id="confirmStatusInfo">
             <div class="confirm-status-detail">
-                <span class="confirm-label">Customer:</span>
+                <span class="confirm-label">Subscriber:</span>
                 <span class="confirm-value" id="confirmStatusCustomerName">---</span>
             </div>
             <div class="confirm-status-detail">
@@ -341,7 +341,7 @@
             <i class="fas fa-info-circle"></i>
             <div>
                 <strong id="statusNoticeTitle">What happens next?</strong>
-                <p id="statusNoticeMessage">This will update the installation status of this customer in the system.</p>
+                <p id="statusNoticeMessage">This will update the installation status of this subscriber in the system.</p>
             </div>
         </div>
         

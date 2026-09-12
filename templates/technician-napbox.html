@@ -220,7 +220,7 @@
             <div class="legend-item"><span class="legend-color boundary"></span><span>Municipal Boundary</span></div>
             <div class="legend-item customer-legend" id="customerLegendItem" style="display: none;">
                 <span class="legend-color customer-pin"></span>
-                <span>Customer Pin</span>
+                <span>Subscriber's Pin</span>
             </div>
         </div>
         <div class="map-controls">
@@ -250,7 +250,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s-8-4.5-8-10a8 8 0 0 1 16 0c0 5.5-8 10-8 10z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
-                </svg>Customer Pin
+                </svg>Subscriber's Pin
             </button>
             <button id="currentLocationBtn" class="current-location-btn">
              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -381,7 +381,7 @@ My Location
         <div class="edit-modal-header">
             <div class="edit-modal-header-left">
                 <i class="fas fa-pencil-alt"></i>
-                <h2>Edit Slot <small>Update customer information</small></h2>
+                <h2>Edit Slot <small>Update subscriber's information</small></h2>
             </div>
             <button class="edit-modal-close" id="closeEditModalBtnTech">
                 <i class="fas fa-times"></i>
@@ -398,11 +398,11 @@ My Location
 
             <div class="edit-form-group">
                 <label for="editCustomerNameTech">
-                    <i class="fas fa-user"></i> Customer Name <span class="required-star">*</span>
+                    <i class="fas fa-user"></i> Subscriber Name <span class="required-star">*</span>
                 </label>
-                <input type="text" id="editCustomerNameTech" class="form-input" placeholder="Enter customer name" required>
+                <input type="text" id="editCustomerNameTech" class="form-input" placeholder="Enter subscriber name" required>
                 <div id="editNameErrorTech" class="edit-error-message">
-                    <i class="fas fa-exclamation-circle"></i> Customer name is required when slot is OCCUPIED
+                    <i class="fas fa-exclamation-circle"></i> Subscriber's name is required when slot is OCCUPIED
                 </div>
             </div>
 
@@ -422,9 +422,9 @@ My Location
 
             <div class="edit-form-group">
                 <label for="editCustomerPhoneTech">
-                    <i class="fas fa-phone"></i> Customer Phone <span style="color: #94a3b8; font-weight: 400; text-transform: none;">(Optional)</span>
+                    <i class="fas fa-phone"></i> Subscriber Phone <span style="color: #94a3b8; font-weight: 400; text-transform: none;">(Optional)</span>
                 </label>
-                <input type="text" id="editCustomerPhoneTech" class="form-input" placeholder="Enter customer phone">
+                <input type="text" id="editCustomerPhoneTech" class="form-input" placeholder="Enter subscriber phone">
             </div>
 
             <div class="edit-form-group">
@@ -443,7 +443,7 @@ My Location
                 </div>
                 <div class="edit-hint-text">
                     <i class="fas fa-info-circle"></i>
-                    <span>Changing to "Available" will keep customer data but mark slot as free</span>
+                    <span>Changing to "Available" will keep subscriber's data but mark slot as free</span>
                 </div>
             </div>
 
@@ -451,7 +451,7 @@ My Location
                 <div style="display: flex; align-items: flex-start; gap: 10px;">
                     <i class="fas fa-exclamation-triangle" style="color: #92400e; font-size: 16px; margin-top: 1px;"></i>
                     <div style="font-size: 12px; color: #92400e; line-height: 1.5;">
-                        <strong>Important:</strong> Editing this slot will update the customer information immediately.
+                        <strong>Important:</strong> Editing this slot will update the subscriber's information immediately.
                     </div>
                 </div>
             </div>
@@ -567,7 +567,7 @@ My Location
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
             <h3 id="clearSlotModalTitle"> Clear Slot Data</h3>
-            <p id="clearSlotModalText">This will permanently remove all customer data from this slot.</p>
+            <p id="clearSlotModalText">This will permanently remove all subscriber data from this slot.</p>
         </div>
         
         <!-- Slot Info -->
@@ -581,7 +581,7 @@ My Location
                 <span class="clear-value" id="clearNapboxName">---</span>
             </div>
             <div class="clear-slot-detail">
-                <span class="clear-label">Customer:</span>
+                <span class="clear-label">Subscriber:</span>
                 <span class="clear-value" id="clearCustomerName">---</span>
             </div>
         </div>
@@ -591,7 +591,7 @@ My Location
             <i class="fas fa-skull"></i>
             <div>
                 <strong>This action CANNOT be undone!</strong>
-                <p>This will permanently remove customer name, phone, application number, contract number, and installation date from this slot.</p>
+                <p>This will permanently remove Subscriber name, phone, application number, contract number, and installation date from this slot.</p>
             </div>
         </div>
         
@@ -619,7 +619,7 @@ My Location
                 <i class="fas fa-undo-alt"></i>
             </div>
             <h3 id="confirmAvailableTitle">Set Slot to Available</h3>
-            <p id="confirmAvailableText">You are about to set this slot to <strong>AVAILABLE</strong>, making it ready for a new customer assignment.</p>
+            <p id="confirmAvailableText">You are about to set this slot to <strong>AVAILABLE</strong>, making it ready for a new subscriber assignment.</p>
         </div>
         
         <!-- Slot Details -->
@@ -633,11 +633,11 @@ My Location
                 <span class="confirm-value" id="confirmAvailableNapboxName">---</span>
             </div>
             <div class="confirm-available-detail">
-                <span class="confirm-label">Current Customer:</span>
+                <span class="confirm-label">Current Subscriber:</span>
                 <span class="confirm-value" id="confirmAvailableCustomerName">---</span>
             </div>
             <div class="confirm-available-detail">
-                <span class="confirm-label">Customer Phone:</span>
+                <span class="confirm-label">Subscriber Phone:</span>
                 <span class="confirm-value" id="confirmAvailableCustomerPhone">---</span>
             </div>
             <div class="confirm-available-detail">
@@ -651,7 +651,7 @@ My Location
             <i class="fas fa-info-circle"></i>
             <div>
                 <strong>What happens next?</strong>
-                <p>This slot will be set to <strong>AVAILABLE</strong> and can be assigned to a new customer. The current customer data will be cleared from this slot.</p>
+                <p>This slot will be set to <strong>AVAILABLE</strong> and can be assigned to a new subscriber. The current subscriber data will be cleared from this slot.</p>
             </div>
         </div>
         
