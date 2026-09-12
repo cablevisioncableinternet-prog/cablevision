@@ -62,6 +62,16 @@ function getTabId() {
     return sessionStorage.getItem('tab_id') || '';
 }
 
+// ==================== PROPER CASE HELPER ====================
+function toProperCase(str) {
+    if (!str) return "";
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
 // ==================== SESSION MANAGEMENT - PER TAB ====================
 (function() {
     const isLoggedIn = sessionStorage.getItem('adminUsername') && sessionStorage.getItem('sessionActive') === 'true';
@@ -529,7 +539,7 @@ function renderApprovedCustomers(data) {
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
             <td><span class="contract-number">${escapeHtml(contractNumber)}</span></td>
-            <td>${escapeHtml(app.first_name || "")} ${escapeHtml(app.last_name || "")}</td>
+            <td>${escapeHtml(toProperCase(app.first_name))} ${escapeHtml(toProperCase(app.last_name))}</td>
             <td>${escapeHtml(app.email || "")}</td>
             <td>${escapeHtml(app.plan || "N/A")}</td>
             <td>${escapeHtml(app.plan_speed || "N/A")}</td>
