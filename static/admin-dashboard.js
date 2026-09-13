@@ -1033,7 +1033,7 @@ async function loadTrendChart(username, selectedMonth = "all", selectedYear = St
                         pointBorderWidth: 2
                     },
                     {
-                        label: 'Customers',
+                        label: 'Subscribers',
                         data: customerData,
                         borderColor: '#0f766e',
                         backgroundColor: 'rgba(15, 118, 110, 0.12)',
@@ -1104,14 +1104,15 @@ async function loadTrendChart(username, selectedMonth = "all", selectedYear = St
                         }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
+                        backgroundColor: "rgba(15, 23, 42, 0.92)",
+                        titleColor: "#ffffff",
+                        bodyColor: "#ffffff",
                         padding: 12,
                         cornerRadius: 10,
                         callbacks: {
                             label: function(context) {
-                                return ` ${context.dataset.label}: ${context.parsed.y.toLocaleString()}`;
+                                const label = context.dataset.label === "Customers" ? "Subscribers" : context.dataset.label;
+                                return ` ${label}: ${context.parsed.y.toLocaleString()}`;
                             }
                         }
                     }
