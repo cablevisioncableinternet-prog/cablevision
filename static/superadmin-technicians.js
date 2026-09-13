@@ -721,18 +721,22 @@ function setupSearchFilter() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     
     if (!searchTerm) {
-      renderTechnicians(allTechnicians);
-      return;
+      filteredTechniciansData = [...allTechnicians];
+    } else {
+      filteredTechniciansData = allTechnicians.filter(technician => 
+        (technician.technician_id && technician.technician_id.toLowerCase().includes(searchTerm)) ||
+        (technician.name && technician.name.toLowerCase().includes(searchTerm)) ||
+        (technician.email && technician.email.toLowerCase().includes(searchTerm)) ||
+        (technician.area && technician.area.toLowerCase().includes(searchTerm))
+      );
     }
     
-    const filtered = allTechnicians.filter(technician => 
-      (technician.technician_id && technician.technician_id.toLowerCase().includes(searchTerm)) ||
-      (technician.name && technician.name.toLowerCase().includes(searchTerm)) ||
-      (technician.email && technician.email.toLowerCase().includes(searchTerm)) ||
-      (technician.area && technician.area.toLowerCase().includes(searchTerm))
-    );
+    // ✅ UPDATE BADGE TO REFLECT FILTERED COUNT
+    updateTechnicianCountBadge(filteredTechniciansData.length);
     
-    renderTechnicians(filtered);
+    // ✅ RESET TO PAGE 1 AND RENDER
+    currentTechniciansPage = 1;
+    renderTechniciansCurrentPage();
   }
   
   searchInput.addEventListener("input", filterTechnicians);
@@ -864,7 +868,13 @@ async function loadTechnicians(forceRefresh = false) {
       await loadTeamsForSelect();
     }
     
-    renderTechnicians(cached);
+    // ✅ UPDATE BADGE
+    updateTechnicianCountBadge(cached.length);
+    
+    // ✅ STORE FILTERED DATA + RESET PAGE
+    filteredTechniciansData = [...cached];
+    currentTechniciansPage = 1;
+    renderTechniciansCurrentPage();
     return;
   }
 
@@ -898,9 +908,17 @@ async function loadTechnicians(forceRefresh = false) {
     allTechnicians = technicians;
     allTechniciansData = technicians;
     sessionStorage.setItem("techniciansCache", JSON.stringify(technicians));
-    renderTechnicians(technicians);
+    
+    // ✅ UPDATE BADGE
+    updateTechnicianCountBadge(technicians.length);
+    
+    // ✅ STORE FILTERED DATA + RESET PAGE
+    filteredTechniciansData = [...technicians];
+    currentTechniciansPage = 1;
+    renderTechniciansCurrentPage();
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#dc3545;">Failed to load technicians</td></tr>`;
+    updateTechnicianCountBadge(0);
     console.error(err);
   }
 }
@@ -911,6 +929,14 @@ let allTeams = [];
 let allTeamsData = [];
 let allTechniciansData = [];
 let currentEditTeamId = null;
+
+// ==================== PAGINATION STATE ====================
+const ROWS_PER_PAGE = 3;
+let currentTeamsPage = 1;
+let currentTechniciansPage = 1;
+let filteredTeamsData = [];
+let filteredTechniciansData = [];
+
 
 function hasActiveLoginLock(account) {
     if (Number(account.login_locked) === 1 || account.login_locked === true) return true;
@@ -1069,6 +1095,146 @@ function updateLeaderDropdownByArea() {
     console.log(`✅ Leader dropdown updated with ${filteredTechnicians.length} technicians`);
 }
 
+// ==================== BADGE UPDATES ====================
+function updateTeamCountBadge(count) {
+    const badge = document.getElementById('teamCountBadge');
+    if (badge) badge.textContent = count;
+}
+
+function updateTechnicianCountBadge(count) {
+    const badge = document.getElementById('technicianCountBadge');
+    if (badge) badge.textContent = count;
+}
+
+// ==================== PAGINATION HELPERS ====================
+function renderTeamsPaginationControls(totalPages, totalItems) {
+    const container = document.getElementById('teamsPaginationControls');
+    if (!container) return;
+
+    if (totalItems === 0 || totalPages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+
+    let html = `<button class="pagination-btn" id="teamsFirstPageBtn" ${currentTeamsPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
+    html += `<button class="pagination-btn" id="teamsPrevPageBtn" ${currentTeamsPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="pagination-btn ${i === currentTeamsPage ? 'active' : ''}" data-teams-page="${i}">${i}</button>`;
+    }
+
+    html += `<button class="pagination-btn" id="teamsNextPageBtn" ${currentTeamsPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+    html += `<button class="pagination-btn" id="teamsLastPageBtn" ${currentTeamsPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
+    html += `<div class="pagination-info"><i class="fas fa-database"></i> ${((currentTeamsPage - 1) * ROWS_PER_PAGE) + 1}–${Math.min(currentTeamsPage * ROWS_PER_PAGE, totalItems)} of ${totalItems}</div>`;
+
+    container.innerHTML = html;
+
+    document.getElementById('teamsFirstPageBtn')?.addEventListener('click', () => {
+        if (currentTeamsPage !== 1) { currentTeamsPage = 1; renderTeamsCurrentPage(); }
+    });
+    document.getElementById('teamsPrevPageBtn')?.addEventListener('click', () => {
+        if (currentTeamsPage > 1) { currentTeamsPage--; renderTeamsCurrentPage(); }
+    });
+    document.getElementById('teamsNextPageBtn')?.addEventListener('click', () => {
+        if (currentTeamsPage < totalPages) { currentTeamsPage++; renderTeamsCurrentPage(); }
+    });
+    document.getElementById('teamsLastPageBtn')?.addEventListener('click', () => {
+        if (currentTeamsPage !== totalPages) { currentTeamsPage = totalPages; renderTeamsCurrentPage(); }
+    });
+
+    container.querySelectorAll('.pagination-btn[data-teams-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentTeamsPage = parseInt(btn.dataset.teamsPage);
+            renderTeamsCurrentPage();
+        });
+    });
+}
+
+function renderTechniciansPaginationControls(totalPages, totalItems) {
+    const container = document.getElementById('techniciansPaginationControls');
+    if (!container) return;
+
+    if (totalItems === 0 || totalPages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+
+    let html = `<button class="pagination-btn" id="techFirstPageBtn" ${currentTechniciansPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
+    html += `<button class="pagination-btn" id="techPrevPageBtn" ${currentTechniciansPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="pagination-btn ${i === currentTechniciansPage ? 'active' : ''}" data-tech-page="${i}">${i}</button>`;
+    }
+
+    html += `<button class="pagination-btn" id="techNextPageBtn" ${currentTechniciansPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+    html += `<button class="pagination-btn" id="techLastPageBtn" ${currentTechniciansPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
+    html += `<div class="pagination-info"><i class="fas fa-database"></i> ${((currentTechniciansPage - 1) * ROWS_PER_PAGE) + 1}–${Math.min(currentTechniciansPage * ROWS_PER_PAGE, totalItems)} of ${totalItems}</div>`;
+
+    container.innerHTML = html;
+
+    document.getElementById('techFirstPageBtn')?.addEventListener('click', () => {
+        if (currentTechniciansPage !== 1) { currentTechniciansPage = 1; renderTechniciansCurrentPage(); }
+    });
+    document.getElementById('techPrevPageBtn')?.addEventListener('click', () => {
+        if (currentTechniciansPage > 1) { currentTechniciansPage--; renderTechniciansCurrentPage(); }
+    });
+    document.getElementById('techNextPageBtn')?.addEventListener('click', () => {
+        if (currentTechniciansPage < totalPages) { currentTechniciansPage++; renderTechniciansCurrentPage(); }
+    });
+    document.getElementById('techLastPageBtn')?.addEventListener('click', () => {
+        if (currentTechniciansPage !== totalPages) { currentTechniciansPage = totalPages; renderTechniciansCurrentPage(); }
+    });
+
+    container.querySelectorAll('.pagination-btn[data-tech-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentTechniciansPage = parseInt(btn.dataset.techPage);
+            renderTechniciansCurrentPage();
+        });
+    });
+}
+
+function renderTeamsCurrentPage() {
+    const totalItems = filteredTeamsData.length;
+    const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+
+    if (totalItems === 0) {
+        renderTeamsTable([]);
+        renderTeamsPaginationControls(0, 0);
+        return;
+    }
+
+    if (currentTeamsPage > totalPages) currentTeamsPage = totalPages;
+
+    const start = (currentTeamsPage - 1) * ROWS_PER_PAGE;
+    const pageData = filteredTeamsData.slice(start, start + ROWS_PER_PAGE);
+
+    renderTeamsTable(pageData);
+    renderTeamsPaginationControls(totalPages, totalItems);
+}
+
+function renderTechniciansCurrentPage() {
+    const totalItems = filteredTechniciansData.length;
+    const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+
+    if (totalItems === 0) {
+        renderTechnicians([]);
+        renderTechniciansPaginationControls(0, 0);
+        return;
+    }
+
+    if (currentTechniciansPage > totalPages) currentTechniciansPage = totalPages;
+
+    const start = (currentTechniciansPage - 1) * ROWS_PER_PAGE;
+    const pageData = filteredTechniciansData.slice(start, start + ROWS_PER_PAGE);
+
+    renderTechnicians(pageData);
+    renderTechniciansPaginationControls(totalPages, totalItems);
+}
+
 // ==================== TEAMS TABLE ====================
 // Load teams for the teams table
 async function loadTeamsTable() {
@@ -1104,7 +1270,14 @@ async function loadTeamsTable() {
         
         const teams = await response.json();
         allTeamsData = teams;
-        renderTeamsTable(teams);
+        
+        // ✅ UPDATE BADGE
+        updateTeamCountBadge(teams.length);
+        
+        // ✅ STORE FILTERED DATA + RESET PAGE
+        filteredTeamsData = [...teams];
+        currentTeamsPage = 1;
+        renderTeamsCurrentPage();
         
     } catch (error) {
         console.error('Error loading teams:', error);
@@ -1116,6 +1289,7 @@ async function loadTeamsTable() {
                 </td>
             </tr>
         `;
+        updateTeamCountBadge(0);
     }
 }
 
@@ -1229,17 +1403,21 @@ function setupTeamSearch() {
         const searchTerm = this.value.toLowerCase().trim();
         
         if (!searchTerm) {
-            renderTeamsTable(allTeamsData);
-            return;
+            filteredTeamsData = [...allTeamsData];
+        } else {
+            filteredTeamsData = allTeamsData.filter(team =>
+                (team.team_id && team.team_id.toLowerCase().includes(searchTerm)) ||
+                (team.team_name && team.team_name.toLowerCase().includes(searchTerm)) ||
+                (team.area && team.area.toLowerCase().includes(searchTerm))
+            );
         }
         
-        const filtered = allTeamsData.filter(team =>
-            (team.team_id && team.team_id.toLowerCase().includes(searchTerm)) ||
-            (team.team_name && team.team_name.toLowerCase().includes(searchTerm)) ||
-            (team.area && team.area.toLowerCase().includes(searchTerm))
-        );
+        // ✅ UPDATE BADGE TO REFLECT FILTERED COUNT
+        updateTeamCountBadge(filteredTeamsData.length);
         
-        renderTeamsTable(filtered);
+        // ✅ RESET TO PAGE 1 AND RENDER
+        currentTeamsPage = 1;
+        renderTeamsCurrentPage();
     });
 }
 

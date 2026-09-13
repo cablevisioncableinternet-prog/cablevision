@@ -302,7 +302,7 @@
     </div>
   </div>
 
-  <!-- ================= TEAMS TABLE CARD ================= -->
+    <!-- ================= TEAMS TABLE CARD ================= -->
   <div class="card">
     <div class="card-header">
       <div class="header-icon-wrapper">
@@ -311,6 +311,10 @@
       <div class="header-title-section">
         <h2>Teams Management</h2>
         <p class="header-subtitle">Manage all teams, view members, and update team details</p>
+      </div>
+      <div class="stats-badge">
+        <i class="fas fa-users"></i>
+        <span id="teamCountBadge">0</span> Total Teams
       </div>
     </div>
     <div class="card-body">
@@ -350,6 +354,10 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <!-- Pagination for Teams Table -->
+      <div class="pagination-wrapper">
+        <div id="teamsPaginationControls" class="pagination-container"></div>
       </div>
     </div>
   </div>
@@ -435,6 +443,10 @@
         <h2>Registered Technicians</h2>
         <p class="header-subtitle">Manage and monitor all technician accounts</p>
       </div>
+      <div class="stats-badge">
+        <i class="fas fa-wrench"></i>
+        <span id="technicianCountBadge">0</span> Total Technicians
+      </div>
     </div>
     <div class="card-body">
       <div class="search-section">
@@ -473,6 +485,10 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <!-- Pagination for Technicians Table -->
+      <div class="pagination-wrapper">
+        <div id="techniciansPaginationControls" class="pagination-container"></div>
       </div>
     </div>
   </div>

@@ -4810,3 +4810,169 @@ th:nth-child(3), th:nth-child(4), th:nth-child(5) {
     font-size: 0.6rem;
   }
 }
+
+
+/* ================= STATS BADGE (Total Teams / Total Technicians) ================= */
+.card-header .stats-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.08) 0%, rgba(0, 123, 255, 0.06) 100%);
+  border: 1px solid rgba(0, 71, 171, 0.15);
+  border-radius: 40px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  margin-left: auto;
+}
+
+.card-header .stats-badge:hover {
+  background: linear-gradient(135deg, rgba(0, 71, 171, 0.12) 0%, rgba(0, 123, 255, 0.1) 100%);
+  border-color: rgba(0, 71, 171, 0.25);
+  transform: translateY(-1px);
+}
+
+.card-header .stats-badge i {
+  font-size: 12px;
+  color: var(--primary-blue);
+}
+
+.card-header .stats-badge span {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  line-height: 1;
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+  .card-header .stats-badge {
+    padding: 6px 14px;
+    font-size: 0.7rem;
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .card-header .stats-badge span {
+    font-size: 0.95rem;
+  }
+}
+
+/* ================= PAGINATION ================= */
+.pagination-wrapper {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f6;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-dark);
+  min-width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+  background: rgba(0, 71, 171, 0.06);
+  border-color: rgba(0, 71, 171, 0.3);
+  color: var(--primary-blue);
+  transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px -2px rgba(0, 71, 171, 0.35);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.pagination-ellipsis {
+  padding: 8px 6px;
+  color: var(--text-light);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pagination-info {
+  margin-left: 16px;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-info i {
+  color: var(--primary-blue);
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .pagination-container {
+    gap: 6px;
+  }
+  
+  .pagination-btn {
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    min-width: 32px;
+    height: 32px;
+  }
+  
+  .pagination-info {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .pagination-btn#firstPageBtn,
+  .pagination-btn#lastPageBtn,
+  .pagination-btn#teamsFirstPageBtn,
+  .pagination-btn#teamsLastPageBtn {
+    display: none;
+  }
+  
+  .pagination-btn {
+    padding: 5px 9px;
+    font-size: 0.7rem;
+    min-width: 30px;
+    height: 30px;
+  }
+}
