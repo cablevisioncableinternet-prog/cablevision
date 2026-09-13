@@ -931,7 +931,7 @@ let allTechniciansData = [];
 let currentEditTeamId = null;
 
 // ==================== PAGINATION STATE ====================
-const ROWS_PER_PAGE = 3;
+const ROWS_PER_PAGE = 5;
 let currentTeamsPage = 1;
 let currentTechniciansPage = 1;
 let filteredTeamsData = [];
