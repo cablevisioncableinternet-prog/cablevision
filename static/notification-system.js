@@ -229,37 +229,7 @@ async function handleNotificationClick(notificationId) {
 
 // ==================== UI FUNCTIONS ====================
 
-// Update notification badge count
-async function updateNotificationBadge() {
-    const badge = document.getElementById('notificationBadge');
-    
-    try {
-        const response = await fetch('/api/superadmin/notifications/unread/count');
-        if (response.ok) {
-            const data = await response.json();
-            const unreadCount = data.unread_count || 0;
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.style.display = 'flex';
-                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                } else {
-                    badge.style.display = 'none';
-                }
-            }
-        }
-    } catch (err) {
-        console.error('Error updating badge:', err);
-        const unreadCount = notifications.filter(n => !n.read).length;
-        if (badge) {
-            if (unreadCount > 0) {
-                badge.style.display = 'flex';
-                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-    }
-}
+// (Removed duplicate - using the first updateNotificationBadge function with 10+ logic)
 
 // Helper function to escape HTML
 function escapeHtml(text) {
