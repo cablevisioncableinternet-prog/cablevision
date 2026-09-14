@@ -1022,7 +1022,62 @@ body {
   box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
 }
 
-/* ================= LOADING STATES ================= */
+/* ================= MODERN SKELETON LOADING ================= */
+.skeleton-row-loader {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.skeleton-card {
+  width: min(100%, 720px);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+}
+
+.skeleton-title,
+.skeleton-line {
+  height: 14px;
+  background: linear-gradient(90deg, #e5e7eb 0%, #f8fafc 50%, #e5e7eb 100%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+  border-radius: 999px;
+}
+
+.skeleton-title {
+  width: 40%;
+  margin-bottom: 18px;
+}
+
+.skeleton-line {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.skeleton-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.skeleton-short {
+  width: 70%;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: -200% 0; }
+}
+
+.loading-row td {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+/* Keep spinner for buttons (delete, add) */
 .spinner {
   width: 36px;
   height: 36px;
@@ -1050,11 +1105,6 @@ body {
   color: #64748b;
   font-size: 0.85rem;
   font-weight: 500;
-}
-
-.loading-row td {
-  text-align: center;
-  padding: 48px 20px;
 }
 
 /* ================= NO DATA MESSAGE ================= */

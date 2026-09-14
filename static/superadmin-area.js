@@ -341,19 +341,26 @@ function showButtonLoading(button, isLoading, originalText = null) {
 }
 
 // =========================
-// SHOW TABLE LOADING STATE
+// SHOW TABLE LOADING STATE (SKELETON)
 // =========================
 function showTableLoading() {
     if (!table) return;
     table.innerHTML = `
         <tr class="loading-row">
             <td colspan="4">
-                <div class="loading-container">
-                    <div class="spinner"></div>
-                    <p>Loading areas...</p>
+                <div class="skeleton-row-loader">
+                    <div class="skeleton-card">
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-row">
+                            <div class="skeleton-line skeleton-short"></div>
+                            <div class="skeleton-line skeleton-short"></div>
+                            <div class="skeleton-line skeleton-short"></div>
+                        </div>
+                    </div>
                 </div>
-                </td>
-            </tr>
+            </td>
+        </tr>
     `;
     if (noDataDiv) noDataDiv.style.display = "none";
     if (paginationContainer) paginationContainer.innerHTML = "";
@@ -531,8 +538,8 @@ async function loadAreas(forceRefresh = false) {
                             <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #dc2626;"></i>
                             <p>Failed to load areas. Please refresh the page.</p>
                         </div>
-                        </td>
-                    </tr>
+                    </td>
+                </tr>
             `;
         }
     }
