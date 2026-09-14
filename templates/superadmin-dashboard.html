@@ -324,8 +324,40 @@
   <!-- APPLICATION AREA - DYNAMIC CARDS -->
   <div class="area-grid" id="areaGrid">
     <div class="loading-areas" id="loadingAreas">
-      <div class="spinner"></div>
-      <p>Loading areas...</p>
+      <div class="area-skeleton-grid">
+        <div class="area-skeleton-card">
+          <div class="skeleton-line skeleton-icon-box"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-title-line"></div>
+            <div class="skeleton-line skeleton-subtitle-line"></div>
+            <div class="skeleton-line skeleton-badge-line"></div>
+          </div>
+        </div>
+        <div class="area-skeleton-card">
+          <div class="skeleton-line skeleton-icon-box"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-title-line"></div>
+            <div class="skeleton-line skeleton-subtitle-line"></div>
+            <div class="skeleton-line skeleton-badge-line"></div>
+          </div>
+        </div>
+        <div class="area-skeleton-card">
+          <div class="skeleton-line skeleton-icon-box"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-title-line"></div>
+            <div class="skeleton-line skeleton-subtitle-line"></div>
+            <div class="skeleton-line skeleton-badge-line"></div>
+          </div>
+        </div>
+        <div class="area-skeleton-card">
+          <div class="skeleton-line skeleton-icon-box"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-title-line"></div>
+            <div class="skeleton-line skeleton-subtitle-line"></div>
+            <div class="skeleton-line skeleton-badge-line"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -409,8 +441,27 @@
       
       <div class="analytics-card-body">
         <div id="installationLoading" class="analytics-loading">
-          <div class="spinner"></div>
-          <p>Loading installation data...</p>
+          <div class="chart-skeleton chart-skeleton-doughnut">
+            <div class="skeleton-circle"></div>
+            <div class="skeleton-legend">
+              <div class="skeleton-legend-item">
+                <div class="skeleton-dot"></div>
+                <div class="skeleton-line skeleton-legend-text"></div>
+              </div>
+              <div class="skeleton-legend-item">
+                <div class="skeleton-dot"></div>
+                <div class="skeleton-line skeleton-legend-text"></div>
+              </div>
+              <div class="skeleton-legend-item">
+                <div class="skeleton-dot"></div>
+                <div class="skeleton-line skeleton-legend-text"></div>
+              </div>
+              <div class="skeleton-legend-item">
+                <div class="skeleton-dot"></div>
+                <div class="skeleton-line skeleton-legend-text"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <p id="installationNoData" class="analytics-no-data" style="display:none;">No installation data available.</p>
         <canvas id="installationStatusChart" style="display:none;"></canvas>
@@ -460,8 +511,28 @@
 
       <div class="analytics-card-body">
         <div id="superadminTrendLoading" class="analytics-loading">
-          <div class="spinner"></div>
-          <p>Loading data...</p>
+          <div class="chart-skeleton chart-skeleton-line">
+            <div class="skeleton-line-chart">
+              <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+                <path d="M 0 150 Q 50 120, 100 130 T 200 90 T 300 60 T 400 40" 
+                      fill="none" stroke="#e2e8f0" stroke-width="3" 
+                      stroke-linecap="round" class="skeleton-path-1"/>
+                <path d="M 0 170 Q 50 160, 100 165 T 200 140 T 300 120 T 400 100" 
+                      fill="none" stroke="#e2e8f0" stroke-width="3" 
+                      stroke-linecap="round" class="skeleton-path-2"/>
+              </svg>
+            </div>
+            <div class="skeleton-line-legend">
+              <div class="skeleton-line-legend-item">
+                <div class="skeleton-dot"></div>
+                <div class="skeleton-line skeleton-legend-text"></div>
+              </div>
+              <div class="skeleton-line-legend-item">
+                <div class="skeleton-dot skeleton-dot-2"></div>
+                <div class="skeleton-line skeleton-legend-text"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <canvas id="superadminTrendChart" style="display:none;"></canvas>
       </div>

@@ -331,10 +331,43 @@ async function loadAndRenderAreaCards() {
     const areaGrid = document.getElementById("areaGrid");
     if (!areaGrid) return;
     
+    // Skeleton HTML (same structure as in HTML file)
     areaGrid.innerHTML = `
-        <div class="loading-areas">
-            <div class="spinner"></div>
-            <p>Loading areas...</p>
+        <div class="loading-areas" id="loadingAreas">
+            <div class="area-skeleton-grid">
+                <div class="area-skeleton-card">
+                    <div class="skeleton-line skeleton-icon-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-line skeleton-title-line"></div>
+                        <div class="skeleton-line skeleton-subtitle-line"></div>
+                        <div class="skeleton-line skeleton-badge-line"></div>
+                    </div>
+                </div>
+                <div class="area-skeleton-card">
+                    <div class="skeleton-line skeleton-icon-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-line skeleton-title-line"></div>
+                        <div class="skeleton-line skeleton-subtitle-line"></div>
+                        <div class="skeleton-line skeleton-badge-line"></div>
+                    </div>
+                </div>
+                <div class="area-skeleton-card">
+                    <div class="skeleton-line skeleton-icon-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-line skeleton-title-line"></div>
+                        <div class="skeleton-line skeleton-subtitle-line"></div>
+                        <div class="skeleton-line skeleton-badge-line"></div>
+                    </div>
+                </div>
+                <div class="area-skeleton-card">
+                    <div class="skeleton-line skeleton-icon-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-line skeleton-title-line"></div>
+                        <div class="skeleton-line skeleton-subtitle-line"></div>
+                        <div class="skeleton-line skeleton-badge-line"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
     
@@ -578,6 +611,32 @@ async function loadSuperadminGrowthChart(selectedMonth = "all", selectedYear = S
 
     loading.style.display = "flex";
     canvas.style.display = "none";
+    
+    // Restore skeleton HTML (in case na-override ng previous "No data" message)
+    loading.innerHTML = `
+        <div class="chart-skeleton chart-skeleton-line">
+            <div class="skeleton-line-chart">
+                <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+                    <path d="M 0 150 Q 50 120, 100 130 T 200 90 T 300 60 T 400 40" 
+                          fill="none" stroke="#e2e8f0" stroke-width="3" 
+                          stroke-linecap="round" class="skeleton-path-1"/>
+                    <path d="M 0 170 Q 50 160, 100 165 T 200 140 T 300 120 T 400 100" 
+                          fill="none" stroke="#e2e8f0" stroke-width="3" 
+                          stroke-linecap="round" class="skeleton-path-2"/>
+                </svg>
+            </div>
+            <div class="skeleton-line-legend">
+                <div class="skeleton-line-legend-item">
+                    <div class="skeleton-dot"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+                <div class="skeleton-line-legend-item">
+                    <div class="skeleton-dot skeleton-dot-2"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+            </div>
+        </div>
+    `;
 
     try {
         const appParams = new URLSearchParams({ limit: "1000" });
@@ -1112,6 +1171,33 @@ function renderInstallationChart(data){
     const loadingIndicator = document.getElementById("installationLoading");
 
     if(loadingIndicator) loadingIndicator.style.display = "none";
+    
+    // Reset skeleton HTML para sa susunod na filter
+    if(loadingIndicator) {
+        loadingIndicator.innerHTML = `
+            <div class="chart-skeleton chart-skeleton-doughnut">
+                <div class="skeleton-circle"></div>
+                <div class="skeleton-legend">
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 
     const summary = data.installation_summary || {};
     const areaName = data.area || "All Areas";
@@ -1239,6 +1325,34 @@ function loadInstallationStatusChart(startDate = "", endDate = "", area = ""){
     }
 
     const loadingIndicator = document.getElementById("installationLoading");
+    
+    // Show skeleton bago mag-fetch
+    if(loadingIndicator) {
+        loadingIndicator.style.display = "flex";
+        loadingIndicator.innerHTML = `
+            <div class="chart-skeleton chart-skeleton-doughnut">
+                <div class="skeleton-circle"></div>
+                <div class="skeleton-legend">
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                    <div class="skeleton-legend-item">
+                        <div class="skeleton-dot"></div>
+                        <div class="skeleton-line skeleton-legend-text"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
     
     fetchWithCacheAndUpdate({
         cacheKey: `installation_${startDate}_${endDate}_${area}`,

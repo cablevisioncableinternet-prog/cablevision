@@ -1660,53 +1660,125 @@ body {
   }
 }
 
-/* Loading States */
+/* ================= MODERN SKELETON LOADING ================= */
+
+/* Base skeleton shimmer */
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 0%,
+    #f1f5f9 50%,
+    #e2e8f0 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.8s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ================= AREA CARDS SKELETON ================= */
 .loading-areas {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  background: #ffffff;
+  padding: 0;
+  background: transparent;
   border-radius: 16px;
+  gap: 0;
+}
+
+.area-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  width: 100%;
 }
 
-.loading-areas .spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #0047ab;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.area-skeleton-card {
+  background: #ffffff;
+  border-radius: clamp(12px, 1.2vw, 16px);
+  padding: clamp(12px, 1.5vw, 18px) clamp(14px, 1.8vw, 20px);
+  border: 1px solid #eef2f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.2vw, 14px);
+  min-height: clamp(52px, 8vh, 72px);
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Shimmer overlay */
+.area-skeleton-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 100%
+  );
+  animation: shimmerArea 1.8s infinite;
+  z-index: 2;
 }
 
+@keyframes shimmerArea {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.skeleton-icon-box {
+  width: clamp(32px, 4vw, 44px);
+  height: clamp(32px, 4vw, 44px);
+  border-radius: clamp(8px, 1vw, 12px);
+  flex-shrink: 0;
+}
+
+.skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.skeleton-title-line {
+  height: clamp(12px, 1.4vw, 14px);
+  width: 60%;
+  border-radius: 4px;
+}
+
+.skeleton-subtitle-line {
+  height: clamp(9px, 1vw, 11px);
+  width: 45%;
+  border-radius: 4px;
+}
+
+.skeleton-badge-line {
+  height: clamp(14px, 1.6vw, 18px);
+  width: 35%;
+  border-radius: 30px;
+  margin-top: 2px;
+}
+
+/* ================= ANALYTICS LOADING BASE ================= */
 .analytics-loading {
-  text-align: center;
-  padding: 30px 20px;
-}
-
-.analytics-loading .spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #0047ab;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 12px;
-}
-
-.analytics-loading p,
-.loading-areas p {
-  color: #64748b;
-  font-size: 13px;
-  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 220px;
+  padding: 16px;
 }
 
 .analytics-no-data {
@@ -1714,6 +1786,233 @@ body {
   padding: 40px 20px;
   color: #94a3b8;
   font-size: 13px;
+}
+
+/* ================= CHART SKELETON BASE ================= */
+.chart-skeleton {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 260px;
+}
+
+/* ================= DOUGHNUT SKELETON ================= */
+.chart-skeleton-doughnut {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.skeleton-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+  background: conic-gradient(
+    #e2e8f0 0deg 90deg,
+    #f1f5f9 90deg 180deg,
+    #e2e8f0 180deg 270deg,
+    #f1f5f9 270deg 360deg
+  );
+  animation: chartSkeletonRotate 2s linear infinite;
+  box-shadow: inset 0 0 0 40px #ffffff;
+}
+
+@keyframes chartSkeletonRotate {
+  to { transform: rotate(360deg); }
+}
+
+.skeleton-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 140px;
+}
+
+.skeleton-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.skeleton-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 0%,
+    #f1f5f9 50%,
+    #e2e8f0 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.8s ease-in-out infinite;
+}
+
+.skeleton-dot-2 {
+  background: linear-gradient(
+    90deg,
+    #cbd5e1 0%,
+    #e2e8f0 50%,
+    #cbd5e1 100%
+  );
+}
+
+.skeleton-legend-text {
+  height: 12px;
+  width: 90px;
+  border-radius: 4px;
+}
+
+/* ================= LINE CHART SKELETON ================= */
+.chart-skeleton-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  padding: 20px;
+}
+
+.skeleton-line-chart {
+  width: 100%;
+  max-width: 500px;
+  height: 180px;
+  position: relative;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 39px,
+    #f1f5f9 39px,
+    #f1f5f9 40px
+  );
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.skeleton-line-chart svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.skeleton-path-1 {
+  background: none;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: drawLine 2.5s ease-in-out infinite;
+  stroke: #cbd5e1;
+}
+
+.skeleton-path-2 {
+  background: none;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: drawLine 2.5s ease-in-out infinite 0.5s;
+  stroke: #e2e8f0;
+}
+
+@keyframes drawLine {
+  0% { stroke-dashoffset: 600; opacity: 0.3; }
+  50% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -600; opacity: 0.3; }
+}
+
+.skeleton-line-legend {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+}
+
+.skeleton-line-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 992px) {
+  .chart-skeleton-doughnut {
+    gap: 24px;
+  }
+  
+  .skeleton-circle {
+    width: 150px;
+    height: 150px;
+    box-shadow: inset 0 0 0 34px #ffffff;
+  }
+}
+
+@media (max-width: 640px) {
+  .chart-skeleton {
+    min-height: 220px;
+  }
+  
+  .chart-skeleton-doughnut {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .skeleton-circle {
+    width: 130px;
+    height: 130px;
+    box-shadow: inset 0 0 0 30px #ffffff;
+  }
+  
+  .skeleton-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    min-width: auto;
+  }
+  
+  .skeleton-legend-text {
+    width: 70px;
+  }
+  
+  .skeleton-line-chart {
+    height: 140px;
+  }
+  
+  /* Area skeleton — 2 cols pa rin sa mobile */
+  .area-skeleton-grid {
+    gap: 10px;
+  }
+  
+  .area-skeleton-card {
+    padding: 12px 14px;
+    min-height: 54px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .area-skeleton-grid {
+    gap: 8px;
+  }
+  
+  .area-skeleton-card {
+    padding: 8px 10px;
+    min-height: 42px;
+    gap: 6px;
+  }
+  
+  .skeleton-subtitle-line {
+    display: none;
+  }
 }
 
 /* ================= TOAST ================= */
