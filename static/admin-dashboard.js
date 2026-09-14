@@ -604,9 +604,30 @@ async function loadInstallationStatusChart(username, startDate = "", endDate = "
     loading.style.display = "flex";
     canvas.style.display = "none";
     
+    // Huwag i-override ang HTML — hayaan ang skeleton na nasa HTML
+    // Kung kailangan i-reset (para sa filter), i-restore ang skeleton
     loading.innerHTML = `
-        <div class="spinner"></div>
-        <p>Loading chart...</p>
+        <div class="chart-skeleton chart-skeleton-doughnut">
+            <div class="skeleton-circle"></div>
+            <div class="skeleton-legend">
+                <div class="skeleton-legend-item">
+                    <div class="skeleton-dot"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+                <div class="skeleton-legend-item">
+                    <div class="skeleton-dot"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+                <div class="skeleton-legend-item">
+                    <div class="skeleton-dot"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+                <div class="skeleton-legend-item">
+                    <div class="skeleton-dot"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+            </div>
+        </div>
     `;
 
     try {
@@ -748,6 +769,32 @@ async function loadAdminAreaPlanChartData(username) {
 
     loading.style.display = "flex";
     areaCanvas.style.display = "none";
+    
+    // I-restore ang skeleton HTML para sa bar chart
+    loading.innerHTML = `
+        <div class="chart-skeleton chart-skeleton-bar">
+            <div class="skeleton-bar-row">
+                <div class="skeleton-bar-label"></div>
+                <div class="skeleton-bar" style="width: 85%;"></div>
+            </div>
+            <div class="skeleton-bar-row">
+                <div class="skeleton-bar-label"></div>
+                <div class="skeleton-bar" style="width: 65%;"></div>
+            </div>
+            <div class="skeleton-bar-row">
+                <div class="skeleton-bar-label"></div>
+                <div class="skeleton-bar" style="width: 45%;"></div>
+            </div>
+            <div class="skeleton-bar-row">
+                <div class="skeleton-bar-label"></div>
+                <div class="skeleton-bar" style="width: 75%;"></div>
+            </div>
+            <div class="skeleton-bar-row">
+                <div class="skeleton-bar-label"></div>
+                <div class="skeleton-bar" style="width: 35%;"></div>
+            </div>
+        </div>
+    `;
 
     try {
         const [plansRes, applicationsRes] = await Promise.all([
@@ -933,8 +980,28 @@ async function loadTrendChart(username, selectedMonth = "all", selectedYear = St
     loading.style.display = "flex";
     canvas.style.display = "none";
     loading.innerHTML = `
-        <div class="spinner"></div>
-        <p>Loading data...</p>
+        <div class="chart-skeleton chart-skeleton-line">
+            <div class="skeleton-line-chart">
+                <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+                    <path d="M 0 150 Q 50 120, 100 130 T 200 90 T 300 60 T 400 40" 
+                          fill="none" stroke="#e2e8f0" stroke-width="3" 
+                          stroke-linecap="round" class="skeleton-path-1"/>
+                    <path d="M 0 170 Q 50 160, 100 165 T 200 140 T 300 120 T 400 100" 
+                          fill="none" stroke="#e2e8f0" stroke-width="3" 
+                          stroke-linecap="round" class="skeleton-path-2"/>
+                </svg>
+            </div>
+            <div class="skeleton-line-legend">
+                <div class="skeleton-line-legend-item">
+                    <div class="skeleton-dot"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+                <div class="skeleton-line-legend-item">
+                    <div class="skeleton-dot skeleton-dot-2"></div>
+                    <div class="skeleton-line skeleton-legend-text"></div>
+                </div>
+            </div>
+        </div>
     `;
 
     try {
