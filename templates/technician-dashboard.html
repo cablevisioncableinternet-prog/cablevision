@@ -318,7 +318,31 @@
     </div>
 
     <div class="chart-wrapper">
-      <canvas id="trendChart"></canvas>
+      <!-- Skeleton Loading for Trend Chart -->
+      <div id="trendChartLoading" class="chart-skeleton chart-skeleton-line">
+        <div class="skeleton-line-chart">
+          <svg viewBox="0 0 400 200" preserveAspectRatio="none">
+            <path d="M 0 150 Q 50 120, 100 130 T 200 90 T 300 60 T 400 40" 
+                  fill="none" stroke="#e2e8f0" stroke-width="3" 
+                  stroke-linecap="round" class="skeleton-path-1"/>
+            <path d="M 0 170 Q 50 160, 100 165 T 200 140 T 300 120 T 400 100" 
+                  fill="none" stroke="#e2e8f0" stroke-width="3" 
+                  stroke-linecap="round" class="skeleton-path-2"/>
+          </svg>
+        </div>
+        <div class="skeleton-line-legend">
+          <div class="skeleton-line-legend-item">
+            <div class="skeleton-dot"></div>
+            <div class="skeleton-line skeleton-legend-text"></div>
+          </div>
+          <div class="skeleton-line-legend-item">
+            <div class="skeleton-dot skeleton-dot-2"></div>
+            <div class="skeleton-line skeleton-legend-text"></div>
+          </div>
+        </div>
+      </div>
+      
+      <canvas id="trendChart" style="display:none;"></canvas>
     </div>
   </div>
   
@@ -333,7 +357,22 @@
       </div>
     </div>
     <div class="chart-wrapper">
-      <canvas id="distributionChart"></canvas>
+      <!-- Skeleton Loading for Distribution Chart -->
+      <div id="distributionChartLoading" class="chart-skeleton chart-skeleton-doughnut">
+        <div class="skeleton-circle"></div>
+        <div class="skeleton-legend">
+          <div class="skeleton-legend-item">
+            <div class="skeleton-dot"></div>
+            <div class="skeleton-line skeleton-legend-text"></div>
+          </div>
+          <div class="skeleton-legend-item">
+            <div class="skeleton-dot"></div>
+            <div class="skeleton-line skeleton-legend-text"></div>
+          </div>
+        </div>
+      </div>
+      
+      <canvas id="distributionChart" style="display:none;"></canvas>
     </div>
     <div class="stats-summary">
       <div class="summary-item">
@@ -362,9 +401,40 @@
       </div>
     </div>
     <div class="activities-list" id="activitiesList">
-      <div class="loading-state">
-        <div class="loading-spinner"></div>
-        <p>Loading activities...</p>
+      <!-- Skeleton Loading for Activities -->
+      <div class="activity-skeleton-list">
+        <div class="activity-skeleton-card">
+          <div class="skeleton-line skeleton-activity-icon"></div>
+          <div class="activity-skeleton-content">
+            <div class="skeleton-line skeleton-activity-title"></div>
+            <div class="skeleton-line skeleton-activity-desc"></div>
+            <div class="skeleton-line skeleton-activity-meta"></div>
+          </div>
+        </div>
+        <div class="activity-skeleton-card">
+          <div class="skeleton-line skeleton-activity-icon"></div>
+          <div class="activity-skeleton-content">
+            <div class="skeleton-line skeleton-activity-title"></div>
+            <div class="skeleton-line skeleton-activity-desc"></div>
+            <div class="skeleton-line skeleton-activity-meta"></div>
+          </div>
+        </div>
+        <div class="activity-skeleton-card">
+          <div class="skeleton-line skeleton-activity-icon"></div>
+          <div class="activity-skeleton-content">
+            <div class="skeleton-line skeleton-activity-title"></div>
+            <div class="skeleton-line skeleton-activity-desc"></div>
+            <div class="skeleton-line skeleton-activity-meta"></div>
+          </div>
+        </div>
+        <div class="activity-skeleton-card">
+          <div class="skeleton-line skeleton-activity-icon"></div>
+          <div class="activity-skeleton-content">
+            <div class="skeleton-line skeleton-activity-title"></div>
+            <div class="skeleton-line skeleton-activity-desc"></div>
+            <div class="skeleton-line skeleton-activity-meta"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -380,16 +450,42 @@
         <h3>Quick Summary</h3>
       </div>
     </div>
-    <div class="summary-grid">
+    <div class="summary-grid" id="summaryGrid">
+      <!-- Skeleton Loading for Summary Cards -->
+      <div class="summary-skeleton-card">
+        <div class="skeleton-line skeleton-summary-icon"></div>
+        <div class="summary-skeleton-content">
+          <div class="skeleton-line skeleton-summary-label"></div>
+          <div class="skeleton-line skeleton-summary-number"></div>
+        </div>
+      </div>
+      <div class="summary-skeleton-card">
+        <div class="skeleton-line skeleton-summary-icon"></div>
+        <div class="summary-skeleton-content">
+          <div class="skeleton-line skeleton-summary-label"></div>
+          <div class="skeleton-line skeleton-summary-number"></div>
+        </div>
+      </div>
+      <div class="summary-skeleton-card">
+        <div class="skeleton-line skeleton-summary-icon"></div>
+        <div class="summary-skeleton-content">
+          <div class="skeleton-line skeleton-summary-label"></div>
+          <div class="skeleton-line skeleton-summary-number"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Hidden Actual Summary Cards (shown after load) -->
+    <div class="summary-grid" id="summaryGridContent" style="display: none;">
       <div class="summary-card">
         <div class="summary-icon">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <rect x="3" y="4" width="18" height="18" rx="2" />
-  <line x1="3" y1="10" x2="21" y2="10" />
-  <line x1="8" y1="2" x2="8" y2="6" />
-  <line x1="16" y1="2" x2="16" y2="6" />
-  <rect x="8" y="12" width="8" height="8" rx="1" />
-</svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <rect x="8" y="12" width="8" height="8" rx="1" />
+          </svg>
         </div>
         <div class="summary-info">
           <span class="summary-label">Today's Activity</span>
@@ -398,11 +494,11 @@
       </div>
       <div class="summary-card">
         <div class="summary-icon">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <line x1="19" y1="5" x2="5" y2="19" />
-  <circle cx="6.5" cy="6.5" r="2.5" />
-  <circle cx="17.5" cy="17.5" r="2.5" />
-</svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="5" x2="5" y2="19" />
+            <circle cx="6.5" cy="6.5" r="2.5" />
+            <circle cx="17.5" cy="17.5" r="2.5" />
+          </svg>
         </div>
         <div class="summary-info">
           <span class="summary-label">Occupancy Rate</span>
@@ -411,11 +507,11 @@
       </div>
       <div class="summary-card">
         <div class="summary-icon">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-  <path d="M2 17l10 5 10-5" />
-  <path d="M2 12l10 5 10-5" />
-</svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
         </div>
         <div class="summary-info">
           <span class="summary-label">Avg Slots/NAP</span>

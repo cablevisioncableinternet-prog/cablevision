@@ -647,7 +647,14 @@ async function updateTrendChart(filteredData, period) {
     }
     
     
-    const ctx = document.getElementById('trendChart').getContext('2d');
+    const trendCanvas = document.getElementById('trendChart');
+    const trendLoading = document.getElementById('trendChartLoading');
+    
+    // Show skeleton bago mag-render
+    if (trendLoading) trendLoading.style.display = 'flex';
+    if (trendCanvas) trendCanvas.style.display = 'none';
+    
+    const ctx = trendCanvas.getContext('2d');
     
     if (trendChart) {
         trendChart.destroy();
@@ -764,6 +771,12 @@ async function updateTrendChart(filteredData, period) {
             }
         }
     });
+    
+    // Hide skeleton, show canvas after render
+    setTimeout(() => {
+        if (trendLoading) trendLoading.style.display = 'none';
+        if (trendCanvas) trendCanvas.style.display = 'block';
+    }, 300);
 }
 
 // Update distribution chart with summary stats (OCCUPIED % and AVAILABLE %)
@@ -786,7 +799,14 @@ function updateDistributionChart() {
     // Update occupancy rate (keep for compatibility)
     document.getElementById('occupancyRate').textContent = `${occupiedPercent}%`;
     
-    const ctx = document.getElementById('distributionChart').getContext('2d');
+    const distCanvas = document.getElementById('distributionChart');
+    const distLoading = document.getElementById('distributionChartLoading');
+    
+    // Show skeleton bago mag-render
+    if (distLoading) distLoading.style.display = 'flex';
+    if (distCanvas) distCanvas.style.display = 'none';
+    
+    const ctx = distCanvas.getContext('2d');
     
     if (distributionChart) {
         distributionChart.destroy();
@@ -837,6 +857,12 @@ function updateDistributionChart() {
             }
         }
     });
+    
+    // Hide skeleton, show canvas after render
+    setTimeout(() => {
+        if (distLoading) distLoading.style.display = 'none';
+        if (distCanvas) distCanvas.style.display = 'block';
+    }, 300);
 }
 
 // Update today's activity count
@@ -851,17 +877,75 @@ function updateTodayActivity() {
         return slotDate.getTime() === today.getTime();
     }).length;
     
-    document.getElementById('todayActivity').textContent = todayActivities;
-    
     // Calculate average slots per NAP box
     const totalSlots = allSlotsData.length;
     const totalNapboxes = allNapboxesData.length;
     const avgSlots = totalNapboxes > 0 ? (totalSlots / totalNapboxes).toFixed(1) : 0;
+    
+    // Update summary cards (may content na ngayon)
+    document.getElementById('todayActivity').textContent = todayActivities;
     document.getElementById('avgSlotsPerNap').textContent = avgSlots;
+    
+    // ✅ Hide skeleton, show actual content
+    const summarySkeleton = document.getElementById('summaryGrid');
+    const summaryContent = document.getElementById('summaryGridContent');
+    
+    if (summarySkeleton) summarySkeleton.style.display = 'none';
+    if (summaryContent) summaryContent.style.display = 'flex';
 }
 
 // Update recent activities list - NEW DESIGN (Fixed - removed duplicate status)
 function updateRecentActivities() {
+    const activitiesList = document.getElementById('activitiesList');
+    const activityCount = document.getElementById('activityCount');
+    
+    if (!activitiesList) return;
+    
+    // Show skeleton HTML habang naglo-load
+    activitiesList.innerHTML = `
+        <div class="activity-skeleton-list">
+            <div class="activity-skeleton-card">
+                <div class="skeleton-line skeleton-activity-icon"></div>
+                <div class="activity-skeleton-content">
+                    <div class="skeleton-line skeleton-activity-title"></div>
+                    <div class="skeleton-line skeleton-activity-desc"></div>
+                    <div class="skeleton-line skeleton-activity-meta"></div>
+                </div>
+            </div>
+            <div class="activity-skeleton-card">
+                <div class="skeleton-line skeleton-activity-icon"></div>
+                <div class="activity-skeleton-content">
+                    <div class="skeleton-line skeleton-activity-title"></div>
+                    <div class="skeleton-line skeleton-activity-desc"></div>
+                    <div class="skeleton-line skeleton-activity-meta"></div>
+                </div>
+            </div>
+            <div class="activity-skeleton-card">
+                <div class="skeleton-line skeleton-activity-icon"></div>
+                <div class="activity-skeleton-content">
+                    <div class="skeleton-line skeleton-activity-title"></div>
+                    <div class="skeleton-line skeleton-activity-desc"></div>
+                    <div class="skeleton-line skeleton-activity-meta"></div>
+                </div>
+            </div>
+            <div class="activity-skeleton-card">
+                <div class="skeleton-line skeleton-activity-icon"></div>
+                <div class="activity-skeleton-content">
+                    <div class="skeleton-line skeleton-activity-title"></div>
+                    <div class="skeleton-line skeleton-activity-desc"></div>
+                    <div class="skeleton-line skeleton-activity-meta"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Small delay para smooth ang transition
+    setTimeout(() => {
+        renderRecentActivities();
+    }, 400);
+}
+
+function renderRecentActivities() {
     const activitiesList = document.getElementById('activitiesList');
     const activityCount = document.getElementById('activityCount');
     
