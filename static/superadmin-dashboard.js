@@ -874,7 +874,8 @@ function renderStatistics(data){
     const noData = document.getElementById("statisticsNoData");
     const content = document.getElementById("statisticsContent");
 
-    const hasData = data.total_applicants || data.total_customers || Object.keys(data.popular_plans||{}).length || data.total_admins;
+    // ✅ Updated: tinanggal ang total_admins at popular_plans sa check
+    const hasData = data.total_applicants || data.total_customers;
     if(!hasData){ 
         if(noData) noData.style.display = "block"; 
         return; 
@@ -882,20 +883,11 @@ function renderStatistics(data){
     if(noData) noData.style.display = "none";
 
     const totalApplicantsSpan = document.getElementById("totalApplicants");
-    const totalAdminsSpan = document.getElementById("totalAdmins");
     
     if(totalApplicantsSpan) totalApplicantsSpan.textContent = data.total_active_applicants || data.total_applicants || 0;
-    if(totalAdminsSpan) totalAdminsSpan.textContent = data.total_admins || 0;
 
-    const plansList = document.getElementById("popularPlans");
-    if(plansList){
-        plansList.innerHTML = "";
-        for(const plan in data.popular_plans){
-            const li = document.createElement("li");
-            li.textContent = `${plan} : ${data.popular_plans[plan]}`;
-            plansList.appendChild(li);
-        }
-    }
+    // ❌ Removed: totalAdmins update (element deleted)
+    // ❌ Removed: popularPlans update (element deleted)
 
     if(content) content.style.display = "grid";
 }
