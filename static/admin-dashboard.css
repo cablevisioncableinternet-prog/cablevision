@@ -651,8 +651,8 @@ body {
 /* ================= STATS GRID ================= */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
   margin-bottom: 28px;
 }
 
@@ -2094,7 +2094,7 @@ tbody tr:last-child td {
   .hamburger { display: none !important; }
   .sidebar-overlay { display: none !important; }
   .main-content { margin-left: var(--sidebar-width); }
-  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Medium-large screens (992px - 1200px) */
@@ -2107,7 +2107,7 @@ tbody tr:last-child td {
   .sidebar-brand h2 { font-size: 18px; }
   .sidebar-brand p { font-size: 9px; }
   .sidebar-menu li a { font-size: 12px; padding: 8px 12px; }
-  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 }
 
 /* Medium screens (768px - 991px) */

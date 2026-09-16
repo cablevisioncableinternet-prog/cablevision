@@ -422,16 +422,9 @@ async function loadStatistics() {
         const res = await fetch(`/api/admin/statistics?username=${username}&tab_id=${tabId}`);
         const data = await res.json();
 
-        const plansList = document.getElementById("popularPlans");
-        if (plansList && data.popular_plans) {
-            plansList.innerHTML = "";
-            for (const plan in data.popular_plans) {
-                const li = document.createElement("li");
-                li.textContent = plan + " : " + data.popular_plans[plan];
-                plansList.appendChild(li);
-            }
-        }
-        
+        // ❌ Removed: popularPlans update (element deleted from HTML)
+        // Ang stats API ay tinatawag pa rin para sa iba pang data (kung meron)
+
         await fetchActiveApplicationsCount();
         
     } catch (err) {
