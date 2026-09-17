@@ -247,6 +247,8 @@ let cityBoundaryLayer = null;
 let currentCity = null;
 let isSatelliteView = false;
 let currentTileLayer = null;
+let streetTileLayer = null;      // IDAGDAG
+let satelliteTileLayer = null; 
 
 // NAP Box pinning
 let isAddingNapbox = false;
@@ -255,6 +257,9 @@ let pendingLocation = null;
 let allBarangays = [];
 
 let technicianSelectedContractPrefix = null; // "GIF-" or "POB-" — ginagamit lang kapag Pila
+
+// ================= GOOGLE MAPS API CONFIG (SAME KEY AS USER SIDE) =================
+const GOOGLE_MAPS_API_KEY = "AIzaSyBM8-ArKJJS5KTaYnKoJFeUDg7_Blz6nvI";
 
 const LAGUNA_GEOJSON_URLS = {
     "Santa Cruz": "https://raw.githubusercontent.com/faeldon/philippines-json-maps/master/2023/geojson/municities/lowres/bgysubmuns-municity-0434280000.0.001.json",
@@ -474,16 +479,6 @@ async function loadTechnicianArea(technicianId) {
         
         // Initialize map
         initializeMap();
-
-        map.whenReady(() => {
-            setTimeout(() => {
-                map.invalidateSize();
-            }, 300);
-
-            if (!focusCustomerTargetLocation()) {
-                showCurrentLocation(false);
-            }
-        });
 
         // Show municipal boundary AUTOMATICALLY for assigned area
         if (technicianArea) {
@@ -738,15 +733,29 @@ function initializeMap() {
     if (!mapContainer) return;
     
     const allowedBounds = L.latLngBounds([14.18, 121.34], [14.33, 121.48]);
-    map = L.map('napboxMap').fitBounds(allowedBounds);
-    
-    const streetMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
+    map = L.map('napboxMap', {
+        zoomControl: true,
+        attributionControl: true
+    }).fitBounds(allowedBounds);
+
+    // ========== CREATE BOTH TILE LAYERS ==========
+    streetTileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '© Google Maps'
     });
-    streetMapLayer.addTo(map);
-    currentTileLayer = streetMapLayer;
-    
-    // Satellite Control
+    satelliteTileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '© Google Maps'
+    });
+
+    // Default: Street Map
+    streetTileLayer.addTo(map);
+    currentTileLayer = streetTileLayer;
+    isSatelliteView = false;
+
+    // ========== ADD SATELLITE CONTROL BUTTON ==========
     const SatelliteControl = L.Control.extend({
         options: { position: 'topright' },
         onAdd: function(map) {
@@ -776,8 +785,9 @@ function initializeMap() {
     });
     const satelliteControl = new SatelliteControl();
     satelliteControl.addTo(map);
-    
-    // I-CHECK KUNG MAY CUSTOMER LOCATION NA DAPAT IPAKITA
+    // =================================================
+
+    // ========== CUSTOMER MARKER CHECK + MAP READY ==========
     const showCustomerMarker = sessionStorage.getItem('showCustomerLocationMarker') === 'true';
     
     map.whenReady(() => {
@@ -785,14 +795,11 @@ function initializeMap() {
             map.invalidateSize();
         }, 300);
         
-        // I-DELAY NG KONTI PARA SURE NA NA-LOAD NA ANG LAHAT
         setTimeout(() => {
             if (showCustomerMarker) {
-                // MAY CUSTOMER LOCATION - IPAKITA ANG MARKER
                 console.log(' Showing customer location marker...');
                 showCustomerLocationMarkerOnMap();
             } else {
-                // WALANG CUSTOMER LOCATION - NORMAL BEHAVIOR
                 console.log(' No customer marker to show');
                 if (!focusCustomerTargetLocation()) {
                     showCurrentLocation(false);
@@ -800,26 +807,27 @@ function initializeMap() {
             }
         }, 500);
     });
+    // ======================================================
 }
 
-
-
 function toggleSatelliteView() {
-    const btn = document.querySelector('.leaflet-control-custom');
-    const satelliteLayers = [
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
-        L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt1', 'mt2', 'mt3'] })
-    ];
-    const streetMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+    if (!map) return;
     
+    const btn = document.querySelector('.leaflet-control-custom');
+
     if (!isSatelliteView) {
-        if (currentTileLayer) map.removeLayer(currentTileLayer);
-        satelliteLayers[0].addTo(map);
-        currentTileLayer = satelliteLayers[0];
+        // ===== LIPAT SA SATELLITE =====
+        if (currentTileLayer && map.hasLayer(currentTileLayer)) {
+            map.removeLayer(currentTileLayer);
+        }
+        satelliteTileLayer.addTo(map);
+        currentTileLayer = satelliteTileLayer;
         isSatelliteView = true;
+
         if (cityBoundaryLayer && map.hasLayer(cityBoundaryLayer)) {
             cityBoundaryLayer.setStyle({ color: "#FFFFFF", weight: 4 });
         }
+
         if (btn) {
             btn.style.backgroundColor = '#28a745';
             btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -829,13 +837,18 @@ function toggleSatelliteView() {
             btn.title = 'Street View';
         }
     } else {
-        if (currentTileLayer) map.removeLayer(currentTileLayer);
-        streetMapLayer.addTo(map);
-        currentTileLayer = streetMapLayer;
+        // ===== BALIK SA STREET MAP =====
+        if (currentTileLayer && map.hasLayer(currentTileLayer)) {
+            map.removeLayer(currentTileLayer);
+        }
+        streetTileLayer.addTo(map);
+        currentTileLayer = streetTileLayer;
         isSatelliteView = false;
+
         if (cityBoundaryLayer && map.hasLayer(cityBoundaryLayer)) {
             cityBoundaryLayer.setStyle({ color: "#000000", weight: 3 });
         }
+
         if (btn) {
             btn.style.backgroundColor = 'white';
             btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
@@ -848,7 +861,6 @@ function toggleSatelliteView() {
         }
     }
 }
-
 // ================= CITY BOUNDARY FUNCTION =================
 
 // Helper function to normalize city name (para kahit anong case, mag-match)
@@ -1666,173 +1678,251 @@ function startAddNapbox() {
     map.on('click', onMapClickForAdd);
 }
 
+// ================= GET BARANGAY FROM GOOGLE MAPS (REPLACES GEORISK) =================
 async function getBarangayFromGeoRisk(lat, lng) {
     try {
-        const georiskUrl = "https://portal.georisk.gov.ph/arcgis/rest/services/PSA/Barangay/MapServer/4/query";
-        
-        const queryParams = new URLSearchParams({
-            geometry: `${lng},${lat}`,
-            geometryType: 'esriGeometryPoint',
-            inSR: '4326',
-            outFields: 'brgy_name,city_name,prov_name,psgc_10d',
-            returnGeometry: 'false',
-            f: 'geojson'
-        });
-        
-        const response = await fetch(`${georiskUrl}?${queryParams.toString()}`);
-        
-        if (response.ok) {
-            const data = await response.json();
-            
-            if (data.features && data.features.length > 0) {
-                const props = data.features[0].properties;
-                let detectedCity = props.city_name || "";
-                let detectedBarangay = props.brgy_name || "";
-                
-                console.log(` GeoRisk raw: City="${detectedCity}", Barangay="${detectedBarangay}"`);
-                
-                if (detectedBarangay) {
-                    // I-convert sa Proper Case para tumugma sa database
-                    detectedBarangay = detectedBarangay.toLowerCase().split(' ').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join(' ');
-                    
-                    // Handle (POB.) -> (Poblacion)
-                    detectedBarangay = detectedBarangay
-                        .replace(/\(Pob\.?\)/gi, '(Poblacion)')
-                        .replace(/ Pob\.?/gi, ' (Poblacion)')
-                        .replace(/\(Poblacion\)/gi, '(Poblacion)');
-                    
-// SPECIAL HANDLING para sa Santa Cruz Poblacion - GAMIT ANG ROMAN NUMERALS
-if (detectedCity === "Santa Cruz") {
-    console.log(` Raw detected barangay from GeoRisk: "${detectedBarangay}"`);
-    
-    let number = '';
-    let rawName = detectedBarangay;
-    
-    // Pattern 1: "Poblacion 1", "Poblacion 2", etc.
-    let match = rawName.match(/Poblacion\s*(\d+)/i);
-    if (match) {
-        number = match[1];
-        console.log(` Pattern 1 (Poblacion X): ${number}`);
-    }
-    
-    // Pattern 2: "Barangay 1 (Poblacion)", "Barangay 2 (Poblacion)", etc.
-    if (!number) {
-        match = rawName.match(/Barangay\s*(\d+)\s*\(Poblacion\)/i);
-        if (match) {
-            number = match[1];
-            console.log(` Pattern 2 (Barangay X (Poblacion)): ${number}`);
+        if (!GOOGLE_MAPS_API_KEY) {
+            console.warn(' Google Maps API key not configured');
+            return null;
         }
-    }
-    
-    // Pattern 3: "Barangay 1", "Barangay 2", etc.
-    if (!number) {
-        match = rawName.match(/Barangay\s*(\d+)/i);
-        if (match) {
-            number = match[1];
-            console.log(` Pattern 3 (Barangay X): ${number}`);
-        }
-    }
-    
-    // Pattern 4: Roman numerals converted to numbers
-    if (!number) {
-        const romanMap = {
-            'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5'
-        };
-        match = rawName.match(/\b(I|II|III|IV|V)\b/i);
-        if (match) {
-            number = romanMap[match[1].toUpperCase()];
-            console.log(` Pattern 4 (Roman numeral ${match[1]} → ${number})`);
-        }
-    }
-    
-    // Pattern 5: Spanish words
-    if (!number) {
-        const spanishMap = {
-            'uno': '1', 'dos': '2', 'tres': '3', 
-            'kuwatro': '4', 'sinko': '5'
-        };
-        for (const [spanish, num] of Object.entries(spanishMap)) {
-            if (rawName.toLowerCase().includes(spanish)) {
-                number = num;
-                console.log(` Pattern 5 (Spanish ${spanish} → ${number})`);
-                break;
-            }
-        }
-    }
-    
-    // I-CONVERT ANG NUMBERS TO ROMAN NUMERALS
-    const numToRoman = {
-        '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V'
-    };
-    
-    if (number && numToRoman[number]) {
-        detectedBarangay = `Poblacion ${numToRoman[number]}`;
-        console.log(` FINAL Santa Cruz barangay (Roman): "${detectedBarangay}"`);
-    } else if (rawName.toLowerCase().includes('poblacion')) {
-        detectedBarangay = 'Poblacion I';
-        console.log(` Fallback to Poblacion I`);
-    } else {
-        // I-capitalize lang ang normal na barangay
-        detectedBarangay = rawName.split(' ').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        ).join(' ');
-    }
-}
-                    
-                    // SPECIAL HANDLING para sa Pila (Bulilan Norte/Sur, Santa Clara Norte/Sur)
-                    if (detectedCity === "Pila") {
-                        const lower = detectedBarangay.toLowerCase();
-                        if (lower.includes('bulilan norte')) {
-                            detectedBarangay = 'Bulilan Norte (Poblacion)';
-                        } else if (lower.includes('bulilan sur')) {
-                            detectedBarangay = 'Bulilan Sur (Poblacion)';
-                        } else if (lower.includes('santa clara norte')) {
-                            detectedBarangay = 'Santa Clara Norte (Poblacion)';
-                        } else if (lower.includes('santa clara sur')) {
-                            detectedBarangay = 'Santa Clara Sur (Poblacion)';
-                        } else {
-                            detectedBarangay = detectedBarangay.split(' ').map(word => 
-                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                            ).join(' ');
-                        }
-                    }
-                    
-                    // Para sa ibang lungsod, i-capitalize lang
-                    if (detectedCity !== "Santa Cruz" && detectedCity !== "Pagsanjan" && detectedCity !== "Pila") {
-                        detectedBarangay = detectedBarangay.split(' ').map(word => 
-                            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                        ).join(' ');
-                    }
-                    
-                    // I-capitalize ang city name
-                    detectedCity = detectedCity.split(' ').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                    ).join(' ');
-                    
-                    console.log(` GeoRisk converted: City="${detectedCity}", Barangay="${detectedBarangay}"`);
 
-                                        // I-convert ang Pagsanjan barangay (Uno/Dos to I/II)
-                    if (detectedCity === "Pagsanjan") {
-                        const originalBarangay = detectedBarangay;
-                        detectedBarangay = convertPagsanjanBarangay(detectedBarangay);
-                        console.log(` Pagsanjan conversion: "${originalBarangay}" → "${detectedBarangay}"`);
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}&language=en&region=ph`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.warn(` Google Maps HTTP error: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+
+        if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+            console.log(` Google Maps: no results (status=${data.status})`);
+            return null;
+        }
+
+                let detectedBarangay = '';
+        let detectedCity = '';
+        let detectedProvince = '';
+
+        // ===== HELPER: Filter out prefix-only barangay names =====
+        // Google sometimes returns just "Brgy", "Brgy.", "Barangay", "Purok", "Sitio"
+        // as the sublocality — these are useless. We need the actual name.
+        const isInvalidBarangayName = (name) => {
+            if (!name) return true;
+            const lower = name.toLowerCase().trim().replace(/\.$/, ''); // remove trailing period
+            if (lower.length < 3) return true;
+            const invalidPrefixes = [
+                'brgy', 'barangay', 'brgys', 'purok', 'sitio',
+                'subdivision', 'subd', 'phase', 'block', 'lot',
+                'street', 'st', 'road', 'rd', 'avenue', 'ave',
+                'poblacion' // will still be valid as full name "Poblacion I"
+            ];
+            // Only invalid if it's EXACTLY the prefix (with nothing else)
+            if (invalidPrefixes.includes(lower) && lower !== 'poblacion') return true;
+            return false;
+        };
+
+        // ===== Collect all candidates from all results =====
+        // Google's component hierarchy differs per location:
+        //   - Sometimes: sublocality_level_1 = "Brgy. San Antonio"
+        //   - Sometimes: sublocality_level_1 = "Brgy", sublocality_level_2 = "San Antonio"
+        // We try multiple types in order of specificity.
+        const barangayCandidates = []; // { name, priority }
+        let bestCity = '';
+        let bestProvince = '';
+
+        for (const result of data.results) {
+            if (!result.address_components) continue;
+
+            for (const component of result.address_components) {
+                const types = component.types || [];
+                const longName = (component.long_name || '').trim();
+                const shortName = (component.short_name || '').trim();
+
+                // ===== Barangay candidates (sorted by specificity) =====
+                // We collect ALL of them; after gathering, we pick the best.
+
+                // sublocality_level_2 = most specific (often "San Antonio" or "Poblacion I")
+                if (types.includes('sublocality_level_2') && longName) {
+                    barangayCandidates.push({ name: longName, priority: 1 });
+                }
+
+                // sublocality_level_1 = standard barangay (often "Brgy. San Antonio")
+                if (types.includes('sublocality_level_1') && longName) {
+                    barangayCandidates.push({ name: longName, priority: 2 });
+                }
+
+                // sublocality = generic sublocality
+                if (types.includes('sublocality') && longName) {
+                    barangayCandidates.push({ name: longName, priority: 3 });
+                }
+
+                // neighborhood
+                if (types.includes('neighborhood') && longName) {
+                    barangayCandidates.push({ name: longName, priority: 4 });
+                }
+
+                // administrative_area_level_3 (rare in PH)
+                if (types.includes('administrative_area_level_3') && longName) {
+                    barangayCandidates.push({ name: longName, priority: 5 });
+                }
+
+                // ===== City =====
+                if (!bestCity) {
+                    if (types.includes('locality') && longName) {
+                        bestCity = longName;
+                    } else if (types.includes('administrative_area_level_2') && longName) {
+                        bestCity = longName;
                     }
                 }
-                
-                return {
-                    barangay: detectedBarangay,
-                    city: detectedCity,
-                    province: props.prov_name,
-                    psgc: props.psgc_10d,
-                    source: 'GeoRisk'
-                };
+
+                // ===== Province =====
+                if (!bestProvince && types.includes('administrative_area_level_1') && longName) {
+                    bestProvince = longName;
+                }
             }
         }
-        return null;
+
+        // ===== Pick the BEST barangay candidate =====
+        // Sort by priority (lower number = better), then prefer longer names
+        barangayCandidates.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            return b.name.length - a.name.length; // longer = more specific
+        });
+
+        console.log(` 🔎 Barangay candidates from Google:`, barangayCandidates);
+
+        // Pick first VALID candidate (skip "Brgy", "Purok", etc.)
+        for (const candidate of barangayCandidates) {
+            if (!isInvalidBarangayName(candidate.name)) {
+                detectedBarangay = candidate.name;
+                console.log(` ✅ Selected barangay: "${detectedBarangay}" (priority ${candidate.priority})`);
+                break;
+            } else {
+                console.log(` ⏭️ Skipped invalid candidate: "${candidate.name}"`);
+            }
+        }
+
+        // ===== If still no valid barangay, try combining short + long =====
+        // Example: sublocality_level_1 = "Brgy", sublocality_level_2 = "San Antonio"
+        // → combine into "Brgy. San Antonio"
+        if (!detectedBarangay && barangayCandidates.length > 1) {
+            const first = barangayCandidates[0];
+            const second = barangayCandidates[1];
+            const combined = `${first.name} ${second.name}`.trim();
+            if (!isInvalidBarangayName(combined)) {
+                detectedBarangay = combined;
+                console.log(` 🔗 Combined barangay: "${detectedBarangay}"`);
+            }
+        }
+
+        detectedCity = bestCity;
+        detectedProvince = bestProvince;
+
+        console.log(` Google Maps raw: City="${detectedCity}", Barangay="${detectedBarangay}"`);
+
+        if (!detectedBarangay || !detectedCity) {
+            console.log(' Google Maps: incomplete address data');
+            return null;
+        }
+
+        // ===== CITY: Proper Case =====
+        detectedCity = detectedCity.split(' ').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+
+        // ===== SPECIAL HANDLING PER MUNICIPALITY (PAREHAS NG DATING LOGIC) =====
+
+        // --- SANTA CRUZ: Poblacion with Roman Numerals ---
+        if (detectedCity === "Santa Cruz") {
+            let number = '';
+            const rawName = detectedBarangay;
+
+            let match = rawName.match(/Poblacion\s*(\d+)/i);
+            if (match) number = match[1];
+
+            if (!number) {
+                match = rawName.match(/Barangay\s*(\d+)\s*\(Poblacion\)/i);
+                if (match) number = match[1];
+            }
+
+            if (!number) {
+                match = rawName.match(/Barangay\s*(\d+)/i);
+                if (match) number = match[1];
+            }
+
+            if (!number) {
+                const romanMap = { 'I': '1', 'II': '2', 'III': '3', 'IV': '4', 'V': '5' };
+                match = rawName.match(/\b(I|II|III|IV|V)\b/i);
+                if (match) number = romanMap[match[1].toUpperCase()];
+            }
+
+            if (!number) {
+                const spanishMap = { 'uno': '1', 'dos': '2', 'tres': '3', 'kuwatro': '4', 'sinko': '5' };
+                for (const [spanish, num] of Object.entries(spanishMap)) {
+                    if (rawName.toLowerCase().includes(spanish)) {
+                        number = num;
+                        break;
+                    }
+                }
+            }
+
+            const numToRoman = { '1': 'I', '2': 'II', '3': 'III', '4': 'IV', '5': 'V' };
+
+            if (number && numToRoman[number]) {
+                detectedBarangay = `Poblacion ${numToRoman[number]}`;
+            } else if (rawName.toLowerCase().includes('poblacion')) {
+                detectedBarangay = 'Poblacion I';
+            } else {
+                detectedBarangay = rawName.split(' ').map(word =>
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+            }
+        }
+
+        // --- PILA: Bulilan / Santa Clara ---
+        else if (detectedCity === "Pila") {
+            const lower = detectedBarangay.toLowerCase();
+            if (lower.includes('bulilan norte')) {
+                detectedBarangay = 'Bulilan Norte (Poblacion)';
+            } else if (lower.includes('bulilan sur')) {
+                detectedBarangay = 'Bulilan Sur (Poblacion)';
+            } else if (lower.includes('santa clara norte')) {
+                detectedBarangay = 'Santa Clara Norte (Poblacion)';
+            } else if (lower.includes('santa clara sur')) {
+                detectedBarangay = 'Santa Clara Sur (Poblacion)';
+            } else {
+                detectedBarangay = detectedBarangay.split(' ').map(word =>
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+            }
+        }
+
+        // --- PAGSANJAN: Uno/Dos → Barangay I/II ---
+        else if (detectedCity === "Pagsanjan") {
+            detectedBarangay = convertPagsanjanBarangay(detectedBarangay);
+        }
+
+        // --- Other cities ---
+        else {
+            detectedBarangay = detectedBarangay.split(' ').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ');
+        }
+
+        console.log(` Google Maps converted: City="${detectedCity}", Barangay="${detectedBarangay}"`);
+
+        return {
+            barangay: detectedBarangay,
+            city: detectedCity,
+            province: detectedProvince,
+            source: 'GoogleMaps'
+        };
+
     } catch (error) {
-        console.error('GeoRisk API error:', error);
+        console.error('Google Maps Geocoding error:', error);
         return null;
     }
 }
@@ -1941,26 +2031,26 @@ async function getBarangayFromNominatim(lat, lng) {
     }
 }
 
-// ===== GET BARANGAY WITH FALLBACK (GeoRisk first, then Nominatim) =====
+// ===== GET BARANGAY WITH FALLBACK (Google Maps first, then Nominatim) =====
 async function getAccurateBarangay(lat, lng) {
-    // Try GeoRisk first (more accurate)
+    // Google Maps muna (kapalit ng GeoRisk)
     let result = await getBarangayFromGeoRisk(lat, lng);
-    
+
     if (result && result.barangay) {
-        console.log(` GeoRisk success: ${result.barangay}`);
+        console.log(` Google Maps success: ${result.barangay}`);
         return result;
     }
-    
-    // Fallback to Nominatim
-    console.log(' GeoRisk failed, trying Nominatim...');
+
+    // Fallback sa Nominatim
+    console.log(' Google Maps failed, trying Nominatim...');
     result = await getBarangayFromNominatim(lat, lng);
-    
+
     if (result && result.barangay) {
         console.log(` Nominatim success: ${result.barangay}`);
         return result;
     }
-    
-    console.log(' Both GeoRisk and Nominatim failed');
+
+    console.log(' Both Google Maps and Nominatim failed');
     return null;
 }
 

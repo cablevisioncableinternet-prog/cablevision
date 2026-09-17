@@ -17066,44 +17066,50 @@ def technician_napbox():
     return render_template("technician-napbox.html")
 
 # ===============================
-# HELPER: GET BOUNDARY FROM GEORISK (MUNICIPAL LEVEL)
+# HELPER: GET BOUNDARY (NOMINATIM-BASED, REPLACES GEORISK)
 # ===============================
 def get_municipal_boundary_from_georisk(city_name):
-    """Get municipal boundary GeoJSON from GeoRisk API"""
+    """Get municipal boundary GeoJSON using Nominatim (replaces GeoRisk)"""
     import requests
-    
+
     try:
-        georisk_url = "https://portal.georisk.gov.ph/arcgis/rest/services/PSA/Barangay/MapServer/4/query"
-        
-        query_params = {
-            "where": f"city_name = '{city_name.upper()}'",
-            "outFields": "city_name,brgy_name,prov_name",
-            "returnGeometry": "true",
-            "f": "geojson",
-            "outSR": "4326"
-        }
-        
-        response = requests.get(georisk_url, params=query_params, timeout=15)
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            if data.get("features") and len(data["features"]) > 0:
-                combined = {
-                    "type": "FeatureCollection",
-                    "features": data["features"]
-                }
-                print(f" Got municipal boundary for {city_name} with {len(data['features'])} barangays")
-                return combined
-            else:
-                print(f" No boundary data found for {city_name}")
-                return None
-        else:
-            print(f" GeoRisk API error: {response.status_code}")
+        query = f"{city_name}, Laguna, Philippines"
+        url = "https://nominatim.openstreetmap.org/search"
+
+        response = requests.get(
+            url,
+            params={
+                "q": query,
+                "format": "json",
+                "limit": 1,
+                "polygon_geojson": 1,
+            },
+            headers={"User-Agent": "CableVision-Technician/1.0"},
+            timeout=15,
+        )
+
+        if response.status_code != 200:
+            print(f" Nominatim boundary error: {response.status_code}")
             return None
-            
+
+        data = response.json()
+
+        if data and len(data) > 0 and data[0].get("geojson"):
+            print(f" Got boundary for {city_name} via Nominatim")
+            return {
+                "type": "FeatureCollection",
+                "features": [{
+                    "type": "Feature",
+                    "geometry": data[0]["geojson"],
+                    "properties": {"name": city_name}
+                }]
+            }
+
+        print(f" No boundary found for {city_name}")
+        return None
+
     except Exception as e:
-        print(f"Error getting boundary from GeoRisk: {e}")
+        print(f"Error getting boundary: {e}")
         return None
 
 # ===============================
