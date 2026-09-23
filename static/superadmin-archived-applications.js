@@ -487,7 +487,6 @@ function renderArchivedApplications(data) {
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
             <td>${fullName}</td>
-            <td>${app.email || ""}</td>
             <td>${formattedDateTime}</td>
             <td>${app.barangay || "N/A"}</td>
             <td>${app.city || "N/A"}</td>

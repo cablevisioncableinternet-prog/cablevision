@@ -314,7 +314,7 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
     if (!adminUsername) {
         console.error("No admin username found");
         if (tableBody) {
-            tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">Please login again. Admin username not found.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Please login again. Admin username not found.</td></tr>`;
         }
         return;
     }
@@ -343,7 +343,7 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
         let data = await res.json();
 
         if (!res.ok) {
-            tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">${data.error}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">${data.error}</td></tr>`;
             return;
         }
 
@@ -360,7 +360,7 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
 
     } catch (err) {
         console.error(err);
-        tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">Server error</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">Server error</td></tr>`;
     } finally {
         if (!silent) loading.style.display = "none";
         isManualRefresh = false;
@@ -467,7 +467,6 @@ function renderTable(data) {
             <td>${app.application_number || "N/A"}</td>
             <td><span class="contract-number">${contractNumber}</span></td>
             <td>${app.first_name || ""} ${app.last_name || ""}</td>
-            <td>${email}</td>
             <td>${plan}</td>
             <td>${speed}</td>
             <td><span class="status-badge status-approved">Approved</span></td>
