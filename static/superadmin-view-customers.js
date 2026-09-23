@@ -263,7 +263,7 @@ function showLoading() {
     } else {
         const tbody = document.getElementById("approvedCustomersBody");
         if (tbody) {
-            tbody.innerHTML = `<tr class="loading-row"><td colspan="9"><div class="loading-container"><div class="spinner"></div><p>Loading customers...</p></div></td>`;
+            tbody.innerHTML = `<tr class="loading-row"><td colspan="8"><div class="loading-container"><div class="spinner"></div><p>Loading customers...</p></div></td>`;
         }
     }
     if (noDataEl) noDataEl.style.display = "none";
@@ -540,7 +540,6 @@ function renderApprovedCustomers(data) {
             <td>${app.application_number || "N/A"}</td>
             <td><span class="contract-number">${escapeHtml(contractNumber)}</span></td>
             <td>${escapeHtml(toProperCase(app.first_name))} ${escapeHtml(toProperCase(app.last_name))}</td>
-            <td>${escapeHtml(app.email || "")}</td>
             <td>${escapeHtml(app.plan || "N/A")}</td>
             <td>${escapeHtml(app.plan_speed || "N/A")}</td>
             <td><span class="status-badge ${appStatusBadgeClass}">${appStatusText}</span></td>

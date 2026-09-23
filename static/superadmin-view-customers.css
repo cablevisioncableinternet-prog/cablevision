@@ -883,7 +883,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.85rem;
-  min-width: 1300px;
+  min-width: 1180px;
 }
 
 th {
@@ -1920,7 +1920,7 @@ tbody tr:last-child td {
   .sidebar-brand h2 { font-size: 18px; }
   .sidebar-brand p { font-size: 9px; }
   .sidebar-menu li a { font-size: 12px; padding: 8px 12px; }
-  table { min-width: 1100px; }
+  table { min-width: 1000px; }
 }
 
 /* Medium screens (768px - 991px) */
@@ -1951,7 +1951,7 @@ tbody tr:last-child td {
   .card-body { padding: 16px 18px 18px 18px; }
   .filter-section { flex-direction: column; align-items: stretch; }
   .filter-group { justify-content: space-between; }
-  table { min-width: 900px; }
+  table { min-width: 820px; }
   th, td { padding: 10px 12px; }
   th { font-size: 0.7rem; }
   td { font-size: 0.75rem; }
@@ -2033,7 +2033,7 @@ tbody tr:last-child td {
   .filter-select { width: 100%; }
   .stats-badge { text-align: center; }
   
-  table { min-width: 800px; }
+  table { min-width: 720px; }
   th, td { padding: 8px 10px; }
   th { font-size: 0.65rem; }
   td { font-size: 0.7rem; }
@@ -2069,7 +2069,7 @@ tbody tr:last-child td {
   .header-subtitle { font-size: 0.7rem; }
   .card-body { padding: 10px 12px 12px 12px; }
   
-  table { min-width: 700px; }
+  table { min-width: 640px; }
   th, td { padding: 6px 8px; font-size: 0.6rem; }
   
   .profile-dropdown .profile-icon { width: 24px; height: 24px; }

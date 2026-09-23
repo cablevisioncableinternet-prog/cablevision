@@ -579,7 +579,6 @@ function renderApplications(data) {
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
             <td>${fullName}</td>
-            <td>${email}</td>
             <td>${formattedDateTime}</td>
             <td>${barangay}</td>
             <td>${city}</td>
@@ -679,7 +678,6 @@ function renderRejectedApplications(data) {
         row.innerHTML = `
             <td>${app.application_number || "N/A"}</td>
             <td>${fullName}</td>
-            <td>${email}</td>
             <td>${formattedDateSubmitted}</td>
             <td>${barangay}</td>
             <td>${city}</td>
