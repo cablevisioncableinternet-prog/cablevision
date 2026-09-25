@@ -1430,7 +1430,7 @@ function renderTotalCustomers(data){
 // ==================== FETCH ACTIVE APPLICATIONS COUNT ====================
 async function fetchActiveApplicationsCount(){
     try {
-        const res = await fetch("/api/superadmin/applications?limit=1000");
+        const res = await fetch("/api/superadmin/applications?limit=1000&include_archived=true");
         if(!res.ok) throw new Error("Failed to fetch applications");
         const applications = await res.json();
         
