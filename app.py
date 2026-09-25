@@ -5611,8 +5611,8 @@ def reject_reconnect_request(request_id):
 @app.route("/api/superadmin/statistics", methods=["GET"])
 def superadmin_statistics():
     try:
-        # ========== GET APPLICATIONS COUNT ==========
-        # Count total applications (excluding rejected? keep original logic)
+        # ========== GET APPLICATIONS COUNT (INCLUDING ARCHIVED) ==========
+        # Count ALL applications regardless of is_archived status
         apps_query = "SELECT COUNT(*) as total FROM applications"
         apps_result = execute_query(apps_query, fetch_one=True)
         total_applicants = apps_result['total'] if apps_result else 0
