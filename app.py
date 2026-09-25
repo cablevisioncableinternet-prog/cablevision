@@ -5604,44 +5604,7 @@ def reject_reconnect_request(request_id):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
-# ===============================
-# GET APPLICATIONS COUNT (INCLUDING ARCHIVED)
-# ===============================
-@app.route("/api/superadmin/applications-count", methods=["GET"])
-def superadmin_applications_count():
-    try:
-        city_filter = request.args.get("city", "")
 
-        # ✅ Count ALL applications (including archived)
-        query = """
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN DATE(date_submitted) = CURDATE() THEN 1 ELSE 0 END) as today,
-                SUM(CASE WHEN date_submitted >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as week,
-                SUM(CASE WHEN date_submitted >= DATE_FORMAT(CURDATE(), '%Y-%m-01') THEN 1 ELSE 0 END) as month
-            FROM applications
-            WHERE 1 = 1
-        """
-        params = []
-
-        if city_filter and city_filter.lower() != "all":
-            query += " AND city = %s"
-            params.append(city_filter)
-
-        result = execute_query(query, tuple(params), fetch_one=True) or {}
-
-        return jsonify({
-            "total": int(result.get("total", 0) or 0),
-            "today": int(result.get("today", 0) or 0),
-            "week": int(result.get("week", 0) or 0),
-            "month": int(result.get("month", 0) or 0)
-        })
-
-    except Exception as e:
-        print(f"Error in superadmin_applications_count: {e}")
-        return jsonify({"error": str(e)}), 500
-
-        
 # ===============================
 # GLOBAL STATISTICS - CONVERTED TO MYSQL
 # ===============================
