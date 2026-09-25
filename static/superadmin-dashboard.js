@@ -884,7 +884,8 @@ function renderStatistics(data){
 
     const totalApplicantsSpan = document.getElementById("totalApplicants");
     
-    if(totalApplicantsSpan) totalApplicantsSpan.textContent = data.total_active_applicants || data.total_applicants || 0;
+    // ✅ Use total_applicants to include ALL statuses (Cancelled, Terminated, Rejected)
+    if(totalApplicantsSpan) totalApplicantsSpan.textContent = data.total_applicants || data.total_active_applicants || 0;
 
     // ❌ Removed: totalAdmins update (element deleted)
     // ❌ Removed: popularPlans update (element deleted)
@@ -1444,8 +1445,9 @@ async function fetchActiveApplicationsCount(){
             appsArray = Object.values(applications).find(val => Array.isArray(val)) || [];
         }
 
-        const activeApplications = appsArray.filter(app => app.status !== "Rejected");
-        const activeCount = activeApplications.length;
+        // ✅ COUNT ALL APPLICATIONS (including Cancelled, Terminated, Rejected)
+        const allApplications = appsArray;
+        const activeCount = allApplications.length;
 
         const totalApplicantsSpan = document.getElementById("totalApplicants");
         if(totalApplicantsSpan) totalApplicantsSpan.textContent = activeCount;
@@ -1457,7 +1459,7 @@ async function fetchActiveApplicationsCount(){
 
         let todayCount = 0, weekCount = 0, monthCount = 0;
 
-        activeApplications.forEach(app => {
+        allApplications.forEach(app => {
             let createdDate = null;
             
             if (app.date_submitted) {

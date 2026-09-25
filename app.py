@@ -5653,11 +5653,10 @@ def superadmin_statistics():
         for row in coverage_result:
             coverage_growth[row['city']] = row['count']
         
-        # ========== GET TOTAL ACTIVE APPLICANTS (non-rejected) - optional ==========
+        # ========== GET TOTAL ACTIVE APPLICANTS (ALL STATUSES) ==========
         active_applicants_query = """
             SELECT COUNT(*) as total 
-            FROM applications 
-            WHERE status != 'Rejected'
+            FROM applications
         """
         active_applicants_result = execute_query(active_applicants_query, fetch_one=True)
         total_active_applicants = active_applicants_result['total'] if active_applicants_result else 0
