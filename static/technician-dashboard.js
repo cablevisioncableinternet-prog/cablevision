@@ -519,7 +519,7 @@ function updateDistributionChart() {
 }
 
 
-// Update trend chart with 12-hour format
+// Update trend chart with 12-hour format - REDESIGNED
 async function updateTrendChart(filteredData, period) {
     let labels = [];
     let availableData = [];
@@ -529,7 +529,6 @@ async function updateTrendChart(filteredData, period) {
     
     switch(period) {
         case 'all-months':
-            // Show all 12 months with aggregated data
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const currentYear = now.getFullYear();
             
@@ -556,7 +555,6 @@ async function updateTrendChart(filteredData, period) {
             break;
             
         case 'day':
-            // Get 24-HOUR format data
             for (let i = 0; i <= 23; i++) {
                 let hourLabel = '';
                 let hourNum = i;
@@ -584,7 +582,6 @@ async function updateTrendChart(filteredData, period) {
             break;
             
         case 'week':
-            // Get daily data for this week
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const startOfWeek = new Date(now);
             startOfWeek.setDate(now.getDate() - now.getDay());
@@ -613,8 +610,6 @@ async function updateTrendChart(filteredData, period) {
             break;
             
         case 'month':
-            // Get daily data for the selected month (from filteredData)
-            // Get the month from the first item or use current month
             let monthToShow = now.getMonth();
             if (filteredData.length > 0) {
                 const firstDate = new Date(filteredData[0].updated_at || filteredData[0].created_at);
@@ -646,11 +641,9 @@ async function updateTrendChart(filteredData, period) {
             break;
     }
     
-    
     const trendCanvas = document.getElementById('trendChart');
     const trendLoading = document.getElementById('trendChartLoading');
     
-    // Show skeleton bago mag-render
     if (trendLoading) trendLoading.style.display = 'flex';
     if (trendCanvas) trendCanvas.style.display = 'none';
     
@@ -659,46 +652,134 @@ async function updateTrendChart(filteredData, period) {
     if (trendChart) {
         trendChart.destroy();
     }
+
+    // ============================================================
+    // ✅ AUTO-OFFSET — paghiwalayin kapag pareho ang Available at Occupied
+    // ============================================================
+    const maxValue = Math.max(...availableData, ...occupiedData, 1);
+    const OFFSET = Math.max(maxValue * 0.04, 0.2);
+
+    const displayAvailableData = availableData.map((val, i) => {
+        if (val === occupiedData[i] && val > 0) {
+            return val + OFFSET;
+        }
+        return val;
+    });
+
+    const displayOccupiedData = occupiedData.map((val, i) => {
+        if (val === availableData[i] && val > 0) {
+            return Math.max(val - OFFSET, 0);
+        }
+        return val;
+    });
+
+    // ============================================================
+    // ✅ GRADIENT FILLS — modern look
+    // ============================================================
+    const availGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    availGradient.addColorStop(0, "rgba(37, 99, 235, 0.22)");
+    availGradient.addColorStop(0.6, "rgba(37, 99, 235, 0.04)");
+    availGradient.addColorStop(1, "rgba(37, 99, 235, 0.00)");
+
+    const occGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    occGradient.addColorStop(0, "rgba(239, 68, 68, 0.22)");
+    occGradient.addColorStop(0.6, "rgba(239, 68, 68, 0.04)");
+    occGradient.addColorStop(1, "rgba(239, 68, 68, 0.00)");
+
+    // ============================================================
+    // ✅ SOFT DROP SHADOW PLUGIN
+    // ============================================================
+    const softShadowPlugin = {
+        id: 'softShadow',
+        beforeDatasetDraw(chart, args) {
+            const ds = chart.data.datasets[args.index];
+            if (ds && ds._shadow) {
+                chart.ctx.save();
+                chart.ctx.shadowColor = ds._shadow.color;
+                chart.ctx.shadowBlur = ds._shadow.blur;
+                chart.ctx.shadowOffsetX = 0;
+                chart.ctx.shadowOffsetY = ds._shadow.y;
+            }
+        },
+        afterDatasetDraw(chart, args) {
+            const ds = chart.data.datasets[args.index];
+            if (ds && ds._shadow) {
+                chart.ctx.restore();
+            }
+        }
+    };
     
     trendChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [
-                {
-                    label: 'Available Slots',
-                    data: availableData,
-                    borderColor: '#0b3d91',
-                    backgroundColor: 'rgba(11, 61, 145, 0.12)',
-                    borderWidth: 3,
-                    tension: 0.25,
-                    fill: false,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointHitRadius: 12,
-                    pointStyle: 'circle',
-                    pointBackgroundColor: '#0b3d91',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
-                },
+                // ====================================================
+                // OCCUPIED SLOTS — RED DASHED (nasa likod)
+                // ====================================================
                 {
                     label: 'Occupied Slots',
-                    data: occupiedData,
+                    data: displayOccupiedData,
+                    _originalData: occupiedData,
                     borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    backgroundColor: occGradient,
                     borderWidth: 3,
-                    tension: 0.25,
-                    fill: false,
+                    tension: 0.45,
+                    fill: true,
                     pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointHitRadius: 12,
+                    pointHoverRadius: 10,
+                    pointHitRadius: 22,
+                    pointStyle: 'rectRounded',
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#ef4444',
+                    pointBorderWidth: 3,
+                    pointHoverBackgroundColor: '#ef4444',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 3,
+                    borderDash: [9, 5],
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round',
+                    _shadow: {
+                        color: 'rgba(239, 68, 68, 0.20)',
+                        blur: 8,
+                        y: 2
+                    },
+                    order: 2
+                },
+                // ====================================================
+                // AVAILABLE SLOTS — BLUE SOLID (nasa harap)
+                // ====================================================
+                {
+                    label: 'Available Slots',
+                    data: displayAvailableData,
+                    _originalData: availableData,
+                    borderColor: '#2563eb',
+                    backgroundColor: availGradient,
+                    borderWidth: 3,
+                    tension: 0.45,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 10,
+                    pointHitRadius: 22,
                     pointStyle: 'circle',
-                    pointBackgroundColor: '#ef4444',
+                    pointBackgroundColor: '#2563eb',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
+                    pointBorderWidth: 3,
+                    pointHoverBackgroundColor: '#ffffff',
+                    pointHoverBorderColor: '#2563eb',
+                    pointHoverBorderWidth: 3,
+                    borderCapStyle: 'round',
+                    borderJoinStyle: 'round',
+                    _shadow: {
+                        color: 'rgba(37, 99, 235, 0.25)',
+                        blur: 10,
+                        y: 3
+                    },
+                    order: 1
                 }
             ]
         },
+        plugins: [softShadowPlugin],
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -707,29 +788,39 @@ async function updateTrendChart(filteredData, period) {
                 intersect: false
             },
             layout: {
-                padding: { top: 16, right: 16, bottom: 8, left: 16 }
+                padding: { top: 20, right: 20, bottom: 8, left: 8 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    border: { color: '#1f2937', width: 1.5 },
-                    grid: { color: 'rgba(15, 23, 42, 0.18)', drawBorder: true },
+                    grace: '8%',
+                    border: { display: false },
+                    grid: {
+                        color: 'rgba(15, 23, 42, 0.06)',
+                        drawTicks: false,
+                        lineWidth: 1
+                    },
                     ticks: {
                         precision: 0,
+                        padding: 14,
                         callback: function(value) {
                             if (Number.isInteger(value)) return value;
                             return Math.round(value);
                         },
-                        font: { size: 11, weight: '700', family: 'Inter, sans-serif' },
-                        color: '#1f2937'
+                        font: { size: 11, weight: '600', family: 'Inter, sans-serif' },
+                        color: '#94a3b8'
                     }
                 },
                 x: {
-                    border: { color: '#1f2937', width: 1.5 },
-                    grid: { color: 'rgba(15, 23, 42, 0.18)', drawBorder: true },
+                    border: { display: false },
+                    grid: {
+                        color: 'rgba(15, 23, 42, 0.04)',
+                        drawTicks: false
+                    },
                     ticks: {
-                        font: { size: 11, weight: '700', family: 'Inter, sans-serif' },
-                        color: '#1f2937'
+                        padding: 10,
+                        font: { size: 11, weight: '600', family: 'Inter, sans-serif' },
+                        color: '#94a3b8'
                     }
                 }
             },
@@ -741,33 +832,60 @@ async function updateTrendChart(filteredData, period) {
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        boxWidth: 32,
-                        boxHeight: 10,
-                        padding: 18,
-                        color: '#111827',
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                        borderColor: '#111827',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        font: { size: 12, weight: '700', family: 'Inter, sans-serif' }
+                        boxWidth: 8,
+                        boxHeight: 8,
+                        padding: 20,
+                        color: '#334155',
+                        font: { size: 12, weight: '700', family: 'Inter, sans-serif' },
+                        generateLabels: function(chart) {
+                            const datasets = chart.data.datasets;
+                            return datasets.map((ds, i) => {
+                                const isDashed = Array.isArray(ds.borderDash) && ds.borderDash.length > 0;
+                                return {
+                                    text: ds.label,
+                                    fillStyle: ds.borderColor,
+                                    strokeStyle: ds.borderColor,
+                                    lineWidth: 2,
+                                    lineDash: isDashed ? ds.borderDash : [],
+                                    pointStyle: isDashed ? 'line' : 'circle',
+                                    hidden: !chart.isDatasetVisible(i),
+                                    datasetIndex: i
+                                };
+                            });
+                        }
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                    titleColor: '#ffffff',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#94a3b8',
                     bodyColor: '#ffffff',
-                    padding: 12,
-                    cornerRadius: 10,
+                    padding: 14,
+                    cornerRadius: 12,
+                    boxPadding: 8,
+                    usePointStyle: true,
+                    titleFont: { size: 11, weight: '700', family: 'Inter, sans-serif' },
+                    bodyFont: { size: 13, weight: '600', family: 'Inter, sans-serif' },
                     callbacks: {
+                        title: function(items) {
+                            return items[0].label;
+                        },
                         label: function(context) {
-                            return ` ${context.dataset.label}: ${context.parsed.y.toLocaleString()}`;
+                            const original = context.dataset._originalData 
+                                ? context.dataset._originalData[context.dataIndex] 
+                                : context.parsed.y;
+                            return `  ${context.dataset.label}: ${original.toLocaleString()}`;
                         }
                     }
                 }
             },
             animation: {
-                duration: 1000,
+                duration: 1200,
                 easing: 'easeOutQuart'
+            },
+            elements: {
+                line: {
+                    cubicInterpolationMode: 'monotone'
+                }
             }
         }
     });

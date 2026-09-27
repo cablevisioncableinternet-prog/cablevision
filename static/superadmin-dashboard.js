@@ -612,7 +612,7 @@ async function loadSuperadminGrowthChart(selectedMonth = "all", selectedYear = S
     loading.style.display = "flex";
     canvas.style.display = "none";
     
-    // Restore skeleton HTML (in case na-override ng previous "No data" message)
+    // Restore skeleton HTML
     loading.innerHTML = `
         <div class="chart-skeleton chart-skeleton-line">
             <div class="skeleton-line-chart">
@@ -716,46 +716,137 @@ async function loadSuperadminGrowthChart(selectedMonth = "all", selectedYear = S
             superadminTrendChart.destroy();
         }
 
+        // ============================================================
+        // ✅ AUTO-OFFSET — paghiwalayin kapag same total
+        // ============================================================
+        const maxValue = Math.max(...appData, ...customerData, 1);
+        const OFFSET = Math.max(maxValue * 0.04, 0.2);
+
+        const displayAppData = appData.map((val, i) => {
+            // Kapag same at may value, i-offset pataas ang Apps
+            if (val === customerData[i] && val > 0) {
+                return val + OFFSET;
+            }
+            return val;
+        });
+
+        const displayCustomerData = customerData.map((val, i) => {
+            // Kapag same at may value, i-offset pababa ang Subs
+            if (val === appData[i] && val > 0) {
+                return Math.max(val - OFFSET, 0);
+            }
+            return val;
+        });
+
         const ctx = canvas.getContext("2d");
+
+        // ============================================================
+        // ✅ GRADIENT FILLS — modern look
+        // ============================================================
+        const appGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        appGradient.addColorStop(0, "rgba(37, 99, 235, 0.22)");
+        appGradient.addColorStop(0.6, "rgba(37, 99, 235, 0.04)");
+        appGradient.addColorStop(1, "rgba(37, 99, 235, 0.00)");
+
+        const subGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        subGradient.addColorStop(0, "rgba(13, 148, 136, 0.22)");
+        subGradient.addColorStop(0.6, "rgba(13, 148, 136, 0.04)");
+        subGradient.addColorStop(1, "rgba(13, 148, 136, 0.00)");
+
+        // ============================================================
+        // ✅ SOFT DROP SHADOW PLUGIN — separation kahit mag-overlap
+        // ============================================================
+        const softShadowPlugin = {
+            id: 'softShadow',
+            beforeDatasetDraw(chart, args) {
+                const ds = chart.data.datasets[args.index];
+                if (ds && ds._shadow) {
+                    chart.ctx.save();
+                    chart.ctx.shadowColor = ds._shadow.color;
+                    chart.ctx.shadowBlur = ds._shadow.blur;
+                    chart.ctx.shadowOffsetX = 0;
+                    chart.ctx.shadowOffsetY = ds._shadow.y;
+                }
+            },
+            afterDatasetDraw(chart, args) {
+                const ds = chart.data.datasets[args.index];
+                if (ds && ds._shadow) {
+                    chart.ctx.restore();
+                }
+            }
+        };
+
         superadminTrendChart = new Chart(ctx, {
             type: "line",
             data: {
                 labels,
                 datasets: [
-                    {
-                        label: "Applications",
-                        data: appData,
-                        borderColor: "#0b3d91",
-                        backgroundColor: "rgba(11, 61, 145, 0.12)",
-                        borderWidth: 3,
-                        tension: 0.25,
-                        fill: false,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        pointHitRadius: 12,
-                        pointStyle: "circle",
-                        pointBackgroundColor: "#0b3d91",
-                        pointBorderColor: "#ffffff",
-                        pointBorderWidth: 2
-                    },
+                    // ====================================================
+                    // SUBSCRIBERS — TEAL DASHED (nasa likod para kita ang blue)
+                    // ====================================================
                     {
                         label: "Subscribers",
-                        data: customerData,
-                        borderColor: "#0f766e",
-                        backgroundColor: "rgba(15, 118, 110, 0.12)",
+                        data: displayCustomerData,
+                        _originalData: customerData,
+                        borderColor: "#0d9488",
+                        backgroundColor: subGradient,
                         borderWidth: 3,
-                        tension: 0.25,
-                        fill: false,
+                        tension: 0.45,
+                        fill: true,
                         pointRadius: 5,
-                        pointHoverRadius: 7,
-                        pointHitRadius: 12,
+                        pointHoverRadius: 10,
+                        pointHitRadius: 22,
+                        pointStyle: "rectRounded",
+                        pointBackgroundColor: "#ffffff",
+                        pointBorderColor: "#0d9488",
+                        pointBorderWidth: 3,
+                        pointHoverBackgroundColor: "#0d9488",
+                        pointHoverBorderColor: "#ffffff",
+                        pointHoverBorderWidth: 3,
+                        borderDash: [9, 5],
+                        borderCapStyle: "round",
+                        borderJoinStyle: "round",
+                        _shadow: {
+                            color: "rgba(13, 148, 136, 0.20)",
+                            blur: 8,
+                            y: 2
+                        },
+                        order: 2
+                    },
+                    // ====================================================
+                    // APPLICATIONS — BLUE SOLID (nasa harap)
+                    // ====================================================
+                    {
+                        label: "Applications",
+                        data: displayAppData,
+                        _originalData: appData,
+                        borderColor: "#2563eb",
+                        backgroundColor: appGradient,
+                        borderWidth: 3,
+                        tension: 0.45,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 10,
+                        pointHitRadius: 22,
                         pointStyle: "circle",
-                        pointBackgroundColor: "#0f766e",
+                        pointBackgroundColor: "#2563eb",
                         pointBorderColor: "#ffffff",
-                        pointBorderWidth: 2
+                        pointBorderWidth: 3,
+                        pointHoverBackgroundColor: "#ffffff",
+                        pointHoverBorderColor: "#2563eb",
+                        pointHoverBorderWidth: 3,
+                        borderCapStyle: "round",
+                        borderJoinStyle: "round",
+                        _shadow: {
+                            color: "rgba(37, 99, 235, 0.25)",
+                            blur: 10,
+                            y: 3
+                        },
+                        order: 1
                     }
                 ]
             },
+            plugins: [softShadowPlugin],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -764,29 +855,39 @@ async function loadSuperadminGrowthChart(selectedMonth = "all", selectedYear = S
                     intersect: false
                 },
                 layout: {
-                    padding: { top: 16, right: 16, bottom: 8, left: 16 }
+                    padding: { top: 20, right: 20, bottom: 8, left: 8 }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        border: { color: "#1f2937", width: 1.5 },
-                        grid: { color: "rgba(15, 23, 42, 0.18)", drawBorder: true },
+                        grace: '8%',
+                        border: { display: false },
+                        grid: {
+                            color: "rgba(15, 23, 42, 0.06)",
+                            drawTicks: false,
+                            lineWidth: 1
+                        },
                         ticks: {
                             precision: 0,
+                            padding: 14,
                             callback: function(value) {
                                 if (Number.isInteger(value)) return value;
                                 return Math.round(value);
                             },
-                            font: { size: 11, weight: "700", family: "Inter, sans-serif" },
-                            color: "#1f2937"
+                            font: { size: 11, weight: "600", family: "Inter, sans-serif" },
+                            color: "#94a3b8"
                         }
                     },
                     x: {
-                        border: { color: "#1f2937", width: 1.5 },
-                        grid: { color: "rgba(15, 23, 42, 0.18)", drawBorder: true },
+                        border: { display: false },
+                        grid: {
+                            color: "rgba(15, 23, 42, 0.04)",
+                            drawTicks: false
+                        },
                         ticks: {
-                            font: { size: 11, weight: "700", family: "Inter, sans-serif" },
-                            color: "#1f2937"
+                            padding: 10,
+                            font: { size: 11, weight: "600", family: "Inter, sans-serif" },
+                            color: "#94a3b8"
                         }
                     }
                 },
@@ -798,34 +899,61 @@ async function loadSuperadminGrowthChart(selectedMonth = "all", selectedYear = S
                         labels: {
                             usePointStyle: true,
                             pointStyle: "circle",
-                            boxWidth: 32,
-                            boxHeight: 10,
-                            padding: 18,
-                            color: "#111827",
-                            backgroundColor: "rgba(255,255,255,0.9)",
-                            borderColor: "#111827",
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            font: { size: 12, weight: "700", family: "Inter, sans-serif" }
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            padding: 20,
+                            color: "#334155",
+                            font: { size: 12, weight: "700", family: "Inter, sans-serif" },
+                            generateLabels: function(chart) {
+                                const datasets = chart.data.datasets;
+                                return datasets.map((ds, i) => {
+                                    const isDashed = Array.isArray(ds.borderDash) && ds.borderDash.length > 0;
+                                    return {
+                                        text: ds.label,
+                                        fillStyle: ds.borderColor,
+                                        strokeStyle: ds.borderColor,
+                                        lineWidth: 2,
+                                        lineDash: isDashed ? ds.borderDash : [],
+                                        pointStyle: isDashed ? "line" : "circle",
+                                        hidden: !chart.isDatasetVisible(i),
+                                        datasetIndex: i
+                                    };
+                                });
+                            }
                         }
                     },
                     tooltip: {
-                        backgroundColor: "rgba(15, 23, 42, 0.92)",
-                        titleColor: "#ffffff",
+                        backgroundColor: "rgba(15, 23, 42, 0.95)",
+                        titleColor: "#94a3b8",
                         bodyColor: "#ffffff",
-                        padding: 12,
-                        cornerRadius: 10,
+                        padding: 14,
+                        cornerRadius: 12,
+                        boxPadding: 8,
+                        usePointStyle: true,
+                        titleFont: { size: 11, weight: "700", family: "Inter, sans-serif" },
+                        bodyFont: { size: 13, weight: "600", family: "Inter, sans-serif" },
                         callbacks: {
+                            title: function(items) {
+                                return items[0].label;
+                            },
                             label: function(context) {
                                 const label = context.dataset.label === "Customers" ? "Subscribers" : context.dataset.label;
-                                return ` ${label}: ${context.parsed.y.toLocaleString()}`;
+                                const original = context.dataset._originalData 
+                                    ? context.dataset._originalData[context.dataIndex] 
+                                    : context.parsed.y;
+                                return `  ${label}: ${original.toLocaleString()}`;
                             }
                         }
                     }
                 },
                 animation: {
-                    duration: 1000,
+                    duration: 1200,
                     easing: "easeOutQuart"
+                },
+                elements: {
+                    line: {
+                        cubicInterpolationMode: "monotone"
+                    }
                 }
             }
         });
@@ -1133,6 +1261,7 @@ function renderPlanChart({ labels = [], values = [] } = {}) {
 
 // ==================== INSTALLATION STATUS CHART ====================
 let installationChart = null;
+let installationChartMode = "subscribers";
 
 const totalCenterPlugin = {
     id: 'totalCenterPlugin',
@@ -1153,7 +1282,7 @@ const totalCenterPlugin = {
 
         ctx.font = '500 11px "Inter", sans-serif';
         ctx.fillStyle = '#64748b';
-        ctx.fillText('Applications', centerX, centerY + 16);
+        ctx.fillText(installationChartMode === "applications" ? 'Applications' : 'Subscribers', centerX, centerY + 16);
         ctx.restore();
     }
 };
@@ -1198,7 +1327,9 @@ function renderInstallationChart(data){
     const dateRange = data.date_range || {};
     
     // ✅ I-CONTROL ANG ORDER NG STATUSES
-    const orderedStatuses = ["Pending", "Ongoing", "Installed", "Cancelled", "Terminated"];
+    const orderedStatuses = installationChartMode === "applications"
+        ? ["Pending", "Approved", "Rejected"]
+        : ["Pending", "Ongoing", "Installed", "Cancelled", "Terminated"];
     
     // ✅ KUNIN ANG LABELS AT COUNTS BASE SA ORDERED STATUSES
     const labels = orderedStatuses;
@@ -1211,10 +1342,10 @@ function renderInstallationChart(data){
             noData.style.display = "block";
             let message = "";
             if (areaName !== "All Areas") {
-                message = `<i class="fas fa-info-circle"></i><br>No installation data available for ${areaName}.<br>
+                message = `<i class="fas fa-info-circle"></i><br>No ${installationChartMode === "applications" ? "application" : "installation"} data available for ${areaName}.<br>
                           <small style="font-size: 11px;">Try selecting a different area or date range.</small>`;
             } else {
-                message = `<i class="fas fa-info-circle"></i><br>No installation data available.<br>
+                message = `<i class="fas fa-info-circle"></i><br>No ${installationChartMode === "applications" ? "application" : "installation"} data available.<br>
                           <small style="font-size: 11px;">Try adjusting your date filters.</small>`;
             }
             noData.innerHTML = message;
@@ -1236,7 +1367,9 @@ function renderInstallationChart(data){
             "Ongoing": "#0284c7",      // Sky Blue
             "Installed": "#10b981",    // Green
             "Cancelled": "#ef4444",    // Red
-            "Terminated": "#6b7280"    // Gray
+            "Terminated": "#6b7280",   // Gray
+            "Approved": "#10b981",
+            "Rejected": "#ef4444"
         };
         
         const backgroundColors = labels.map(label => statusColors[label] || "#94a3b8");
@@ -1301,6 +1434,11 @@ function renderInstallationChart(data){
 }
 
 function loadInstallationStatusChart(startDate = "", endDate = "", area = ""){
+    if (installationChartMode === "applications") {
+        loadApplicationStatusChart(startDate, endDate, area);
+        return;
+    }
+
     let url = "/api/superadmin/installation-summary";
     const params = new URLSearchParams();
     
@@ -1354,6 +1492,75 @@ function loadInstallationStatusChart(startDate = "", endDate = "", area = ""){
         renderCallback: renderInstallationChart,
         showLoading: loadingIndicator,
         initialLoad: true
+    });
+}
+
+function loadApplicationStatusChart(startDate = "", endDate = "", area = "") {
+    const params = new URLSearchParams({ limit: "1000" });
+    if (area && area !== "all") params.set("city", area);
+
+    const loadingIndicator = document.getElementById("installationLoading");
+    if (loadingIndicator) loadingIndicator.style.display = "flex";
+
+    fetchWithCacheAndUpdate({
+        cacheKey: `application_status_${startDate}_${endDate}_${area}`,
+        url: `/api/superadmin/applications?${params.toString()}`,
+        ttl: 5,
+        renderCallback: applications => {
+            const summary = { Pending: 0, Approved: 0, Rejected: 0 };
+            const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+            const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+            (Array.isArray(applications) ? applications : []).forEach(application => {
+                const status = String(application.status || "").trim().toLowerCase();
+                const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+                if (!Object.prototype.hasOwnProperty.call(summary, statusLabel)) return;
+
+                const submitted = parseSuperadminTrendDate(application.date_submitted);
+                if ((start || end) && !submitted) return;
+                if (start && submitted < start) return;
+                if (end && submitted > end) return;
+                summary[statusLabel] += 1;
+            });
+
+            renderInstallationChart({
+                installation_summary: summary,
+                area: area && area !== "all" ? area : "All Areas",
+                total_matched: Object.values(summary).reduce((total, count) => total + count, 0)
+            });
+        },
+        showLoading: loadingIndicator,
+        initialLoad: true
+    });
+}
+
+function initInstallationChartMode() {
+    const modeButtons = [
+        [document.getElementById("applicationsChartBtn"), "applications"],
+        [document.getElementById("subscribersChartBtn"), "subscribers"]
+    ];
+
+    modeButtons.forEach(([button, mode]) => {
+        if (!button) return;
+        button.addEventListener("click", () => {
+            if (installationChartMode === mode) return;
+            installationChartMode = mode;
+            const exportButton = document.getElementById("superadminExportBtn");
+            if (exportButton) exportButton.style.display = mode === "applications" ? "none" : "";
+
+            modeButtons.forEach(([modeButton, buttonMode]) => {
+                if (!modeButton) return;
+                const isActive = buttonMode === mode;
+                modeButton.classList.toggle("active", isActive);
+                modeButton.setAttribute("aria-pressed", String(isActive));
+            });
+
+            loadInstallationStatusChart(
+                document.getElementById("startDate")?.value || "",
+                document.getElementById("endDate")?.value || "",
+                document.getElementById("areaFilter")?.value || ""
+            );
+        });
     });
 }
 
@@ -1657,6 +1864,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadInstallationStatusChart();
     await loadSuperadminGrowthChart("all", String(new Date().getFullYear()), "all");
     initFilterButton();
+    initInstallationChartMode();
     setupSuperadminExportButton();
     
     if (window.NotificationSystem) {

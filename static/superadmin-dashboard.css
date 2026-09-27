@@ -1277,6 +1277,39 @@ body {
   gap: 10px;
 }
 
+.chart-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.chart-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #475569;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chart-mode-btn.active {
+  background: #0047ab;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
 .header-icon {
   width: 40px;
   height: 40px;
@@ -1355,6 +1388,15 @@ body {
 @media (max-width: 640px) {
   .analytics-card-header {
     padding: 16px;
+  }
+
+  .analytics-card-header.installation-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .analytics-card-header.installation-header .header-buttons {
+    flex-wrap: wrap;
   }
 
   .analytics-card-body {
