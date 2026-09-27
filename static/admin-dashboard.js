@@ -562,6 +562,7 @@ async function loadAdminArea() {
 
 // ================= LOAD INSTALLATION CHART - WITH CANCELLED & TERMINATED =================
 let installationChart = null;
+let installationChartMode = "subscribers";
 
 const installationCenterPlugin = {
     id: 'installationCenterPlugin',
@@ -582,7 +583,7 @@ const installationCenterPlugin = {
 
         ctx.font = '500 11px "Inter", sans-serif';
         ctx.fillStyle = '#64748b';
-        ctx.fillText('Applications', centerX, centerY + 16);
+        ctx.fillText(installationChartMode === "applications" ? 'Applications' : 'Subscribers', centerX, centerY + 16);
         ctx.restore();
     }
 };
@@ -629,10 +630,38 @@ async function loadInstallationStatusChart(username, startDate = "", endDate = "
             url += `&start_date=${startDate}&end_date=${endDate}`;
         }
 
-        const response = await fetch(url);
-        const data = await response.json();
+        let data;
+        if (installationChartMode === "applications") {
+            const applicationsUrl = `/api/admin/internet-applications?username=${encodeURIComponent(username)}&tab_id=${encodeURIComponent(tabId)}`;
+            const response = await fetch(applicationsUrl);
+            if (!response.ok) throw new Error("Failed to fetch area applications");
 
-        // ✅ GAMITIN ANG LABELS AT VALUES KUNG MERON
+            const applications = await response.json();
+            const summary = { Pending: 0, Approved: 0, Rejected: 0 };
+            const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+            const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+            (Array.isArray(applications) ? applications : []).forEach(application => {
+                const status = String(application.status || "").trim().toLowerCase();
+                const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+                if (!Object.prototype.hasOwnProperty.call(summary, statusLabel)) return;
+
+                const submitted = parseTrendDate(application.date_submitted);
+                if ((start || end) && !submitted) return;
+                if (start && submitted < start) return;
+                if (end && submitted > end) return;
+                summary[statusLabel] += 1;
+            });
+
+            data = {
+                labels: ["Pending", "Approved", "Rejected"],
+                values: [summary.Pending, summary.Approved, summary.Rejected]
+            };
+        } else {
+            const response = await fetch(url);
+            data = await response.json();
+        }
+
         let labels = [];
         let counts = [];
         
@@ -642,7 +671,9 @@ async function loadInstallationStatusChart(username, startDate = "", endDate = "
         } else {
             // Fallback: gamitin ang installation_summary
             const summary = data.installation_summary || {};
-            const orderedStatuses = ["Pending", "Ongoing", "Installed", "Cancelled", "Terminated"];
+            const orderedStatuses = installationChartMode === "applications"
+                ? ["Pending", "Approved", "Rejected"]
+                : ["Pending", "Ongoing", "Installed", "Cancelled", "Terminated"];
             labels = orderedStatuses;
             counts = orderedStatuses.map(status => summary[status] || 0);
         }
@@ -655,7 +686,7 @@ async function loadInstallationStatusChart(username, startDate = "", endDate = "
             loading.innerHTML = `
                 <div style="text-align: center; padding: 40px 20px;">
                     <i class="fas fa-chart-pie" style="font-size: 48px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
-                    <p style="color: #64748b; font-weight: 500; margin: 0;">No installation data available</p>
+                    <p style="color: #64748b; font-weight: 500; margin: 0;">No ${installationChartMode === "applications" ? "application" : "installation"} data available</p>
                 </div>
             `;
             loading.style.display = "flex";
@@ -675,7 +706,9 @@ async function loadInstallationStatusChart(username, startDate = "", endDate = "
             "Ongoing": "#0284c7",      // Sky Blue
             "Installed": "#10b981",    // Green
             "Cancelled": "#ef4444",    // Red
-            "Terminated": "#6b7280"    // Gray
+            "Terminated": "#6b7280",   // Gray
+            "Approved": "#10b981",
+            "Rejected": "#ef4444"
         };
         
         const backgroundColors = labels.map(label => statusColors[label] || "#94a3b8");
@@ -939,7 +972,7 @@ if (resetFilterBtn) {
     });
 }
 
-// ================= TREND CHART - WITH MONTH/YEAR FILTER =================
+// ================= TREND CHART - REDESIGNED =================
 let trendChart = null;
 
 function populateTrendFilterSelects() {
@@ -1065,51 +1098,139 @@ async function loadTrendChart(username, selectedMonth = "all", selectedYear = St
             return;
         }
 
-        const ctx = canvas.getContext('2d');
-
         if (trendChart) {
             trendChart.destroy();
         }
+
+        // ============================================================
+        // ✅ AUTO-OFFSET — paghiwalayin kapag same total
+        // ============================================================
+        const maxValue = Math.max(...appData, ...customerData, 1);
+        const OFFSET = Math.max(maxValue * 0.04, 0.2);
+
+        const displayAppData = appData.map((val, i) => {
+            if (val === customerData[i] && val > 0) {
+                return val + OFFSET;
+            }
+            return val;
+        });
+
+        const displayCustomerData = customerData.map((val, i) => {
+            if (val === appData[i] && val > 0) {
+                return Math.max(val - OFFSET, 0);
+            }
+            return val;
+        });
+
+        const ctx = canvas.getContext('2d');
+
+        // ============================================================
+        // ✅ GRADIENT FILLS — modern look
+        // ============================================================
+        const appGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        appGradient.addColorStop(0, "rgba(37, 99, 235, 0.22)");
+        appGradient.addColorStop(0.6, "rgba(37, 99, 235, 0.04)");
+        appGradient.addColorStop(1, "rgba(37, 99, 235, 0.00)");
+
+        const subGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        subGradient.addColorStop(0, "rgba(13, 148, 136, 0.22)");
+        subGradient.addColorStop(0.6, "rgba(13, 148, 136, 0.04)");
+        subGradient.addColorStop(1, "rgba(13, 148, 136, 0.00)");
+
+        // ============================================================
+        // ✅ SOFT DROP SHADOW PLUGIN
+        // ============================================================
+        const softShadowPlugin = {
+            id: 'softShadow',
+            beforeDatasetDraw(chart, args) {
+                const ds = chart.data.datasets[args.index];
+                if (ds && ds._shadow) {
+                    chart.ctx.save();
+                    chart.ctx.shadowColor = ds._shadow.color;
+                    chart.ctx.shadowBlur = ds._shadow.blur;
+                    chart.ctx.shadowOffsetX = 0;
+                    chart.ctx.shadowOffsetY = ds._shadow.y;
+                }
+            },
+            afterDatasetDraw(chart, args) {
+                const ds = chart.data.datasets[args.index];
+                if (ds && ds._shadow) {
+                    chart.ctx.restore();
+                }
+            }
+        };
 
         trendChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels,
                 datasets: [
-                    {
-                        label: 'Applications',
-                        data: appData,
-                        borderColor: '#0b3d91',
-                        backgroundColor: 'rgba(11, 61, 145, 0.12)',
-                        borderWidth: 3,
-                        tension: 0.25,
-                        fill: false,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        pointHitRadius: 12,
-                        pointStyle: 'circle',
-                        pointBackgroundColor: '#0b3d91',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    },
+                    // ====================================================
+                    // SUBSCRIBERS — TEAL DASHED (nasa likod)
+                    // ====================================================
                     {
                         label: 'Subscribers',
-                        data: customerData,
-                        borderColor: '#0f766e',
-                        backgroundColor: 'rgba(15, 118, 110, 0.12)',
+                        data: displayCustomerData,
+                        _originalData: customerData,
+                        borderColor: '#0d9488',
+                        backgroundColor: subGradient,
                         borderWidth: 3,
-                        tension: 0.25,
-                        fill: false,
+                        tension: 0.45,
+                        fill: true,
                         pointRadius: 5,
-                        pointHoverRadius: 7,
-                        pointHitRadius: 12,
+                        pointHoverRadius: 10,
+                        pointHitRadius: 22,
+                        pointStyle: 'rectRounded',
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#0d9488',
+                        pointBorderWidth: 3,
+                        pointHoverBackgroundColor: '#0d9488',
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 3,
+                        borderDash: [9, 5],
+                        borderCapStyle: 'round',
+                        borderJoinStyle: 'round',
+                        _shadow: {
+                            color: 'rgba(13, 148, 136, 0.20)',
+                            blur: 8,
+                            y: 2
+                        },
+                        order: 2
+                    },
+                    // ====================================================
+                    // APPLICATIONS — BLUE SOLID (nasa harap)
+                    // ====================================================
+                    {
+                        label: 'Applications',
+                        data: displayAppData,
+                        _originalData: appData,
+                        borderColor: '#2563eb',
+                        backgroundColor: appGradient,
+                        borderWidth: 3,
+                        tension: 0.45,
+                        fill: true,
+                        pointRadius: 5,
+                        pointHoverRadius: 10,
+                        pointHitRadius: 22,
                         pointStyle: 'circle',
-                        pointBackgroundColor: '#0f766e',
+                        pointBackgroundColor: '#2563eb',
                         pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
+                        pointBorderWidth: 3,
+                        pointHoverBackgroundColor: '#ffffff',
+                        pointHoverBorderColor: '#2563eb',
+                        pointHoverBorderWidth: 3,
+                        borderCapStyle: 'round',
+                        borderJoinStyle: 'round',
+                        _shadow: {
+                            color: 'rgba(37, 99, 235, 0.25)',
+                            blur: 10,
+                            y: 3
+                        },
+                        order: 1
                     }
                 ]
             },
+            plugins: [softShadowPlugin],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -1118,29 +1239,39 @@ async function loadTrendChart(username, selectedMonth = "all", selectedYear = St
                     intersect: false
                 },
                 layout: {
-                    padding: { top: 16, right: 16, bottom: 8, left: 16 }
+                    padding: { top: 20, right: 20, bottom: 8, left: 8 }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        border: { color: '#1f2937', width: 1.5 },
-                        grid: { color: 'rgba(15, 23, 42, 0.18)', drawBorder: true },
+                        grace: '8%',
+                        border: { display: false },
+                        grid: {
+                            color: 'rgba(15, 23, 42, 0.06)',
+                            drawTicks: false,
+                            lineWidth: 1
+                        },
                         ticks: {
                             precision: 0,
+                            padding: 14,
                             callback: function(value) {
                                 if (Number.isInteger(value)) return value;
                                 return Math.round(value);
                             },
-                            font: { size: 11, weight: '700', family: 'Inter, sans-serif' },
-                            color: '#1f2937'
+                            font: { size: 11, weight: '600', family: 'Inter, sans-serif' },
+                            color: '#94a3b8'
                         }
                     },
                     x: {
-                        border: { color: '#1f2937', width: 1.5 },
-                        grid: { color: 'rgba(15, 23, 42, 0.18)', drawBorder: true },
+                        border: { display: false },
+                        grid: {
+                            color: 'rgba(15, 23, 42, 0.04)',
+                            drawTicks: false
+                        },
                         ticks: {
-                            font: { size: 11, weight: '700', family: 'Inter, sans-serif' },
-                            color: '#1f2937'
+                            padding: 10,
+                            font: { size: 11, weight: '600', family: 'Inter, sans-serif' },
+                            color: '#94a3b8'
                         }
                     }
                 },
@@ -1152,34 +1283,61 @@ async function loadTrendChart(username, selectedMonth = "all", selectedYear = St
                         labels: {
                             usePointStyle: true,
                             pointStyle: 'circle',
-                            boxWidth: 32,
-                            boxHeight: 10,
-                            padding: 18,
-                            color: '#111827',
-                            backgroundColor: 'rgba(255,255,255,0.9)',
-                            borderColor: '#111827',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            font: { size: 12, weight: '700', family: 'Inter, sans-serif' }
+                            boxWidth: 8,
+                            boxHeight: 8,
+                            padding: 20,
+                            color: '#334155',
+                            font: { size: 12, weight: '700', family: 'Inter, sans-serif' },
+                            generateLabels: function(chart) {
+                                const datasets = chart.data.datasets;
+                                return datasets.map((ds, i) => {
+                                    const isDashed = Array.isArray(ds.borderDash) && ds.borderDash.length > 0;
+                                    return {
+                                        text: ds.label,
+                                        fillStyle: ds.borderColor,
+                                        strokeStyle: ds.borderColor,
+                                        lineWidth: 2,
+                                        lineDash: isDashed ? ds.borderDash : [],
+                                        pointStyle: isDashed ? 'line' : 'circle',
+                                        hidden: !chart.isDatasetVisible(i),
+                                        datasetIndex: i
+                                    };
+                                });
+                            }
                         }
                     },
                     tooltip: {
-                        backgroundColor: "rgba(15, 23, 42, 0.92)",
-                        titleColor: "#ffffff",
-                        bodyColor: "#ffffff",
-                        padding: 12,
-                        cornerRadius: 10,
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#94a3b8',
+                        bodyColor: '#ffffff',
+                        padding: 14,
+                        cornerRadius: 12,
+                        boxPadding: 8,
+                        usePointStyle: true,
+                        titleFont: { size: 11, weight: '700', family: 'Inter, sans-serif' },
+                        bodyFont: { size: 13, weight: '600', family: 'Inter, sans-serif' },
                         callbacks: {
+                            title: function(items) {
+                                return items[0].label;
+                            },
                             label: function(context) {
-                                const label = context.dataset.label === "Customers" ? "Subscribers" : context.dataset.label;
-                                return ` ${label}: ${context.parsed.y.toLocaleString()}`;
+                                const label = context.dataset.label === 'Customers' ? 'Subscribers' : context.dataset.label;
+                                const original = context.dataset._originalData 
+                                    ? context.dataset._originalData[context.dataIndex] 
+                                    : context.parsed.y;
+                                return `  ${label}: ${original.toLocaleString()}`;
                             }
                         }
                     }
                 },
                 animation: {
-                    duration: 1000,
+                    duration: 1200,
                     easing: 'easeOutQuart'
+                },
+                elements: {
+                    line: {
+                        cubicInterpolationMode: 'monotone'
+                    }
                 }
             }
         });
@@ -1325,6 +1483,56 @@ async function reinitializeNotifications() {
     }
 }
 
+function initInstallationChartMode() {
+    if (!document.getElementById("applicationsChartBtn") || !document.getElementById("subscribersChartBtn")) {
+        const headerButtons = document.querySelector(".chart-card .chart-header.header-with-buttons .header-buttons");
+        if (headerButtons && !headerButtons.querySelector(".chart-mode-toggle")) {
+            const toggle = document.createElement("div");
+            toggle.className = "chart-mode-toggle";
+            toggle.setAttribute("role", "group");
+            toggle.setAttribute("aria-label", "Installation overview chart");
+            toggle.innerHTML = `
+                <button id="applicationsChartBtn" class="chart-mode-btn" type="button" aria-pressed="false">
+                    <i class="fas fa-file-alt"></i> Applications
+                </button>
+                <button id="subscribersChartBtn" class="chart-mode-btn active" type="button" aria-pressed="true">
+                    <i class="fas fa-users"></i> Subscribers
+                </button>
+            `;
+            headerButtons.prepend(toggle);
+        }
+    }
+
+    const modeButtons = [
+        [document.getElementById("applicationsChartBtn"), "applications"],
+        [document.getElementById("subscribersChartBtn"), "subscribers"]
+    ];
+
+    modeButtons.forEach(([button, mode]) => {
+        if (!button) return;
+        button.addEventListener("click", () => {
+            if (installationChartMode === mode) return;
+            installationChartMode = mode;
+
+            const exportButton = document.getElementById("exportDataBtn");
+            if (exportButton) exportButton.style.display = mode === "applications" ? "none" : "";
+
+            modeButtons.forEach(([modeButton, buttonMode]) => {
+                if (!modeButton) return;
+                const isActive = buttonMode === mode;
+                modeButton.classList.toggle("active", isActive);
+                modeButton.setAttribute("aria-pressed", String(isActive));
+            });
+
+            loadInstallationStatusChart(
+                adminUsernameGlobal,
+                document.getElementById("startDate")?.value || "",
+                document.getElementById("endDate")?.value || ""
+            );
+        });
+    });
+}
+
 // ================= INITIALIZE ALL DASHBOARD DATA =================
 let adminUsernameGlobal = null;
 
@@ -1347,6 +1555,8 @@ async function initializeDashboard() {
         
         const isValid = await checkSession();
         if (!isValid) return;
+
+        initInstallationChartMode();
         
         await loadAdminProfile();
         await loadStatistics();
