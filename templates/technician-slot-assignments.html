@@ -148,6 +148,20 @@
                     </button>
                 </div>
 
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <label><i class="fas fa-filter"></i> Filter by Status:</label>
+                        <select id="statusFilter" class="filter-select">
+                            <option value="all">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Slot Assigned">Assigned</option>
+                            <option value="Ongoing">Ongoing</option>
+                            <option value="Installed">Installed</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Customers Table -->
                 <div class="table-wrapper">
                     <table id="customersTable">
@@ -184,6 +198,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div id="paginationControls" class="pagination-container"></div>
             </div>
         </div>
     </main>

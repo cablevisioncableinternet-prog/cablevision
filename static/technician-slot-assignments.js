@@ -121,7 +121,28 @@ let currentCustomer = null;
 let currentNapboxId = null;
 let currentNapboxName = null;
 let allCustomers = [];
+let filteredCustomers = [];
 let searchTimeout = null;
+let currentPage = 1;
+const rowsPerPage = 10;
+
+// ==================== SORTING FUNCTION (Pending -> Assigned -> Ongoing -> Installed) ====================
+function sortCustomersByStatus(customers) {
+    const statusOrder = {
+        'Pending': 1,
+        'Slot Assigned': 2,
+        'Ongoing': 3,
+        'Installed': 4
+    };
+
+    return [...customers].sort((a, b) => {
+        const statusA = a.installation_status || 'Pending';
+        const statusB = b.installation_status || 'Pending';
+        const orderA = statusOrder[statusA] || 99;
+        const orderB = statusOrder[statusB] || 99;
+        return orderA - orderB;
+    });
+}
 
 // ==================== VALIDATE INSTALLATION DATE (FOR BUTTON ENABLING) ====================
 function canAssignSlotNow(installationDate) {
@@ -423,9 +444,7 @@ async function loadCustomers() {
     }
     
     try {
-        const searchTerm = document.getElementById('searchInput').value;
         let url = `/api/technician/pending-customers?technician_id=${encodeURIComponent(technicianId)}&limit=100`;
-        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
         
         const tabId = getTabId();
         const res = await fetch(`${url}&tab_id=${tabId}`);
@@ -442,13 +461,126 @@ async function loadCustomers() {
             console.log(`Showing customers for area: ${data.technician_area}`);
         }
         
-        renderCustomers(allCustomers);
-        document.getElementById('customerCount').innerText = allCustomers.length;
+        applyFiltersAndPaginate();
         
     } catch (err) {
         console.error(err);
         tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading customers: ${err.message}</p></div></td></tr>`;
     }
+}
+
+// ==================== SEARCH + STATUS FILTER + SORT ====================
+function applyFiltersAndPaginate() {
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedStatus = statusFilter ? statusFilter.value : 'all';
+
+    let filtered = [...allCustomers];
+
+    if (searchTerm) {
+        filtered = filtered.filter(cust => {
+            const haystack = `${cust.application_number || ''} ${cust.contract_number || ''} ${cust.first_name || ''} ${cust.last_name || ''} ${cust.email || ''} ${cust.mobile || ''}`.toLowerCase();
+            return haystack.includes(searchTerm);
+        });
+    }
+
+    if (selectedStatus !== 'all') {
+        filtered = filtered.filter(cust => (cust.installation_status || 'Pending') === selectedStatus);
+    }
+
+    filtered = sortCustomersByStatus(filtered);
+
+    filteredCustomers = filtered;
+    currentPage = 1;
+    renderCurrentPage();
+}
+
+// ==================== RENDER CURRENT PAGE ====================
+function renderCurrentPage() {
+    const tbody = document.getElementById('customersBody');
+    const totalItems = filteredCustomers.length;
+    const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+    document.getElementById('customerCount').innerText = totalItems;
+
+    if (totalItems === 0) {
+        const teamId = sessionStorage.getItem('technicianTeamId');
+        const message = teamId ? 'No customers assigned to your team' : 'No customers found in your area';
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i><p>${message}</p></div></td></tr>`;
+        const paginationContainer = document.getElementById('paginationControls');
+        if (paginationContainer) paginationContainer.style.display = 'none';
+        return;
+    }
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const pageData = filteredCustomers.slice(startIndex, endIndex);
+
+    renderCustomers(pageData);
+    renderPaginationControls(totalPages, totalItems);
+}
+
+// ==================== RENDER PAGINATION CONTROLS ====================
+function renderPaginationControls(totalPages, totalItems) {
+    const paginationContainer = document.getElementById('paginationControls');
+    if (!paginationContainer) return;
+
+    if (totalItems === 0) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+
+    paginationContainer.style.display = 'flex';
+
+    let html = `<button class="pagination-btn" id="firstPageBtn" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
+    html += `<button class="pagination-btn" id="prevPageBtn" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i> Prev</button>`;
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+
+    if (startPage > 1) {
+        html += `<button class="pagination-btn" data-page="1">1</button>`;
+        if (startPage > 2) html += `<span class="pagination-ellipsis">...</span>`;
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="pagination-ellipsis">...</span>`;
+        html += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+
+    html += `<button class="pagination-btn" id="nextPageBtn" ${currentPage === totalPages ? 'disabled' : ''}>Next <i class="fas fa-chevron-right"></i></button>`;
+    html += `<button class="pagination-btn" id="lastPageBtn" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
+    html += `<div class="pagination-info"><i class="fas fa-database"></i> Showing ${((currentPage - 1) * rowsPerPage) + 1} - ${Math.min(currentPage * rowsPerPage, totalItems)} of ${totalItems} entries</div>`;
+
+    paginationContainer.innerHTML = html;
+
+    const firstPageBtn = document.getElementById('firstPageBtn');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const lastPageBtn = document.getElementById('lastPageBtn');
+
+    if (firstPageBtn) firstPageBtn.addEventListener('click', () => { if (currentPage !== 1) { currentPage = 1; renderCurrentPage(); } });
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderCurrentPage(); } });
+    if (nextPageBtn) nextPageBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; renderCurrentPage(); } });
+    if (lastPageBtn) lastPageBtn.addEventListener('click', () => { if (currentPage !== totalPages) { currentPage = totalPages; renderCurrentPage(); } });
+
+    document.querySelectorAll('.pagination-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentPage = parseInt(btn.dataset.page);
+            renderCurrentPage();
+        });
+    });
 }
 
 // ==================== RENDER CUSTOMERS ====================
@@ -1519,14 +1651,20 @@ document.getElementById('searchInput').addEventListener('input', function() {
     const clearBtn = document.getElementById('clearSearch');
     clearBtn.style.display = this.value ? 'flex' : 'none';
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => loadCustomers(), 300);
+    searchTimeout = setTimeout(() => applyFiltersAndPaginate(), 300);
 });
 
 document.getElementById('clearSearch').addEventListener('click', function() {
     document.getElementById('searchInput').value = '';
     this.style.display = 'none';
-    loadCustomers();
+    applyFiltersAndPaginate();
 });
+
+// ==================== STATUS FILTER ====================
+const statusFilterEl = document.getElementById('statusFilter');
+if (statusFilterEl) {
+    statusFilterEl.addEventListener('change', applyFiltersAndPaginate);
+}
 
 // ==================== ESCAPE HTML ====================
 function escapeHtml(str) {
