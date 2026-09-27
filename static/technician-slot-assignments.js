@@ -506,7 +506,7 @@ function renderCurrentPage() {
 
     if (totalItems === 0) {
         const teamId = sessionStorage.getItem('technicianTeamId');
-        const message = teamId ? 'No customers assigned to your team' : 'No customers found in your area';
+        const message = teamId ? 'No customers assigned to your team' : 'No customers found';
         tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i><p>${message}</p></div></td></tr>`;
         const paginationContainer = document.getElementById('paginationControls');
         if (paginationContainer) paginationContainer.style.display = 'none';
@@ -589,7 +589,7 @@ function renderCustomers(customers) {
     
     if (!customers || customers.length === 0) {
         const teamId = sessionStorage.getItem('technicianTeamId');
-        const message = teamId ? 'No customers assigned to your team' : 'No customers found in your area';
+        const message = teamId ? 'No customers assigned to your team' : 'No subscribers found';
         tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i><p>${message}</p></div></td></tr>`;
         return;
     }
