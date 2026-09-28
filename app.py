@@ -756,10 +756,10 @@ def login():
                 session['admin_username'] = user_row.get('username')
                 session['admin_id'] = user_row.get('admin_id')
 
-                notification_id = int(datetime.now().timestamp() * 1000)
+                notification_id = int(ph_now().timestamp() * 1000)
                 admin_name = user_row.get('username', 'Unknown Admin')
                 admin_area = user_row.get('area', 'Unknown Area')
-                login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                login_time = ph_now_str()
                 notif_query = """
                     INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -770,7 +770,7 @@ def login():
                     f"{admin_name} ({admin_area}) logged in at {login_time}",
                     "admin_login",
                     user_row.get('admin_id'),
-                    datetime.now().isoformat(),
+                    ph_now_iso(),
                     0
                 ))
 
@@ -927,10 +927,10 @@ def login():
                 session['admin_username'] = admin.get('username')
                 session['admin_id'] = admin.get('admin_id')
 
-            notification_id = int(datetime.now().timestamp() * 1000)
+            notification_id = int(ph_now().timestamp() * 1000)
             admin_name = admin.get('username', 'Unknown Admin')
             admin_area = admin.get('area', 'Unknown Area')
-            login_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            login_time = ph_now_str()
             notif_query = """
                 INSERT INTO notifications (id, title, message, type, relatedId, timestamp, read_status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -941,7 +941,7 @@ def login():
                 f"{admin_name} ({admin_area}) logged in at {login_time}",
                 "admin_login",
                 admin.get('admin_id'),
-                datetime.now().isoformat(),
+                ph_now_iso(),
                 0
             ))
 
