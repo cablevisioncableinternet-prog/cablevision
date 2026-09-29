@@ -588,18 +588,15 @@ async function loadAreasForSelect() {
         }
         
         const areas = await response.json();
-        const adminsResponse = await fetch("/api/superadmin/admins");
-        const admins = adminsResponse.ok ? await adminsResponse.json() : [];
-        const assignedAreas = new Set((admins || []).map(admin => admin.area).filter(Boolean));
         
         const uniqueCities = [...new Set(areas.map(area => area.city))]
-            .filter(city => !assignedAreas.has(city))
+            .filter(Boolean)
             .sort();
         
         areaSelect.innerHTML = '<option value="" disabled selected>Select Area</option>';
         
         if (uniqueCities.length === 0) {
-            areaSelect.innerHTML = '<option value="">All available areas already have an administrator.</option>';
+            areaSelect.innerHTML = '<option value="">No areas available.</option>';
             areaSelect.disabled = true;
             return;
         }
