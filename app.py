@@ -2388,12 +2388,6 @@ def create_admin():
         if username_exists:
             return jsonify({"error": "Username already exists"}), 400
 
-        # ========== CHECK DUPLICATE AREA ==========
-        area_exists_query = "SELECT admin_id FROM admins WHERE area = %s LIMIT 1"
-        area_exists = execute_query(area_exists_query, (area,), fetch_one=True)
-        if area_exists:
-            return jsonify({"error": "This area already has an administrator assigned. Delete the existing admin first before creating another one for the same area."}), 400
-
         # ========== CHECK EMAIL IN ALL TABLES ==========
         check_all_query = """
             SELECT 
