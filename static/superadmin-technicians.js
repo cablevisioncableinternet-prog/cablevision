@@ -1610,8 +1610,8 @@ function loadTeamMembersDirect(teamId) {
     
     if (displayMembers.length === 0) {
         container.innerHTML = `
-            <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 13px;">
-                <i class="fas fa-user-slash" style="font-size: 24px; display: block; margin-bottom: 8px;"></i>
+            <div class="team-members-empty">
+                <i class="fas fa-user-slash"></i>
                 No members in this team
             </div>
         `;
@@ -1620,44 +1620,29 @@ function loadTeamMembersDirect(teamId) {
         return;
     }
     
-    container.innerHTML = displayMembers.map(member => `
-        <div style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: ${removedMembers.includes(member.technician_id) ? '#fef2f2' : '#fff'};
-            border-radius: 8px;
-            border: 1px solid ${removedMembers.includes(member.technician_id) ? '#fecaca' : '#e2e8f0'};
-            margin-bottom: 6px;
-            opacity: ${removedMembers.includes(member.technician_id) ? '0.6' : '1'};
-        ">
-            <div>
-                <strong style="font-size: 13px;">${member.name}</strong>
-                <span style="font-size: 11px; color: #64748b; display: block;">
-                    ${member.technician_id} • ${member.area}
-                    ${pendingMembers.includes(member.technician_id) ? ' <span style="color: #059669; font-weight: 600;">(Pending Add)</span>' : ''}
-                    ${removedMembers.includes(member.technician_id) ? ' <span style="color: #dc2626; font-weight: 600;">(Pending Remove)</span>' : ''}
-                </span>
+    container.innerHTML = displayMembers.map(member => {
+        const isPendingRemoval = removedMembers.includes(member.technician_id);
+        const isPendingAddition = pendingMembers.includes(member.technician_id);
+        const memberState = isPendingRemoval ? 'pending-remove' : isPendingAddition ? 'pending-add' : '';
+        const memberAction = isPendingRemoval ? 'Restore' : 'Remove';
+        const memberIcon = isPendingRemoval ? 'fa-undo' : 'fa-user-minus';
+
+        return `
+            <div class="team-member-row ${memberState}">
+                <div class="team-member-info">
+                    <strong class="team-member-name">${escapeHtml(member.name || '')}</strong>
+                    <span class="team-member-meta">
+                        ${escapeHtml(member.technician_id || '')} | ${escapeHtml(member.area || '')}
+                        ${isPendingAddition ? '<span class="team-member-state pending-add-label">Pending Add</span>' : ''}
+                        ${isPendingRemoval ? '<span class="team-member-state pending-remove-label">Pending Remove</span>' : ''}
+                    </span>
+                </div>
+                <button type="button" class="toggleMemberBtn ${memberState}" data-tech-id="${escapeHtml(member.technician_id || '')}">
+                    <i class="fas ${memberIcon}"></i> ${memberAction}
+                </button>
             </div>
-            <button type="button" 
-                class="toggleMemberBtn" 
-                data-tech-id="${member.technician_id}"
-                style="
-                    background: ${removedMembers.includes(member.technician_id) ? '#ecfdf5' : '#fef2f2'};
-                    color: ${removedMembers.includes(member.technician_id) ? '#059669' : '#dc2626'};
-                    border: 1px solid ${removedMembers.includes(member.technician_id) ? '#a7f3d0' : '#fecaca'};
-                    padding: 4px 12px;
-                    border-radius: 20px;
-                    font-size: 0.7rem;
-                    cursor: pointer;
-                    font-weight: 500;
-                ">
-                <i class="fas ${removedMembers.includes(member.technician_id) ? 'fa-undo' : 'fa-user-minus'}"></i>
-                ${removedMembers.includes(member.technician_id) ? ' Restore' : ' Remove'}
-            </button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     // Attach toggle member events
     container.querySelectorAll('.toggleMemberBtn').forEach(btn => {
@@ -3108,7 +3093,6 @@ function showSuperSlotDetails(slot) {
     
     const statusText = slot.status === 'available' ? 'Available' : 'Occupied';
     const statusClass = slot.status === 'available' ? 'available' : 'occupied';
-    const statusIcon = slot.status === 'available' ? 'fa-check-circle' : 'fa-circle';
     const napbox = superAllNapboxes.find(n => n.id === slot.napbox_id);
     const napboxName = napbox ? (napbox.name || napbox.napbox_name || 'N/A') : 'N/A';
     const areaName = napbox ? (napbox.area || 'N/A') : 'N/A';
@@ -3129,121 +3113,68 @@ function showSuperSlotDetails(slot) {
         }
     }
     
-    modalTitle.textContent = `Slot ${slot.slot_number}`;
+    modalTitle.textContent = 'Slot Details';
     
     modalContent.innerHTML = `
-        <!-- Status Badge -->
-        <div class="slot-status-badge ${slot.status}">
-            <i class="fas ${statusIcon}"></i>
-            <span>${statusText}</span>
-        </div>
-        
-        <!-- Details Grid -->
-        <div class="slot-details-grid">
-            <div class="slot-detail-card">
-                <div class="slot-detail-icon">
-                    <i class="fas fa-hashtag"></i>
+        <section class="slot-modal-section" aria-labelledby="slotOverviewHeading">
+            <h3 class="slot-modal-section-heading" id="slotOverviewHeading">Slot Information</h3>
+            <div class="slot-modal-fields">
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Slot Number</span>
+                    <span class="slot-modal-value">${escapeHtml(String(slot.slot_number ?? 'N/A'))}</span>
                 </div>
-                <div class="slot-detail-info">
-                    <span class="slot-detail-label">Slot Number</span>
-                    <span class="slot-detail-value">${slot.slot_number}</span>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">NAP Box</span>
+                    <span class="slot-modal-value">${escapeHtml(napboxName)}</span>
                 </div>
-            </div>
-            
-            <div class="slot-detail-card">
-                <div class="slot-detail-icon">
-                    <i class="fas fa-network-wired"></i>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Status</span>
+                    <span class="slot-modal-value"><span class="slot-modal-status ${statusClass}">${statusText}</span></span>
                 </div>
-                <div class="slot-detail-info">
-                    <span class="slot-detail-label">NAP Box</span>
-                    <span class="slot-detail-value">${escapeHtml(napboxName)}</span>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Barangay</span>
+                    <span class="slot-modal-value">${escapeHtml(slot.barangay || 'N/A')}</span>
                 </div>
-            </div>
-            
-            <div class="slot-detail-card">
-                <div class="slot-detail-icon">
-                    <i class="fas fa-map-pin"></i>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Area</span>
+                    <span class="slot-modal-value">${escapeHtml(areaName)}</span>
                 </div>
-                <div class="slot-detail-info">
-                    <span class="slot-detail-label">Barangay</span>
-                    <span class="slot-detail-value">${escapeHtml(slot.barangay || 'N/A')}</span>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Last Updated</span>
+                    <span class="slot-modal-value">${escapeHtml(lastUpdated)}</span>
                 </div>
             </div>
-            
-            <div class="slot-detail-card">
-                <div class="slot-detail-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="slot-detail-info">
-                    <span class="slot-detail-label">Last Updated</span>
-                    <span class="slot-detail-value">${lastUpdated}</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Customer Information (if occupied) -->
-        ${slot.status === 'occupied' && slot.customer_name ? `
-        <div class="slot-customer-section">
-            <div class="slot-section-title">
-                <i class="fas fa-user"></i>
-                <span>Customer Information</span>
-            </div>
-            <div class="slot-customer-grid">
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-user-circle"></i> Name</span>
-                    <span class="customer-value">${escapeHtml(slot.customer_name)}</span>
+        </section>
+
+        ${slot.customer_name ? `
+        <section class="slot-modal-section slot-modal-customer ${statusClass === 'available' ? 'last-owner' : ''}" aria-labelledby="slotCustomerHeading">
+            <h3 class="slot-modal-section-heading" id="slotCustomerHeading">${statusClass === 'available' ? 'Last Owner (Preserved)' : 'Customer Information'}</h3>
+            <div class="slot-modal-fields">
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Customer Name</span>
+                    <span class="slot-modal-value">${escapeHtml(slot.customer_name)}</span>
                 </div>
                 ${slot.customer_phone ? `
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-phone"></i> Phone</span>
-                    <span class="customer-value">${escapeHtml(slot.customer_phone)}</span>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Phone</span>
+                    <span class="slot-modal-value">${escapeHtml(slot.customer_phone)}</span>
                 </div>` : ''}
                 ${slot.contract_number ? `
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-id-card"></i> Contract</span>
-                    <span class="customer-value">${escapeHtml(slot.contract_number)}</span>
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Contract Number</span>
+                    <span class="slot-modal-value">${escapeHtml(slot.contract_number)}</span>
                 </div>` : ''}
-                ${slot.area ? `
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-building"></i> Area</span>
-                    <span class="customer-value">${escapeHtml(slot.area)}</span>
-                </div>` : ''}
-            </div>
-        </div>` : ''}
-        
-        <!-- Customer Information (if available but has customer data - preserved owner) -->
-        ${slot.status === 'available' && slot.customer_name ? `
-        <div class="slot-customer-section last-owner">
-            <div class="slot-section-title">
-                <i class="fas fa-history"></i>
-                <span>Last Owner (Preserved)</span>
-            </div>
-            <div class="slot-customer-grid">
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-user-circle"></i> Name</span>
-                    <span class="customer-value">${escapeHtml(slot.customer_name)}</span>
-                </div>
-                ${slot.customer_phone ? `
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-phone"></i> Phone</span>
-                    <span class="customer-value">${escapeHtml(slot.customer_phone)}</span>
-                </div>` : ''}
-                ${slot.contract_number ? `
-                <div class="slot-customer-item">
-                    <span class="customer-label"><i class="fas fa-id-card"></i> Contract</span>
-                    <span class="customer-value">${escapeHtml(slot.contract_number)}</span>
+                ${statusClass !== 'available' && slot.area ? `
+                <div class="slot-modal-field">
+                    <span class="slot-modal-label">Customer Area</span>
+                    <span class="slot-modal-value">${escapeHtml(slot.area)}</span>
                 </div>` : ''}
             </div>
-        </div>` : ''}
-        
-        <!-- Actions -->
-        <div class="slot-actions">
-            <div class="slot-action-buttons">
-                <button onclick="closeSuperSlotModal()" class="btn-close-details-super">
-                    <i class="fas fa-times"></i> Close
-                </button>
-            </div>
-        </div>
+        </section>` : ''}
+
+        <footer class="slot-modal-footer">
+            <button type="button" onclick="closeSuperSlotModal()" class="slot-modal-close-button">Close</button>
+        </footer>
     `;
     
     modal.classList.add('show');

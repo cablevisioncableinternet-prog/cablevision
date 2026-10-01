@@ -427,33 +427,21 @@ function openApproveModal(requestId) {
     const customerInfoDiv = document.getElementById('approveCustomerInfo');
     const displayRequestId = request.request_id || `REQ-${request.id}`;
     customerInfoDiv.innerHTML = `
-        <p><strong><i class="fas fa-user"></i> Customer:</strong> ${escapeHtml(request.customer_name)}</p>
-        <p><strong><i class="fas fa-envelope"></i> Email:</strong> ${escapeHtml(request.email)}</p>
-        <p><strong><i class="fas fa-hash-tag"></i> Request ID:</strong> ${escapeHtml(displayRequestId)}</p>
-        <p><strong><i class="fas fa-file-contract"></i> Contract #:</strong> ${escapeHtml(request.contract_number || 'N/A')}</p>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-user"></i> Customer</span><span class="plan-confirmation-value">${escapeHtml(request.customer_name || 'N/A')}</span></div>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-envelope"></i> Email</span><span class="plan-confirmation-value">${escapeHtml(request.email || 'N/A')}</span></div>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-hashtag"></i> Request ID</span><span class="plan-confirmation-value">${escapeHtml(displayRequestId)}</span></div>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-file-contract"></i> Contract #</span><span class="plan-confirmation-value">${escapeHtml(request.contract_number || 'N/A')}</span></div>
     `;
     
     // ✅ BAGONG DESIGN - REQUESTED PLAN LANG ANG IPAPAKITA
     const planSummaryDiv = document.getElementById('approvePlanSummary');
     planSummaryDiv.innerHTML = `
-        <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 16px; text-align: center;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
-                <i class="fas fa-exchange-alt" style="color: #22c55e; font-size: 20px;"></i>
-                <span style="font-weight: 700; font-size: 14px; color: #166534;">REQUESTED PLAN</span>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center;">
-                <div>
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600;">Plan Name</div>
-                    <div style="font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px;">${escapeHtml(request.requested_plan || 'N/A')}</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600;">Speed</div>
-                    <div style="font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px;">${escapeHtml(request.requested_speed || 'N/A')} Mbps</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600;">Monthly Price</div>
-                    <div style="font-size: 16px; font-weight: 800; color: #16a34a; margin-top: 2px;">${formatPrice(request.requested_price)}</div>
-                </div>
+        <div class="requested-plan-summary">
+            <h3 class="requested-plan-heading">Requested Plan</h3>
+            <div class="requested-plan-fields">
+                <div class="plan-confirmation-field"><span class="plan-confirmation-label">Plan Name</span><span class="plan-confirmation-value">${escapeHtml(request.requested_plan || 'N/A')}</span></div>
+                <div class="plan-confirmation-field"><span class="plan-confirmation-label">Speed</span><span class="plan-confirmation-value">${escapeHtml(request.requested_speed || 'N/A')} Mbps</span></div>
+                <div class="plan-confirmation-field"><span class="plan-confirmation-label">Monthly Price</span><span class="plan-confirmation-value plan-confirmation-price">${formatPrice(request.requested_price)}</span></div>
             </div>
         </div>
     `;
@@ -527,33 +515,21 @@ function openRejectModal(requestId) {
     const customerInfoDiv = document.getElementById('rejectCustomerInfo');
     const displayRequestId = request.request_id || `REQ-${request.id}`;
     customerInfoDiv.innerHTML = `
-        <p><strong><i class="fas fa-user"></i> Customer:</strong> ${escapeHtml(request.customer_name)}</p>
-        <p><strong><i class="fas fa-envelope"></i> Email:</strong> ${escapeHtml(request.email)}</p>
-        <p><strong><i class="fas fa-hash-tag"></i> Request ID:</strong> ${escapeHtml(displayRequestId)}</p>
-        <p><strong><i class="fas fa-file-contract"></i> Contract #:</strong> ${escapeHtml(request.contract_number || 'N/A')}</p>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-user"></i> Customer</span><span class="plan-confirmation-value">${escapeHtml(request.customer_name || 'N/A')}</span></div>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-envelope"></i> Email</span><span class="plan-confirmation-value">${escapeHtml(request.email || 'N/A')}</span></div>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-hashtag"></i> Request ID</span><span class="plan-confirmation-value">${escapeHtml(displayRequestId)}</span></div>
+        <div class="plan-confirmation-field"><span class="plan-confirmation-label"><i class="fas fa-file-contract"></i> Contract #</span><span class="plan-confirmation-value">${escapeHtml(request.contract_number || 'N/A')}</span></div>
     `;
     
     // ✅ BAGONG DESIGN - REQUESTED PLAN LANG ANG IPAPAKITA
     const planSummaryDiv = document.getElementById('rejectPlanSummary');
     planSummaryDiv.innerHTML = `
-        <div style="background: #fef2f2; border: 2px solid #ef4444; border-radius: 12px; padding: 16px; text-align: center;">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
-                <i class="fas fa-exchange-alt" style="color: #ef4444; font-size: 20px;"></i>
-                <span style="font-weight: 700; font-size: 14px; color: #991b1b;">REQUESTED PLAN</span>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center;">
-                <div>
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600;">Plan Name</div>
-                    <div style="font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px;">${escapeHtml(request.requested_plan || 'N/A')}</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600;">Speed</div>
-                    <div style="font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px;">${escapeHtml(request.requested_speed || 'N/A')} Mbps</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600;">Monthly Price</div>
-                    <div style="font-size: 16px; font-weight: 800; color: #dc2626; margin-top: 2px;">${formatPrice(request.requested_price)}</div>
-                </div>
+        <div class="requested-plan-summary">
+            <h3 class="requested-plan-heading">Requested Plan</h3>
+            <div class="requested-plan-fields">
+                <div class="plan-confirmation-field"><span class="plan-confirmation-label">Plan Name</span><span class="plan-confirmation-value">${escapeHtml(request.requested_plan || 'N/A')}</span></div>
+                <div class="plan-confirmation-field"><span class="plan-confirmation-label">Speed</span><span class="plan-confirmation-value">${escapeHtml(request.requested_speed || 'N/A')} Mbps</span></div>
+                <div class="plan-confirmation-field"><span class="plan-confirmation-label">Monthly Price</span><span class="plan-confirmation-value plan-confirmation-price">${formatPrice(request.requested_price)}</span></div>
             </div>
         </div>
     `;

@@ -344,83 +344,78 @@
 <div id="editPlanModal" class="edit-modal">
   <div class="edit-modal-container">
     <div class="edit-modal-wrapper">
-      <!-- Header -->
       <div class="edit-modal-header">
         <div class="edit-modal-header-left">
           <div class="edit-modal-title">
             <h2>Edit Internet Plan</h2>
-            <p>Update the plan details below</p>
+            <p>Update plan information and image</p>
           </div>
         </div>
+        <button type="button" class="edit-modal-close" aria-label="Close edit plan modal">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
       
-      <!-- Body -->
       <div class="edit-modal-body">
         <div class="edit-form">
-          <!-- Plan Name -->
-          <div class="edit-row">
-            <div class="edit-row-content">
-              <label>Plan Name <span class="required">*</span></label>
-              <input type="text" id="edit_name" placeholder="Enter plan name">
+          <section class="edit-section">
+            <h3 class="edit-section-title">Plan Details</h3>
+            <div class="edit-fields-grid">
+              <div class="edit-field">
+                <label for="edit_name">Plan Name <span class="required">*</span></label>
+                <input type="text" id="edit_name" placeholder="Enter plan name">
+              </div>
+
+              <div class="edit-field">
+                <label for="edit_speed_value">Speed <span class="required">*</span></label>
+                <div class="speed-input-group">
+                  <input type="number" id="edit_speed_value" placeholder="Enter speed" step="1" min="1" max="999" oninput="validateSpeedInput(this)">
+                  <select id="edit_speed_unit" class="speed-unit-select" onchange="handleSpeedUnitChange(this, 'edit_speed_value')">
+                    <option value="Mbps">Mbps</option>
+                    <option value="Gbps">Gbps</option>
+                  </select>
+                </div>
+                <small class="form-hint" id="editSpeedHint">Maximum 3 digits for Mbps (up to 999)</small>
+              </div>
+
+              <div class="edit-field">
+                <label for="edit_price">Price (PHP) <span class="required">*</span></label>
+                <input type="number" id="edit_price" placeholder="Enter price">
+              </div>
             </div>
-          </div>
-          
-        <!-- Speed -->
-<div class="edit-row">
-    <div class="edit-row-content">
-        <label>Speed <span class="required">*</span></label>
-        <div class="speed-input-group">
-            <input type="number" id="edit_speed_value" placeholder="Enter speed value" step="1" min="1" max="999" oninput="validateSpeedInput(this)">
-            <select id="edit_speed_unit" class="speed-unit-select" onchange="handleSpeedUnitChange(this, 'edit_speed_value')">
-                <option value="Mbps">Mbps</option>
-                <option value="Gbps">Gbps</option>
-            </select>
-        </div>
-        <small class="form-hint" id="editSpeedHint">Maximum 3 digits for Mbps (up to 999)</small>
-    </div>
-</div>
-          
-          <!-- Price -->
-          <div class="edit-row">
-            <div class="edit-row-content">
-              <label>Price (PHP) <span class="required">*</span></label>
-              <input type="number" id="edit_price" placeholder="Enter price">
-            </div>
-          </div>
-          
-          <!-- Current Image - Same style as plan card -->
-          <div class="edit-row edit-row-image">
-            <div class="edit-row-content">
-              <label>Current Image</label>
-              <div class="edit-image-preview-wrapper">
-                <div class="edit-image-preview-container">
-                  <img id="edit_image_preview" src="/static/default-plan.jpg" alt="Plan Image">
+          </section>
+
+          <section class="edit-section edit-image-section">
+            <h3 class="edit-section-title">Plan Image</h3>
+            <div class="edit-image-grid">
+              <div class="edit-field">
+                <label>Current Image</label>
+                <div class="edit-image-preview-wrapper">
+                  <div class="edit-image-preview-container">
+                    <img id="edit_image_preview" src="/static/default-plan.jpg" alt="Current plan image">
+                  </div>
+                </div>
+              </div>
+
+              <div class="edit-field">
+                <label for="edit_image">Change Image</label>
+                <div class="edit-file-wrapper">
+                  <input type="file" id="edit_image" accept="image/jpeg,image/png">
+                  <span class="edit-file-hint">
+                    <i class="fas fa-info-circle"></i> JPG or PNG, landscape orientation
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <!-- Change Image -->
-          <div class="edit-row">
-            <div class="edit-row-content">
-              <label>Change Image</label>
-              <div class="edit-file-wrapper">
-                <input type="file" id="edit_image" accept="image/jpeg,image/png">
-                <span class="edit-file-hint">
-                  <i class="fas fa-info-circle"></i> Upload new image (JPG, PNG only) - Landscape orientation required
-                </span>
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
       </div>
       
-      <!-- Footer -->
       <div class="edit-modal-footer">
-        <button class="edit-modal-btn edit-modal-btn-secondary" onclick="closeEditModal()">
-          <i class="fas fa-times"></i> Cancel
+        <button type="button" class="edit-modal-btn edit-modal-btn-secondary" onclick="closeEditModal()">
+          Cancel
         </button>
-        <button class="edit-modal-btn edit-modal-btn-primary" onclick="openConfirmModal()">
+        <button type="button" class="edit-modal-btn edit-modal-btn-primary" onclick="openConfirmModal()">
           <i class="fas fa-save"></i> Save Changes
         </button>
       </div>

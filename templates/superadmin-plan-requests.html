@@ -309,55 +309,69 @@
 
   <!-- ================= APPROVE CONFIRMATION MODAL ================= -->
   <div id="approveConfirmModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" id="closeApproveConfirmModal">&times;</span>
-      <div class="modal-icon">
-        <i class="fas fa-check-circle"></i>
+    <div class="modal-content plan-confirmation-content approval-confirmation">
+      <div class="plan-confirmation-header">
+        <div class="plan-confirmation-heading">
+          <h2>Approve Plan Change</h2>
+          <p>Review the request before approval</p>
+        </div>
+        <button type="button" class="plan-confirmation-close" id="closeApproveConfirmModal" aria-label="Close approval confirmation">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <h2>Approve Plan Change</h2>
-      <div id="approveCustomerInfo" class="customer-info"></div>
-      <div id="approvePlanSummary" class="plan-change-summary"></div>
-      <p>Are you sure you want to <strong style="color: #22c55e;">APPROVE</strong> this plan change request?</p>
-      <div class="warning-text">
-        <i class="fas fa-info-circle"></i> This will update the subscriber's plan immediately. The subscriber will receive a notification.
+      <div class="plan-confirmation-body">
+        <div id="approveCustomerInfo" class="customer-info"></div>
+        <div id="approvePlanSummary" class="plan-change-summary approve-plan-summary"></div>
+        <p class="plan-confirmation-question">Are you sure you want to <strong>approve</strong> this plan change request?</p>
+        <div class="plan-confirmation-warning">
+          <i class="fas fa-info-circle"></i>
+          <span>This will update the subscriber's plan immediately. The subscriber will receive a notification.</span>
+        </div>
       </div>
-      <div class="modal-buttons">
-        <button id="confirmApproveBtn" class="btn-confirm">Yes, Approve</button>
-        <button id="cancelApproveBtn" class="btn-cancel">Cancel</button>
+      <div class="modal-buttons plan-confirmation-actions">
+        <button type="button" id="cancelApproveBtn" class="btn-cancel">Cancel</button>
+        <button type="button" id="confirmApproveBtn" class="btn-confirm"><i class="fas fa-check"></i> Yes, Approve</button>
       </div>
     </div>
   </div>
 
   <!-- ================= REJECT CONFIRMATION MODAL ================= -->
   <div id="rejectConfirmModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" id="closeRejectConfirmModal">&times;</span>
-      <div class="modal-icon">
-        <i class="fas fa-ban"></i>
+    <div class="modal-content plan-confirmation-content rejection-confirmation">
+      <div class="plan-confirmation-header">
+        <div class="plan-confirmation-heading">
+          <h2>Reject Plan Change</h2>
+          <p>Review the request before rejection</p>
+        </div>
+        <button type="button" class="plan-confirmation-close" id="closeRejectConfirmModal" aria-label="Close rejection confirmation">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <h2>Reject Plan Change</h2>
-      <div id="rejectCustomerInfo" class="customer-info"></div>
-      <div id="rejectPlanSummary" class="plan-change-summary"></div>
-      
-      <div class="reject-reason-section">
-        <label><i class="fas fa-comment"></i> Reason for Rejection:</label>
-        <select id="rejectReasonSelect">
-          <option value="" disabled selected>-- Select a reason --</option>
-          <option value="Incomplete information">Incomplete information</option>
-          <option value="Invalid plan selection">Invalid plan selection</option>
-          <option value="Pending balance">Pending balance</option>
-          <option value="Out of coverage area">Out of coverage area</option>
-          <option value="Other">Other (please specify)</option>
-        </select>
-        <textarea id="rejectCustomReason" placeholder="Enter custom reason..." rows="2" style="margin-top: 8px; display: none;"></textarea>
+      <div class="plan-confirmation-body">
+        <div id="rejectCustomerInfo" class="customer-info"></div>
+        <div id="rejectPlanSummary" class="plan-change-summary reject-plan-summary"></div>
+
+        <div class="reject-reason-section">
+          <label for="rejectReasonSelect">Reason for Rejection</label>
+          <select id="rejectReasonSelect">
+            <option value="" disabled selected>Choose a reason</option>
+            <option value="Incomplete information">Incomplete information</option>
+            <option value="Invalid plan selection">Invalid plan selection</option>
+            <option value="Pending balance">Pending balance</option>
+            <option value="Out of coverage area">Out of coverage area</option>
+            <option value="Other">Other (please specify)</option>
+          </select>
+          <textarea id="rejectCustomReason" placeholder="Enter custom reason..." rows="2" style="margin-top: 8px; display: none;"></textarea>
+        </div>
+
+        <div class="plan-confirmation-warning rejection-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>The subscriber will be notified of this rejection.</span>
+        </div>
       </div>
-      
-      <div class="warning-text">
-        <i class="fas fa-exclamation-triangle"></i> The subscriber will be notified of this rejection.
-      </div>
-      <div class="modal-buttons">
-        <button id="confirmRejectBtn" class="btn-confirm">Yes, Reject</button>
-        <button id="cancelRejectBtn" class="btn-cancel">Cancel</button>
+      <div class="modal-buttons plan-confirmation-actions">
+        <button type="button" id="cancelRejectBtn" class="btn-cancel">Cancel</button>
+        <button type="button" id="confirmRejectBtn" class="btn-confirm"><i class="fas fa-ban"></i> Yes, Reject</button>
       </div>
     </div>
   </div>
@@ -365,14 +379,12 @@
   <!-- ================= VIEW REQUEST MODAL ================= -->
   <div id="viewRequestModal" class="modal">
     <div class="modal-content view-modal-content">
-      <span class="close-btn" id="closeViewModal">&times;</span>
-      
       <div class="view-modal-header">
-        <div class="modal-icon">
-          <i class="fas fa-file-alt"></i>
-        </div>
         <h2>Plan Change Request Details</h2>
         <p class="view-subtitle">Review the subscriber's plan change request</p>
+        <button type="button" class="close-btn view-modal-close" id="closeViewModal" aria-label="Close plan change request details">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
       <!-- CUSTOMER INFORMATION -->

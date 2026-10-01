@@ -685,95 +685,108 @@
 </main>
 
 <!-- ================= TEAM EDIT MODAL ================= -->
-<div id="teamEditModal" class="edit-modal">
-  <div class="modal-content" style="max-width: 700px; text-align: left;">
-    <span class="close-btn" id="closeTeamEditModalBtn">&times;</span>
-    <h2 style="text-align: center; margin-bottom: 20px;">
-      <i class="fas fa-edit"></i> Edit Team
-    </h2>
-    
-    <form id="teamEditForm">
-      <!-- Team Basic Info -->
-      <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <h4 style="margin: 0 0 12px 0; color: #0047ab; font-size: 14px;">
-          <i class="fas fa-info-circle"></i> Team Information
-        </h4>
-        <input type="hidden" id="editTeamId">
-        
-        <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div class="form-group">
-            <label>Team Name</label>
-            <input type="text" id="editTeamName" class="info-input" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
-          </div>
-          <div class="form-group">
-            <label>Area</label>
-            <select id="editTeamArea" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
-              <option value="">Select Area</option>
-            </select>
+<div id="teamEditModal" class="edit-modal info-modal">
+  <div class="info-modal-container">
+    <div class="info-modal-wrapper team-edit-modal-content">
+      <div class="info-modal-header team-edit-modal-header">
+        <div class="info-modal-header-left">
+          <div class="info-modal-title">
+            <h3>Edit Team</h3>
+            <p>Update team details and membership</p>
           </div>
         </div>
-        
-        <div class="form-row" style="grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div class="form-group">
-            <label>Team Leader</label>
-            <select id="editTeamLeader" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
-              <option value="">No leader assigned</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select id="editTeamStatus" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Team Members Section -->
-      <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-        <h4 style="margin: 0 0 12px 0; color: #0047ab; font-size: 14px; display: flex; align-items: center; justify-content: space-between;">
-          <span><i class="fas fa-user-cog"></i> Team Members</span>
-          <button type="button" id="addMemberBtn" class="btn-primary" style="padding: 6px 16px; font-size: 12px; border-radius: 30px;">
-            <i class="fas fa-plus"></i> Add Member
-          </button>
-        </h4>
-        
-        <div id="teamMembersList" style="max-height: 200px; overflow-y: auto;">
-          <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 13px;">
-            Loading members...
-          </div>
-        </div>
-        
-        <!-- Add Member Dropdown -->
-        <div id="addMemberSection" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
-          <div class="form-row" style="grid-template-columns: 1fr auto; gap: 12px;">
-            <div class="form-group">
-              <label>Select Technician</label>
-              <select id="addMemberSelect" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%;">
-                <option value="">Loading technicians...</option>
-              </select>
-            </div>
-            <div class="form-group" style="justify-content: flex-end;">
-              <button type="button" id="confirmAddMemberBtn" class="btn-primary" style="padding: 10px 24px; border-radius: 30px;">
-                <i class="fas fa-plus"></i> Add
-              </button>
-              <button type="button" id="cancelAddMemberBtn" class="btn-reset" style="padding: 10px 16px; border-radius: 30px; margin-top: 4px;">
-                <i class="fas fa-times"></i> Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Modal Actions -->
-      <div class="modal-actions" style="margin-top: 20px; justify-content: flex-end;">
-        <button type="button" id="cancelTeamEditBtn" class="btn cancel" style="min-width: 100px;">Cancel</button>
-        <button type="submit" class="btn confirm" style="min-width: 120px;">
-          <i class="fas fa-save"></i> Save Changes
+        <button type="button" class="info-modal-close team-edit-close" id="closeTeamEditModalBtn" aria-label="Close Edit Team">
+          <i class="fas fa-times"></i>
         </button>
       </div>
-    </form>
+
+      <form id="teamEditForm">
+        <div class="info-modal-body team-edit-modal-body">
+          <section class="info-section team-edit-section">
+            <div class="info-section-header team-edit-section-header">
+              <span>Team Information</span>
+            </div>
+            <input type="hidden" id="editTeamId">
+
+            <div class="info-grid team-edit-fields">
+              <div class="info-card team-edit-field">
+                <div class="info-card-content">
+                  <label for="editTeamName">Team Name</label>
+                  <input type="text" id="editTeamName" class="info-input team-edit-control">
+                </div>
+              </div>
+              <div class="info-card team-edit-field">
+                <div class="info-card-content">
+                  <label for="editTeamArea">Area</label>
+                  <select id="editTeamArea" class="info-input team-edit-control">
+                    <option value="">Select Area</option>
+                  </select>
+                </div>
+              </div>
+              <div class="info-card team-edit-field">
+                <div class="info-card-content">
+                  <label for="editTeamLeader">Team Leader</label>
+                  <select id="editTeamLeader" class="info-input team-edit-control">
+                    <option value="">No leader assigned</option>
+                  </select>
+                </div>
+              </div>
+              <div class="info-card team-edit-field">
+                <div class="info-card-content">
+                  <label for="editTeamStatus">Status</label>
+                  <select id="editTeamStatus" class="info-input team-edit-control">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="info-section team-edit-section team-members-section">
+            <div class="info-section-header team-edit-section-header team-members-heading">
+              <div class="team-members-title">
+                <span>Team Members</span>
+                <span id="memberCount" class="team-member-count">0</span>
+              </div>
+              <button type="button" id="addMemberBtn" class="info-modal-btn team-add-member-button">
+                <i class="fas fa-plus"></i> Add Member
+              </button>
+            </div>
+
+            <div id="teamMembersList" class="team-members-list">
+              <div class="team-members-empty">Loading members...</div>
+            </div>
+
+            <div id="addMemberSection" class="team-add-member-section" style="display: none;">
+              <div class="info-grid team-edit-fields team-add-member-fields">
+                <div class="info-card team-edit-field">
+                  <div class="info-card-content">
+                    <label for="addMemberSelect">Select Technician</label>
+                    <select id="addMemberSelect" class="info-input team-edit-control">
+                      <option value="">Loading technicians...</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="team-add-member-actions">
+                  <button type="button" id="confirmAddMemberBtn" class="info-modal-btn team-add-member-button">
+                    <i class="fas fa-plus"></i> Add
+                  </button>
+                  <button type="button" id="cancelAddMemberBtn" class="info-modal-btn team-cancel-member-button">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="info-modal-footer team-edit-modal-footer">
+          <button type="button" id="cancelTeamEditBtn" class="info-modal-btn team-edit-cancel-button">Cancel</button>
+          <button type="submit" class="info-modal-btn team-edit-save-button">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -786,9 +799,12 @@
         <div class="info-modal-header-left">
           <div class="info-modal-title">
             <h3>Technician Information</h3>
-            <p>View and manage technician details</p>
+            <p>Technician profile</p>
           </div>
         </div>
+        <button type="button" class="info-modal-close" aria-label="Close technician information" onclick="closeInfoModal()">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
       <!-- Body -->
@@ -897,9 +913,9 @@
             <div class="slot-details-header">
                 <div class="slot-details-header-left">
                     <i class="fas fa-info-circle"></i>
-                    <h2 id="superSlotModalTitle">Slot Details</h2>
+                  <h2 id="superSlotModalTitle">Slot Details</h2>
                 </div>
-                <button class="slot-details-close" onclick="closeSuperSlotModal()">
+                <button type="button" class="slot-details-close" aria-label="Close slot details" onclick="closeSuperSlotModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
