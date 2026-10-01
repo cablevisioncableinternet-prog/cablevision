@@ -3176,3 +3176,322 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
     width: 100%;
   }
 }
+
+/* ================= STATUS MODAL / BALANCE INPUT (REDESIGN) ================= */
+#statusModal {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+#statusModal .status-request-content {
+  width: min(480px, calc(100vw - 32px)) !important;
+  max-width: 480px !important;
+  max-height: 90vh !important;
+  margin: 0 !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+  text-align: left !important;
+}
+
+/* ----- Header ----- */
+#statusModal .status-request-header {
+  flex: 0 0 auto;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#statusModal .status-request-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  border: 1px solid #e3e8ef;
+  border-radius: 6px;
+  background: #f5f7fa;
+  color: #596779;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+#statusModal .status-request-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+#statusModal .status-request-heading h2 {
+  margin: 0 !important;
+  color: #202b3c;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#statusModal .status-request-heading p {
+  margin: 3px 0 0 !important;
+  color: #778397;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+#statusModal .status-request-close {
+  position: static !important;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #778397;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#statusModal .status-request-close:hover {
+  background: #f1f3f6;
+  color: #202b3c;
+}
+
+/* ----- Body ----- */
+#statusModal .status-request-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+
+#statusModal .status-request-question {
+  margin: 0 !important;
+  color: #465368 !important;
+  font-size: 12px !important;
+  line-height: 1.45;
+}
+
+#statusModal .status-request-question strong {
+  text-transform: uppercase;
+}
+
+/* ----- Balance section ----- */
+#statusModal .status-balance-section {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #f8f9fb;
+}
+
+#statusModal .status-balance-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 7px;
+  color: #687487;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+#statusModal .status-balance-label i {
+  color: #778397;
+  font-size: 11px;
+}
+
+#statusModal .status-balance-input-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+#statusModal .status-balance-currency {
+  color: #465368;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#statusModal .status-balance-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #fff;
+  color: #263246;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  box-shadow: none;
+}
+
+#statusModal .status-balance-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+#statusModal .status-balance-input:focus {
+  border-color: #6b9ac4;
+  box-shadow: 0 0 0 2px rgba(40, 118, 185, 0.12);
+}
+
+#statusModal .status-balance-input.field-error,
+#statusModal .status-balance-input.field-error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
+}
+
+#statusModal .status-balance-hint {
+  display: block;
+  margin-top: 6px;
+  color: #778397;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+#statusModal .status-balance-hint i {
+  margin-right: 4px;
+}
+
+#statusModal .balance-error {
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+/* ----- Actions ----- */
+#statusModal .status-request-actions {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#statusModal .status-request-actions button {
+  flex: 0 0 auto;
+  min-width: 96px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid #d6dde6;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+#statusModal .status-request-actions .btn-status-cancel {
+  background: #fff;
+  color: #465368;
+}
+
+#statusModal .status-request-actions .btn-status-confirm {
+  min-width: 132px;
+  color: #fff;
+}
+
+#statusModal .status-request-actions button:hover {
+  filter: brightness(0.96);
+  transform: none;
+}
+
+#statusModal :is(.status-request-close, .status-request-actions button, .status-balance-input):focus-visible {
+  outline: 3px solid rgba(40, 118, 185, 0.25);
+  outline-offset: 2px;
+}
+
+/* ----- Themes ----- */
+/* Blue (default / reactivate / connect) */
+#statusModal .blue-theme .status-request-icon {
+  color: #075a9e;
+  background: #eef5fb;
+  border-color: #d3e3f1;
+}
+#statusModal .blue-theme .status-request-question strong { color: #075a9e; }
+#statusModal .blue-theme .btn-status-confirm {
+  border-color: #075a9e;
+  background: #075a9e;
+}
+
+/* Green (activate) */
+#statusModal .green-theme .status-request-icon {
+  color: #187044;
+  background: #edf7f0;
+  border-color: #d6eadc;
+}
+#statusModal .green-theme .status-request-question strong { color: #187044; }
+#statusModal .green-theme .btn-status-confirm {
+  border-color: #187044;
+  background: #187044;
+}
+
+/* Red (deactivate / disconnect) */
+#statusModal .red-theme .status-request-icon {
+  color: #a62d34;
+  background: #fbefef;
+  border-color: #f0d9db;
+}
+#statusModal .red-theme .status-request-question strong { color: #a62d34; }
+#statusModal .red-theme .btn-status-confirm {
+  border-color: #a62d34;
+  background: #a62d34;
+}
+#statusModal .red-theme .status-balance-section {
+  border-color: #f0d9db;
+  background: #fdf7f7;
+}
+
+/* ----- Responsive ----- */
+@media (max-width: 575px) {
+  #statusModal {
+    padding: 14px;
+  }
+
+  #statusModal .status-request-content {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #statusModal .status-request-header {
+    padding: 12px 14px;
+  }
+
+  #statusModal .status-request-body {
+    padding: 14px;
+  }
+
+  #statusModal .status-request-actions {
+    flex-direction: column-reverse;
+    padding: 10px 14px;
+  }
+
+  #statusModal .status-request-actions button {
+    width: 100%;
+  }
+}

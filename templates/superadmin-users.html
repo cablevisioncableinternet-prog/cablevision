@@ -373,50 +373,62 @@
 
 </div>
 
-<!-- ================= STATUS MODAL WITH BALANCE INPUT (ENHANCED) ================= -->
+<!-- ================= STATUS MODAL WITH BALANCE INPUT (REDESIGN) ================= -->
 <div id="statusModal" class="modal">
-  <div class="modal-content status-modal-content">
-    <button class="close-btn" id="closeStatusModalBtn">&times;</button>
-    
-    <!-- Modal Header -->
-    <div class="status-modal-header">
-      <div class="status-modal-icon" id="statusModalIcon">
+  <div class="modal-content status-request-content blue-theme">
+
+    <!-- HEADER -->
+    <div class="status-request-header">
+      <div class="status-request-icon" id="statusModalIcon">
         <i class="fas fa-user-cog"></i>
       </div>
-      <h3 id="statusTitle">Confirm Action</h3>
-      <p id="statusText">Are you sure you want to perform this action?</p>
+      <div class="status-request-heading">
+        <h2 id="statusTitle">Confirm Action</h2>
+        <p>Review the action before proceeding</p>
+      </div>
+      <button type="button" class="close-btn status-request-close" id="closeStatusModalBtn" aria-label="Close confirmation">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-    
-    <!--  BALANCE INPUT FIELD -->
-    <div id="balanceField" style="display: none;">
-      <div class="balance-input-wrapper">
-        <div class="balance-input-label">
-          <i class="fas fa-coins"></i>
-          <span>Remaining Balance</span>
+
+    <!-- BODY -->
+    <div class="status-request-body">
+
+      <!-- BALANCE INPUT (ipinapakita lang kapag Deactivate) -->
+      <div id="balanceField" class="status-balance-section" style="display: none;">
+        <label class="status-balance-label" for="balanceInput">
+          <i class="fas fa-coins"></i> Remaining Balance
+        </label>
+        <div class="status-balance-input-row">
+          <span class="status-balance-currency">₱</span>
+          <input type="text"
+                 id="balanceInput"
+                 class="status-balance-input"
+                 placeholder="0.00"
+                 inputmode="decimal"
+                 autocomplete="off">
         </div>
-        <div class="balance-input-group">
-          <span class="balance-currency">₱</span>
-          <input type="text" id="balanceInput" 
-                placeholder="0.00" 
-                class="balance-input-field"
-                autofocus>
-        </div>
-        <small class="balance-hint">
-          <i class="fas fa-info-circle"></i> 
-          Enter the remaining balance of this user (if any)
+        <small class="status-balance-hint">
+          <i class="fas fa-info-circle"></i> Enter the remaining balance of this user (if any)
         </small>
       </div>
+
+      <p class="status-request-question" id="statusText">
+        Are you sure you want to perform this action?
+      </p>
+
     </div>
-    
-    <!-- Modal Actions -->
-    <div class="status-modal-actions">
-      <button id="cancelStatus" class="btn btn-cancel">
-        <i class="fas fa-times"></i> Cancel
+
+    <!-- ACTIONS -->
+    <div class="status-request-actions">
+      <button type="button" id="cancelStatus" class="btn-status-cancel">
+        Cancel
       </button>
-      <button id="confirmStatus" class="btn btn-confirm">
+      <button type="button" id="confirmStatus" class="btn-status-confirm">
         <i class="fas fa-check"></i> Confirm
       </button>
     </div>
+
   </div>
 </div>
 

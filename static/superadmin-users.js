@@ -456,102 +456,78 @@ function showNoData() {
   if (table) table.style.display = "none";
 }
 
-// ================= SHOW STATUS MODAL (ENHANCED WITH RED THEME) =================
+// ================= STATUS MODAL THEME HELPER =================
+function setStatusModalTheme(modalContent, theme) {
+  if (!modalContent) return;
+  modalContent.classList.remove('red-theme', 'green-theme', 'blue-theme');
+  modalContent.classList.add(theme);
+}
+
+// ================= SHOW STATUS MODAL =================
 function showStatusModal(userId, currentStatus) {
   const modal = document.getElementById("statusModal");
-  const modalContent = modal?.querySelector('.modal-content');
+  const modalContent = modal ? modal.querySelector('.status-request-content') : null;
   const title = document.getElementById("statusTitle");
   const text = document.getElementById("statusText");
   const icon = document.getElementById("statusModalIcon");
   const balanceField = document.getElementById("balanceField");
   const balanceInput = document.getElementById("balanceInput");
   const confirmBtn = document.getElementById("confirmStatus");
-  
+
+  if (!modal || !modalContent || !title || !text || !icon) return;
+
   // DETERMINE NEW STATUS
   let newStatus;
   let actionText;
   let showBalance = false;
-  let iconClass = "fa-user-cog";
-  let iconBg = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
+  let iconClass;
+  let theme;
   let isDeactivate = false;
-  
+
   if (currentStatus === "Active") {
     newStatus = "Inactive";
     actionText = "Deactivate";
     showBalance = true;
-    iconClass = "fa-user-slash"; // Pinalitan ng user-slash
-    iconBg = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+    iconClass = "fa-user-slash";
+    theme = "red-theme";
     isDeactivate = true;
-  } else if (currentStatus === "Inactive") {
-    newStatus = "Active";
-    actionText = "Activate";
-    showBalance = false;
-    iconClass = "fa-user-check";
-    iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
   } else if (currentStatus === "Terminated") {
     newStatus = "Active";
     actionText = "Reactivate";
-    showBalance = false;
     iconClass = "fa-undo-alt";
-    iconBg = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
+    theme = "blue-theme";
   } else {
+    // Inactive o kahit anong ibang status
     newStatus = "Active";
     actionText = "Activate";
-    showBalance = false;
     iconClass = "fa-user-check";
-    iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
-  }
-  
-  if (!modal || !title || !text || !icon) return;
-  
-  // REMOVE OLD THEME CLASSES
-  if (modalContent) {
-    modalContent.classList.remove('red-theme');
-  }
-  
-  // ADD RED THEME IF DEACTIVATE
-  if (isDeactivate) {
-    modalContent.classList.add('red-theme');
-  }
-  
-  // SET ICON
-  icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
-  icon.style.background = iconBg;
-  
-  // SET TITLE & TEXT
-  title.textContent = `Confirm ${actionText}`;
-  text.textContent = `Are you sure you want to ${actionText.toLowerCase()} this user?`;
-  
-  // SHOW/HIDE BALANCE
-  if (showBalance) {
-    balanceField.style.display = "block";
-    balanceInput.value = "";
-    // Auto-focus after modal opens
-    setTimeout(() => balanceInput.focus(), 350);
-  } else {
-    balanceField.style.display = "none";
-    balanceInput.value = "";
-    balanceField.style.display = "block";
-    balanceInput.value = "";
-    balanceInput.classList.remove('field-error');
-    const errorMsg = document.getElementById('balanceError');
-    if (errorMsg) errorMsg.style.display = 'none';
+    theme = "green-theme";
   }
 
-  
-  
-  // UPDATE CONFIRM BUTTON TEXT AND STYLE
+  // THEME + ICON + TEXT (kulay ay galing na sa CSS)
+  setStatusModalTheme(modalContent, theme);
+  icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+  title.textContent = `Confirm ${actionText}`;
+  text.innerHTML = `Are you sure you want to <strong>${actionText.toLowerCase()}</strong> this user?`;
+
+  // BALANCE FIELD - ipakita lang kapag Deactivate
+  if (balanceField) balanceField.style.display = showBalance ? "block" : "none";
+  if (balanceInput) {
+    balanceInput.value = "";
+    balanceInput.classList.remove('field-error');
+  }
+  const errorMsg = document.getElementById('balanceError');
+  if (errorMsg) errorMsg.style.display = 'none';
+
+  if (showBalance && balanceInput) {
+    setTimeout(() => balanceInput.focus(), 350);
+  }
+
+  // CONFIRM BUTTON
   if (confirmBtn) {
     confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${actionText}`;
-    if (isDeactivate) {
-      confirmBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
-      confirmBtn.style.boxShadow = "0 4px 16px rgba(220, 38, 38, 0.25)";
-    } else {
-      confirmBtn.style.background = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
-      confirmBtn.style.boxShadow = "0 4px 16px rgba(0, 71, 171, 0.25)";
-    }
   }
-  
+
   pendingAction = {
     type: "status",
     id: userId,
@@ -560,34 +536,48 @@ function showStatusModal(userId, currentStatus) {
     balance: 0,
     isDeactivate: isDeactivate
   };
-  
+
   // SHOW MODAL
   modal.style.display = "flex";
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
+// ================= SHOW CONNECTION MODAL =================
 function showConnectionModal(userId, currentConnection) {
   const modal = document.getElementById("statusModal");
+  const modalContent = modal ? modal.querySelector('.status-request-content') : null;
   const title = document.getElementById("statusTitle");
   const text = document.getElementById("statusText");
+  const icon = document.getElementById("statusModalIcon");
   const balanceField = document.getElementById("balanceField");
+  const balanceInput = document.getElementById("balanceInput");
+  const confirmBtn = document.getElementById("confirmStatus");
+
+  if (!modal || !modalContent || !title || !text) return;
+
   const isConnected = currentConnection === "Connected";
   const action = isConnected ? "Disconnect" : "Connect";
-  
-  if (!modal || !title || !text) return;
-  
+
+  setStatusModalTheme(modalContent, isConnected ? "red-theme" : "green-theme");
+  if (icon) icon.innerHTML = `<i class="fas ${isConnected ? "fa-link-slash" : "fa-link"}"></i>`;
+
   title.textContent = `Confirm ${action}`;
-  text.textContent = `Are you sure you want to ${action.toLowerCase()} this user's internet connection?`;
-  balanceField.style.display = "none";
-  
+  text.innerHTML = `Are you sure you want to <strong>${action.toLowerCase()}</strong> this user's internet connection?`;
+
+  if (balanceField) balanceField.style.display = "none";
+  if (balanceInput) {
+    balanceInput.value = "";
+    balanceInput.classList.remove('field-error');
+  }
+  if (confirmBtn) confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${action}`;
+
   pendingAction = {
     type: "connection",
     id: userId,
     newValue: isConnected ? "Disconnected" : "Connected"
   };
-  
-  // I-CENTER ANG MODAL - ITO ANG BAGO
+
   modal.style.display = "flex";
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
