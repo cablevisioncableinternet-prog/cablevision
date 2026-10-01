@@ -621,11 +621,11 @@ function openApproveModal(requestId, preloadedBalance = null) {
     const customerInfoDiv = document.getElementById('approveCustomerInfo');
     const displayRequestId = request.request_id || `TR-${request.id}`;
     customerInfoDiv.innerHTML = `
-        <p><strong><i class="fas fa-user"></i> Customer:</strong> ${escapeHtml(request.customer_name)}</p>
-        <p><strong><i class="fas fa-envelope"></i> Email:</strong> ${escapeHtml(request.email)}</p>
-        <p><strong><i class="fas fa-hashtag"></i> Request ID:</strong> ${escapeHtml(displayRequestId)}</p>
-        <p><strong><i class="fas fa-file-contract"></i> Contract #:</strong> ${escapeHtml(request.contract_number || 'N/A')}</p>
-        <p><strong><i class="fas fa-comment"></i> Reason:</strong> ${escapeHtml(request.termination_reason || 'N/A')}</p>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-user"></i> Customer</span><span class="customer-info-value">${escapeHtml(request.customer_name || 'N/A')}</span></div>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-envelope"></i> Email</span><span class="customer-info-value">${escapeHtml(request.email || 'N/A')}</span></div>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-hashtag"></i> Request ID</span><span class="customer-info-value">${escapeHtml(displayRequestId)}</span></div>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-file-contract"></i> Contract #</span><span class="customer-info-value">${escapeHtml(request.contract_number || 'N/A')}</span></div>
+        <div class="customer-info-field customer-reason-field"><span class="customer-info-label"><i class="fas fa-comment"></i> Request Reason</span><span class="customer-info-value">${escapeHtml(request.termination_reason || 'N/A')}</span></div>
     `;
     
     // Display balance
@@ -721,11 +721,11 @@ function openRejectModal(requestId, preloadedBalance = null) {
     const customerInfoDiv = document.getElementById('rejectCustomerInfo');
     const displayRequestId = request.request_id || `TR-${request.id}`;
     customerInfoDiv.innerHTML = `
-        <p><strong><i class="fas fa-user"></i> Customer:</strong> ${escapeHtml(request.customer_name)}</p>
-        <p><strong><i class="fas fa-envelope"></i> Email:</strong> ${escapeHtml(request.email)}</p>
-        <p><strong><i class="fas fa-hashtag"></i> Request ID:</strong> ${escapeHtml(displayRequestId)}</p>
-        <p><strong><i class="fas fa-file-contract"></i> Contract #:</strong> ${escapeHtml(request.contract_number || 'N/A')}</p>
-        <p><strong><i class="fas fa-comment"></i> Reason:</strong> ${escapeHtml(request.termination_reason || 'N/A')}</p>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-user"></i> Customer</span><span class="customer-info-value">${escapeHtml(request.customer_name || 'N/A')}</span></div>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-envelope"></i> Email</span><span class="customer-info-value">${escapeHtml(request.email || 'N/A')}</span></div>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-hashtag"></i> Request ID</span><span class="customer-info-value">${escapeHtml(displayRequestId)}</span></div>
+        <div class="customer-info-field"><span class="customer-info-label"><i class="fas fa-file-contract"></i> Contract #</span><span class="customer-info-value">${escapeHtml(request.contract_number || 'N/A')}</span></div>
+        <div class="customer-info-field customer-reason-field"><span class="customer-info-label"><i class="fas fa-comment"></i> Request Reason</span><span class="customer-info-value">${escapeHtml(request.termination_reason || 'N/A')}</span></div>
     `;
     
     // Display balance

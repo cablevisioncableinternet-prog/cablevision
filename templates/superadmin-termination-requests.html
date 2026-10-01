@@ -295,14 +295,15 @@
 <!-- ================= VIEW REQUEST MODAL ================= -->
 <div id="viewRequestModal" class="modal">
   <div class="modal-content view-modal-content">
-    <span class="close-btn" id="closeViewModal">&times;</span>
-    
     <div class="view-modal-header">
       <div class="modal-icon">
         <i class="fas fa-file-alt"></i>
       </div>
       <h2>Termination Request Details</h2>
       <p class="view-subtitle">Review the subscriber's termination request</p>
+      <button type="button" class="close-btn view-modal-close" id="closeViewModal" aria-label="Close termination request details">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
 
     <!-- CUSTOMER INFORMATION -->
@@ -391,68 +392,78 @@
 
 <!-- ================= APPROVE CONFIRMATION MODAL (UPDATED) ================= -->
 <div id="approveConfirmModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" id="closeApproveConfirmModal">&times;</span>
-    <div class="modal-icon">
-      <i class="fas fa-check-circle"></i>
-    </div>
-    <h2>Confirm Approval</h2>
-    <div id="approveCustomerInfo" class="customer-info"></div>
-    <div class="balance-confirm-section" style="margin: 16px 0; padding: 16px; background: #f0fdf4; border-radius: 12px; border: 2px solid #bbf7d0;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 600; color: #166534;">Outstanding Balance:</span>
-        <span id="approveBalanceDisplay" style="font-size: 20px; font-weight: 700; color: #dc2626;">₱0.00</span>
+  <div class="modal-content confirmation-modal-content approval-confirmation">
+    <div class="confirmation-header">
+      <div class="confirmation-heading">
+        <h2>Confirm Approval</h2>
+        <p>Review the request before approval</p>
       </div>
-      <small style="display: block; margin-top: 4px; color: #15803d; font-size: 12px;">
-        <i class="fas fa-check-circle"></i> This balance will be recorded on the subscriber's account
-      </small>
+      <button type="button" class="confirmation-close" id="closeApproveConfirmModal" aria-label="Close approval confirmation">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-    <p>Are you sure you want to <strong style="color: #22c55e;">APPROVE</strong> this termination request?</p>
-    <div class="warning-text">
-      <i class="fas fa-exclamation-triangle"></i> This will permanently deactivate the subscriber's account. This action cannot be undone.
+    <div class="confirmation-body">
+      <div id="approveCustomerInfo" class="customer-info"></div>
+      <div class="balance-confirm-section approval-balance">
+        <div class="balance-confirm-row">
+          <span class="balance-confirm-label">Outstanding Balance</span>
+          <span id="approveBalanceDisplay" class="balance-confirm-value">₱0.00</span>
+        </div>
+        <small><i class="fas fa-check-circle"></i> This balance will be recorded on the subscriber's account</small>
+      </div>
+      <p class="confirmation-question">Are you sure you want to <strong>approve</strong> this termination request?</p>
+      <div class="warning-text">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>This will permanently deactivate the subscriber's account. This action cannot be undone.</span>
+      </div>
     </div>
-    <div class="modal-buttons">
-      <button id="confirmApproveBtn" class="btn-confirm">Yes, Approve</button>
-      <button id="cancelApproveBtn" class="btn-cancel">Cancel</button>
+    <div class="modal-buttons confirmation-actions">
+      <button type="button" id="cancelApproveBtn" class="btn-cancel">Cancel</button>
+      <button type="button" id="confirmApproveBtn" class="btn-confirm"><i class="fas fa-check"></i> Yes, Approve</button>
     </div>
   </div>
 </div>
 
 <!-- ================= REJECT CONFIRMATION MODAL (UPDATED) ================= -->
 <div id="rejectConfirmModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" id="closeRejectConfirmModal">&times;</span>
-    <div class="modal-icon">
-      <i class="fas fa-ban"></i>
-    </div>
-    <h2>Confirm Rejection</h2>
-    <div id="rejectCustomerInfo" class="customer-info"></div>
-    <div class="balance-confirm-section" style="margin: 16px 0; padding: 16px; background: #fef2f2; border-radius: 12px; border: 2px solid #fecaca;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 600; color: #991b1b;">Outstanding Balance:</span>
-        <span id="rejectBalanceDisplay" style="font-size: 20px; font-weight: 700; color: #dc2626;">₱0.00</span>
+  <div class="modal-content confirmation-modal-content rejection-confirmation">
+    <div class="confirmation-header">
+      <div class="confirmation-heading">
+        <h2>Confirm Rejection</h2>
+        <p>Review the request before rejection</p>
       </div>
-      <small style="display: block; margin-top: 4px; color: #991b1b; font-size: 12px;">
-        <i class="fas fa-info-circle"></i> This balance will be recorded on the subscriber's account
-      </small>
+      <button type="button" class="confirmation-close" id="closeRejectConfirmModal" aria-label="Close rejection confirmation">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-    <div class="reject-reason-section">
-      <label><i class="fas fa-comment"></i> Reason for Rejection:</label>
-      <select id="rejectReasonSelect">
-        <option value="" disabled selected>-- Select a reason --</option>
-        <option value="Pending balance">Pending balance</option>
-        <option value="Contract not yet fulfilled">Contract not yet fulfilled</option>
-        <option value="Incomplete requirements">Incomplete requirements</option>
-        <option value="Other">Other (please specify)</option>
-      </select>
-      <textarea id="rejectCustomReason" placeholder="Enter custom reason..." rows="2" style="margin-top: 8px; display: none;"></textarea>
+    <div class="confirmation-body">
+      <div id="rejectCustomerInfo" class="customer-info"></div>
+      <div class="balance-confirm-section rejection-balance">
+        <div class="balance-confirm-row">
+          <span class="balance-confirm-label">Outstanding Balance</span>
+          <span id="rejectBalanceDisplay" class="balance-confirm-value">₱0.00</span>
+        </div>
+        <small><i class="fas fa-info-circle"></i> This balance will be recorded on the subscriber's account</small>
+      </div>
+      <div class="reject-reason-section">
+        <label for="rejectReasonSelect">Reason for Rejection</label>
+        <select id="rejectReasonSelect">
+          <option value="" disabled selected>Choose a reason</option>
+          <option value="Pending balance">Pending balance</option>
+          <option value="Contract not yet fulfilled">Contract not yet fulfilled</option>
+          <option value="Incomplete requirements">Incomplete requirements</option>
+          <option value="Other">Other (please specify)</option>
+        </select>
+        <textarea id="rejectCustomReason" placeholder="Enter custom reason..." rows="2" style="margin-top: 8px; display: none;"></textarea>
+      </div>
+      <div class="warning-text">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>The subscriber will be notified of this rejection.</span>
+      </div>
     </div>
-    <div class="warning-text">
-      <i class="fas fa-exclamation-triangle"></i> The subscriber will be notified of this rejection.
-    </div>
-    <div class="modal-buttons">
-      <button id="confirmRejectBtn" class="btn-confirm">Yes, Reject</button>
-      <button id="cancelRejectBtn" class="btn-cancel">Cancel</button>
+    <div class="modal-buttons confirmation-actions">
+      <button type="button" id="cancelRejectBtn" class="btn-cancel">Cancel</button>
+      <button type="button" id="confirmRejectBtn" class="btn-confirm"><i class="fas fa-ban"></i> Yes, Reject</button>
     </div>
   </div>
 </div>

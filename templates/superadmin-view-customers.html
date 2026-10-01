@@ -304,13 +304,15 @@
 
   <!-- CREATE ACCOUNT MODAL -->
   <div id="createAccountModal" class="modal">
-    <div class="modal-content" style="max-width: 580px;">
+    <div class="modal-content">
       <div class="modal-header">
         <h3><i class="fas fa-user-plus"></i> Create Subscriber Account</h3>
-        <button class="close-modal" id="closeCreateAccountModal">&times;</button>
+        <button type="button" class="close-modal" id="closeCreateAccountModal" aria-label="Close create subscriber account">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
       <div class="modal-body">
-        <div id="createAccountLoading" style="display:none; text-align:center; padding: 30px;">
+        <div id="createAccountLoading" style="display: none;">
           <div class="spinner"></div>
           <p>Creating account...</p>
         </div>
@@ -360,8 +362,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" id="cancelCreateAccountBtn"><i class="fas fa-times"></i> Cancel</button>
-        <button class="btn-confirm" id="confirmCreateAccountBtn"><i class="fas fa-check-circle"></i> Create Account</button>
+        <button type="button" class="btn-cancel" id="cancelCreateAccountBtn"><i class="fas fa-times"></i> Cancel</button>
+        <button type="button" class="btn-confirm" id="confirmCreateAccountBtn"><i class="fas fa-check-circle"></i> Create Account</button>
       </div>
     </div>
   </div>
