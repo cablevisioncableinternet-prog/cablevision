@@ -355,71 +355,71 @@
               <p>Update your announcement details</p>
             </div>
           </div>
-          <button class="edit-modal-close" onclick="closeEditModal()">
+            <button type="button" class="edit-modal-close" aria-label="Close edit announcement" onclick="closeEditModal()">
             <i class="fas fa-times"></i>
           </button>
         </div>
         
         <div class="edit-modal-body">
-          <div class="input-group">
-            <label>Announcement Title</label>
-            <div class="input-wrapper">
-              <input type="text" id="editTitle" placeholder="Enter announcement title...">
-              <span class="input-focus-border"></span>
-            </div>
-          </div>
+            <section class="edit-section">
+              <h4 class="edit-section-title">Announcement Details</h4>
+              <div class="edit-fields-grid">
+                <div class="input-group edit-field">
+                  <label for="editTitle">Announcement Title</label>
+                  <input type="text" id="editTitle" placeholder="Enter announcement title...">
+                </div>
 
-          <div class="input-group">
-            <label>Announcement Message</label>
-            <div class="input-wrapper">
-              <textarea id="editMessage" placeholder="Write your announcement message here..."></textarea>
-              <span class="input-focus-border"></span>
-            </div>
-            <div class="char-counter">
-              <span id="editCharCount">0</span> characters
-            </div>
-          </div>
+                <div class="input-group edit-field">
+                  <label for="editExpiryValue">Expiration Duration</label>
+                  <div class="expiry-row edit-expiry-row">
+                    <input type="number" id="editExpiryValue" min="1" value="1">
+                    <select id="editExpiryUnit">
+                      <option value="days">Days</option>
+                      <option value="weeks" selected>Weeks</option>
+                      <option value="months">Months</option>
+                    </select>
+                  </div>
+                  <small class="expiry-hint"><i class="fas fa-info-circle"></i> Current expiry will be replaced</small>
+                </div>
 
-        <div class="input-group">
-          <label><i class="fas fa-image"></i> Announcement Image</label>
-          <div class="input-wrapper">
-            <input type="file" id="editAnnouncementImage" accept="image/png,image/jpeg" onchange="previewImage(this, 'editImagePreview')">
-            <span class="input-focus-border"></span>
-          </div>
-          <small style="font-size: 0.75rem; color: #6c757d; margin-top: 4px; display: block;">
-            <i class="fas fa-info-circle"></i> Only PNG and JPEG images are allowed
-          </small>
-          <div id="editImagePreviewContainer" style="display: none; margin-top: 12px;">
-            <img id="editImagePreview" style="max-width: 100%; max-height: 200px; border-radius: 12px; object-fit: cover;">
-            <button type="button" onclick="removeEditImage()" style="background: none; border: none; color: #dc2626; cursor: pointer; margin-top: 8px;">Remove image</button>
-          </div>
-        </div>
+                <div class="input-group edit-field edit-field-wide">
+                  <label for="editMessage">Announcement Message</label>
+                  <textarea id="editMessage" placeholder="Write your announcement message here..."></textarea>
+                  <div class="char-counter"><span id="editCharCount">0</span> characters</div>
+                </div>
+            </div>
+            </section>
 
-          <div class="input-group">
-            <label><i class="fas fa-clock"></i> Expiration Duration</label>
-            <div class="expiry-row" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-              <div style="flex: 1;">
-                <input type="number" id="editExpiryValue" min="1" value="1" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px;">
-              </div>
-              <div style="flex: 1;">
-                <select id="editExpiryUnit" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: white;">
-                  <option value="days">Days</option>
-                  <option value="weeks" selected>Weeks</option>
-                  <option value="months">Months</option>
-                </select>
-              </div>
+            <section class="edit-section">
+              <h4 class="edit-section-title">Announcement Image</h4>
+              <div class="edit-image-grid">
+                <div class="input-group edit-field">
+                  <label>Current Image</label>
+                  <div id="editImagePreviewContainer" class="edit-image-preview-container" style="display: none;">
+                    <img id="editImagePreview" alt="Current announcement image">
+                    <button type="button" class="edit-image-remove" onclick="removeEditImage()">Remove image</button>
+                  </div>
+                  <div id="editImageEmptyState" class="edit-image-empty">No current image</div>
+                </div>
+
+                <div class="input-group edit-field">
+                  <label for="editAnnouncementImage">Change Image</label>
+                  <div class="edit-upload-box">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Choose a PNG or JPEG image</span>
+                    <input type="file" id="editAnnouncementImage" accept="image/png,image/jpeg" onchange="previewImage(this, 'editImagePreview')">
+                  </div>
+                  <small class="edit-file-hint"><i class="fas fa-info-circle"></i> PNG and JPEG only</small>
+                </div>
             </div>
-            <div class="expiry-hint" style="font-size: 0.75rem; color: #6c757d; margin-top: 6px;">
-              <i class="fas fa-info-circle"></i> Current expiry will be replaced with new duration
-            </div>
-          </div>
+            </section>
         </div>
         
         <div class="edit-modal-footer">
-          <button class="edit-modal-btn edit-modal-btn-secondary" onclick="closeEditModal()">
+            <button type="button" class="edit-modal-btn edit-modal-btn-secondary" onclick="closeEditModal()">
             <i class="fas fa-times"></i> Cancel
           </button>
-          <button class="edit-modal-btn edit-modal-btn-primary" onclick="saveEdit()">
+            <button type="button" class="edit-modal-btn edit-modal-btn-primary" onclick="saveEdit()">
             <i class="fas fa-save"></i> Save Changes
           </button>
         </div>

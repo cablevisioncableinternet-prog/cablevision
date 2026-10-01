@@ -378,10 +378,10 @@ function renderAnnouncementCard(a) {
                         ${expiryHtml ? '<div class="announcement-expiry">' + expiryHtml + '</div>' : ''}
                     </div>
                     <div class="announcement-actions">
-                        <button class="edit-btn" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
+                        <button class="edit-btn btn-edit" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
                             <i class="fas fa-edit"></i> Edit
                         </button>
-                        <button class="delete-btn" onclick="openDeleteModal('${a.id}')">
+                        <button class="delete-btn btn-delete" onclick="openDeleteModal('${a.id}')">
                             <i class="fas fa-trash-alt"></i> Delete
                         </button>
                     </div>
@@ -402,10 +402,10 @@ function renderAnnouncementCard(a) {
                     ${expiryHtml ? '<div class="announcement-expiry">' + expiryHtml + '</div>' : ''}
                 </div>
                 <div class="announcement-actions">
-                    <button class="edit-btn" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
+                    <button class="edit-btn btn-edit" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="delete-btn" onclick="openDeleteModal('${a.id}')">
+                    <button class="delete-btn btn-delete" onclick="openDeleteModal('${a.id}')">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
                 </div>
@@ -566,13 +566,16 @@ function openEditModal(id, title, message, imagePath, expirationDate) {
     
     var editImagePreview = document.getElementById("editImagePreview");
     var editImageContainer = document.getElementById("editImagePreviewContainer");
+    var editImageEmptyState = document.getElementById("editImageEmptyState");
     if (imagePath && imagePath !== '') {
         editImagePreview.src = imagePath;
         editImageContainer.style.display = 'block';
+        if (editImageEmptyState) editImageEmptyState.style.display = 'none';
         window.currentEditImagePath = imagePath;
     } else {
         editImageContainer.style.display = 'none';
         editImagePreview.src = '';
+        if (editImageEmptyState) editImageEmptyState.style.display = 'grid';
         window.currentEditImagePath = null;
     }
     window.editImageRemoved = false;
@@ -700,6 +703,7 @@ async function confirmDelete() {
 function previewImage(input, previewId) {
     var container = input.closest('.input-group').querySelector('#' + previewId + 'Container');
     var previewImg = document.getElementById(previewId);
+    var emptyState = input.id === 'editAnnouncementImage' ? document.getElementById('editImageEmptyState') : null;
     
     if (input.files && input.files[0]) {
         var file = input.files[0];
@@ -712,6 +716,7 @@ function previewImage(input, previewId) {
             input.value = '';
             if (container) container.style.display = 'none';
             if (previewImg) previewImg.src = '';
+            if (emptyState) emptyState.style.display = 'grid';
             return;
         }
         
@@ -719,11 +724,13 @@ function previewImage(input, previewId) {
         reader.onload = function(e) {
             previewImg.src = e.target.result;
             if (container) container.style.display = 'block';
+            if (emptyState) emptyState.style.display = 'none';
         };
         reader.readAsDataURL(file);
     } else {
         if (container) container.style.display = 'none';
         if (previewImg) previewImg.src = '';
+        if (emptyState) emptyState.style.display = 'grid';
     }
 }
 
@@ -737,6 +744,9 @@ function removeEditImage() {
     document.getElementById('editAnnouncementImage').value = '';
     document.getElementById('editImagePreviewContainer').style.display = 'none';
     document.getElementById('editImagePreview').src = '';
+    window.currentEditImagePath = null;
+    var emptyState = document.getElementById('editImageEmptyState');
+    if (emptyState) emptyState.style.display = 'grid';
     window.editImageRemoved = true;
 }
 
