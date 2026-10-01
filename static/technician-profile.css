@@ -2301,3 +2301,153 @@ img,
     font-size: 9px !important;
   }
 }
+
+/* ================= TECHNICIAN PROFILE VISUAL ALIGNMENT ================= */
+.main-content {
+  --profile-border: #d5e0ec;
+  background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+  color: #172b43;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content .dashboard-header-card {
+  min-height: 104px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 26, 51, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .dashboard-header-left h1 {
+  color: #000000;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.main-content .dashboard-header-left p {
+  color: rgba(5, 5, 5, 0.78);
+}
+
+.main-content :is(.profile-header-card, .form-card, .security-card) {
+  border: 1px solid var(--profile-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content :is(.profile-header-card, .form-card, .security-card):hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(18, 45, 73, 0.1);
+}
+
+.main-content .profile-header-card,
+.main-content .form-card {
+  padding: 20px 22px;
+}
+
+.main-content .dashboard-header-left {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e1e8f0;
+}
+
+.main-content .profile-name {
+  color: #173754;
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+.main-content .info-label {
+  color: #68798b;
+  font-size: 10px;
+}
+
+.main-content .info-value {
+  color: #263b50;
+  font-size: 12px;
+}
+
+.main-content .personal-info-header {
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e8f0;
+}
+
+.main-content .personal-info-header h3,
+.main-content .security-card__text h4 {
+  color: #173754;
+  font-size: 15px;
+}
+
+.main-content .personal-info-header p,
+.main-content .security-card__text p,
+.main-content .security-card__text li {
+  color: #68798b;
+  font-size: 12px;
+}
+
+.main-content .form-grid {
+  gap: 14px 16px;
+}
+
+.main-content .form-field label {
+  color: #526477;
+  font-size: 10px;
+}
+
+.main-content .form-field input {
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  color: #24364b;
+  font-size: 13px;
+}
+
+.main-content .security-card {
+  padding: 18px;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.main-content .status-pill {
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+.main-content .qr-code {
+  width: 156px;
+  height: 156px;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.main-content :is(.primary-btn, .secondary-btn, #editBtn, #updateBtn, #cancelBtn) {
+  min-height: 36px;
+  padding: 8px 13px;
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.main-content :is(.primary-btn, #editBtn, #updateBtn) {
+  background: #0755a5;
+  color: #fff;
+}
+
+.main-content :is(.secondary-btn, #cancelBtn) {
+  background: #526477;
+  color: #fff;
+}
+
+@media (max-width: 575px) {
+  .main-content :is(.profile-header-card, .form-card) { padding: 16px 14px; }
+  .main-content .dashboard-header-left h1 { font-size: 20px; }
+  .main-content .security-card { padding: 14px; }
+}

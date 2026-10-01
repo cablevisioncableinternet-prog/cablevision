@@ -210,11 +210,13 @@
     <div id="assignModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Assign NAP Box Slot</h3>
-                <button class="close-modal" id="closeAssignModal">&times;</button>
+                <div class="assign-modal-title">
+                    <span class="assign-modal-icon"><i class="fas fa-network-wired"></i></span>
+                    <h3>Assign NAP Box Slot</h3>
+                </div>
+                <button class="close-modal" id="closeAssignModal" type="button" aria-label="Close modal">&times;</button>
             </div>
             <div class="modal-body">
-                <!--  Preferred NAP Box Info (read-only) -->
                 <div id="preferredNapboxInfo"></div>
                 <div id="assignModalNotice" class="napbox-setup-banner" style="display:none; margin-bottom:12px; align-items:flex-start; justify-content:flex-start; background:#fff7ed; color:#9a2c00; border-color:#fdba74;">
                     <div id="assignModalNoticeText" style="flex:1;">
@@ -222,49 +224,58 @@
                     </div>
                     <button id="goToNapboxBtn" class="napbox-setup-btn" type="button">Go to NAP Box Page</button>
                 </div>
-                
-                <div class="form-group">
-                    <label>Contract Number:</label>
-                    <input type="text" id="modalContractNumber" readonly>
-                </div>
-                
-                <div class="form-group">
-                    <label>Subscriber:</label>
-                    <input type="text" id="modalCustomerName" readonly>
-                </div>
-                
-                <div class="form-group">
-                    <label>Application #:</label>
-                    <input type="text" id="modalApplicationNumber" readonly>
-                </div>
-                
-                <!-- ✅ NAP Box selection - readonly kapag may assigned -->
-                <div class="form-group">
-                    <label>NAP Box:</label>
-                    <select id="napboxSelect">
-                        <option value=""disabled selected>-- Select NAP Box --</option>
-                    </select>
-                    <small style="color:#64748b; display:block; margin-top:4px;">
-                        <i class="fas fa-info-circle"></i> 
-                        The system automatically assigned the nearest NAP Box. Please assign a slot from this NAP Box.
-                    </small>
-                </div>
-                
-                <div class="form-group">
-                    <label>Select Slot:</label>
-                    <select id="slotSelect" disabled>
-                        <option value="" disabled selected>-- Select Slot --</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Installation Date:</label>
-                    <input type="date" id="installationDate" readonly style="background-color: #f1f5f9; cursor: not-allowed;">
-                    <small style="color:#64748b; display:block; margin-top:4px;">
-                        <i class="fas fa-info-circle"></i> 
-                        Installation date is set from the subscriber's record.
-                    </small>
-                </div>
+
+                <section class="assign-modal-section assign-subscriber-section" aria-label="Subscriber details">
+                    <h4>Subscriber details</h4>
+                    <div class="assign-subscriber-fields">
+                        <div class="form-group assign-contract-field">
+                            <label>Contract Number:</label>
+                            <input type="text" id="modalContractNumber" readonly>
+                        </div>
+
+                        <div class="form-group assign-customer-field">
+                            <label>Subscriber:</label>
+                            <input type="text" id="modalCustomerName" readonly>
+                        </div>
+
+                        <div class="form-group assign-application-field">
+                            <label>Application #:</label>
+                            <input type="text" id="modalApplicationNumber" readonly>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="assign-modal-section assign-slot-section" aria-label="NAP box and slot">
+                    <h4>NAP box and slot</h4>
+                    <div class="assign-slot-fields">
+                        <div class="form-group assign-napbox-field">
+                            <label>NAP Box:</label>
+                            <select id="napboxSelect">
+                                <option value="" disabled selected>-- Select NAP Box --</option>
+                            </select>
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                The system automatically assigned the nearest NAP Box. Please assign a slot from this NAP Box.
+                            </small>
+                        </div>
+
+                        <div class="form-group assign-slot-field">
+                            <label>Select Slot:</label>
+                            <select id="slotSelect" disabled>
+                                <option value="" disabled selected>-- Select Slot --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group assign-date-field">
+                            <label>Installation Date:</label>
+                            <input type="date" id="installationDate" readonly>
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                Installation date is set from the subscriber's record.
+                            </small>
+                        </div>
+                    </div>
+                </section>
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel-installation" id="cancelInstallationBtn"> <i class="fas fa-ban"></i> Cancel Installation</button>
@@ -326,7 +337,7 @@
         <!-- Modal Header -->
         <div class="confirm-status-modal-header">
             <div class="confirm-status-modal-icon" id="statusModalIcon">
-                <i class="fas fa-play"></i>
+             
             </div>
             <h3 id="confirmStatusTitle">Start Installation</h3>
             <p id="confirmStatusText">You are about to start the installation for this subscriber.</p>

@@ -142,7 +142,7 @@
             <th>Location & IP Address</th>
             <th>Login Time</th>
             <th>Status</th>
-            <th style="text-align: right;">Action</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="otherDevicesTbody">
@@ -181,19 +181,16 @@
 <!-- DEVICE LOGOUT CONFIRMATION MODAL -->
 <div id="deviceLogoutModal" class="device-logout-modal">
   <div class="logout-modal-box">
-    <div class="modal-icon-alert">
-      <i class="fas fa-exclamation-triangle"></i>
-    </div>
     <h3 id="modalLogoutTitle">Confirm Device Logout</h3>
     <p id="modalLogoutMessage">Are you sure you want to log out the selected device? Once logged out, the device session info will be deleted.</p>
 
     <div class="modal-device-preview" id="modalDevicePreview">
-      <i class="fas fa-desktop"></i> <span id="modalDeviceText">Selected Device</span>
+      <span id="modalDeviceText">Selected Device</span>
     </div>
 
     <div class="logout-modal-actions">
-      <button type="button" class="btn-modal-cancel" id="btnCancelDeviceLogout"> <i class="fas fa-times"></i> Cancel</button>
-      <button type="button" class="btn-modal-confirm" id="btnConfirmDeviceLogout"> <i class="fas fa-sign-out-alt"></i> Confirm Logout</button>
+      <button type="button" class="btn-modal-cancel" id="btnCancelDeviceLogout">Cancel</button>
+      <button type="button" class="btn-modal-confirm" id="btnConfirmDeviceLogout">Confirm Logout</button>
     </div>
   </div>
 </div>

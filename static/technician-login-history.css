@@ -115,15 +115,6 @@
   font-weight: 600;
 }
 
-.current-device-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 5px;
-  height: 100%;
-  background: #10b981;
-}
 
 .device-card-header {
   display: flex;
@@ -319,7 +310,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 12px 16px;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   border-bottom: 2px solid #e2e8f0;
   vertical-align: middle;
@@ -861,6 +852,198 @@
 .logout-confirm:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 71, 171, 0.3);
+}
+
+/* ================= TECHNICIAN LOGIN HISTORY VISUAL ALIGNMENT ================= */
+.main-content {
+  --history-border: #d5e0ec;
+  background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+  color: #172b43;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content .history-page-header.dashboard-header-card {
+  min-height: 104px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 26, 51, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .history-page-header .dashboard-header-left h1 {
+  color: #fff;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.main-content .history-page-header .dashboard-header-left h1 i {
+  color: #bfdbfe;
+}
+
+.main-content .history-page-header .dashboard-header-left p {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+}
+
+.main-content .history-section {
+  padding: 18px;
+  border: 1px solid var(--history-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content .section-title {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e8f0;
+  color: #173754;
+  font-size: 15px;
+}
+
+.main-content .section-title i {
+  color: #075a9e;
+  font-size: 15px;
+}
+
+.main-content .current-device-card {
+  border: 1px solid #d5e0ec;
+  border-radius: 6px;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.main-content .current-device-card::before {
+  width: 4px;
+  background: #167a4a;
+}
+
+.main-content .device-icon-box {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #dbe6ef;
+  border-radius: 6px;
+  background: #edf4fa;
+  color: #075a9e;
+  box-shadow: none;
+  font-size: 18px;
+}
+
+.main-content .device-details-grid {
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dfe6ee;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.main-content .batch-toolbar {
+  padding: 10px 12px;
+  border: 1px solid #dfe6ee;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.main-content .devices-table-container {
+  overflow-x: auto;
+  border: 1px solid #d7e1ec;
+  border-radius: 8px;
+  background: #fff;
+  -webkit-overflow-scrolling: touch;
+}
+
+.main-content .devices-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.main-content .devices-table th {
+  padding: 11px 14px;
+  border-bottom: 0;
+  background: #07325c;
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.35px;
+  text-align: center;
+}
+
+.main-content .devices-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e7edf3;
+  color: #293b50;
+  font-size: 12px;
+  text-align: center !important;
+}
+
+.main-content .devices-table .device-row-info {
+  justify-content: center;
+}
+
+.main-content .devices-table .device-row-info > div:last-child {
+  text-align: center;
+}
+
+.main-content .devices-table :is(.device-row-title, .device-row-subtitle) {
+  text-align: center;
+}
+
+.main-content .devices-table tbody tr:hover {
+  background: #edf4fb;
+}
+
+.main-content :is(.btn-logout-all, .btn-logout-selected) {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #b4232c;
+  border-radius: 5px;
+  background: #b4232c;
+  box-shadow: none;
+  font-size: 11px;
+}
+
+.main-content :is(.btn-logout-all, .btn-logout-selected):hover {
+  transform: none;
+  filter: brightness(0.94);
+  box-shadow: none;
+}
+
+.device-logout-modal,
+.logout-modal.modal {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.device-logout-modal .logout-modal-box,
+.logout-modal.modal .logout-modal-content {
+  width: min(440px, calc(100vw - 32px));
+  max-width: 440px;
+  padding: 22px;
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+}
+
+.device-logout-modal :is(.logout-modal-box h3, .logout-modal-box p),
+.logout-modal.modal :is(.logout-title, .logout-message) {
+  color: #202b3c;
+}
+
+.device-logout-modal .logout-modal-actions button,
+.logout-modal.modal .logout-actions .btn {
+  min-height: 36px;
+  padding: 7px 13px;
+  border-radius: 5px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .main-content .history-page-header.dashboard-header-card { padding: 18px; }
+  .main-content .history-section { padding: 14px; }
+  .main-content .history-page-header .dashboard-header-left h1 { font-size: 20px; }
 }
 
 

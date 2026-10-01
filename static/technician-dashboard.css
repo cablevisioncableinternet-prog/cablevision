@@ -4822,3 +4822,148 @@ body {
   }
 }
 
+/* ================= TECHNICIAN DASHBOARD VISUAL ALIGNMENT ================= */
+.main-content {
+  --page-border: #d5e0ec;
+  --page-ink: #172b43;
+  background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+  color: var(--page-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content .dashboard-header-card {
+  min-height: 104px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 26, 51, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .dashboard-header-card::before,
+.main-content .dashboard-header-card::after {
+  display: none;
+}
+
+.main-content .dashboard-header-card:hover,
+.main-content :is(.stat-card, .chart-card, .recent-activities, .quick-summary):hover {
+  transform: none;
+}
+
+.main-content .dashboard-header-left h1 {
+  color: #fff;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.main-content .dashboard-header-left p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.main-content :is(.stat-card, .chart-card, .recent-activities, .quick-summary) {
+  border: 1px solid var(--page-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content .stat-card {
+  min-width: 0;
+  padding: 16px 18px;
+}
+
+.main-content .stat-card .stat-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+  background: #edf4fa;
+}
+
+.main-content .stat-card .stat-icon-wrapper i {
+  color: #075a9e;
+  font-size: 18px;
+}
+
+.main-content .stat-number,
+.main-content .stat-card .stat-info h3 {
+  color: #173754;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.main-content .stat-label,
+.main-content .stat-card .stat-info p {
+  color: #68798b;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.main-content .breakdown-value {
+  border-radius: 5px;
+  background: #edf4fa;
+  color: #075a9e;
+}
+
+.main-content .chart-card {
+  padding: 16px 18px;
+}
+
+.main-content .chart-header,
+.main-content .section-header {
+  padding: 13px 16px;
+  border-bottom: 1px solid #e1e8f0;
+  background: #f5f8fc;
+}
+
+.main-content :is(.header-text h3, .section-title h3) {
+  color: #173754;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.main-content :is(.header-text p, .chart-subtitle) {
+  color: #68798b;
+  font-size: 11px;
+}
+
+.main-content .header-icon {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dbe6ef;
+  border-radius: 6px;
+  background: #edf4fa;
+  box-shadow: none;
+}
+
+.main-content .header-icon i,
+.main-content .section-title i {
+  color: #075a9e;
+}
+
+.main-content .stats-summary,
+.main-content .summary-card {
+  border: 1px solid #e1e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.main-content .activities-list {
+  padding: 10px;
+}
+
+@media (max-width: 767px) {
+  .main-content .dashboard-header-card { padding: 18px; }
+  .main-content .dashboard-header-left h1 { font-size: 20px; }
+  .main-content .stat-card { padding: 12px; }
+  .main-content .chart-card { padding: 14px; }
+  .main-content :is(.section-header, .chart-header) { padding: 12px 14px; }
+}
+
+@media (max-width: 575px) {
+  .main-content .dashboard-header-card { border-radius: 8px; }
+  .main-content .stat-number,
+  .main-content .stat-card .stat-info h3 { font-size: 20px; }
+}
+

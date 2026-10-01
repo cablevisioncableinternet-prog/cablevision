@@ -6959,3 +6959,669 @@ body {
     }
 }
 
+/* ================= TECHNICIAN NAPBOX VISUAL ALIGNMENT ================= */
+.main-content {
+  --napbox-border: #d5e0ec;
+  background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+  color: #172b43;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content .dashboard-header-card {
+  min-height: 104px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 26, 51, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .dashboard-header-card:hover {
+  transform: none;
+}
+
+.main-content .dashboard-header-left h1 {
+  color: #fff;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.main-content .dashboard-header-left p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.main-content :is(.area-info-card, .napbox-section, .map-container, .slots-container) {
+  border: 1px solid var(--napbox-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content :is(.area-info-card, .napbox-section, .map-container, .slots-container):hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(18, 45, 73, 0.1);
+}
+
+.main-content :is(.area-info-header, .map-header, .slots-header, .section-header) {
+  padding: 13px 16px;
+  border-bottom: 1px solid #e1e8f0;
+  background: #f5f8fc;
+}
+
+.main-content :is(.area-info-content, .napbox-content) {
+  padding: 16px;
+}
+
+.main-content .area-detail {
+  min-height: 68px;
+  padding: 11px 12px;
+  border: 1px solid #dfe6ee;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.main-content .area-detail:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.main-content .area-detail-value {
+  color: #173754;
+  font-size: 15px;
+}
+
+.main-content .stat-badge {
+  padding: 6px 10px;
+  border: 1px solid #dfe6ee;
+  border-radius: 5px;
+  box-shadow: none;
+}
+
+.main-content .slot-card {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.main-content .slot-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 9px rgba(18, 45, 73, 0.1);
+}
+
+#slotDetailsModal,
+#editSlotModalTech {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+#slotDetailsModal .modal-content,
+#editSlotModalTech .modal-content {
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+}
+
+#slotDetailsModal .modal-content {
+  width: min(560px, calc(100vw - 40px));
+  max-width: 560px;
+  max-height: 88vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+#slotDetailsModal .slot-details-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+}
+
+#slotDetailsModal .slot-details-header,
+#editSlotModalTech .edit-modal-header {
+  min-height: 60px;
+  padding: 13px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#slotDetailsModal .slot-details-header-left,
+#editSlotModalTech .edit-modal-header-left {
+  gap: 10px;
+}
+
+#slotDetailsModal .slot-details-header-left > i,
+#editSlotModalTech .edit-modal-header-left > i {
+  padding: 0;
+  color: #596779;
+  background: transparent;
+  font-size: 16px;
+}
+
+#slotDetailsModal .slot-details-header-left h2,
+#editSlotModalTech .edit-modal-header-left h2 {
+  color: #202b3c;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+#slotDetailsModal .slot-details-close,
+#editSlotModalTech .edit-modal-close {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #778397;
+  font-size: 16px;
+}
+
+#slotDetailsModal .slot-details-body,
+#editSlotModalTech .edit-modal-body {
+  padding: 18px;
+  background: #fff;
+}
+
+#editSlotModalTech .modal-content {
+  width: min(520px, calc(100vw - 32px));
+  max-width: 520px;
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+#editSlotModalTech .edit-modal-header {
+  flex-shrink: 0;
+}
+
+#editSlotModalTech .edit-modal-header-left h2 {
+  margin: 0;
+  color: #202b3c;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+#editSlotModalTech .edit-modal-header-left h2 small {
+  color: #778397;
+  font-size: 11px;
+}
+
+#editSlotModalTech .edit-modal-body {
+  min-height: 0;
+  max-height: calc(90vh - 120px);
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+
+#editSlotModalTech .edit-form-group {
+  margin-bottom: 13px;
+}
+
+#editSlotModalTech .edit-form-group label {
+  margin-bottom: 5px;
+  color: #526477;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+#editSlotModalTech .form-input {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #24364b;
+  font-size: 12px;
+}
+
+#editSlotModalTech .form-input:focus {
+  border-color: #2876b9;
+  box-shadow: 0 0 0 3px rgba(40, 118, 185, 0.12);
+}
+
+#editSlotModalTech .edit-status-option {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #d5e0ea;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 12px;
+}
+
+#editSlotModalTech .edit-actions {
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  border-radius: 0;
+  background: #fff;
+}
+
+#editSlotModalTech .edit-actions button {
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+#editSlotModalTech .btn-save-edit {
+  background: #0755a5;
+}
+
+#editSlotModalTech .btn-cancel-edit {
+  border: 1px solid #d6dde6 !important;
+  background: #fff;
+  color: #465368;
+}
+
+#slotDetailsModal .slot-details-body {
+  max-height: calc(88vh - 60px);
+  overflow-y: auto;
+}
+
+#slotDetailsModal .slot-status-badge {
+  min-height: 24px;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+#slotDetailsModal .slot-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 10px;
+  margin-bottom: 17px;
+}
+
+#slotDetailsModal .slot-detail-card {
+  min-width: 0;
+  min-height: 58px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 11px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #fff;
+}
+
+#slotDetailsModal .slot-detail-icon {
+  display: none;
+}
+
+#slotDetailsModal .slot-detail-info {
+  width: 100%;
+  align-items: flex-start;
+}
+
+#slotDetailsModal .slot-detail-label,
+#slotDetailsModal .slot-customer-item .customer-label {
+  color: #778397;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+#slotDetailsModal .slot-detail-value,
+#slotDetailsModal .slot-customer-item .customer-value {
+  min-width: 0;
+  color: #263246;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#slotDetailsModal .slot-customer-section {
+  margin: 0 0 17px;
+  padding: 15px 0 0;
+  border: 0;
+  border-top: 1px solid #edf0f3;
+  border-radius: 0;
+  background: #fff;
+}
+
+#slotDetailsModal .slot-section-title {
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  color: #687487;
+  font-size: 10px;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+#slotDetailsModal .slot-customer-section.last-owner {
+  border-top-color: #eadfca;
+}
+
+#slotDetailsModal .slot-customer-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 10px;
+}
+
+#slotDetailsModal .slot-customer-item {
+  min-width: 0;
+  min-height: 58px;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 11px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #fff;
+}
+
+#slotDetailsModal .slot-customer-item .customer-label i {
+  color: #778397;
+}
+
+#slotDetailsModal .slot-actions {
+  padding-top: 12px;
+  border-top-color: #edf0f3;
+}
+
+#slotDetailsModal .slot-action-buttons {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#slotDetailsModal .slot-action-buttons button {
+  flex: 0 1 auto;
+  min-width: 82px;
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+#slotDetailsModal .btn-edit-slot-modal {
+  background: #0755a5;
+}
+
+#slotDetailsModal .close-modal-btn {
+  background: #fff;
+  color: #465368;
+  border: 1px solid #d6dde6 !important;
+}
+
+#slotDetailsModal .btn-clear-slot {
+  background: #b4232c;
+}
+
+@media (max-width: 767px) {
+  .main-content .dashboard-header-card { padding: 18px; }
+  #slotDetailsModal { padding: 0; align-items: flex-end; }
+  #slotDetailsModal .modal-content { max-width: 100%; max-height: 94vh; border-radius: 20px 20px 0 0; }
+  #slotDetailsModal .slot-details-container { max-height: 94vh; }
+  #slotDetailsModal .slot-details-header { padding: 16px 20px; }
+  #slotDetailsModal .slot-details-body { max-height: calc(94vh - 60px); padding: 18px 20px; }
+  #slotDetailsModal .slot-action-buttons { flex-direction: column; }
+  #slotDetailsModal .slot-action-buttons button { width: 100%; }
+}
+
+@media (max-width: 575px) {
+  .main-content .dashboard-header-left h1 { font-size: 20px; }
+  #slotDetailsModal { padding: 14px; }
+  #slotDetailsModal .modal-content { width: 100%; max-height: 90vh; }
+  #slotDetailsModal .slot-details-container { max-height: 90vh; }
+  #slotDetailsModal .slot-details-body { max-height: calc(90vh - 60px); padding: 15px; }
+  #slotDetailsModal .slot-details-grid,
+  #slotDetailsModal .slot-customer-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+#addNapboxModal,
+#coordinatesModal {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+#addNapboxModal .modal-content,
+#coordinatesModal .modal-content {
+  width: min(520px, calc(100vw - 32px)) !important;
+  max-width: 520px !important;
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+}
+
+#addNapboxModal .add-napbox-container {
+  max-height: 90vh;
+  padding: 0;
+  overflow-y: auto;
+  text-align: left;
+}
+
+#addNapboxModal .add-napbox-container > h2 {
+  margin: 0 0 15px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+  color: #202b3c;
+  font-size: 16px;
+  text-align: left;
+}
+
+#addNapboxModal .add-napbox-container > h2 i {
+  color: #075a9e;
+}
+
+#addNapboxModal .add-napbox-container > .form-group {
+  margin: 0 18px 14px;
+}
+
+#addNapboxModal .add-napbox-container > .form-group label {
+  margin-bottom: 5px;
+  color: #526477;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+#addNapboxModal .napbox-name-input,
+#addNapboxModal .form-control {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #24364b;
+  font-size: 12px;
+}
+
+#addNapboxModal .napbox-name-input:focus,
+#addNapboxModal .form-control:focus {
+  border-color: #2876b9;
+  box-shadow: 0 0 0 3px rgba(40, 118, 185, 0.12);
+  outline: 0;
+}
+
+#addNapboxModal .napbox-helper-text {
+  margin-top: 5px;
+  color: #68798b;
+  font-size: 11px;
+}
+
+#addNapboxModal .location-preview {
+  min-height: 0;
+  padding: 9px 11px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #f8fafc;
+  font-size: 12px;
+}
+
+#addNapboxModal .modal-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#addNapboxModal .modal-actions .btn {
+  min-width: 82px;
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+#addNapboxModal .modal-actions .btn.confirm {
+  background: #0755a5;
+}
+
+#addNapboxModal .modal-actions .btn.cancel {
+  border: 1px solid #d6dde6;
+  background: #fff;
+  color: #465368;
+}
+
+#coordinatesModal .coordinates-modal-header {
+  flex: 0 0 auto;
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#coordinatesModal .coordinates-modal-header h2 {
+  margin: 0 0 3px;
+  color: #202b3c;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+#coordinatesModal .coordinates-modal-header p {
+  color: #778397;
+  font-size: 11px;
+}
+
+#coordinatesModal .coordinates-modal-body {
+  min-height: 0;
+  max-height: calc(90vh - 60px);
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+
+#coordinatesModal .coordinates-modal-body .form-group {
+  margin-bottom: 13px;
+}
+
+#coordinatesModal .coordinates-modal-body label {
+  margin-bottom: 5px;
+  color: #526477;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+#coordinatesModal .coordinates-modal-body .form-control {
+  min-height: 38px;
+  padding: 8px 10px 8px 32px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #24364b;
+  font-size: 12px;
+}
+
+#coordinatesModal .coord-input-wrapper .coord-prefix {
+  left: 11px;
+  font-size: 11px;
+}
+
+#coordinatesModal .coordinates-modal-body .form-control:focus {
+  border-color: #2876b9;
+  box-shadow: 0 0 0 3px rgba(40, 118, 185, 0.12);
+}
+
+#coordinatesModal .coord-tooltip {
+  color: #778397;
+  font-size: 10px;
+}
+
+#coordinatesModal #coordValidationResult {
+  margin-bottom: 14px;
+  padding: 11px 12px;
+  border-width: 1px;
+  border-radius: 5px;
+}
+
+#coordinatesModal .coord-detail-row {
+  font-size: 11px;
+}
+
+#coordinatesModal .coordinates-modal-body .modal-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 14px -18px -16px;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#coordinatesModal .coordinates-modal-body .modal-actions .btn {
+  min-width: 82px;
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+#coordinatesModal .btn-validate,
+#coordinatesModal .btn-proceed {
+  background: #0755a5;
+  box-shadow: none;
+  animation: none;
+}
+
+#coordinatesModal .btn-cancel-coords {
+  border: 1px solid #d6dde6;
+  background: #fff;
+  color: #465368;
+}
+
+@media (max-width: 767px) {
+  #editSlotModalTech { padding: 0; align-items: flex-end; }
+  #editSlotModalTech .modal-content { max-width: 100%; max-height: 94vh; border-radius: 20px 20px 0 0; }
+  #editSlotModalTech .edit-modal-body { max-height: calc(94vh - 120px); padding: 16px 20px; }
+  #editSlotModalTech .edit-actions { padding: 12px 20px; }
+  #addNapboxModal .modal-content,
+  #coordinatesModal .modal-content { max-height: 90vh; }
+}
+
+@media (max-width: 575px) {
+  #editSlotModalTech .modal-content,
+  #addNapboxModal .modal-content,
+  #coordinatesModal .modal-content { width: 100%; }
+  #addNapboxModal .modal-content { width: 100% !important; }
+  #editSlotModalTech .edit-modal-body,
+  #coordinatesModal .coordinates-modal-body { padding: 14px; }
+  #editSlotModalTech .edit-actions,
+  #addNapboxModal .modal-actions,
+  #coordinatesModal .coordinates-modal-body .modal-actions { flex-wrap: wrap; gap: 8px; }
+  #editSlotModalTech .edit-actions button,
+  #addNapboxModal .modal-actions .btn,
+  #coordinatesModal .coordinates-modal-body .modal-actions .btn { flex: 1 1 120px; }
+  #coordinatesModal .coordinates-modal-body .modal-actions { margin: 14px -14px -14px; padding: 10px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #slotDetailsModal .modal-content,
+  #editSlotModalTech .modal-content,
+  #addNapboxModal .modal-content,
+  #coordinatesModal .modal-content { animation: none; transition: none; }
+}
+

@@ -762,7 +762,7 @@ function showConfirmStatusModal(applicationNumber, customerName, newStatus) {
     
     // Set modal content based on status
     const icon = document.getElementById('statusModalIcon');
-    const header = document.querySelector('.confirm-status-modal-header');
+    const header = document.querySelector('#confirmStatusModal .confirm-status-modal-header');
     const notice = document.querySelector('.confirm-status-notice');
     const confirmBtn = document.getElementById('confirmStatusAction');
     const title = document.getElementById('confirmStatusTitle');
@@ -778,26 +778,26 @@ function showConfirmStatusModal(applicationNumber, customerName, newStatus) {
     
     if (isOngoing) {
         header.classList.add('ongoing');
-        icon.classList.add('ongoing');
+        icon.style.display = 'none';
         notice.classList.add('ongoing');
         confirmBtn.classList.add('ongoing');
-        icon.innerHTML = '<i class="fas fa-play"></i>';
+        icon.innerHTML = '';
         title.textContent = 'Start Installation';
         text.textContent = `You are about to start the installation for ${customerName}.`;
         noticeTitle.textContent = 'What happens next?';
         noticeMsg.textContent = 'The installation status will be updated to "Ongoing". This means the technician is currently working on the installation.';
-        confirmBtn.innerHTML = '<i class="fas fa-play"></i> Start Installation';
+        confirmBtn.textContent = 'Start Installation';
     } else if (isInstalled) {
         header.classList.add('installed');
-        icon.classList.add('installed');
+        icon.style.display = 'none';
         notice.classList.add('installed');
         confirmBtn.classList.add('installed');
-        icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+        icon.innerHTML = '';
         title.textContent = 'Mark as Installed';
         text.textContent = `You are about to mark the installation for ${customerName} as COMPLETED.`;
         noticeTitle.textContent = 'What happens next?';
         noticeMsg.textContent = 'The installation status will be updated to "Installed". This means the installation is complete and the customer\'s service is active.';
-        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Mark Installed';
+        confirmBtn.textContent = 'Mark Installed';
     }
     
     // Set customer details

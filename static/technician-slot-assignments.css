@@ -2691,3 +2691,873 @@ tbody tr:hover {
     box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
 }
 
+/* ================= TECHNICIAN SLOT ASSIGNMENTS VISUAL ALIGNMENT ================= */
+.main-content {
+    --assignment-border: #d5e0ec;
+    background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+    color: #172b43;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.main-content .dashboard-header-card {
+    min-height: 104px;
+    padding: 20px 24px;
+    border: 1px solid rgba(0, 26, 51, 0.3);
+    border-radius: 10px;
+    background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+    box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .dashboard-header-card::before,
+.main-content .dashboard-header-card::after {
+    display: none;
+}
+
+.main-content .dashboard-header-card:hover {
+    transform: none;
+}
+
+.main-content .dashboard-header-left h1 {
+    color: #fff;
+    font-size: 24px;
+    line-height: 1.25;
+    letter-spacing: 0;
+}
+
+.main-content .dashboard-header-left p {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.main-content .card {
+    border: 1px solid var(--assignment-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content .card::before,
+.main-content .card::after {
+    display: none;
+}
+
+.main-content .card:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(18, 45, 73, 0.1);
+}
+
+.main-content .card-header {
+    min-height: 60px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e1e8f0;
+    background: #f5f8fc;
+}
+
+.main-content .card-header h2 {
+    color: #173754;
+    font-size: 16px;
+    letter-spacing: 0;
+}
+
+.main-content .card-body {
+    padding: 18px;
+}
+
+.main-content .filter-section {
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid #e1e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+}
+
+.main-content .filter-group label {
+    color: #526477;
+    font-size: 11px;
+}
+
+.main-content .filter-select,
+.main-content .search-section input {
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid #cbd7e3;
+    border-radius: 6px;
+    color: #24364b;
+    font-size: 12px;
+}
+
+.main-content .table-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #d7e1ec;
+    border-radius: 8px;
+    background: #fff;
+    -webkit-overflow-scrolling: touch;
+}
+
+.main-content table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+.main-content table th {
+    padding: 11px 14px;
+    background: #07325c;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    text-transform: uppercase;
+}
+
+.main-content table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e7edf3;
+    color: #293b50;
+    font-size: 12px;
+}
+
+.main-content tbody tr:hover {
+    background: #edf4fb;
+    transform: none;
+}
+
+.main-content :is(.btn-assign, .btn-ongoing, .btn-installed, .btn-completed, .btn-cancel-installation, .btn-download) {
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    font-size: 11px;
+    box-shadow: none;
+}
+
+.main-content .btn-assign { background: #0755a5; }
+.main-content .btn-ongoing { background: #1d4ed8; }
+.main-content :is(.btn-installed, .btn-download) { background: #167a4a; }
+.main-content .btn-completed { background: #526477; }
+
+.main-content :is(.btn-assign, .btn-ongoing, .btn-installed, .btn-download):hover {
+    transform: none;
+    filter: brightness(0.94);
+    box-shadow: none;
+}
+
+#assignModal .modal-content,
+#cancelInstallationModal .confirm-status-modal-content,
+#confirmStatusModal .confirm-status-modal-content {
+    border: 1px solid #e1e5eb;
+    border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+}
+
+#assignModal .modal-content {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+}
+
+#assignModal .modal-header,
+#assignModal .modal-footer {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    border-color: #edf0f3;
+    background: #fff;
+}
+
+#assignModal .modal-header h3 {
+    color: #202b3c;
+    font-size: 15px;
+}
+
+#assignModal .modal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+#assignModal .modal-body .form-group :is(input, select) {
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid #cbd7e3;
+    border-radius: 6px;
+    color: #24364b;
+    font-size: 12px;
+}
+
+#assignModal .modal-footer {
+    gap: 8px;
+}
+
+#assignModal .modal-footer > div[style*="flex:1"] {
+    flex: 1 1 auto;
+}
+
+#assignModal .modal-footer :is(.btn-cancel, .btn-confirm, .btn-cancel-installation) {
+    min-height: 36px;
+    padding: 7px 12px;
+    border-radius: 5px;
+    font-size: 11px;
+    box-shadow: none;
+}
+
+#assignModal .modal-footer .btn-cancel {
+    border: 1px solid #d6dde6;
+    background: #fff;
+    color: #465368;
+}
+
+#assignModal .modal-footer .btn-confirm {
+    background: #0755a5;
+}
+
+#assignModal .modal-footer .btn-cancel-installation {
+    background: #b4232c;
+}
+
+#cancelInstallationModal .confirm-status-modal-content,
+#confirmStatusModal .confirm-status-modal-content {
+    max-width: 460px;
+    padding: 0;
+    overflow: hidden;
+    background: #fff;
+}
+
+#cancelInstallationModal .confirm-status-modal-header,
+#confirmStatusModal .confirm-status-modal-header {
+    padding: 16px 20px 12px;
+}
+
+#cancelInstallationModal .confirm-status-modal-icon,
+#confirmStatusModal .confirm-status-modal-icon {
+    width: 42px;
+    height: 42px;
+    box-shadow: none;
+}
+
+#cancelInstallationModal .confirm-status-modal-header h3,
+#confirmStatusModal .confirm-status-modal-header h3 {
+    font-size: 16px;
+}
+
+#cancelInstallationModal .confirm-status-info,
+#confirmStatusModal .confirm-status-info {
+    padding: 12px 18px;
+    background: #fff;
+}
+
+#cancelInstallationModal .confirm-status-notice,
+#confirmStatusModal .confirm-status-notice {
+    padding: 10px 18px;
+}
+
+#cancelInstallationModal .confirm-status-actions,
+#confirmStatusModal .confirm-status-actions {
+    gap: 8px;
+    padding: 12px 18px 16px;
+    background: #fff;
+}
+
+#cancelInstallationModal .confirm-status-actions .btn,
+#confirmStatusModal .confirm-status-actions .btn {
+    min-width: 82px;
+    min-height: 36px;
+    padding: 7px 13px;
+    border-radius: 5px;
+    font-size: 11px;
+    box-shadow: none;
+}
+
+@media (max-width: 991px) {
+    .main-content { padding-left: 18px; padding-right: 18px; }
+}
+
+@media (max-width: 767px) {
+    .main-content { padding: 16px 14px; }
+    .main-content .dashboard-header-card { align-items: flex-start; flex-direction: column; gap: 12px; }
+    .main-content .dashboard-header-left h1 { font-size: 20px; }
+    .main-content .card-header { flex-wrap: wrap; gap: 10px; }
+    .main-content .filter-section { flex-direction: column; align-items: stretch; }
+    .main-content .filter-select { width: 100%; }
+    .main-content .table-wrapper { overflow-x: auto; }
+}
+
+@media (max-width: 575px) {
+    .main-content { padding: 12px 10px; }
+    .main-content .dashboard-header-card { padding: 17px 16px; }
+    .main-content .card-body { padding: 14px; }
+    .main-content table th,
+    .main-content table td { padding: 9px 10px; }
+    #assignModal .modal-footer { flex-wrap: wrap; }
+    #assignModal .modal-footer > div[style*="flex:1"] { display: none; }
+    #assignModal .modal-footer > button { flex: 1 1 130px; }
+}
+
+/* ================= INSTALLATION STATUS CONFIRMATION ================= */
+#confirmStatusModal .confirm-status-modal-content {
+    width: min(500px, calc(100vw - 32px));
+    max-width: 500px;
+    max-height: 90vh;
+    margin: 0;
+    border: 1px solid #dbe2ea;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 22px 58px rgba(15, 23, 42, 0.25);
+}
+
+#confirmStatusModal .confirm-status-modal-content .close-btn {
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #d8e0e8;
+    border-radius: 5px;
+    background: #fff;
+    color: #64748b;
+    font-size: 17px;
+}
+
+#confirmStatusModal .confirm-status-modal-content .close-btn:hover {
+    transform: none;
+    border-color: #bac9d8;
+    background: #eef3f7;
+    color: #24364b;
+}
+
+#confirmStatusModal .confirm-status-modal-header {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    padding: 20px 48px 18px 22px;
+    border-bottom: 1px solid #e5eaf0;
+    background: #fff;
+    text-align: left;
+}
+
+#confirmStatusModal .confirm-status-modal-header.ongoing,
+#confirmStatusModal .confirm-status-modal-header.installed {
+    border-bottom-color: #e5eaf0;
+    background: #fff;
+}
+
+#confirmStatusModal .confirm-status-modal-header.ongoing,
+#confirmStatusModal .confirm-status-modal-header.installed {
+    display: block;
+    text-align: left;
+}
+
+#confirmStatusModal .confirm-status-modal-header.ongoing h3,
+#confirmStatusModal .confirm-status-modal-header.installed h3 {
+    align-self: auto;
+    margin: 0 0 6px;
+}
+
+#confirmStatusModal .confirm-status-modal-header.ongoing p,
+#confirmStatusModal .confirm-status-modal-header.installed p {
+    align-self: auto;
+    max-width: 100%;
+    margin: 0;
+}
+
+#confirmStatusModal .confirm-status-modal-icon {
+    grid-row: span 2;
+    width: 42px;
+    height: 42px;
+    margin: 0;
+    border: 1px solid #c9dced;
+    border-radius: 6px;
+    background: #eaf2f9 !important;
+    box-shadow: none;
+}
+
+#confirmStatusModal .confirm-status-modal-icon.installed {
+    border-color: #cbe5d4;
+    background: #edf7f0 !important;
+}
+
+#confirmStatusModal .confirm-status-modal-icon i {
+    color: #075a9e;
+    font-size: 17px;
+}
+
+#confirmStatusModal .confirm-status-modal-icon.installed i {
+    color: #167a4a;
+}
+
+#confirmStatusModal .confirm-status-modal-header h3 {
+    align-self: end;
+    margin: 0 0 3px;
+    color: #202b3c;
+    font-size: 17px;
+    line-height: 1.3;
+}
+
+#confirmStatusModal .confirm-status-modal-header.ongoing h3,
+#confirmStatusModal .confirm-status-modal-header.installed h3 {
+    color: #202b3c;
+}
+
+#confirmStatusModal .confirm-status-modal-header p {
+    align-self: start;
+    color: #68798b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#confirmStatusModal .confirm-status-modal-info,
+#confirmStatusModal .confirm-status-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 16px 22px;
+    border-bottom: 1px solid #e7edf3;
+    background: #fff;
+}
+
+#confirmStatusModal .confirm-status-detail {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 9px 10px;
+    border: 1px solid #dfe5ec;
+    border-radius: 5px;
+    background: #f8fafc;
+}
+
+#confirmStatusModal .confirm-status-detail .confirm-label {
+    color: #778397;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+#confirmStatusModal .confirm-status-detail .confirm-value {
+    max-width: 100%;
+    color: #263246;
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+#confirmStatusModal .confirm-status-notice {
+    align-items: flex-start;
+    gap: 10px;
+    margin: 14px 22px 0;
+    padding: 11px 12px;
+    border: 1px solid #cbdced;
+    border-radius: 5px;
+    background: #f3f7fb;
+}
+
+#confirmStatusModal .confirm-status-notice.ongoing {
+    border-color: #cbdced;
+    background: #f3f7fb;
+}
+
+#confirmStatusModal .confirm-status-notice.installed {
+    border-color: #cbe5d4;
+    background: #f2f8f4;
+}
+
+#confirmStatusModal .confirm-status-notice i,
+#confirmStatusModal .confirm-status-notice.ongoing i {
+    margin-top: 1px;
+    color: #075a9e;
+    font-size: 14px;
+}
+
+#confirmStatusModal .confirm-status-notice.installed i {
+    color: #167a4a;
+}
+
+#confirmStatusModal .confirm-status-notice div strong,
+#confirmStatusModal .confirm-status-notice.ongoing div strong,
+#confirmStatusModal .confirm-status-notice.installed div strong {
+    margin-bottom: 3px;
+    color: #344256;
+    font-size: 11px;
+}
+
+#confirmStatusModal .confirm-status-notice div p,
+#confirmStatusModal .confirm-status-notice.ongoing div p,
+#confirmStatusModal .confirm-status-notice.installed div p {
+    color: #586579;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+#confirmStatusModal .confirm-status-actions {
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 22px 18px;
+    border-top: 0;
+    background: #f8fafc;
+}
+
+#confirmStatusModal .confirm-status-actions .btn {
+    min-width: 96px;
+    min-height: 38px;
+    padding: 8px 13px;
+    border-radius: 5px;
+    font-size: 12px;
+    box-shadow: none;
+}
+
+#confirmStatusModal .confirm-status-actions .btn-cancel {
+    border: 1px solid #cbd5df;
+    background: #fff;
+    color: #465368;
+}
+
+#confirmStatusModal .confirm-status-actions .btn-cancel:hover {
+    transform: none;
+    background: #eef2f6;
+}
+
+#confirmStatusModal .confirm-status-actions .btn-confirm-status.ongoing {
+    border: 1px solid #0755a5;
+    background: #0755a5;
+}
+
+#confirmStatusModal .confirm-status-actions .btn-confirm-status.installed {
+    border: 1px solid #167a4a;
+    background: #167a4a;
+}
+
+#confirmStatusModal .confirm-status-actions .btn-confirm-status:hover {
+    transform: none;
+    filter: brightness(0.93);
+    box-shadow: none;
+}
+
+@media (max-width: 575px) {
+    #confirmStatusModal .confirm-status-modal-content {
+        width: calc(100vw - 24px);
+        max-height: 92vh;
+    }
+
+    #confirmStatusModal .confirm-status-modal-header {
+        padding: 17px 42px 15px 16px;
+    }
+
+    #confirmStatusModal .confirm-status-info {
+        gap: 7px;
+        padding: 12px 16px;
+    }
+
+    #confirmStatusModal .confirm-status-detail {
+        padding: 8px;
+    }
+
+    #confirmStatusModal .confirm-status-notice {
+        margin: 12px 16px 0;
+    }
+
+    #confirmStatusModal .confirm-status-actions {
+        flex-direction: row;
+        justify-content: stretch;
+        padding: 12px 16px 15px;
+    }
+
+    #confirmStatusModal .confirm-status-actions .btn {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/* ================= ASSIGN NAP BOX SLOT MODAL ================= */
+#assignModal.modal {
+    z-index: 1200;
+    background: rgba(15, 23, 42, 0.56);
+}
+
+#assignModal .modal-content {
+    width: min(680px, calc(100vw - 32px));
+    max-width: 680px;
+    max-height: min(90vh, 820px);
+    margin: 0;
+    border: 1px solid #d9e1e9;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 22px 58px rgba(15, 23, 42, 0.26);
+}
+
+#assignModal .modal-header {
+    min-height: 68px;
+    gap: 16px;
+    padding: 14px 20px;
+    background: #f6f8fb;
+}
+
+#assignModal .assign-modal-title {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 11px;
+}
+
+#assignModal .assign-modal-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    place-items: center;
+    border: 1px solid #c9dced;
+    border-radius: 6px;
+    background: #eaf2f9;
+    color: #075a9e;
+    font-size: 15px;
+}
+
+#assignModal .modal-header h3 {
+    color: #202b3c;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+#assignModal .close-modal {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    place-items: center;
+    border: 1px solid #d8e0e8;
+    border-radius: 5px;
+    background: #fff;
+    color: #64748b;
+    font-size: 19px;
+}
+
+#assignModal .close-modal:hover {
+    border-color: #bac9d8;
+    background: #eef3f7;
+    color: #24364b;
+}
+
+#assignModal .modal-body {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 20px;
+    overflow-y: auto;
+}
+
+#assignModal #preferredNapboxInfo:empty {
+    display: none;
+}
+
+#assignModal #preferredNapboxInfo {
+    margin: 0;
+}
+
+#assignModal .napbox-setup-banner {
+    width: 100%;
+    margin: 0 !important;
+    border-radius: 6px;
+    line-height: 1.45;
+}
+
+#assignModal .assign-modal-section {
+    min-width: 0;
+    padding-top: 13px;
+    border-top: 1px solid #e6ebf1;
+}
+
+#assignModal .assign-modal-section h4 {
+    margin: 0 0 10px;
+    color: #536174;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+#assignModal .assign-subscriber-fields,
+#assignModal .assign-slot-fields {
+    display: grid;
+    min-width: 0;
+    gap: 11px 14px;
+}
+
+#assignModal .assign-subscriber-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+        "contract application"
+        "subscriber subscriber";
+}
+
+#assignModal .assign-contract-field { grid-area: contract; }
+#assignModal .assign-customer-field { grid-area: subscriber; }
+#assignModal .assign-application-field { grid-area: application; }
+
+#assignModal .assign-slot-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+        "napbox napbox"
+        "slot date";
+}
+
+#assignModal .assign-napbox-field { grid-area: napbox; }
+#assignModal .assign-slot-field { grid-area: slot; }
+#assignModal .assign-date-field { grid-area: date; }
+
+#assignModal .modal-body .form-group {
+    min-width: 0;
+    margin: 0;
+}
+
+#assignModal .modal-body .form-group label {
+    margin-bottom: 5px;
+    color: #465368;
+    font-size: 11px;
+}
+
+#assignModal .modal-body .form-group :is(input, select) {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid #cbd5df;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #24364b;
+    font: inherit;
+    font-size: 12px;
+}
+
+#assignModal .modal-body .form-group input[readonly] {
+    background-color: #f3f6f9;
+    color: #536174;
+    cursor: default;
+}
+
+#assignModal .modal-body .form-group select:disabled {
+    border-color: #dce3ea;
+    background-color: #f3f6f9;
+    color: #8793a2;
+    cursor: not-allowed;
+}
+
+#assignModal .modal-body .form-group :is(input, select):focus-visible {
+    border-color: #2876b9;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(40, 118, 185, 0.13);
+}
+
+#assignModal .modal-body .form-group small {
+    margin-top: 6px;
+    color: #718096;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+#assignModal .modal-footer {
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #f8fafc;
+}
+
+#assignModal .modal-footer :is(.btn-cancel, .btn-confirm, .btn-cancel-installation) {
+    min-height: 38px;
+    padding: 8px 13px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+#assignModal .modal-footer .btn-cancel-installation {
+    border: 1px solid #efc4c7;
+    background: #fff5f5;
+    color: #a3222b;
+}
+
+#assignModal .modal-footer .btn-cancel-installation:hover {
+    background: #fee9e9;
+}
+
+#assignModal .modal-footer .btn-cancel {
+    border: 1px solid #cbd5df;
+    background: #fff;
+    color: #465368;
+}
+
+#assignModal .modal-footer .btn-cancel:hover {
+    background: #eef2f6;
+}
+
+#assignModal .modal-footer .btn-confirm {
+    border: 1px solid #0755a5;
+    background: #0755a5;
+    color: #fff;
+}
+
+#assignModal .modal-footer .btn-confirm:hover:not(:disabled) {
+    background: #064784;
+}
+
+#assignModal .modal-footer .btn-confirm:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed;
+}
+
+@media (max-width: 575px) {
+    #assignModal .modal-content {
+        width: calc(100vw - 24px);
+        max-height: 92vh;
+    }
+
+    #assignModal .modal-header {
+        min-height: 60px;
+        padding: 11px 14px;
+    }
+
+    #assignModal .modal-body {
+        gap: 12px;
+        padding: 14px;
+    }
+
+    #assignModal .assign-subscriber-fields {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "contract"
+            "subscriber"
+            "application";
+    }
+
+    #assignModal .assign-slot-fields {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "napbox"
+            "slot"
+            "date";
+    }
+
+    #assignModal .modal-footer {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 10px 14px;
+    }
+
+    #assignModal .modal-footer > div[style*="flex:1"] {
+        display: none;
+    }
+
+    #assignModal .modal-footer #cancelInstallationBtn {
+        grid-column: 1 / -1;
+    }
+
+    #assignModal .modal-footer > button {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+    }
+}
