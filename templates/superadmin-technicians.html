@@ -955,9 +955,6 @@
 <div id="deleteTeamModal" class="modal delete-team-modal">
   <div class="modal-content delete-team-content">
     <span class="close-btn delete-team-close" id="closeDeleteTeamModalBtn">&times;</span>
-    <div class="delete-team-icon">
-      <i class="fas fa-trash-alt"></i>
-    </div>
     <h2 class="delete-team-title">Confirm Delete Team</h2>
     <p class="delete-team-text" id="deleteTeamText">Are you sure you want to delete this team?</p>
     <div class="delete-team-note">
@@ -973,17 +970,20 @@
 
 <!-- ================= CONFIRM TEAM CHANGES MODAL ================= -->
 <div id="confirmTeamChangesModal" class="modal">
-  <div class="modal-content" style="max-width: 500px; text-align: left;">
-    <span class="close-btn" id="closeConfirmTeamChangesModal">&times;</span>
-    <h2 style="text-align: center; margin-bottom: 16px;">
-      <i class="fas fa-check-circle" style="color: #0047ab;"></i> Confirm Changes
-    </h2>
-    <div id="confirmTeamChangesContent" style="max-height: 400px; overflow-y: auto; padding: 0 4px;">
+  <div class="modal-content team-changes-confirm-content">
+    <div class="team-changes-confirm-header">
+      <div class="info-modal-title">
+        <h3>Confirm Changes</h3>
+        <p>Review the team updates before saving</p>
+      </div>
+      <button type="button" class="info-modal-close" id="closeConfirmTeamChangesModal" aria-label="Close Confirm Changes">&times;</button>
+    </div>
+    <div id="confirmTeamChangesContent" class="team-changes-review-content">
       <!-- Dynamic content will be inserted here -->
     </div>
-    <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
-      <button id="cancelTeamChangesBtn" class="btn btn-cancel" style="min-width: 120px;">Cancel</button>
-      <button id="confirmTeamChangesBtn" class="btn btn-confirm" style="min-width: 140px; background: linear-gradient(135deg, #0047ab, #007bff);">
+    <div class="modal-actions team-changes-confirm-actions">
+      <button id="cancelTeamChangesBtn" class="btn btn-cancel">Cancel</button>
+      <button id="confirmTeamChangesBtn" class="btn btn-confirm">
         <i class="fas fa-save"></i> Save Changes
       </button>
     </div>

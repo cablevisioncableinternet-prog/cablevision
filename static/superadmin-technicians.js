@@ -2007,102 +2007,82 @@ function openConfirmTeamChangesModal(changeDetails) {
     // Store the changes for later use
     pendingTeamChanges = changeDetails;
     
-    // Build the content HTML
     let html = `
-        <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-            <p style="margin: 0; font-weight: 600; color: #1e293b; font-size: 14px;">
-                <i class="fas fa-info-circle" style="color: #0047ab;"></i> 
-                Please review the following changes before saving:
-            </p>
-        </div>
+        <p class="team-changes-intro">Review the updates below before saving them.</p>
     `;
     
     // Team info changes
     if (changeDetails.teamInfoChanges) {
         html += `
-            <div style="background: #eff6ff; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #0047ab;">
-                <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #0047ab;">
-                    <i class="fas fa-edit"></i> Team Information Changes
-                </h4>
-                <div style="font-size: 13px; color: #1e293b;">
+            <section class="team-change-group team-change-group--team">
+                <h4 class="team-change-group-title">Team Information</h4>
+                <div class="team-change-rows">
         `;
         
         if (changeDetails.nameChange) {
-            html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
-                <span style="color: #64748b;">Team Name:</span>
-                <span><span style="color: #dc2626; text-decoration: line-through;">${escapeHtml(changeDetails.oldName)}</span> → <span style="color: #16a34a; font-weight: 600;">${escapeHtml(changeDetails.newName)}</span></span>
+            html += `<div class="team-change-row">
+                <span class="team-change-label">Team Name</span>
+                <span class="team-change-values"><span class="team-change-old">${escapeHtml(changeDetails.oldName)}</span><span class="team-change-arrow" aria-hidden="true">&rarr;</span><span class="team-change-new">${escapeHtml(changeDetails.newName)}</span></span>
             </div>`;
         }
         
         if (changeDetails.areaChange) {
-            // ✅ IDAGDAG ANG WARNING KUNG AREA ANG NAGBAGO
-            html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
-                <span style="color: #64748b;">Area:</span>
-                <span><span style="color: #dc2626; text-decoration: line-through;">${escapeHtml(changeDetails.oldArea)}</span> → <span style="color: #16a34a; font-weight: 600;">${escapeHtml(changeDetails.newArea)}</span></span>
+            html += `<div class="team-change-row">
+                <span class="team-change-label">Area</span>
+                <span class="team-change-values"><span class="team-change-old">${escapeHtml(changeDetails.oldArea)}</span><span class="team-change-arrow" aria-hidden="true">&rarr;</span><span class="team-change-new">${escapeHtml(changeDetails.newArea)}</span></span>
             </div>`;
             
-            // ✅ I-SHOW ANG WARNING NA MAG-U-UPDATE ANG AREA NG MGA MEMBERS
-            html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; background: #fef3c7; margin-top: 4px; padding: 8px 12px; border-radius: 6px;">
-                <span style="color: #92400e; font-weight: 600;"><i class="fas fa-exclamation-triangle"></i> Effect on Members:</span>
-                <span style="color: #92400e; font-weight: 600;">All ${changeDetails.memberCount || 0} members' area will be updated to "${escapeHtml(changeDetails.newArea)}"</span>
+            html += `<div class="team-change-impact">
+                <strong>Impact on members</strong>
+                <span>Area for ${changeDetails.memberCount || 0} team member(s) will change to ${escapeHtml(changeDetails.newArea)}.</span>
             </div>`;
         }
         
         if (changeDetails.leaderChange) {
-            html += `<div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
-                <span style="color: #64748b;">Team Leader:</span>
-                <span><span style="color: #dc2626; text-decoration: line-through;">${escapeHtml(changeDetails.oldLeader)}</span> → <span style="color: #16a34a; font-weight: 600;">${escapeHtml(changeDetails.newLeader)}</span></span>
+            html += `<div class="team-change-row">
+                <span class="team-change-label">Team Leader</span>
+                <span class="team-change-values"><span class="team-change-old">${escapeHtml(changeDetails.oldLeader)}</span><span class="team-change-arrow" aria-hidden="true">&rarr;</span><span class="team-change-new">${escapeHtml(changeDetails.newLeader)}</span></span>
             </div>`;
         }
         
         if (changeDetails.statusChange) {
-            html += `<div style="display: flex; justify-content: space-between; padding: 4px 0;">
-                <span style="color: #64748b;">Status:</span>
-                <span><span style="color: #dc2626; text-decoration: line-through;">${escapeHtml(changeDetails.oldStatus)}</span> → <span style="color: #16a34a; font-weight: 600;">${escapeHtml(changeDetails.newStatus)}</span></span>
+            html += `<div class="team-change-row">
+                <span class="team-change-label">Status</span>
+                <span class="team-change-values"><span class="team-change-old">${escapeHtml(changeDetails.oldStatus)}</span><span class="team-change-arrow" aria-hidden="true">&rarr;</span><span class="team-change-new">${escapeHtml(changeDetails.newStatus)}</span></span>
             </div>`;
         }
         
-        html += `</div></div>`;
+        html += `</div></section>`;
     }
     
     // Member changes
     if (changeDetails.memberChanges) {
         html += `
-            <div style="background: #f8fafc; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #64748b;">
-                <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;">
-                    <i class="fas fa-users"></i> Member Changes
-                </h4>
-                <div style="font-size: 13px; color: #1e293b;">
+            <section class="team-change-group team-change-group--members">
+                <h4 class="team-change-group-title">Team Members</h4>
+                <div class="team-member-changes">
         `;
         
         if (changeDetails.addedMembers && changeDetails.addedMembers.length > 0) {
-            html += `<div style="margin-bottom: 6px; color: #16a34a; font-weight: 600;">📥 Adding (${changeDetails.addedMembers.length}):</div>`;
+            html += `<div class="team-member-change-heading team-member-change-heading--added">Adding ${changeDetails.addedMembers.length}</div>`;
             changeDetails.addedMembers.forEach(m => {
-                html += `<div style="padding: 3px 0 3px 16px; color: #16a34a;">+ ${escapeHtml(m.name)} (${escapeHtml(m.id)})</div>`;
+                html += `<div class="team-member-change team-member-change--added"><span>${escapeHtml(m.name)}</span><span class="team-member-id">${escapeHtml(m.id)}</span></div>`;
             });
         }
         
         if (changeDetails.removedMembers && changeDetails.removedMembers.length > 0) {
-            if (changeDetails.addedMembers && changeDetails.addedMembers.length > 0) {
-                html += `<div style="margin-top: 8px;"></div>`;
-            }
-            html += `<div style="margin-bottom: 6px; color: #dc2626; font-weight: 600;">📤 Removing (${changeDetails.removedMembers.length}):</div>`;
+            html += `<div class="team-member-change-heading team-member-change-heading--removed">Removing ${changeDetails.removedMembers.length}</div>`;
             changeDetails.removedMembers.forEach(m => {
-                html += `<div style="padding: 3px 0 3px 16px; color: #dc2626;">- ${escapeHtml(m.name)} (${escapeHtml(m.id)})</div>`;
+                html += `<div class="team-member-change team-member-change--removed"><span>${escapeHtml(m.name)}</span><span class="team-member-id">${escapeHtml(m.id)}</span></div>`;
             });
         }
         
-        html += `</div></div>`;
+        html += `</div></section>`;
     }
     
     // Summary
     html += `
-        <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 8px; text-align: center;">
-            <span style="font-size: 12px; color: #64748b;">
-                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> 
-                This action cannot be undone. Please review carefully.
-            </span>
-        </div>
+        <div class="team-changes-warning">This action cannot be undone. Review the changes carefully before saving.</div>
     `;
     
     content.innerHTML = html;
