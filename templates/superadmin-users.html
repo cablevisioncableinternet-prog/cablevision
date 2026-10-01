@@ -470,67 +470,84 @@
 
 <!-- ================= VIEW REQUEST MODAL ================= -->
 <div id="requestModal" class="modal">
-  <div class="modal-content status-modal-content">
-    <button class="close-btn" id="closeRequestModalBtn">&times;</button>
-    
-    <div class="status-modal-header">
-      <div class="status-modal-icon" id="requestModalIcon">
+  <div class="modal-content request-modal-content">
+
+    <!-- HEADER -->
+    <div class="request-modal-header">
+      <div class="modal-icon">
         <i class="fas fa-file-signature"></i>
       </div>
-      <h3>Reconnection Request</h3>
-      <p>Review the request details before approving.</p>
-    </div>
-    
-    <div class="delete-user-info" id="requestDetails">
-      <div class="delete-user-detail">
-        <span class="delete-label">Name:</span>
-        <span class="delete-value" id="reqFullName">---</span>
-      </div>
-      <div class="delete-user-detail">
-        <span class="delete-label">Contact:</span>
-        <span class="delete-value" id="reqContact">---</span>
-      </div>
-      <div class="delete-user-detail">
-        <span class="delete-label">Email:</span>
-        <span class="delete-value" id="reqEmail">---</span>
-      </div>
-      <div class="delete-user-detail">
-        <span class="delete-label">Address:</span>
-        <span class="delete-value" id="reqAddress">---</span>
-      </div>
-    </div>
-    
-    <!-- ✅ PLAN DETAILS SECTION - UPDATED -->
-    <div id="reqPlanSection" style="padding: 16px 28px; border-top: 1px solid #eef2f6; border-bottom: 1px solid #eef2f6;">
-      <div style="font-size:13px; font-weight:600; color:#1e293b; margin-bottom:10px;">
-        <i class="fas fa-wifi"></i> Plan Details
-      </div>
-      <div class="delete-user-detail">
-        <span class="delete-label">Current Plan:</span>
-        <span class="delete-value" id="reqCurrentPlan">---</span>
-      </div>
-      <div class="delete-user-detail" id="reqNewPlanRow" style="display:none;">
-        <span class="delete-label" style="color: #2563eb;">New Plan:</span>
-        <span class="delete-value" id="reqNewPlan" style="color: #2563eb; font-weight:700;">---</span>
-      </div>
-      <div class="delete-user-detail" id="reqNoChangeRow">
-        <span class="delete-label">Plan Change:</span>
-        <span class="delete-value" style="color: #94a3b8;">No plan change requested</span>
-      </div>
-    </div>
-    
-    <!-- ✅ MODAL ACTIONS - WITH REJECT BUTTON -->
-    <div class="status-modal-actions" style="padding: 16px 28px 20px 28px; gap: 12px;">
-      <button id="cancelRequest" class="btn btn-cancel">
-        <i class="fas fa-times"></i> Close
+      <h2>Reconnection Request</h2>
+      <p class="request-subtitle">Review the request details before approving.</p>
+      <button type="button" class="close-btn request-modal-close" id="closeRequestModalBtn" aria-label="Close reconnection request details">
+        <i class="fas fa-times"></i>
       </button>
-      <button id="rejectRequestBtn" class="btn btn-danger" style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+    </div>
+
+    <!-- BODY -->
+    <div class="request-modal-body">
+
+      <!-- USER INFORMATION -->
+      <div class="request-section">
+        <div class="request-section-title">
+          <i class="fas fa-user-circle"></i> User Information
+        </div>
+        <div class="request-info-grid" id="requestDetails">
+          <div class="request-info-item">
+            <span class="request-info-label">Name</span>
+            <span class="request-info-value" id="reqFullName">---</span>
+          </div>
+          <div class="request-info-item">
+            <span class="request-info-label">Contact</span>
+            <span class="request-info-value" id="reqContact">---</span>
+          </div>
+          <div class="request-info-item request-info-full">
+            <span class="request-info-label">Email</span>
+            <span class="request-info-value" id="reqEmail">---</span>
+          </div>
+          <div class="request-info-item request-info-full">
+            <span class="request-info-label">Address</span>
+            <span class="request-info-value" id="reqAddress">---</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAN DETAILS -->
+      <div class="request-section" id="reqPlanSection">
+        <div class="request-section-title">
+          <i class="fas fa-wifi"></i> Plan Details
+        </div>
+        <div class="request-info-grid">
+          <div class="request-info-item request-info-full">
+            <span class="request-info-label">Current Plan</span>
+            <span class="request-info-value" id="reqCurrentPlan">---</span>
+          </div>
+          <div class="request-info-item request-info-full request-info-highlight" id="reqNewPlanRow" style="display:none;">
+            <span class="request-info-label">New Plan</span>
+            <span class="request-info-value" id="reqNewPlan">---</span>
+          </div>
+          <div class="request-info-item request-info-full" id="reqNoChangeRow">
+            <span class="request-info-label">Plan Change</span>
+            <span class="request-info-value request-info-muted">No plan change requested</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="request-modal-actions">
+      <button type="button" id="cancelRequest" class="btn-request-close">
+        Close
+      </button>
+      <button type="button" id="rejectRequestBtn" class="btn-request-reject">
         <i class="fas fa-ban"></i> Reject
       </button>
-      <button id="confirmApproveRequest" class="btn btn-confirm" style="background: linear-gradient(135deg, #0047ab 0%, #007bff 100%); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+      <button type="button" id="confirmApproveRequest" class="btn-request-approve">
         <i class="fas fa-check"></i> Approve
       </button>
     </div>
+
   </div>
 </div>
 
