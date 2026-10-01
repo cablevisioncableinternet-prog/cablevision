@@ -456,78 +456,102 @@ function showNoData() {
   if (table) table.style.display = "none";
 }
 
-// ================= STATUS MODAL THEME HELPER =================
-function setStatusModalTheme(modalContent, theme) {
-  if (!modalContent) return;
-  modalContent.classList.remove('red-theme', 'green-theme', 'blue-theme');
-  modalContent.classList.add(theme);
-}
-
-// ================= SHOW STATUS MODAL =================
+// ================= SHOW STATUS MODAL (ENHANCED WITH RED THEME) =================
 function showStatusModal(userId, currentStatus) {
   const modal = document.getElementById("statusModal");
-  const modalContent = modal ? modal.querySelector('.status-request-content') : null;
+  const modalContent = modal?.querySelector('.modal-content');
   const title = document.getElementById("statusTitle");
   const text = document.getElementById("statusText");
   const icon = document.getElementById("statusModalIcon");
   const balanceField = document.getElementById("balanceField");
   const balanceInput = document.getElementById("balanceInput");
   const confirmBtn = document.getElementById("confirmStatus");
-
-  if (!modal || !modalContent || !title || !text || !icon) return;
-
+  
   // DETERMINE NEW STATUS
   let newStatus;
   let actionText;
   let showBalance = false;
-  let iconClass;
-  let theme;
+  let iconClass = "fa-user-cog";
+  let iconBg = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
   let isDeactivate = false;
-
+  
   if (currentStatus === "Active") {
     newStatus = "Inactive";
     actionText = "Deactivate";
     showBalance = true;
-    iconClass = "fa-user-slash";
-    theme = "red-theme";
+    iconClass = "fa-user-slash"; // Pinalitan ng user-slash
+    iconBg = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
     isDeactivate = true;
+  } else if (currentStatus === "Inactive") {
+    newStatus = "Active";
+    actionText = "Activate";
+    showBalance = false;
+    iconClass = "fa-user-check";
+    iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
   } else if (currentStatus === "Terminated") {
     newStatus = "Active";
     actionText = "Reactivate";
+    showBalance = false;
     iconClass = "fa-undo-alt";
-    theme = "blue-theme";
+    iconBg = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
   } else {
-    // Inactive o kahit anong ibang status
     newStatus = "Active";
     actionText = "Activate";
+    showBalance = false;
     iconClass = "fa-user-check";
-    theme = "green-theme";
+    iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
   }
-
-  // THEME + ICON + TEXT (kulay ay galing na sa CSS)
-  setStatusModalTheme(modalContent, theme);
+  
+  if (!modal || !title || !text || !icon) return;
+  
+  // REMOVE OLD THEME CLASSES
+  if (modalContent) {
+    modalContent.classList.remove('red-theme');
+  }
+  
+  // ADD RED THEME IF DEACTIVATE
+  if (isDeactivate) {
+    modalContent.classList.add('red-theme');
+  }
+  
+  // SET ICON
   icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+  icon.style.background = iconBg;
+  
+  // SET TITLE & TEXT
   title.textContent = `Confirm ${actionText}`;
-  text.innerHTML = `Are you sure you want to <strong>${actionText.toLowerCase()}</strong> this user?`;
-
-  // BALANCE FIELD - ipakita lang kapag Deactivate
-  if (balanceField) balanceField.style.display = showBalance ? "block" : "none";
-  if (balanceInput) {
+  text.textContent = `Are you sure you want to ${actionText.toLowerCase()} this user?`;
+  
+  // SHOW/HIDE BALANCE
+  if (showBalance) {
+    balanceField.style.display = "block";
+    balanceInput.value = "";
+    // Auto-focus after modal opens
+    setTimeout(() => balanceInput.focus(), 350);
+  } else {
+    balanceField.style.display = "none";
+    balanceInput.value = "";
+    balanceField.style.display = "block";
     balanceInput.value = "";
     balanceInput.classList.remove('field-error');
-  }
-  const errorMsg = document.getElementById('balanceError');
-  if (errorMsg) errorMsg.style.display = 'none';
-
-  if (showBalance && balanceInput) {
-    setTimeout(() => balanceInput.focus(), 350);
+    const errorMsg = document.getElementById('balanceError');
+    if (errorMsg) errorMsg.style.display = 'none';
   }
 
-  // CONFIRM BUTTON
+  
+  
+  // UPDATE CONFIRM BUTTON TEXT AND STYLE
   if (confirmBtn) {
     confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${actionText}`;
+    if (isDeactivate) {
+      confirmBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+      confirmBtn.style.boxShadow = "0 4px 16px rgba(220, 38, 38, 0.25)";
+    } else {
+      confirmBtn.style.background = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
+      confirmBtn.style.boxShadow = "0 4px 16px rgba(0, 71, 171, 0.25)";
+    }
   }
-
+  
   pendingAction = {
     type: "status",
     id: userId,
@@ -536,48 +560,34 @@ function showStatusModal(userId, currentStatus) {
     balance: 0,
     isDeactivate: isDeactivate
   };
-
+  
   // SHOW MODAL
   modal.style.display = "flex";
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
-// ================= SHOW CONNECTION MODAL =================
 function showConnectionModal(userId, currentConnection) {
   const modal = document.getElementById("statusModal");
-  const modalContent = modal ? modal.querySelector('.status-request-content') : null;
   const title = document.getElementById("statusTitle");
   const text = document.getElementById("statusText");
-  const icon = document.getElementById("statusModalIcon");
   const balanceField = document.getElementById("balanceField");
-  const balanceInput = document.getElementById("balanceInput");
-  const confirmBtn = document.getElementById("confirmStatus");
-
-  if (!modal || !modalContent || !title || !text) return;
-
   const isConnected = currentConnection === "Connected";
   const action = isConnected ? "Disconnect" : "Connect";
-
-  setStatusModalTheme(modalContent, isConnected ? "red-theme" : "green-theme");
-  if (icon) icon.innerHTML = `<i class="fas ${isConnected ? "fa-link-slash" : "fa-link"}"></i>`;
-
+  
+  if (!modal || !title || !text) return;
+  
   title.textContent = `Confirm ${action}`;
-  text.innerHTML = `Are you sure you want to <strong>${action.toLowerCase()}</strong> this user's internet connection?`;
-
-  if (balanceField) balanceField.style.display = "none";
-  if (balanceInput) {
-    balanceInput.value = "";
-    balanceInput.classList.remove('field-error');
-  }
-  if (confirmBtn) confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${action}`;
-
+  text.textContent = `Are you sure you want to ${action.toLowerCase()} this user's internet connection?`;
+  balanceField.style.display = "none";
+  
   pendingAction = {
     type: "connection",
     id: userId,
     newValue: isConnected ? "Disconnected" : "Connected"
   };
-
+  
+  // I-CENTER ANG MODAL - ITO ANG BAGO
   modal.style.display = "flex";
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -690,7 +700,6 @@ let pendingConfirmAction = null;
 
 function showConfirmModal(action, requestId, requestData) {
   const modal = document.getElementById("confirmActionModal");
-  const icon = document.getElementById("confirmModalIcon");
   const title = document.getElementById("confirmModalTitle");
   const text = document.getElementById("confirmModalText");
   const confirmBtn = document.getElementById("executeConfirmAction");
@@ -705,24 +714,17 @@ function showConfirmModal(action, requestId, requestData) {
   // I-set ang data
   const isApprove = action === 'approve';
   const fullName = requestData?.full_name || "User";
+  modal.classList.toggle("is-approve", isApprove);
+  modal.classList.toggle("is-reject", !isApprove);
   
-  // Theme (green = approve, red = reject) - kulay ay galing na sa CSS
-  const modalContent = modal.querySelector('.confirm-request-content');
-  if (modalContent) {
-    modalContent.classList.remove('approve-theme', 'reject-theme');
-    modalContent.classList.add(isApprove ? 'approve-theme' : 'reject-theme');
-  }
-
   if (isApprove) {
-    icon.innerHTML = '<i class="fas fa-check-circle"></i>';
-    title.textContent = "Confirm Approval";
-    text.innerHTML = 'Are you sure you want to <strong>approve</strong> this reconnection request?';
-    confirmBtn.innerHTML = '<i class="fas fa-check"></i> Yes, Approve';
+    title.textContent = "Approve Request";
+    text.textContent = "Are you sure you want to approve this reconnection request?";
+    confirmBtn.innerHTML = '<i class="fas fa-check"></i> Approve';
   } else {
-    icon.innerHTML = '<i class="fas fa-ban"></i>';
-    title.textContent = "Confirm Rejection";
-    text.innerHTML = 'Are you sure you want to <strong>reject</strong> this reconnection request?';
-    confirmBtn.innerHTML = '<i class="fas fa-ban"></i> Yes, Reject';
+    title.textContent = "Reject Request";
+    text.textContent = "Are you sure you want to reject this reconnection request?";
+    confirmBtn.innerHTML = '<i class="fas fa-times"></i> Reject';
   }
   
   requestIdEl.textContent = requestId || "N/A";

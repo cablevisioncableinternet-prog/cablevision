@@ -2017,22 +2017,6 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
   border-bottom: 1px solid #e2e8f0;
 }
 
-.status-modal-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0047ab 0%, #007bff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 12px auto;
-  box-shadow: 0 4px 20px rgba(0, 71, 171, 0.3);
-}
-
-.status-modal-icon i {
-  font-size: 28px;
-  color: white;
-}
 
 .status-modal-header h3 {
   font-size: 20px;
@@ -2610,390 +2594,92 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
   }
 }
 
-/* ================= RECONNECTION REQUEST MODAL (REDESIGN) ================= */
+/* ================= RECONNECTION REQUEST MODAL ================= */
 #requestModal {
   background: rgba(15, 23, 42, 0.48);
   backdrop-filter: blur(3px);
 }
 
-#requestModal .request-modal-content {
-  width: min(600px, calc(100vw - 32px)) !important;
-  max-width: 600px !important;
-  max-height: 90vh !important;
-  margin: 0 !important;
+#requestModal .status-modal-content {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  padding: 0 !important;
-  overflow: hidden !important;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid #e1e5eb;
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
-  text-align: left !important;
-}
-
-/* ----- Header ----- */
-#requestModal .request-modal-header {
-  position: relative;
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 10px;
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 13px 54px 13px 18px;
-  border-bottom: 1px solid #edf0f3;
-  background: #fff;
   text-align: left;
 }
 
-#requestModal .request-modal-header .modal-icon {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  border: 1px solid #e3e8ef;
-  border-radius: 6px;
-  background: #f5f7fa;
-}
-
-#requestModal .request-modal-header .modal-icon i {
-  color: #596779;
-  font-size: 14px;
-}
-
-#requestModal .request-modal-header h2 {
-  grid-column: 2;
-  grid-row: 1;
-  margin: 0 !important;
-  color: #202b3c;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
-  text-align: left;
-}
-
-#requestModal .request-modal-header .request-subtitle {
-  grid-column: 2;
-  grid-row: 2;
-  margin: 3px 0 0 !important;
-  color: #778397;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-#requestModal .request-modal-close {
-  position: absolute;
-  top: 50%;
-  right: 14px;
+#requestModal .close-btn {
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   width: 30px;
   height: 30px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  transform: translateY(-50%);
   border: 1px solid transparent;
   border-radius: 5px;
   background: transparent;
   color: #778397;
-  font-size: 14px;
-  cursor: pointer;
+  font-size: 16px;
 }
 
-#requestModal .request-modal-close:hover {
-  background: #f1f3f6;
-  color: #202b3c;
-}
-
-/* ----- Body ----- */
-#requestModal .request-modal-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 18px 18px 1px;
-  overflow-y: auto;
-}
-
-#requestModal .request-section {
-  margin: 0 0 17px;
-  padding: 0;
-}
-
-#requestModal .request-section-title {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 0 9px;
-  padding: 0 0 8px;
-  border-bottom: 1px solid #edf0f3;
-  color: #687487;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.3;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-#requestModal .request-section-title i {
-  color: #778397;
-  font-size: 11px;
-}
-
-#requestModal .request-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px 10px;
-}
-
-#requestModal .request-info-item {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 11px;
-  border: 1px solid #dfe4eb;
-  border-radius: 5px;
-  background: #fff;
-}
-
-#requestModal .request-info-full {
-  grid-column: 1 / -1;
-}
-
-#requestModal .request-info-label {
-  color: #778397;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-#requestModal .request-info-value {
-  color: #263246;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-#requestModal .request-info-highlight {
-  border-color: #cfe0ef;
-  background: #f4f9fd;
-}
-
-#requestModal .request-info-highlight .request-info-label,
-#requestModal .request-info-highlight .request-info-value {
-  color: #075a9e;
-}
-
-#requestModal .request-info-muted {
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-/* ----- Actions ----- */
-#requestModal .request-modal-actions {
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin: 0;
-  padding: 12px 18px;
-  border-top: 1px solid #edf0f3;
-  background: #fff;
-}
-
-#requestModal .request-modal-actions button {
-  flex: 0 0 auto;
-  min-width: 110px;
-  min-height: 34px;
-  padding: 7px 12px;
-  border: 1px solid #d6dde6;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  cursor: pointer;
-  box-shadow: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: filter 0.15s ease, background 0.15s ease;
-}
-
-#requestModal .request-modal-actions .btn-request-close {
-  background: #fff;
-  color: #465368;
-}
-
-#requestModal .request-modal-actions .btn-request-reject {
-  min-width: 124px;
-  border-color: #edd2d4;
-  background: #fff;
-  color: #a62d34;
-}
-
-#requestModal .request-modal-actions .btn-request-approve {
-  min-width: 124px;
-  border-color: #187044;
-  background: #187044;
-  color: #fff;
-}
-
-#requestModal .request-modal-actions button:hover {
-  filter: brightness(0.96);
+#requestModal .close-btn:hover {
   transform: none;
-}
-
-#requestModal :is(.request-modal-close, .request-modal-actions button):focus-visible {
-  outline: 3px solid rgba(40, 118, 185, 0.25);
-  outline-offset: 2px;
-}
-
-/* ----- Responsive ----- */
-@media (max-width: 575px) {
-  #requestModal {
-    padding: 14px;
-  }
-
-  #requestModal .request-modal-content {
-    width: 100% !important;
-  }
-
-  #requestModal .request-modal-header {
-    padding: 12px 48px 12px 14px;
-  }
-
-  #requestModal .request-modal-body {
-    padding: 14px 14px 1px;
-  }
-
-  #requestModal .request-info-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  #requestModal .request-modal-actions {
-    flex-direction: column-reverse;
-    padding: 10px 14px;
-  }
-
-  #requestModal .request-modal-actions button {
-    width: 100%;
-  }
-}
-
-/* ================= CONFIRM ACTION MODAL (REDESIGN) ================= */
-#confirmActionModal {
-  background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(3px);
-}
-
-#confirmActionModal .confirm-request-content {
-  width: min(520px, calc(100vw - 32px)) !important;
-  max-width: 520px !important;
-  max-height: 90vh !important;
-  margin: 0 !important;
-  display: flex;
-  flex-direction: column;
-  padding: 0 !important;
-  overflow: hidden !important;
-  border: 1px solid #e1e5eb;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
-  text-align: left !important;
-}
-
-/* ----- Header ----- */
-#confirmActionModal .confirm-request-header {
-  flex: 0 0 auto;
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 18px;
-  border-bottom: 1px solid #edf0f3;
-  background: #fff;
-}
-
-#confirmActionModal .confirm-request-icon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  border: 1px solid #e3e8ef;
-  border-radius: 6px;
-  background: #f5f7fa;
-  color: #596779;
-  font-size: 14px;
-  box-shadow: none;
-}
-
-#confirmActionModal .confirm-request-heading {
-  min-width: 0;
-  flex: 1;
-}
-
-#confirmActionModal .confirm-request-heading h2 {
-  margin: 0 !important;
-  color: #202b3c;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-#confirmActionModal .confirm-request-heading p {
-  margin: 3px 0 0 !important;
-  color: #778397;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-#confirmActionModal .confirm-request-close {
-  position: static !important;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: transparent;
-  color: #778397;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#confirmActionModal .confirm-request-close:hover {
   background: #f1f3f6;
   color: #202b3c;
 }
 
-/* ----- Body ----- */
-#confirmActionModal .confirm-request-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 16px 18px;
-  overflow-y: auto;
+#requestModal .status-modal-header {
+  flex: 0 0 auto;
+  padding: 16px 48px 13px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+  text-align: left;
 }
 
-#confirmActionModal .confirm-request-fields {
+#requestModal .status-modal-icon {
+  width: 38px;
+  height: 38px;
+  margin: 0 0 9px;
+  border: 1px solid #dbe6ef;
+  border-radius: 6px;
+  background: #edf4fa;
+  box-shadow: none;
+}
+
+#requestModal .status-modal-icon i {
+  color: #075a9e;
+  font-size: 17px;
+}
+
+#requestModal .status-modal-header h3 {
+  margin: 0 0 3px;
+  color: #202b3c;
+  font-size: 16px;
+}
+
+#requestModal .status-modal-header p {
+  margin: 0;
+  color: #68798b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#requestModal #requestDetails {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: 0 0 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
 }
 
-#confirmActionModal .confirm-field {
+#requestModal #requestDetails .delete-user-detail {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -3001,497 +2687,680 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
   padding: 8px 10px;
   border: 1px solid #dfe4eb;
   border-radius: 5px;
-  background: #fff;
 }
 
-#confirmActionModal .confirm-field-full {
-  grid-column: 1 / -1;
-}
-
-#confirmActionModal .confirm-field-label {
+#requestModal #requestDetails .delete-label {
   color: #778397;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-transform: uppercase;
 }
 
-#confirmActionModal .confirm-field-label i {
-  margin-right: 3px;
-  color: #778397;
-  font-size: 9px;
-}
-
-#confirmActionModal .confirm-field-value {
+#requestModal #requestDetails .delete-value {
+  min-width: 0;
   color: #263246;
   font-size: 12px;
-  font-weight: 600;
   line-height: 1.35;
+  text-align: left;
   overflow-wrap: anywhere;
 }
 
-#confirmActionModal .confirm-request-question {
-  margin: 0 0 10px !important;
-  color: #465368 !important;
-  font-size: 12px !important;
-  line-height: 1.45;
+#requestModal #reqPlanSection {
+  flex: 0 0 auto;
+  padding: 13px 18px !important;
+  border-top: 0 !important;
+  border-bottom: 1px solid #edf0f3 !important;
+  background: #f8fafc;
 }
 
-#confirmActionModal .confirm-request-question strong {
+#requestModal #reqPlanSection > div:first-child {
+  margin-bottom: 8px !important;
+  color: #687487 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-#confirmActionModal .confirm-request-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0;
-  padding: 9px 10px;
-  border: 1px solid #eadfca;
-  border-radius: 5px;
-  background: #fffaf1;
-  color: #806b45;
-  font-size: 10px;
-  line-height: 1.45;
+#requestModal #reqPlanSection > .delete-user-detail {
+  padding: 5px 0;
+  border-bottom: 1px solid #e7edf3;
+  font-size: 12px;
 }
 
-#confirmActionModal .confirm-request-note i {
+#requestModal #reqPlanSection > .delete-user-detail:last-child {
+  border-bottom: 0;
+}
+
+#requestModal .status-modal-actions {
   flex: 0 0 auto;
-  margin-top: 1px;
-  color: #a77821;
-}
-
-/* ----- Actions ----- */
-#confirmActionModal .confirm-request-actions {
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin: 0;
-  padding: 12px 18px;
-  border-top: 1px solid #edf0f3;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px !important;
+  padding: 11px 18px !important;
+  border-top: 0;
   background: #fff;
 }
 
-#confirmActionModal .confirm-request-actions button {
-  flex: 0 0 auto;
-  min-width: 96px;
+#requestModal .status-modal-actions .btn {
+  min-width: 0;
   min-height: 36px;
-  padding: 8px 14px;
-  border: 1px solid #d6dde6;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  cursor: pointer;
-  box-shadow: none;
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
+  padding: 7px 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  line-height: 1.2;
+  box-shadow: none !important;
 }
 
-#confirmActionModal .confirm-request-actions .btn-confirm-cancel {
-  background: #fff;
-  color: #465368;
+#requestModal #cancelRequest {
+  border-color: #d6dde6 !important;
+  background: #fff !important;
+  color: #465368 !important;
 }
 
-#confirmActionModal .confirm-request-actions .btn-confirm-execute {
-  min-width: 132px;
-  color: #fff;
+#requestModal #rejectRequestBtn {
+  background: #b4232c !important;
+  color: #fff !important;
 }
 
-#confirmActionModal .confirm-request-actions button:hover {
-  filter: brightness(0.96);
+#requestModal #confirmApproveRequest {
+  background: #167a4a !important;
+  color: #fff !important;
+}
+
+#requestModal .status-modal-actions .btn:hover {
   transform: none;
+  filter: brightness(0.95);
 }
 
-#confirmActionModal :is(.confirm-request-close, .confirm-request-actions button):focus-visible {
+#requestModal :is(button, input, select):focus-visible {
   outline: 3px solid rgba(40, 118, 185, 0.25);
   outline-offset: 2px;
 }
 
-/* ----- Approve theme (green) ----- */
-#confirmActionModal .approve-theme .confirm-request-icon {
-  color: #187044;
-  background: #edf7f0;
-  border-color: #d6eadc;
-}
-
-#confirmActionModal .approve-theme .confirm-request-question strong {
-  color: #187044;
-}
-
-#confirmActionModal .approve-theme .btn-confirm-execute {
-  border-color: #187044;
-  background: #187044;
-}
-
-/* ----- Reject theme (red) ----- */
-#confirmActionModal .reject-theme .confirm-request-icon {
-  color: #a62d34;
-  background: #fbefef;
-  border-color: #f0d9db;
-}
-
-#confirmActionModal .reject-theme .confirm-request-question strong {
-  color: #a62d34;
-}
-
-#confirmActionModal .reject-theme .btn-confirm-execute {
-  border-color: #a62d34;
-  background: #a62d34;
-}
-
-/* ----- Responsive ----- */
 @media (max-width: 575px) {
-  #confirmActionModal {
-    padding: 14px;
+  #requestModal .status-modal-content {
+    width: calc(100vw - 28px);
+    max-height: 90vh;
   }
 
-  #confirmActionModal .confirm-request-content {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  #confirmActionModal .confirm-request-header {
+  #requestModal #requestDetails {
+    grid-template-columns: minmax(0, 1fr);
     padding: 12px 14px;
   }
 
-  #confirmActionModal .confirm-request-body {
-    padding: 14px;
+  #requestModal #reqPlanSection {
+    padding: 11px 14px !important;
   }
 
-  #confirmActionModal .confirm-request-fields {
+  #requestModal .status-modal-actions {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  #confirmActionModal .confirm-request-actions {
-    flex-direction: column-reverse;
-    padding: 10px 14px;
-  }
-
-  #confirmActionModal .confirm-request-actions button {
-    width: 100%;
+    padding: 10px 14px !important;
   }
 }
 
-/* ================= STATUS MODAL / BALANCE INPUT (REDESIGN) ================= */
-#statusModal {
-  background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(3px);
+/* ================= REQUEST APPROVAL CONFIRMATION ================= */
+#confirmActionModal {
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(4px);
 }
 
-#statusModal .status-request-content {
-  width: min(480px, calc(100vw - 32px)) !important;
-  max-width: 480px !important;
-  max-height: 90vh !important;
-  margin: 0 !important;
-  display: flex;
-  flex-direction: column;
-  padding: 0 !important;
-  overflow: hidden !important;
-  border: 1px solid #e1e5eb;
+#confirmActionModal .status-modal-content {
+  width: min(440px, calc(100vw - 32px));
+  max-width: 440px !important;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #dfe5ec;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
-  text-align: left !important;
+  text-align: left;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.26);
 }
 
-/* ----- Header ----- */
-#statusModal .status-request-header {
-  flex: 0 0 auto;
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 18px;
-  border-bottom: 1px solid #edf0f3;
-  background: #fff;
-}
-
-#statusModal .status-request-icon {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  border: 1px solid #e3e8ef;
-  border-radius: 6px;
-  background: #f5f7fa;
-  color: #596779;
-  font-size: 14px;
-  box-shadow: none;
-}
-
-#statusModal .status-request-heading {
-  min-width: 0;
-  flex: 1;
-}
-
-#statusModal .status-request-heading h2 {
-  margin: 0 !important;
-  color: #202b3c;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-#statusModal .status-request-heading p {
-  margin: 3px 0 0 !important;
-  color: #778397;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-#statusModal .status-request-close {
-  position: static !important;
+#confirmActionModal .close-btn {
+  top: 10px;
+  right: 10px;
+  z-index: 1;
   width: 30px;
   height: 30px;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid transparent;
   border-radius: 5px;
-  background: transparent;
   color: #778397;
-  font-size: 14px;
-  cursor: pointer;
+  font-size: 16px;
 }
 
-#statusModal .status-request-close:hover {
+#confirmActionModal .close-btn:hover {
   background: #f1f3f6;
   color: #202b3c;
 }
 
-/* ----- Body ----- */
-#statusModal .status-request-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 16px 18px;
-  overflow-y: auto;
+#confirmActionModal .status-modal-header {
+  padding: 22px 48px 18px 22px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+  text-align: left;
 }
 
-#statusModal .status-request-question {
-  margin: 0 !important;
-  color: #465368 !important;
-  font-size: 12px !important;
-  line-height: 1.45;
+#confirmActionModal .fa-check-circle,
+#confirmActionModal .fa-check-circle::before,
+#confirmActionModal .status-modal-header::before {
+  display: none !important;
+  content: none !important;
 }
 
-#statusModal .status-request-question strong {
-  text-transform: uppercase;
+#confirmActionModal .status-modal-header h3 {
+  margin: 0 0 5px;
+  color: #202b3c;
+  font-size: 17px;
 }
 
-/* ----- Balance section ----- */
-#statusModal .status-balance-section {
-  margin: 0 0 12px;
+#confirmActionModal .status-modal-header p {
+  max-width: 330px;
+  color: #68798b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#confirmActionModal #confirmModalDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 16px 22px;
+  padding: 0 !important;
+  border: 1px solid #dfe4eb;
+  border-radius: 6px;
+  background: #f8fafc;
+  text-align: left;
+}
+
+#confirmActionModal #confirmModalDetails .delete-user-detail {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   padding: 10px 12px;
-  border: 1px solid #dfe4eb;
-  border-radius: 5px;
-  background: #f8f9fb;
+  border-bottom: 1px solid #e7edf3;
 }
 
-#statusModal .status-balance-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 7px;
-  color: #687487;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.3;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+#confirmActionModal #confirmModalDetails .delete-user-detail:last-child {
+  border-bottom: 0;
 }
 
-#statusModal .status-balance-label i {
+#confirmActionModal #confirmModalDetails .delete-label {
+  flex: 0 0 auto;
   color: #778397;
-  font-size: 11px;
-}
-
-#statusModal .status-balance-input-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-}
-
-#statusModal .status-balance-currency {
-  color: #465368;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-#statusModal .status-balance-input {
-  width: 100%;
-  min-width: 0;
-  min-height: 38px;
-  padding: 7px 10px;
-  border: 1px solid #dfe4eb;
-  border-radius: 5px;
-  background: #fff;
-  color: #263246;
-  font-family: inherit;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 600;
-  outline: none;
-  box-shadow: none;
+  text-transform: uppercase;
 }
 
-#statusModal .status-balance-input::placeholder {
-  color: #94a3b8;
-  font-weight: 400;
+#confirmActionModal #confirmModalDetails .delete-value {
+  min-width: 0;
+  color: #263246;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
-#statusModal .status-balance-input:focus {
-  border-color: #6b9ac4;
-  box-shadow: 0 0 0 2px rgba(40, 118, 185, 0.12);
-}
-
-#statusModal .status-balance-input.field-error,
-#statusModal .status-balance-input.field-error:focus {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.1);
-}
-
-#statusModal .status-balance-hint {
-  display: block;
-  margin-top: 6px;
-  color: #778397;
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-#statusModal .status-balance-hint i {
-  margin-right: 4px;
-}
-
-#statusModal .balance-error {
-  margin-top: 6px;
-  font-size: 11px;
-}
-
-/* ----- Actions ----- */
-#statusModal .status-request-actions {
-  flex: 0 0 auto;
-  display: flex;
+#confirmActionModal .status-modal-actions {
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
-  padding: 12px 18px;
-  border-top: 1px solid #edf0f3;
+  padding: 12px 22px 18px;
+  border-top: 0;
   background: #fff;
 }
 
-#statusModal .status-request-actions button {
-  flex: 0 0 auto;
+#confirmActionModal .status-modal-actions .btn {
   min-width: 96px;
   min-height: 36px;
-  padding: 8px 14px;
-  border: 1px solid #d6dde6;
-  border-radius: 5px;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.2;
-  cursor: pointer;
-  box-shadow: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
+  padding: 8px 13px !important;
+  border: 1px solid transparent;
+  border-radius: 5px !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
 }
 
-#statusModal .status-request-actions .btn-status-cancel {
+#confirmActionModal #cancelConfirmAction {
+  border-color: #d6dde6;
   background: #fff;
   color: #465368;
 }
 
-#statusModal .status-request-actions .btn-status-confirm {
-  min-width: 132px;
+#confirmActionModal #cancelConfirmAction:hover {
+  background: #f3f5f8;
+}
+
+#confirmActionModal.is-approve #executeConfirmAction {
+  background: #167a4a !important;
   color: #fff;
 }
 
-#statusModal .status-request-actions button:hover {
-  filter: brightness(0.96);
-  transform: none;
+#confirmActionModal.is-reject #executeConfirmAction {
+  background: #b4232c !important;
+  color: #fff;
 }
 
-#statusModal :is(.status-request-close, .status-request-actions button, .status-balance-input):focus-visible {
+#confirmActionModal #executeConfirmAction:hover {
+  filter: brightness(0.93);
+}
+
+#confirmActionModal :is(button, input, select):focus-visible {
   outline: 3px solid rgba(40, 118, 185, 0.25);
   outline-offset: 2px;
 }
 
-/* ----- Themes ----- */
-/* Blue (default / reactivate / connect) */
-#statusModal .blue-theme .status-request-icon {
-  color: #075a9e;
-  background: #eef5fb;
-  border-color: #d3e3f1;
-}
-#statusModal .blue-theme .status-request-question strong { color: #075a9e; }
-#statusModal .blue-theme .btn-status-confirm {
-  border-color: #075a9e;
-  background: #075a9e;
-}
-
-/* Green (activate) */
-#statusModal .green-theme .status-request-icon {
-  color: #187044;
-  background: #edf7f0;
-  border-color: #d6eadc;
-}
-#statusModal .green-theme .status-request-question strong { color: #187044; }
-#statusModal .green-theme .btn-status-confirm {
-  border-color: #187044;
-  background: #187044;
-}
-
-/* Red (deactivate / disconnect) */
-#statusModal .red-theme .status-request-icon {
-  color: #a62d34;
-  background: #fbefef;
-  border-color: #f0d9db;
-}
-#statusModal .red-theme .status-request-question strong { color: #a62d34; }
-#statusModal .red-theme .btn-status-confirm {
-  border-color: #a62d34;
-  background: #a62d34;
-}
-#statusModal .red-theme .status-balance-section {
-  border-color: #f0d9db;
-  background: #fdf7f7;
-}
-
-/* ----- Responsive ----- */
 @media (max-width: 575px) {
-  #statusModal {
-    padding: 14px;
+  #confirmActionModal .status-modal-header {
+    padding: 18px 42px 15px 16px;
   }
 
-  #statusModal .status-request-content {
-    width: 100% !important;
-    max-width: 100% !important;
+  #confirmActionModal #confirmModalDetails {
+    margin: 12px 16px;
   }
 
-  #statusModal .status-request-header {
-    padding: 12px 14px;
+  #confirmActionModal #confirmModalDetails .delete-user-detail {
+    gap: 10px;
+    padding: 9px 10px;
   }
 
-  #statusModal .status-request-body {
-    padding: 14px;
+  #confirmActionModal .status-modal-actions {
+    padding: 10px 16px 14px;
+  }
+}
+
+/* ================= PERMANENT DELETE CONFIRMATION ================= */
+#deleteModal {
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.56);
+  backdrop-filter: blur(4px);
+}
+
+#deleteModal .delete-modal-content {
+  width: min(480px, calc(100vw - 32px));
+  max-width: 480px;
+  margin: 0;
+  border: 1px solid #e2d6d7;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.26);
+}
+
+#deleteModal .close-btn {
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  color: #778397;
+  font-size: 16px;
+}
+
+#deleteModal .close-btn:hover {
+  background: #f1f3f6;
+  color: #202b3c;
+}
+
+#deleteModal .delete-modal-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  padding: 22px 48px 18px 22px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+  text-align: left;
+}
+
+#deleteModal .delete-modal-icon {
+  grid-row: span 2;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  border: 1px solid #f2cacc;
+  border-radius: 7px;
+  background: #fff0f0;
+  box-shadow: none;
+}
+
+#deleteModal .delete-modal-icon i {
+  color: #b4232c;
+  font-size: 18px;
+}
+
+#deleteModal .delete-modal-header h3 {
+  align-self: end;
+  margin: 0 0 3px;
+  color: #202b3c;
+  font-size: 17px;
+}
+
+#deleteModal .delete-modal-header p {
+  align-self: start;
+  color: #68798b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#deleteModal #deleteUserInfo {
+  margin: 16px 22px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #dfe4eb;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+#deleteModal #deleteUserInfo .delete-user-detail {
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e7edf3;
+}
+
+#deleteModal #deleteUserInfo .delete-user-detail:last-child {
+  border-bottom: 0;
+}
+
+#deleteModal #deleteUserInfo .delete-label {
+  color: #778397;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+#deleteModal #deleteUserInfo .delete-value {
+  min-width: 0;
+  color: #263246;
+  font-size: 12px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+#deleteModal .delete-warning {
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 22px 16px;
+  padding: 12px;
+  border: 1px solid #f1c7c9;
+  border-radius: 6px;
+  background: #fff5f5;
+  text-align: left;
+}
+
+#deleteModal .delete-warning i {
+  margin-top: 1px;
+  color: #b4232c;
+  font-size: 16px;
+}
+
+#deleteModal .delete-warning div strong {
+  margin-bottom: 3px;
+  color: #8f1d25;
+  font-size: 12px;
+}
+
+#deleteModal .delete-warning div p {
+  color: #6e3438;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#deleteModal .delete-modal-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 22px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #f8fafc;
+}
+
+#deleteModal .delete-modal-actions .btn {
+  min-width: 104px;
+  min-height: 36px;
+  padding: 8px 13px !important;
+  border: 1px solid transparent;
+  border-radius: 5px !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
+}
+
+#deleteModal .delete-modal-actions .btn-cancel {
+  border-color: #d6dde6;
+  background: #fff;
+  color: #465368;
+}
+
+#deleteModal .delete-modal-actions .btn-cancel:hover {
+  background: #f1f3f6;
+}
+
+#deleteModal .delete-modal-actions .btn-danger {
+  background: #b4232c;
+  color: #fff;
+}
+
+#deleteModal .delete-modal-actions .btn-danger:hover {
+  background: #941b23;
+}
+
+#deleteModal :is(button, input, select):focus-visible {
+  outline: 3px solid rgba(180, 35, 44, 0.22);
+  outline-offset: 2px;
+}
+
+@media (max-width: 575px) {
+  #deleteModal .delete-modal-content {
+    width: calc(100vw - 28px);
+    max-width: 480px;
   }
 
-  #statusModal .status-request-actions {
+  #deleteModal .delete-modal-header {
+    padding: 18px 42px 15px 16px;
+  }
+
+  #deleteModal #deleteUserInfo {
+    margin: 12px 16px;
+  }
+
+  #deleteModal .delete-warning {
+    margin: 0 16px 12px;
+  }
+
+  #deleteModal .delete-modal-actions {
     flex-direction: column-reverse;
-    padding: 10px 14px;
+    padding: 10px 16px 14px;
   }
 
-  #statusModal .status-request-actions button {
+  #deleteModal .delete-modal-actions .btn {
     width: 100%;
+  }
+}
+
+/* ================= DEACTIVATE CONFIRMATION MODAL ================= */
+#statusModal .status-modal-content.red-theme {
+  width: min(460px, calc(100vw - 32px));
+  max-width: 460px;
+  margin: 0 auto;
+  border: 1px solid #e8d4d5;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.26);
+}
+
+#statusModal .status-modal-content.red-theme .close-btn {
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  color: #778397;
+  font-size: 16px;
+}
+
+#statusModal .status-modal-content.red-theme .close-btn:hover {
+  background: #f1f3f6;
+  color: #202b3c;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  padding: 22px 48px 18px 22px;
+  border-bottom: 1px solid #f0dddd;
+  background: #fff;
+  text-align: left;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-icon {
+  grid-row: span 2;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  border: 1px solid #f2cacc;
+  border-radius: 7px;
+  background: #fff0f0 !important;
+  box-shadow: none;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-icon i {
+  color: #b4232c;
+  font-size: 18px;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-header h3 {
+  align-self: end;
+  margin: 0 0 3px;
+  color: #202b3c;
+  font-size: 17px;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-header p {
+  align-self: start;
+  color: #68798b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#statusModal .status-modal-content.red-theme .balance-input-wrapper {
+  margin: 16px 22px;
+  padding: 13px;
+  border: 1px solid #e5e9ef;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+#statusModal .status-modal-content.red-theme .balance-input-label {
+  margin-bottom: 8px;
+  color: #344256;
+  font-size: 12px;
+}
+
+#statusModal .status-modal-content.red-theme .balance-input-label i {
+  color: #b4232c;
+  font-size: 15px;
+}
+
+#statusModal .status-modal-content.red-theme .balance-input-group {
+  border: 1px solid #cbd5df;
+  border-radius: 5px;
+  background: #fff;
+}
+
+#statusModal .status-modal-content.red-theme .balance-input-group:focus-within {
+  border-color: #b4232c;
+  box-shadow: 0 0 0 3px rgba(180, 35, 44, 0.12);
+}
+
+#statusModal .status-modal-content.red-theme .balance-currency {
+  padding: 10px 0 10px 12px;
+  color: #536174;
+  font-size: 15px;
+}
+
+#statusModal .status-modal-content.red-theme .balance-input-field {
+  min-height: 42px;
+  padding: 9px 12px 9px 8px;
+  color: #202b3c;
+  font-size: 15px;
+}
+
+#statusModal .status-modal-content.red-theme .balance-hint {
+  margin-top: 7px;
+  color: #778397 !important;
+  font-size: 11px;
+}
+
+#statusModal .status-modal-content.red-theme .balance-hint i {
+  color: #778397 !important;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 22px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #f8fafc;
+}
+
+#statusModal .status-modal-content.red-theme .status-modal-actions .btn {
+  min-width: 100px;
+  min-height: 36px;
+  padding: 8px 13px !important;
+  border-radius: 5px !important;
+  font-size: 12px !important;
+  box-shadow: none !important;
+}
+
+#statusModal .status-modal-content.red-theme #cancelStatus {
+  border: 1px solid #d6dde6;
+  background: #fff;
+  color: #465368;
+}
+
+#statusModal .status-modal-content.red-theme #cancelStatus:hover {
+  background: #f1f3f6;
+}
+
+#statusModal .status-modal-content.red-theme #confirmStatus {
+  border: 1px solid #a51f28;
+  background: #b4232c !important;
+  color: #fff;
+}
+
+#statusModal .status-modal-content.red-theme #confirmStatus:hover {
+  background: #941b23 !important;
+}
+
+@media (max-width: 575px) {
+  #statusModal .status-modal-content.red-theme {
+    width: calc(100vw - 28px);
+  }
+
+  #statusModal .status-modal-content.red-theme .status-modal-header {
+    padding: 18px 42px 15px 16px;
+  }
+
+  #statusModal .status-modal-content.red-theme .balance-input-wrapper {
+    margin: 12px 16px;
+  }
+
+  #statusModal .status-modal-content.red-theme .status-modal-actions {
+    padding: 10px 16px 14px;
+  }
+
+  #statusModal .status-modal-content.red-theme .status-modal-actions .btn {
+    flex: 1;
+    min-width: 0;
   }
 }

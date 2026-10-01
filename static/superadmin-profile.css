@@ -1704,8 +1704,8 @@ button {
 @media (max-width:479px) { .main-content { padding:12px 10px!important; } .main-content :is(.card-body,.create-card-body) { padding:14px!important; } .main-content :is(.card-header h2,.header-title-section h2,.create-card-title h2) { font-size:16px!important; } .main-content table th,.main-content table td { padding:9px 10px!important; } }
 .main-content { --page-navy:#001a33; --page-blue:#0047ab; --page-bright:#007bff; --page-ink:#172b43; --page-muted:#64748b; --page-border:#d5e0ec; background:linear-gradient(145deg,#e8eff8 0%,#f3f7fc 55%,#e4edf7 100%); color:var(--page-ink); }
 .main-content .dashboard-header-card { border:1px solid rgba(0,26,51,.3); border-left:6px solid var(--page-bright); border-radius:12px; background:linear-gradient(115deg,#001a33,#063669 58%,#0755a5); box-shadow:0 10px 24px rgba(0,26,51,.22); }
-.main-content .dashboard-header-left h1 { color:#fff; font-size:25px; line-height:1.25; letter-spacing:0; }
-.main-content .dashboard-header-left p { color:rgba(255,255,255,.78); }
+.main-content .dashboard-header-left h1 { color:#000000; font-size:25px; line-height:1.25; letter-spacing:0; }
+.main-content .dashboard-header-left p { color:rgba(0, 0, 0, 0.78); }
 .main-content :is(.profile-header-card,.form-card,.security-card) { border:1px solid var(--page-border); border-radius:10px; background:#fff; box-shadow:0 5px 16px rgba(0,26,51,.08); transition:border-color .2s,box-shadow .2s; }
 .main-content :is(.profile-header-card,.form-card,.security-card):hover { border-color:#9bb7d7; box-shadow:0 9px 22px rgba(0,71,171,.12); transform:translateY(-1px); }
 .main-content :is(.personal-info-header h3,.security-card__text h4) { color:var(--page-navy); }
