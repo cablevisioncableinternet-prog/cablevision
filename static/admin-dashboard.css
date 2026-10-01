@@ -878,7 +878,7 @@ body {
 
 .filter-btn {
     background: #FFFFFF;
-    color: #161616;
+    color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0 18px;
     border-radius: 8px;
@@ -936,7 +936,7 @@ body {
 
 .reset-btn {
     background: #FFFFFF;
-    color: #161616;
+    color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0 18px;
     border-radius: 8px;
@@ -976,7 +976,7 @@ body {
 
 .export-btn {
     background: #FFFFFF;
-    color: #161616;
+    color: #fdfdfd;
     border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 0 18px;
     border-radius: 8px;
@@ -2290,4 +2290,181 @@ tbody tr:last-child td {
     display: block;
 }
 
+/* ================= ADMIN DASHBOARD VISUAL ALIGNMENT ================= */
+.main-content {
+  --dashboard-border: #d5e0ec;
+  --dashboard-ink: #172b43;
+  --dashboard-muted: #64748b;
+  background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+  color: var(--dashboard-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content .dashboard-header-card {
+  min-height: 104px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 26, 51, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .dashboard-header-card:hover,
+.main-content .stat-card:hover,
+.main-content .chart-card:hover {
+  transform: none;
+}
+
+.main-content .dashboard-header-left h1 {
+  color: #fff;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.main-content .dashboard-header-left p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.main-content :is(.stat-card, .chart-card) {
+  min-width: 0;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content .stat-card {
+  min-height: 120px;
+  padding: 16px 18px;
+  gap: 12px;
+}
+
+.main-content .stat-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 7px;
+  background: #edf4fa;
+}
+
+.main-content .stat-icon {
+  background: none;
+  color: #075a9e;
+  font-size: 20px;
+  -webkit-text-fill-color: #075a9e;
+}
+
+.main-content .stat-info h3 {
+  color: #617286;
+  font-size: 10px;
+  letter-spacing: 0.35px;
+}
+
+.main-content .stat-info p {
+  color: #173754;
+  font-size: 25px;
+  letter-spacing: 0;
+}
+
+.main-content .detail-value {
+  border-radius: 5px;
+  background: #edf4fa;
+  color: #075a9e;
+}
+
+.main-content .chart-header {
+  padding: 15px 18px;
+  border-bottom: 1px solid #e1e8f0;
+  background: #f5f8fc;
+}
+
+.main-content .header-icon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #dbe6ef;
+  border-radius: 7px;
+  background: #edf4fa;
+  box-shadow: none;
+}
+
+.main-content .header-icon i {
+  color: #075a9e;
+}
+
+.main-content .header-text h3 {
+  color: #173754;
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.main-content .header-text p {
+  color: #68798b;
+  font-size: 12px;
+}
+
+.main-content .chart-mode-toggle {
+  padding: 2px;
+  border-color: #d5e0ea;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.main-content .chart-mode-btn {
+  min-height: 32px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.main-content .chart-mode-btn.active {
+  background: #075a9e;
+  box-shadow: none;
+}
+
+.main-content :is(.filter-group input, .filter-group select) {
+  min-height: 38px;
+  height: 38px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  color: #24364b;
+  font-size: 12px;
+}
+
+.main-content :is(.filter-btn, .export-btn, .reset-btn) {
+  min-width: 0;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.main-content .filter-btn { background: #075a9e; }
+.main-content .export-btn { background: #167a4a; }
+.main-content .reset-btn { background: #526477; }
+
+.main-content :is(.filter-btn, .export-btn, .reset-btn):hover {
+  filter: brightness(0.94);
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .main-content .dashboard-header-card { padding: 18px; }
+  .main-content .stat-card { min-height: 0; padding: 14px; }
+  .main-content .chart-header { gap: 10px; }
+}
+
+@media (max-width: 575px) {
+  .main-content .dashboard-header-card { border-radius: 8px; }
+  .main-content .dashboard-header-left h1 { font-size: 18px; }
+  .main-content .chart-header { padding: 13px 14px; }
+}
 

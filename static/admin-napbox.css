@@ -5208,6 +5208,486 @@ body {
     color: #991b1b;
 }
 
+/* ================= ADMIN NAPBOX VISUAL ALIGNMENT ================= */
+.main-content {
+  --napbox-border: #d5e0ec;
+  --napbox-ink: #172b43;
+  background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+  color: var(--napbox-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content .dashboard-header-card {
+  min-height: 104px;
+  padding: 20px 24px;
+  border: 1px solid rgba(0, 26, 51, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+  box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+}
+
+.main-content .dashboard-header-card:hover,
+.main-content .applications-card:hover,
+.main-content .map-card:hover,
+.main-content .slots-card:hover {
+  transform: none;
+}
+
+.main-content .applications-card,
+.main-content .map-card,
+.main-content .slots-card,
+.main-content .napbox-stat-card {
+  border: 1px solid var(--napbox-border);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+}
+
+.main-content .applications-card .card-header,
+.main-content .map-card-header,
+.main-content .slots-card-header {
+  min-height: 58px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #e1e8f0;
+  background: #f5f8fc;
+}
+
+.main-content .applications-card .card-header h2,
+.main-content .map-card-header h3,
+.main-content .slots-card-header h3 {
+  color: #173754;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.main-content .applications-card .header-subtitle {
+  color: #68798b;
+}
+
+.main-content .napbox-stat-card {
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.main-content .napbox-stat-card:hover {
+  transform: none;
+  border-color: #bdccdb;
+  box-shadow: 0 4px 12px rgba(18, 45, 73, 0.1);
+}
+
+.main-content .napbox-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+  background: #edf4fa;
+  color: #075a9e;
+  font-size: 20px;
+}
+
+.main-content .napbox-stat-info h3 {
+  color: #173754;
+  font-size: 22px;
+}
+
+.main-content .napbox-stat-info p {
+  color: #68798b;
+  font-size: 11px;
+}
+
+.main-content .slots-card-header .filter-chip {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid #d5e0ea;
+  border-radius: 5px;
+  font-size: 11px;
+}
+
+.main-content .slots-card-header .filter-chip.active {
+  border-color: #075a9e;
+  background: #075a9e;
+}
+
+.main-content .refresh-btn,
+.main-content .admin-add-napbox-btn {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+.main-content .refresh-btn:hover,
+.main-content .admin-add-napbox-btn:hover {
+  transform: none;
+  filter: brightness(0.94);
+  box-shadow: none;
+}
+
+#adminSlotDetailsModal,
+#editSlotModal,
+#adminAddNapboxModal,
+#deleteNapboxModal,
+#clearSlotModal {
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+#adminSlotDetailsModal .modal-content,
+#editSlotModal .modal-content,
+#adminAddNapboxModal .modal-content,
+#deleteNapboxModal .modal-content,
+#clearSlotModal .modal-content {
+  border: 1px solid #e1e5eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+}
+
+#adminSlotDetailsModal .modal-content {
+  width: min(560px, calc(100vw - 40px));
+  max-width: 560px;
+  max-height: 88vh;
+  overflow: hidden;
+}
+
+#adminSlotDetailsModal .slot-details-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 88vh;
+}
+
+#adminSlotDetailsModal .slot-details-header,
+#editSlotModal .edit-modal-header {
+  min-height: 60px;
+  padding: 13px 18px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#adminSlotDetailsModal .slot-details-header-left {
+  gap: 10px;
+}
+
+#adminSlotDetailsModal .slot-details-header-left > i,
+#editSlotModal .edit-modal-header-left > i {
+  padding: 0;
+  color: #596779;
+  background: transparent;
+  font-size: 15px;
+}
+
+#adminSlotDetailsModal .slot-details-header-left h2,
+#editSlotModal .edit-modal-header-left h2 {
+  color: #202b3c;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+#adminSlotDetailsModal .slot-details-body,
+#editSlotModal .edit-modal-body {
+  padding: 18px;
+  background: #fff;
+}
+
+#adminSlotDetailsModal .slot-details-body {
+  max-height: calc(88vh - 60px);
+  overflow-y: auto;
+}
+
+#adminSlotDetailsModal .slot-status-badge {
+  min-height: 24px;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+#adminSlotDetailsModal .slot-status-badge i {
+  font-size: 12px;
+}
+
+#adminSlotDetailsModal .slot-details-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 10px;
+  margin-bottom: 17px;
+}
+
+#adminSlotDetailsModal .slot-detail-card {
+  min-width: 0;
+  min-height: 58px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 11px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #fff;
+}
+
+#adminSlotDetailsModal .slot-detail-icon {
+  display: none;
+}
+
+#adminSlotDetailsModal .slot-detail-info {
+  min-width: 0;
+  width: 100%;
+  align-items: flex-start;
+}
+
+#adminSlotDetailsModal .slot-detail-label {
+  color: #778397;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+#adminSlotDetailsModal .slot-detail-value {
+  min-width: 0;
+  color: #263246;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#adminSlotDetailsModal .slot-detail-card:hover {
+  background: #fff;
+  border-color: #dfe4eb;
+  transform: none;
+  box-shadow: none;
+}
+
+#adminSlotDetailsModal .slot-customer-section {
+  margin: 0 0 17px;
+  padding: 15px 0 0;
+  border: 0;
+  border-top: 1px solid #edf0f3;
+  border-radius: 0;
+  background: #fff;
+}
+
+#adminSlotDetailsModal .slot-customer-section.last-owner {
+  border-top-color: #eadfca;
+}
+
+#adminSlotDetailsModal .slot-customer-section .slot-section-title {
+  min-height: 0;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  color: #687487;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+#adminSlotDetailsModal .slot-customer-section.last-owner .slot-section-title {
+  color: #806b45;
+}
+
+#adminSlotDetailsModal .slot-customer-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 10px;
+}
+
+#adminSlotDetailsModal .slot-customer-item {
+  min-width: 0;
+  min-height: 58px;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 11px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  background: #fff;
+}
+
+#adminSlotDetailsModal .slot-customer-item .customer-label {
+  color: #778397;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+#adminSlotDetailsModal .slot-customer-item .customer-value {
+  min-width: 0;
+  color: #263246;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#adminSlotDetailsModal .slot-customer-section {
+  box-shadow: none;
+}
+
+#adminSlotDetailsModal .slot-customer-section .slot-section-title {
+  box-shadow: none;
+}
+
+#adminSlotDetailsModal .slot-action-buttons button,
+#editSlotModal .edit-actions button,
+#adminAddNapboxModal .admin-modal-actions button,
+#deleteNapboxModal .delete-napbox-actions button,
+#clearSlotModal .clear-slot-actions button {
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 11px;
+  box-shadow: none;
+}
+
+#adminSlotDetailsModal .slot-actions {
+  padding-top: 12px;
+  border-top-color: #edf0f3;
+}
+
+#adminSlotDetailsModal .slot-action-buttons {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#adminSlotDetailsModal .slot-action-buttons button {
+  flex: 0 1 auto;
+  min-width: 82px;
+}
+
+#adminSlotDetailsModal .btn-edit-slot-modal,
+#editSlotModal .btn-save-edit,
+#adminAddNapboxModal .admin-btn-proceed,
+#adminAddNapboxModal .admin-btn-validate {
+  background: #075a9e;
+  color: #fff;
+}
+
+#adminSlotDetailsModal .btn-clear-slot {
+  background: #b4232c;
+  color: #fff;
+}
+
+#adminSlotDetailsModal .btn-close-details-modal,
+#editSlotModal .btn-cancel-edit,
+#adminAddNapboxModal .admin-btn-back,
+#adminAddNapboxModal .admin-btn-cancel {
+  border: 1px solid #d6dde6;
+  background: #fff;
+  color: #465368;
+}
+
+#deleteNapboxModal .btn-danger,
+#clearSlotModal .btn-danger {
+  background: #b4232c;
+  color: #fff;
+}
+
+#adminAddNapboxModal .admin-modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f3;
+  background: #fff;
+}
+
+#adminAddNapboxModal .admin-modal-header h2 {
+  color: #202b3c;
+  font-size: 16px;
+}
+
+#adminAddNapboxModal .admin-modal-header p {
+  color: #778397;
+  font-size: 11px;
+}
+
+#adminAddNapboxModal .admin-modal-body {
+  padding: 16px 18px;
+}
+
+#adminAddNapboxModal .admin-form-control,
+#editSlotModal .form-input {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+#deleteNapboxModal .clear-slot-modal-header,
+#clearSlotModal .clear-slot-modal-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #edf0f3;
+}
+
+#deleteNapboxModal .clear-slot-modal-icon,
+#clearSlotModal .clear-slot-modal-icon {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 9px;
+  border-radius: 7px;
+}
+
+#deleteNapboxModal .clear-slot-modal-header h3,
+#clearSlotModal .clear-slot-modal-header h3 {
+  color: #202b3c;
+  font-size: 16px;
+}
+
+#deleteNapboxModal .clear-slot-modal-header p,
+#clearSlotModal .clear-slot-modal-header p {
+  color: #68798b;
+  font-size: 12px;
+}
+
+#adminSlotDetailsModal :is(button, input, select):focus-visible,
+#editSlotModal :is(button, input, select):focus-visible,
+#adminAddNapboxModal :is(button, input, select):focus-visible,
+#deleteNapboxModal button:focus-visible,
+#clearSlotModal button:focus-visible {
+  outline: 3px solid rgba(40, 118, 185, 0.25);
+  outline-offset: 2px;
+}
+
+@media (max-width: 575px) {
+  .main-content .dashboard-header-card { padding: 18px; }
+  .main-content .dashboard-header-left h1 { font-size: 18px; }
+  .main-content .applications-card .card-header,
+  .main-content .map-card-header,
+  .main-content .slots-card-header { padding: 12px 14px; }
+  .main-content .napbox-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .main-content .napbox-stat-card { padding: 10px; gap: 8px; }
+  .main-content .napbox-stat-icon { width: 34px; height: 34px; font-size: 17px; }
+  #adminSlotDetailsModal .modal-content { max-height: 90vh; }
+  #adminSlotDetailsModal .slot-details-container { max-height: 90vh; }
+  #adminSlotDetailsModal .slot-details-body {
+    max-height: calc(90vh - 60px);
+    padding: 15px;
+  }
+  #editSlotModal .edit-modal-body,
+  #adminAddNapboxModal .admin-modal-body { padding: 14px; }
+  #adminSlotDetailsModal .slot-details-grid,
+  #adminSlotDetailsModal .slot-customer-grid { grid-template-columns: minmax(0, 1fr); }
+  #editSlotModal .edit-actions,
+  #adminAddNapboxModal .admin-modal-actions,
+  #deleteNapboxModal .delete-napbox-actions,
+  #clearSlotModal .clear-slot-actions { gap: 8px; }
+  #editSlotModal .edit-actions button,
+  #adminAddNapboxModal .admin-modal-actions button,
+  #deleteNapboxModal .delete-napbox-actions button,
+  #clearSlotModal .clear-slot-actions button { flex: 1 1 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-content :is(.applications-card, .map-card, .slots-card, .napbox-stat-card),
+  #adminSlotDetailsModal .modal-content,
+  #editSlotModal .modal-content {
+    animation: none;
+    transition: none;
+  }
+}
 
 /* ================= CONTRACT PREFIX CHOICE (PILA ONLY) ================= */
 .prefix-choice-wrapper {
@@ -5241,4 +5721,3 @@ body {
     color: #0047ab;
     box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.08);
 }
-

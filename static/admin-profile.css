@@ -2301,3 +2301,282 @@ img,
     font-size: 9px !important;
   }
 }
+
+  /* ================= ADMIN PROFILE VISUAL ALIGNMENT ================= */
+  .main-content {
+    --profile-navy: #001a33;
+    --profile-blue: #0047ab;
+    --profile-muted: #64748b;
+    --profile-border: #d5e0ec;
+    background: linear-gradient(145deg, #e8eff8 0%, #f3f7fc 55%, #e4edf7 100%);
+    color: #172b43;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .main-content .dashboard-header-card {
+    min-height: 104px;
+    padding: 20px 24px;
+    border: 1px solid rgba(0, 26, 51, 0.3);
+    border-radius: 10px;
+    background: linear-gradient(115deg, #001a33, #063669 58%, #0755a5);
+    box-shadow: 0 8px 20px rgba(0, 26, 51, 0.16);
+  }
+
+  .main-content .dashboard-header-card:hover,
+  .main-content :is(.profile-header-card, .form-card, .security-card):hover {
+    transform: none;
+  }
+
+  .main-content .dashboard-header-left h1 {
+    color: #000000;
+    font-size: 24px;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .main-content .dashboard-header-left p {
+    color: rgba(3, 3, 3, 0.78);
+  }
+
+  .main-content :is(.profile-header-card, .form-card, .security-card) {
+    border: 1px solid var(--profile-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(18, 45, 73, 0.07);
+  }
+
+  .main-content .profile-header-card,
+  .main-content .form-card {
+    padding: 22px 24px;
+  }
+
+  .main-content .dashboard-header-left {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e6edf3;
+  }
+
+  .main-content .dashboard-header-left h1 {
+    margin-bottom: 4px;
+  }
+
+  .main-content .dashboard-header-left p {
+    margin: 0;
+  }
+
+  .main-content .profile-info-section {
+    gap: 20px;
+  }
+
+  .main-content .profile-image-wrapper {
+    width: 76px;
+    height: 76px;
+    border-color: #fff;
+    outline-color: #d9e3ed;
+    box-shadow: none;
+  }
+
+  .main-content .profile-name {
+    margin-bottom: 10px;
+    color: #173754;
+    font-size: 19px;
+    letter-spacing: 0;
+  }
+
+  .main-content .info-row {
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .main-content .info-label {
+    min-width: 78px;
+    color: #68798b;
+    font-size: 10px;
+    letter-spacing: 0.25px;
+  }
+
+  .main-content .info-value {
+    color: #263b50;
+    font-size: 12px;
+  }
+
+  .main-content .personal-info-header {
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e6edf3;
+  }
+
+  .main-content .personal-info-header h3 {
+    color: #173754;
+    font-size: 15px;
+  }
+
+  .main-content .personal-info-header h3 i {
+    color: #075a9e;
+    font-size: 15px;
+  }
+
+  .main-content .personal-info-header p {
+    color: #68798b;
+    font-size: 12px;
+  }
+
+  .main-content .form-grid {
+    gap: 14px 16px;
+  }
+
+  .main-content .form-field label {
+    margin-bottom: 5px;
+    color: #526477;
+    font-size: 10px;
+    letter-spacing: 0.2px;
+  }
+
+  .main-content .form-field label i {
+    color: #55728d;
+  }
+
+  .main-content .form-field input {
+    min-height: 38px;
+    padding: 8px 11px;
+    border: 1px solid #cbd7e3;
+    border-radius: 6px;
+    color: #24364b;
+    font-size: 13px;
+  }
+
+  .main-content .form-field input:focus {
+    border-color: #2876b9;
+    box-shadow: 0 0 0 3px rgba(40, 118, 185, 0.12);
+  }
+
+  .main-content .security-card {
+    margin-top: 12px;
+    padding: 18px;
+    border-color: #d5e0ec;
+    background: #f8fafc;
+    box-shadow: none;
+  }
+
+  .main-content .security-card__text h4 {
+    color: #173754;
+    font-size: 15px;
+  }
+
+  .main-content .security-card__text p,
+  .main-content .security-card__text li {
+    color: #526477;
+    font-size: 12px;
+  }
+
+  .main-content .security-card__actions {
+    gap: 9px;
+  }
+
+  .main-content .status-pill {
+    min-height: 28px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 10px;
+  }
+
+  .main-content .qr-code {
+    width: 156px;
+    height: 156px;
+    border-radius: 6px;
+    box-shadow: none;
+  }
+
+  .main-content .secret-box {
+    border-color: #dfe4eb;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .main-content :is(.primary-btn, .secondary-btn, #editBtn, #updateBtn, #cancelBtn) {
+    min-height: 36px;
+    padding: 8px 13px;
+    border-radius: 6px;
+    font-size: 12px;
+    letter-spacing: 0;
+    box-shadow: none;
+  }
+
+  .main-content :is(.primary-btn, #editBtn, #updateBtn) {
+    border: 1px solid #0755a5;
+    background: #0755a5;
+    color: #fff;
+  }
+
+  .main-content :is(.secondary-btn, #cancelBtn) {
+    border: 1px solid #526477;
+    background: #526477;
+    color: #fff;
+  }
+
+  .main-content :is(.primary-btn, .secondary-btn, #editBtn, #updateBtn, #cancelBtn):hover {
+    transform: none;
+    filter: brightness(0.95);
+    box-shadow: none;
+  }
+
+  #confirmModal {
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(3px);
+  }
+
+  #confirmModal .modal-content {
+    width: min(440px, calc(100vw - 32px));
+    max-width: 440px;
+    padding: 22px;
+    border: 1px solid #e1e5eb;
+    border-radius: 8px;
+    text-align: left;
+    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+  }
+
+  #confirmModal .modal-content h3 {
+    color: #202b3c;
+    font-size: 16px;
+  }
+
+  #confirmModal .modal-content p {
+    color: #68798b;
+    font-size: 13px;
+  }
+
+  #confirmModal .close-btn {
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    color: #778397;
+    font-size: 16px;
+  }
+
+  #confirmModal .modal-actions {
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  #confirmModal .modal-actions button {
+    min-width: 82px;
+    min-height: 34px;
+    padding: 7px 14px;
+    border-radius: 5px;
+    font-size: 11px;
+  }
+
+  @media (max-width: 575px) {
+    .main-content :is(.profile-header-card, .form-card) { padding: 16px 14px; }
+    .main-content .dashboard-header-left h1 { font-size: 18px; }
+    .main-content .profile-info-section { align-items: flex-start; }
+    .main-content .info-row { flex-wrap: wrap; }
+    .main-content .security-card { padding: 14px; }
+    .main-content .security-card__text { min-width: 0; }
+    .main-content .security-card__actions { min-width: 0; }
+    .main-content .form-actions { gap: 8px; }
+  }
