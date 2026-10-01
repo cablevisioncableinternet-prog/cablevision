@@ -716,20 +716,23 @@ function showConfirmModal(action, requestId, requestData) {
   const isApprove = action === 'approve';
   const fullName = requestData?.full_name || "User";
   
+  // Theme (green = approve, red = reject) - kulay ay galing na sa CSS
+  const modalContent = modal.querySelector('.confirm-request-content');
+  if (modalContent) {
+    modalContent.classList.remove('approve-theme', 'reject-theme');
+    modalContent.classList.add(isApprove ? 'approve-theme' : 'reject-theme');
+  }
+
   if (isApprove) {
     icon.innerHTML = '<i class="fas fa-check-circle"></i>';
-    icon.style.background = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
-    title.textContent = "Approve Request";
-    text.textContent = "Are you sure you want to approve this reconnection request?";
-    confirmBtn.innerHTML = '<i class="fas fa-check"></i> Approve';
-    confirmBtn.style.background = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
+    title.textContent = "Confirm Approval";
+    text.innerHTML = 'Are you sure you want to <strong>approve</strong> this reconnection request?';
+    confirmBtn.innerHTML = '<i class="fas fa-check"></i> Yes, Approve';
   } else {
     icon.innerHTML = '<i class="fas fa-ban"></i>';
-    icon.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
-    title.textContent = "Reject Request";
-    text.textContent = "Are you sure you want to reject this reconnection request?";
-    confirmBtn.innerHTML = '<i class="fas fa-times"></i> Reject';
-    confirmBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+    title.textContent = "Confirm Rejection";
+    text.innerHTML = 'Are you sure you want to <strong>reject</strong> this reconnection request?';
+    confirmBtn.innerHTML = '<i class="fas fa-ban"></i> Yes, Reject';
   }
   
   requestIdEl.textContent = requestId || "N/A";

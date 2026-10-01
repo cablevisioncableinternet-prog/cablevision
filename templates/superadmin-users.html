@@ -553,40 +553,59 @@
 
 <!-- ================= CONFIRM ACTION MODAL ================= -->
 <div id="confirmActionModal" class="modal">
-  <div class="modal-content status-modal-content" style="max-width: 420px;">
-    <button class="close-btn" id="closeConfirmModalBtn">&times;</button>
-    
-    <div class="status-modal-header" id="confirmModalHeader">
-      <div class="status-modal-icon" id="confirmModalIcon">
+  <div class="modal-content confirm-request-content approve-theme">
+
+    <!-- HEADER -->
+    <div class="confirm-request-header" id="confirmModalHeader">
+      <div class="confirm-request-icon" id="confirmModalIcon">
         <i class="fas fa-check-circle"></i>
       </div>
-      <h3 id="confirmModalTitle">Confirm Action</h3>
-      <p id="confirmModalText">Are you sure you want to perform this action?</p>
-    </div>
-    
-    <div class="delete-user-info" id="confirmModalDetails" style="padding: 16px 28px;">
-      <div class="delete-user-detail">
-        <span class="delete-label">Request ID:</span>
-        <span class="delete-value" id="confirmRequestId">---</span>
+      <div class="confirm-request-heading">
+        <h2 id="confirmModalTitle">Confirm Action</h2>
+        <p>Review the request before proceeding</p>
       </div>
-      <div class="delete-user-detail">
-        <span class="delete-label">User:</span>
-        <span class="delete-value" id="confirmUserName">---</span>
-      </div>
-      <div class="delete-user-detail" id="confirmPlanChangeRow" style="display:none;">
-        <span class="delete-label">New Plan:</span>
-        <span class="delete-value" id="confirmNewPlan" style="color: #2563eb; font-weight:700;">---</span>
-      </div>
-    </div>
-    
-    <div class="status-modal-actions" style="padding: 12px 28px 24px 28px;">
-      <button id="cancelConfirmAction" class="btn btn-cancel">
-        <i class="fas fa-times"></i> Cancel
+      <button type="button" class="close-btn confirm-request-close" id="closeConfirmModalBtn" aria-label="Close confirmation">
+        <i class="fas fa-times"></i>
       </button>
-      <button id="executeConfirmAction" class="btn btn-confirm">
+    </div>
+
+    <!-- BODY -->
+    <div class="confirm-request-body">
+      <div class="confirm-request-fields" id="confirmModalDetails">
+        <div class="confirm-field">
+          <span class="confirm-field-label"><i class="fas fa-hashtag"></i> Request ID</span>
+          <span class="confirm-field-value" id="confirmRequestId">---</span>
+        </div>
+        <div class="confirm-field">
+          <span class="confirm-field-label"><i class="fas fa-user"></i> User</span>
+          <span class="confirm-field-value" id="confirmUserName">---</span>
+        </div>
+        <div class="confirm-field confirm-field-full" id="confirmPlanChangeRow" style="display:none;">
+          <span class="confirm-field-label"><i class="fas fa-wifi"></i> New Plan</span>
+          <span class="confirm-field-value" id="confirmNewPlan">---</span>
+        </div>
+      </div>
+
+      <p class="confirm-request-question" id="confirmModalText">
+        Are you sure you want to perform this action?
+      </p>
+
+      <div class="confirm-request-note">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Please make sure the details above are correct before proceeding.</span>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="confirm-request-actions">
+      <button type="button" id="cancelConfirmAction" class="btn-confirm-cancel">
+        Cancel
+      </button>
+      <button type="button" id="executeConfirmAction" class="btn-confirm-execute">
         <i class="fas fa-check"></i> Confirm
       </button>
     </div>
+
   </div>
 </div>
 
