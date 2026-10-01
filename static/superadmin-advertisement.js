@@ -219,8 +219,8 @@ async function loadAdvertisements() {
                         </div>
                     </div>
                     <div class="ad-actions">
-                        <button class="delete-list-btn" onclick="openDeleteModal('${ad.id}', '${ad.file_type}')">
-                            <i class="fas fa-trash-alt"></i> Delete
+                        <button class="delete-list-btn" type="button" aria-label="Delete uploaded file" title="Delete uploaded file" onclick="openDeleteModal('${ad.id}', '${ad.file_type}')">
+                            <i class="fas fa-trash-alt" aria-hidden="true"></i><span>Delete</span>
                         </button>
                     </div>
                 </div>
