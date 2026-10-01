@@ -5142,9 +5142,9 @@ function showCustomerLocationMarkerOnMap() {
                 btn.style.opacity = '1';
                 btn.dataset.lat = latNum;
                 btn.dataset.lng = lngNum;
-                console.log(' Customer Pin button found and shown (delayed)');
+                console.log(' Subsriber Pin button found and shown (delayed)');
             } else {
-                console.error(' Customer Pin button still not found!');
+                console.error(' Subscriber Pin button still not found!');
             }
         }, 500);
     }
@@ -5193,11 +5193,11 @@ function showCustomerLocationMarkerOnMap() {
         <div style="padding: 4px 0; min-width: 160px;">
             <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px; text-align: center;">
                 <i class="fas fa-map-pin" style="color: #2563eb;"></i> 
-                Customer Location
+                SUbscriber's Location
             </div>
             <div style="font-size: 12px; color: #475569; text-align: center; padding: 6px 10px; border-radius: 6px;">
                 <i class="fas fa-info-circle" style="color: #2563eb;"></i> 
-                This is the customer's pinned location. Add a NAP Box near this pin.
+                This is the subscriber's pinned location. Add a NAP Box near this pin.
             </div>
         </div>
     `);
