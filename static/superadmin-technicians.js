@@ -534,77 +534,354 @@ const viewInfoModal = document.getElementById("viewInfoModal");
 const closeInfoModalBtn = document.getElementById("closeInfoModalBtn");
 
 
-function openViewInfoModal(technicianId) {
-    // Show loading state
-    const infoName = document.getElementById("infoName");
-    const infoEmail = document.getElementById("infoEmail");
-    const infoContactNumber = document.getElementById("infoContactNumber"); // ✅ BAGO
-    const infoArea = document.getElementById("infoArea");
-    const infoTeam = document.getElementById("infoTeam");
+// ================= TECHNICIAN VIEW / EDIT STATE =================
+let currentViewedTechnician = null;
+let pendingTechChanges = null;
+let isTechEditMode = false;
+
+// I-fill ang lahat ng fields ng modal gamit ang technician data
+function renderTechnicianInfo(technician) {
+    currentViewedTechnician = technician;
+
+    const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    };
+
+    setValue("infoTechnicianId", technician.technician_id || "");
+    setValue("infoName", technician.name || "");
+    setValue("infoEmail", technician.email || "");
+    setValue("infoContactNumber", technician.contact_number || "Not provided");
+    setValue("infoArea", technician.area || "");
+
+    if (technician.team_id) {
+        const team = allTeams.find(t => t.team_id === technician.team_id);
+        setValue("infoTeam", team ? team.team_name : technician.team_id);
+    } else {
+        setValue("infoTeam", "Not assigned");
+    }
+
     const infoStatus = document.getElementById("infoStatus");
-    const infoTechnicianId = document.getElementById("infoTechnicianId");
-    
-    // Set loading text
-    if (infoTechnicianId) infoTechnicianId.value = "Loading...";
-    if (infoName) infoName.value = "Loading...";
-    if (infoEmail) infoEmail.value = "Loading...";
-    if (infoContactNumber) infoContactNumber.value = "Loading..."; // ✅ BAGO
-    if (infoArea) infoArea.value = "Loading...";
-    if (infoTeam) infoTeam.value = "Loading...";
-    
+    if (infoStatus) {
+        const statusText = technician.status || "Active";
+        infoStatus.textContent = statusText;
+        infoStatus.className = `info-status-badge ${statusText === "Active" ? "active" : "inactive"}`;
+    }
+}
+
+function openViewInfoModal(technicianId) {
+    // Siguraduhing nasa viewing mode at walang naiwang data
+    currentViewedTechnician = null;
+    exitTechEditMode(false);
+
+    const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    };
+
+    // Loading state
+    setValue("infoTechnicianId", "Loading...");
+    setValue("infoName", "Loading...");
+    setValue("infoEmail", "Loading...");
+    setValue("infoContactNumber", "Loading...");
+    setValue("infoArea", "Loading...");
+    setValue("infoTeam", "Loading...");
+
     // Show modal
     if (viewInfoModal) {
         viewInfoModal.classList.add("show");
         viewInfoModal.style.display = "flex";
     }
-    
+
     fetch(`/api/superadmin/technicians/${technicianId}`)
         .then((res) => res.json())
         .then((technician) => {
-            console.log("📋 Technician data:", technician);
-            
-            if (infoTechnicianId) infoTechnicianId.value = technician.technician_id || "";
-            if (infoName) infoName.value = technician.name || "";
-            if (infoEmail) infoEmail.value = technician.email || "";
-            if (infoContactNumber) infoContactNumber.value = technician.contact_number || "Not provided"; // ✅ BAGO
-            if (infoArea) infoArea.value = technician.area || "";
-
-            // Get team name from team_id
-            if (infoTeam) {
-                if (technician.team_id) {
-                    // Find the team name from allTeams data
-                    const team = allTeams.find(t => t.team_id === technician.team_id);
-                    infoTeam.value = team ? team.team_name : technician.team_id;
-                    console.log(`✅ Team found: ${infoTeam.value}`);
-                } else {
-                    infoTeam.value = "Not assigned";
-                    console.log(`ℹ️ No team assigned`);
-                }
+            if (!technician || !technician.technician_id) {
+                throw new Error(technician && technician.error ? technician.error : "Technician not found");
             }
-
-            if (infoStatus) {
-                const statusText = technician.status || "Active";
-                infoStatus.textContent = statusText;
-                infoStatus.className = `info-status-badge ${statusText === "Active" ? "active" : "inactive"}`;
-            }
+            renderTechnicianInfo(technician);
         })
         .catch((error) => {
             console.error("❌ Failed to load technician info:", error);
             showToast("Failed to load technician information", 'error');
-            
-            // Set error state
-            if (infoName) infoName.value = "Error loading data";
-            if (infoTeam) infoTeam.value = "Error";
+            setValue("infoName", "Error loading data");
+            setValue("infoTeam", "Error");
         });
 }
 
 // Close info modal function
 function closeInfoModal() {
+    closeConfirmTechEditModal();
+    exitTechEditMode(false);
     if (viewInfoModal) {
         viewInfoModal.classList.remove("show");
         viewInfoModal.style.display = "none";
     }
 }
+
+// ================= EDIT MODE =================
+function toggleEl(id, visible) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visible ? "" : "none";
+}
+
+async function populateInfoAreaSelect(currentArea) {
+    const select = document.getElementById("infoAreaSelect");
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Loading areas...</option>';
+
+    try {
+        const response = await fetch("/api/superadmin/areas");
+        if (!response.ok) throw new Error("Failed to load areas");
+
+        const areas = await response.json();
+        const cities = [...new Set(areas.map(a => a.city))].sort();
+
+        // Siguraduhing nandoon ang current area kahit wala sa list
+        if (currentArea && !cities.some(c => c.toLowerCase() === currentArea.toLowerCase())) {
+            cities.push(currentArea);
+        }
+
+        select.innerHTML = '<option value="" disabled>Select Area</option>';
+        cities.forEach(city => {
+            const option = document.createElement("option");
+            option.value = city;
+            option.textContent = city;
+            select.appendChild(option);
+        });
+
+        const matched = cities.find(c => c.toLowerCase() === (currentArea || "").toLowerCase());
+        select.value = matched || "";
+    } catch (error) {
+        console.error("Error loading areas for edit:", error);
+        select.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = currentArea || "";
+        option.textContent = currentArea || "Unable to load areas";
+        select.appendChild(option);
+        select.value = currentArea || "";
+    }
+}
+
+async function enterTechEditMode() {
+    const t = currentViewedTechnician;
+    if (!t) return;
+
+    isTechEditMode = true;
+
+    // EMAIL - editable
+    const emailEl = document.getElementById("infoEmail");
+    if (emailEl) {
+        emailEl.readOnly = false;
+        emailEl.classList.add("editing");
+    }
+
+    // AREA - editable lang kapag WALANG team
+    if (t.team_id) {
+        toggleEl("infoAreaHint", true);   // naka-lock, may hint
+    } else {
+        await populateInfoAreaSelect(t.area);
+        toggleEl("infoArea", false);
+        toggleEl("infoAreaSelect", true);
+    }
+
+    // STATUS - editable
+    const statusSelect = document.getElementById("infoStatusSelect");
+    if (statusSelect) statusSelect.value = t.status === "Active" ? "Active" : "Deactivated";
+    toggleEl("infoStatus", false);
+    toggleEl("infoStatusSelect", true);
+
+    // Buttons
+    toggleEl("closeInfoModalBtn", false);
+    toggleEl("editTechnicianBtn", false);
+    toggleEl("cancelTechEditBtn", true);
+    toggleEl("saveTechEditBtn", true);
+
+    if (emailEl) emailEl.focus();
+}
+
+function exitTechEditMode(restore = true) {
+    isTechEditMode = false;
+
+    const emailEl = document.getElementById("infoEmail");
+    if (emailEl) {
+        emailEl.readOnly = true;
+        emailEl.classList.remove("editing");
+    }
+
+    toggleEl("infoArea", true);
+    toggleEl("infoAreaSelect", false);
+    toggleEl("infoAreaHint", false);
+    toggleEl("infoStatus", true);
+    toggleEl("infoStatusSelect", false);
+
+    toggleEl("closeInfoModalBtn", true);
+    toggleEl("editTechnicianBtn", true);
+    toggleEl("cancelTechEditBtn", false);
+    toggleEl("saveTechEditBtn", false);
+
+    // Ibalik ang original values (cancel)
+    if (restore && currentViewedTechnician) {
+        renderTechnicianInfo(currentViewedTechnician);
+    }
+}
+
+// ================= SAVE -> CONFIRMATION =================
+function requestSaveTechnicianChanges() {
+    const t = currentViewedTechnician;
+    if (!t) return;
+
+    const newEmail = document.getElementById("infoEmail").value.trim();
+    const areaSelect = document.getElementById("infoAreaSelect");
+    const areaEditable = !t.team_id && areaSelect && areaSelect.style.display !== "none";
+    const newArea = areaEditable ? areaSelect.value : (t.area || "");
+    const newStatus = document.getElementById("infoStatusSelect").value;
+
+    // Validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!newEmail) {
+        showToast("Email is required", "error");
+        return;
+    }
+    if (!emailRegex.test(newEmail)) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+    }
+    if (areaEditable && !newArea) {
+        showToast("Please select an area", "error");
+        return;
+    }
+
+    // Alamin kung ano ang nagbago
+    const payload = {};
+    const rows = [];
+
+    if (newEmail !== (t.email || "")) {
+        payload.email = newEmail;
+        rows.push({ label: "Email", oldValue: t.email || "—", newValue: newEmail });
+    }
+
+    if (areaEditable && newArea !== (t.area || "")) {
+        payload.area = newArea;
+        rows.push({ label: "Area", oldValue: t.area || "—", newValue: newArea });
+    }
+
+    const oldStatus = t.status === "Active" ? "Active" : "Deactivated";
+    if (newStatus !== oldStatus) {
+        payload.status = newStatus;
+        rows.push({ label: "Status", oldValue: oldStatus, newValue: newStatus });
+    }
+
+    if (rows.length === 0) {
+        showToast("No changes to save", "info");
+        return;
+    }
+
+    pendingTechChanges = {
+        technicianId: t.technician_id,
+        name: t.name,
+        payload,
+        rows
+    };
+
+    openConfirmTechEditModal();
+}
+
+function openConfirmTechEditModal() {
+    const modal = document.getElementById("confirmTechEditModal");
+    const content = document.getElementById("confirmTechEditContent");
+    if (!modal || !content || !pendingTechChanges) return;
+
+    const rowsHtml = pendingTechChanges.rows.map(r => `
+        <div class="tech-edit-row">
+            <span class="tech-edit-label">${escapeHtml(r.label)}</span>
+            <span class="tech-edit-values">
+                <span class="tech-edit-old">${escapeHtml(r.oldValue)}</span>
+                <span class="tech-edit-arrow" aria-hidden="true">&rarr;</span>
+                <span class="tech-edit-new">${escapeHtml(r.newValue)}</span>
+            </span>
+        </div>
+    `).join("");
+
+    content.innerHTML = `
+        <p class="tech-edit-target">Updating <strong>${escapeHtml(pendingTechChanges.name || "")}</strong> (${escapeHtml(pendingTechChanges.technicianId)})</p>
+        <div class="tech-edit-group">${rowsHtml}</div>
+    `;
+
+    modal.classList.add("show");
+    modal.style.display = "flex";
+}
+
+function closeConfirmTechEditModal() {
+    const modal = document.getElementById("confirmTechEditModal");
+    if (modal) {
+        modal.classList.remove("show");
+        modal.style.display = "none";
+    }
+    pendingTechChanges = null;
+}
+
+async function confirmTechnicianChanges() {
+    if (!pendingTechChanges) return;
+
+    const { technicianId, name, payload } = pendingTechChanges;
+    const confirmBtn = document.getElementById("confirmTechEditBtn");
+    const originalHtml = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const res = await fetch(`/api/superadmin/technicians/${technicianId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
+            showToast(`Technician "${name}" (${technicianId}) updated successfully!`, "success");
+            closeConfirmTechEditModal();
+
+            // Kunin ang bagong data at bumalik sa viewing mode
+            try {
+                const freshRes = await fetch(`/api/superadmin/technicians/${technicianId}`);
+                const fresh = await freshRes.json();
+                if (fresh && fresh.technician_id) currentViewedTechnician = fresh;
+            } catch (e) {
+                console.warn("Could not refresh technician info:", e);
+            }
+            exitTechEditMode(true);
+
+            // I-refresh ang mga table
+            sessionStorage.removeItem("techniciansCache");
+            await loadTechnicians(true);
+            await loadTeamsTable();
+            await loadTeamsForSelect();
+        } else {
+            showToast(data.error || "Failed to update technician", "error");
+            closeConfirmTechEditModal(); // nasa edit mode pa rin para maitama
+        }
+    } catch (error) {
+        console.error("Error updating technician:", error);
+        showToast("Network error. Please try again.", "error");
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalHtml;
+    }
+}
+
+// ================= EDIT MODE EVENTS =================
+document.getElementById("editTechnicianBtn")?.addEventListener("click", enterTechEditMode);
+document.getElementById("cancelTechEditBtn")?.addEventListener("click", () => exitTechEditMode(true));
+document.getElementById("saveTechEditBtn")?.addEventListener("click", requestSaveTechnicianChanges);
+
+document.getElementById("closeConfirmTechEditModal")?.addEventListener("click", closeConfirmTechEditModal);
+document.getElementById("cancelTechEditConfirmBtn")?.addEventListener("click", closeConfirmTechEditModal);
+document.getElementById("confirmTechEditBtn")?.addEventListener("click", confirmTechnicianChanges);
+document.getElementById("confirmTechEditModal")?.addEventListener("click", function (e) {
+    if (e.target === this) closeConfirmTechEditModal();
+});
 
 // Close button events
 if (closeInfoModalBtn) {

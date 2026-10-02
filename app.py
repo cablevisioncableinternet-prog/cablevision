@@ -4224,44 +4224,77 @@ def get_technician(technician_id):
 # ===============================
 @app.route("/api/superadmin/technicians/<technician_id>", methods=["PUT"])
 def update_technician(technician_id):
-    """Update technician information"""
+    """Update technician information (email, area, status)"""
     try:
-        data = request.json
+        data = request.json or {}
         name = data.get("name")
         email = data.get("email")
         area = data.get("area")
-        team_id = data.get("team_id")  # ← BAGO
-        
-        # Check if technician exists
-        check_query = "SELECT technician_id FROM technicians WHERE technician_id = %s"
-        exists = execute_query(check_query, (technician_id,), fetch_one=True)
-        
-        if not exists:
+        team_id = data.get("team_id")
+        status = data.get("status")
+
+        # Check if technician exists (kunin na rin ang current values)
+        check_query = """
+            SELECT technician_id, email, area, team_id, status
+            FROM technicians
+            WHERE technician_id = %s
+        """
+        current = execute_query(check_query, (technician_id,), fetch_one=True)
+
+        if not current:
             return jsonify({"error": "Technician not found"}), 404
-        
-        # Build update query dynamically
+
         updates = []
         params = []
-        
+
         if name is not None:
             updates.append("name = %s")
             params.append(name)
+
+        # ---------- EMAIL ----------
         if email is not None:
-            # Check for duplicate email
-            duplicate_query = "SELECT email FROM technicians WHERE email = %s AND technician_id != %s"
-            duplicate = execute_query(duplicate_query, (email, technician_id), fetch_one=True)
-            if duplicate:
-                return jsonify({"error": "Email already exists"}), 400
+            email = email.strip()
+            email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+            if not email_pattern.match(email):
+                return jsonify({"error": "Invalid email address"}), 400
+
+            if email.lower() != (current.get("email") or "").lower():
+                dup_query = """
+                    SELECT
+                        (SELECT COUNT(*) FROM technicians WHERE email = %s AND technician_id != %s) AS tech_count,
+                        (SELECT COUNT(*) FROM admins WHERE email = %s) AS admin_count,
+                        (SELECT COUNT(*) FROM superadmins WHERE email = %s) AS superadmin_count
+                """
+                dup = execute_query(dup_query, (email, technician_id, email, email), fetch_one=True) or {}
+                if (dup.get("tech_count", 0) or 0) > 0 or (dup.get("admin_count", 0) or 0) > 0 or (dup.get("superadmin_count", 0) or 0) > 0:
+                    return jsonify({"error": f"Email '{email}' already exists"}), 400
+
             updates.append("email = %s")
             params.append(email)
+
+        # ---------- AREA (bawal kapag may team) ----------
         if area is not None:
-            updates.append("area = %s")
-            params.append(area)
+            area = area.strip()
+            if not area:
+                return jsonify({"error": "Area is required"}), 400
+
+            if area != (current.get("area") or ""):
+                if current.get("team_id"):
+                    return jsonify({"error": "Cannot change area while the technician is assigned to a team"}), 400
+                updates.append("area = %s")
+                params.append(area)
+
+        # ---------- STATUS ----------
+        if status is not None:
+            if status not in ["Active", "Deactivated"]:
+                return jsonify({"error": "Invalid status. Use 'Active' or 'Deactivated'"}), 400
+            updates.append("status = %s")
+            params.append(status)
+
+        # ---------- TEAM (existing behavior) ----------
         if team_id is not None:
-            # If team_id is empty string, set to NULL
             if team_id == "":
                 team_id = None
-            # Validate team if provided
             if team_id:
                 team_check = "SELECT team_id FROM teams WHERE team_id = %s AND status = 'Active'"
                 team_exists = execute_query(team_check, (team_id,), fetch_one=True)
@@ -4269,17 +4302,17 @@ def update_technician(technician_id):
                     return jsonify({"error": "Invalid or inactive team selected"}), 400
             updates.append("team_id = %s")
             params.append(team_id)
-        
+
         if not updates:
             return jsonify({"error": "No fields to update"}), 400
-        
+
         params.append(technician_id)
         update_query = f"UPDATE technicians SET {', '.join(updates)} WHERE technician_id = %s"
         execute_query(update_query, tuple(params))
-        
+
         print(f" Technician {technician_id} updated successfully")
         return jsonify({"message": "Technician updated successfully"})
-        
+
     except Exception as e:
         print(f"Error updating technician: {e}")
         return jsonify({"error": str(e)}), 500

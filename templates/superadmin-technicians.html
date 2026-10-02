@@ -855,7 +855,7 @@
           </div>
         </div>
 
-        <!-- Account Information Section -->
+                <!-- Account Information Section -->
         <div class="info-section">
           <div class="info-section-header">
             <i class="fas fa-laptop"></i>
@@ -869,6 +869,8 @@
               <div class="info-card-content">
                 <label>Area Assignment</label>
                 <input type="text" id="infoArea" class="info-input" readonly>
+                <select id="infoAreaSelect" class="info-input" style="display:none;"></select>
+                <small id="infoAreaHint" class="info-edit-hint" style="display:none;">Area is locked while assigned to a team</small>
               </div>
             </div>
             <!-- Team Field -->
@@ -889,6 +891,10 @@
                 <label>Account Status</label>
                 <div class="info-status-wrapper">
                   <span id="infoStatus" class="info-status-badge"></span>
+                  <select id="infoStatusSelect" class="info-input" style="display:none;">
+                    <option value="Active">Active</option>
+                    <option value="Deactivated">Deactivated</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -900,6 +906,15 @@
       <div class="info-modal-footer">
         <button class="info-modal-btn" id="closeInfoModalBtn">
           <i class="fas fa-times"></i> Close
+        </button>
+        <button type="button" class="info-modal-btn" id="editTechnicianBtn">
+          <i class="fas fa-pen"></i> Edit
+        </button>
+        <button type="button" class="info-modal-btn" id="cancelTechEditBtn" style="display:none;">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="info-modal-btn" id="saveTechEditBtn" style="display:none;">
+          <i class="fas fa-save"></i> Save Changes
         </button>
       </div>
     </div>
@@ -1014,6 +1029,24 @@
             </button>
         </div>
     </div>
+</div>
+
+<!-- ================= CONFIRM TECHNICIAN EDIT MODAL ================= -->
+<div id="confirmTechEditModal" class="modal">
+  <div class="modal-content">
+    <div class="tech-edit-confirm-header">
+      <div>
+        <h3>Confirm Changes</h3>
+        <p>Review the technician updates before saving</p>
+      </div>
+      <button type="button" class="tech-edit-confirm-close" id="closeConfirmTechEditModal" aria-label="Close">&times;</button>
+    </div>
+    <div id="confirmTechEditContent" class="tech-edit-review-content"></div>
+    <div class="modal-actions tech-edit-confirm-actions">
+      <button type="button" id="cancelTechEditConfirmBtn" class="btn cancel">Cancel</button>
+      <button type="button" id="confirmTechEditBtn" class="btn confirm"><i class="fas fa-save"></i> Confirm &amp; Save</button>
+    </div>
+  </div>
 </div>
 
 
