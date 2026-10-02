@@ -386,8 +386,6 @@ def parse_user_agent(ua_string):
         os_name = "iOS"
     elif "mac os x" in ua_lower or "macintosh" in ua_lower:
         os_name = "macOS"
-    elif "linux" in ua_lower:
-        os_name = "Linux"
     else:
         os_name = "Desktop/Mobile"
 
@@ -440,8 +438,7 @@ def parse_user_agent(ua_string):
         device_brand = "Mac"
     elif "windows" in ua_lower:
         device_brand = "Windows PC"
-    elif "linux" in ua_lower:
-        device_brand = "Linux"
+
 
     return browser, os_name, device_brand
 
