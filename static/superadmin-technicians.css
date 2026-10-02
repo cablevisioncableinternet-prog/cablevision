@@ -6138,3 +6138,42 @@ th:nth-child(3), th:nth-child(4), th:nth-child(5) {
     border-radius: 6px !important;
   }
 }
+
+
+/* ================= SUPERADMIN SLOT CARDS - FIX OVERFLOW ================= */
+/* Hayaang sundin ng taas ng row ang laman ng pinakamataas na card */
+#superSlotsGrid {
+  grid-auto-rows: max-content !important;
+  align-content: start !important;
+  align-items: stretch !important;
+}
+
+/* Ang card ay lalaki ayon sa laman niya, hindi na naka-lock sa vh-based min-height */
+#superSlotsGrid .slot-card {
+  box-sizing: border-box !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  justify-content: flex-start !important;
+}
+
+/* Siguraduhing hindi mapipiga ang bawat bahagi ng card */
+#superSlotsGrid .slot-card > * {
+  flex-shrink: 0 !important;
+  min-width: 0;
+}
+
+/* Tama ang spacing at hindi lalampas ang NAP box name sa border */
+#superSlotsGrid .slot-card .slot-napbox-name {
+  display: block !important;
+  margin-top: 6px !important;
+  padding-top: 6px !important;
+  padding-bottom: 2px !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+#superSlotsGrid .slot-card .slot-barangay {
+  overflow: visible !important;
+}
