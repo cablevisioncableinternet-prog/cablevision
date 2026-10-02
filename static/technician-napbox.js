@@ -4703,92 +4703,85 @@ async function saveEditSlotTech() {
     let hasError = false;
     let errorMessages = [];
 
-    if (selectedStatus === 'occupied') {
-        if (!customerName) {
-            nameInput.className = 'form-input input-error';
-            if (nameError) {
-                nameError.textContent = 'Customer name is required when slot is OCCUPIED';
-                nameError.style.display = 'flex';
-            }
-            hasError = true;
-            errorMessages.push('Customer Name');
+    // CUSTOMER NAME: REQUIRED KAPAG OCCUPIED
+    if (selectedStatus === 'occupied' && !customerName) {
+        nameInput.className = 'form-input input-error';
+        if (nameError) {
+            nameError.textContent = 'Subscriber name is required when slot is OCCUPIED';
+            nameError.style.display = 'flex';
         }
-        if (!cleanContractNumber) {
-            contractInput.className = 'form-input input-error';
-            if (contractError) {
-                contractError.textContent = 'Contract number is required when slot is OCCUPIED';
-                contractError.style.display = 'flex';
-            }
-            hasError = true;
-            errorMessages.push('Contract Number');
+        hasError = true;
+        errorMessages.push('Subscriber Name');
+    }
+
+    // CONTRACT NUMBER: LAGING REQUIRED (kahit anong status)
+    if (!cleanContractNumber) {
+        contractInput.className = 'form-input input-error';
+        if (contractError) {
+            contractError.textContent = 'Contract number is required';
+            contractError.style.display = 'flex';
         }
+        hasError = true;
+        errorMessages.push('Contract Number');
     }
 
     if (hasError) {
-        showToast(`Please fill in: ${errorMessages.join(' and ')} for OCCUPIED status`, 'error');
-        if (!customerName) nameInput.focus();
-        else if (!cleanContractNumber) contractInput.focus();
+        showToast(`Please fill in: ${errorMessages.join(' and ')}`, 'error');
+        if (selectedStatus === 'occupied' && !customerName) {
+            nameInput.focus();
+        } else {
+            contractInput.focus();
+        }
         return;
     }
 
-    let finalStatus = selectedStatus;
-    if (selectedStatus === 'occupied' && !customerName && !cleanContractNumber) {
-        finalStatus = 'available';
-        const occ = document.getElementById('editStatusOccupiedTech');
-        const avail = document.getElementById('editStatusAvailableTech');
-        [occ, avail].forEach(btn => btn.classList.remove('active', 'active-occupied', 'active-available'));
-        avail.classList.add('active', 'active-available');
-        showToast('Status changed to AVAILABLE because fields are empty', 'info');
+    const finalStatus = selectedStatus;
+
+    // VALIDATE: CONTRACT NUMBER MUST BE 4 TO 6 DIGITS
+    const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
+    if (numberPart.length < 4 || numberPart.length > 6) {
+        contractInput.className = 'form-input input-error';
+        if (contractError) {
+            contractError.textContent = 'Contract number must be 4 to 6 digits (e.g., 0001, 001234, 123456)';
+            contractError.style.display = 'flex';
+        }
+        showToast('Contract number must be 4 to 6 digits', 'error');
+        contractInput.focus();
+        return;
     }
 
-    // VALIDATE: CONTRACT NUMBER LENGTH (6 DIGITS ONLY)
-    if (cleanContractNumber) {
-        const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
-        // PALITAN: FROM exactly 6 digits TO 4-6 digits
-        if (numberPart.length < 4 || numberPart.length > 6) {
+    // VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
+    try {
+        const tabId = getTabId();
+        const technicianId = sessionStorage.getItem('technicianId');
+
+        const response = await fetch(`/api/check-contract-number-exists?tab_id=${tabId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contract_number: cleanContractNumber,
+                technician_id: technicianId,
+                exclude_slot_id: currentEditSlotTech.id,
+                tab_id: tabId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.exists) {
             contractInput.className = 'form-input input-error';
             if (contractError) {
-                contractError.textContent = 'Contract number must be 4 to 6 digits (e.g., 0001, 001234, 123456)';
+                contractError.textContent = `Contract number "${cleanContractNumber}" is already used in Slot #${data.slot_number}!`;
                 contractError.style.display = 'flex';
             }
-            showToast('Contract number must be 4 to 6 digits', 'error');
+            showToast(`Contract number "${cleanContractNumber}" already exists in Slot #${data.slot_number}!`, 'error');
             contractInput.focus();
             return;
         }
-        
-        // VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
-        try {
-            const tabId = getTabId();
-            const technicianId = sessionStorage.getItem('technicianId');
-            
-            const response = await fetch(`/api/check-contract-number-exists?tab_id=${tabId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contract_number: cleanContractNumber,
-                    technician_id: technicianId,
-                    exclude_slot_id: currentEditSlotTech.id,
-                    tab_id: tabId
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.exists) {
-                contractInput.className = 'form-input input-error';
-                if (contractError) {
-                    contractError.textContent = `Contract number "${cleanContractNumber}" is already used in Slot #${data.slot_number}!`;
-                    contractError.style.display = 'flex';
-                }
-                showToast(`Contract number "${cleanContractNumber}" already exists in Slot #${data.slot_number}!`, 'error');
-                contractInput.focus();
-                return;
-            }
-        } catch (error) {
-            console.error('Error checking contract number:', error);
-            showToast('Error validating contract number', 'error');
-            return;
-        }
+    } catch (error) {
+        console.error('Error checking contract number:', error);
+        showToast('Error validating contract number', 'error');
+        return;
     }
 
     const saveBtn = document.getElementById('saveEditBtnTech');

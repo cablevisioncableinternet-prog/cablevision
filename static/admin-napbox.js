@@ -1305,56 +1305,53 @@ async function saveEditSlot() {
     let hasError = false;
     let errorMessages = [];
     
-    if (selectedStatus === 'occupied') {
-        if (!customerName) {
-            nameInput.className = 'form-input input-error';
-            if (nameError) {
-                nameError.textContent = ' Customer name is required when slot is OCCUPIED';
-                nameError.style.display = 'flex';
-            }
-            hasError = true;
-            errorMessages.push('Customer Name');
+    // CUSTOMER NAME: REQUIRED KAPAG OCCUPIED
+    if (selectedStatus === 'occupied' && !customerName) {
+        nameInput.className = 'form-input input-error';
+        if (nameError) {
+            nameError.textContent = 'Subscriber name is required when slot is OCCUPIED';
+            nameError.style.display = 'flex';
         }
-        
-        if (!cleanContractNumber) {
-            contractInput.className = 'form-input input-error';
-            if (contractError) {
-                contractError.textContent = 'Contract number is required when slot is OCCUPIED';
-                contractError.style.display = 'flex';
-            }
-            hasError = true;
-            errorMessages.push('Contract Number');
+        hasError = true;
+        errorMessages.push('Subscriber Name');
+    }
+    
+    // CONTRACT NUMBER: LAGING REQUIRED (kahit anong status)
+    if (!cleanContractNumber) {
+        contractInput.className = 'form-input input-error';
+        if (contractError) {
+            contractError.textContent = 'Contract number is required';
+            contractError.style.display = 'flex';
         }
+        hasError = true;
+        errorMessages.push('Contract Number');
     }
     
     if (hasError) {
-        const missingFields = errorMessages.join(' and ');
-        showToast(`Please fill in: ${missingFields} for OCCUPIED status`, 'error');
-        if (!customerName) {
+        showToast(`Please fill in: ${errorMessages.join(' and ')}`, 'error');
+        if (selectedStatus === 'occupied' && !customerName) {
             nameInput.focus();
-        } else if (!cleanContractNumber) {
+        } else {
             contractInput.focus();
         }
         return;
     }
     
     // VALIDATE: CONTRACT NUMBER MUST BE 4 TO 6 DIGITS
-    if (cleanContractNumber) {
-        const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
-        if (numberPart.length < 4 || numberPart.length > 6) {
-            contractInput.className = 'form-input input-error';
-            if (contractError) {
-                contractError.textContent = 'Contract number must be 4 to 6 digits (e.g., 0001, 001234, 123456)';
-                contractError.style.display = 'flex';
-            }
-            showToast('Contract number must be 4 to 6 digits', 'error');
-            contractInput.focus();
-            return;
+    const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
+    if (numberPart.length < 4 || numberPart.length > 6) {
+        contractInput.className = 'form-input input-error';
+        if (contractError) {
+            contractError.textContent = 'Contract number must be 4 to 6 digits (e.g., 0001, 001234, 123456)';
+            contractError.style.display = 'flex';
         }
+        showToast('Contract number must be 4 to 6 digits', 'error');
+        contractInput.focus();
+        return;
     }
     
     // VALIDATE: CHECK IF CONTRACT NUMBER ALREADY EXISTS (EXCLUDING CURRENT SLOT)
-    if (cleanContractNumber && selectedStatus === 'occupied') {
+    if (selectedStatus === 'occupied') {
         try {
             const response = await fetch('/api/check-contract-number-exists', {
                 method: 'POST',
@@ -1384,17 +1381,7 @@ async function saveEditSlot() {
         }
     }
     
-    let finalStatus = selectedStatus;
-    if (selectedStatus === 'occupied' && !customerName && !cleanContractNumber) {
-        finalStatus = 'available';
-        const occupiedBtn = document.getElementById('editStatusOccupied');
-        const availableBtn = document.getElementById('editStatusAvailable');
-        [occupiedBtn, availableBtn].forEach(btn => {
-            btn.classList.remove('active', 'active-occupied', 'active-available');
-        });
-        availableBtn.classList.add('active', 'active-available');
-        showToast('Status changed to AVAILABLE because fields are empty', 'info');
-    }
+    const finalStatus = selectedStatus;
     
     const saveBtn = document.getElementById('saveEditBtn');
     const originalText = saveBtn.innerHTML;
