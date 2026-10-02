@@ -913,7 +913,9 @@ function showAdminSlotDetails(slot) {
     
     modalContent.innerHTML = `
         <!-- Status Badge -->
-        <div class="slot-status-badge">
+        <div class="slot-status-badge ${slot.status}">
+            <i class="fas ${statusIcon}"></i>
+            <span>${statusDisplay}</span>
             ${showClearButton ? `<span class="has-data-badge"><i class="fas fa-history"></i> Has Previous Data</span>` : ''}
         </div>
         
@@ -1314,20 +1316,7 @@ async function saveEditSlot() {
             errorMessages.push('Customer Name');
         }
         
-        // VALIDATE: CHECK IF CONTRACT NUMBER IS EXACTLY 6 DIGITS
-        if (cleanContractNumber) {
-            const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
-            if (numberPart.length !== 6) {
-                contractInput.className = 'form-input input-error';
-                if (contractError) {
-                    contractError.textContent = 'Contract number must be exactly 6 digits (e.g., 000001, 001234, 123456)';
-                    contractError.style.display = 'flex';
-                }
-                showToast('Contract number must be exactly 6 digits', 'error');
-                contractInput.focus();
-                return;
-            }
-        } else {
+        if (!cleanContractNumber) {
             contractInput.className = 'form-input input-error';
             if (contractError) {
                 contractError.textContent = 'Contract number is required when slot is OCCUPIED';
@@ -1335,6 +1324,32 @@ async function saveEditSlot() {
             }
             hasError = true;
             errorMessages.push('Contract Number');
+        }
+    }
+    
+    if (hasError) {
+        const missingFields = errorMessages.join(' and ');
+        showToast(`Please fill in: ${missingFields} for OCCUPIED status`, 'error');
+        if (!customerName) {
+            nameInput.focus();
+        } else if (!cleanContractNumber) {
+            contractInput.focus();
+        }
+        return;
+    }
+    
+    // VALIDATE: CONTRACT NUMBER MUST BE 4 TO 6 DIGITS
+    if (cleanContractNumber) {
+        const numberPart = cleanContractNumber.replace(/^[A-Z]+-/i, '');
+        if (numberPart.length < 4 || numberPart.length > 6) {
+            contractInput.className = 'form-input input-error';
+            if (contractError) {
+                contractError.textContent = 'Contract number must be 4 to 6 digits (e.g., 0001, 001234, 123456)';
+                contractError.style.display = 'flex';
+            }
+            showToast('Contract number must be 4 to 6 digits', 'error');
+            contractInput.focus();
+            return;
         }
     }
     
@@ -1367,17 +1382,6 @@ async function saveEditSlot() {
             showToast('Error validating contract number', 'error');
             return;
         }
-    }
-    
-    if (hasError) {
-        const missingFields = errorMessages.join(' and ');
-        showToast(`Please fill in: ${missingFields} for OCCUPIED status`, 'error');
-        if (!customerName) {
-            nameInput.focus();
-        } else if (!cleanContractNumber) {
-            contractInput.focus();
-        }
-        return;
     }
     
     let finalStatus = selectedStatus;
