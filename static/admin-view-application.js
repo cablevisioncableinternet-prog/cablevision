@@ -795,10 +795,9 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
                     }
                     
                     floatingReapplyActions.innerHTML = `
-                        <button class="btn-floating btn-reapply-floating" style="opacity:0.6; cursor:not-allowed; background: linear-gradient(135deg, #78716c 0%, #a8a29e 100%);" disabled>
-                            <i class="fas fa-check-circle"></i>
+                        <button class="btn-floating btn-reapply-floating btn-reapply-disabled" disabled>
                             <span class="reapply-btn-text">
-                                <strong>Reapply Requested</strong>
+                                <strong>Re-application Requested</strong>
                                 ${formattedDate ? `<small>Request sent on ${formattedDate}</small>` : ''}
                             </span>
                         </button>
@@ -808,8 +807,7 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
                     floatingReapplyActions.style.opacity = '0.8';
                 } else if (hasPending && pendingStatus === 'Reapply') {
                     floatingReapplyActions.innerHTML = `
-                        <button class="btn-floating btn-reapply-floating" style="opacity:0.6; cursor:not-allowed; background: linear-gradient(135deg, #78716c 0%, #a8a29e 100%);" disabled>
-                            <i class="fas fa-clock"></i>
+                        <button class="btn-floating btn-reapply-floating btn-reapply-disabled" disabled>
                             <span class="reapply-btn-text">
                                 <strong>Request Pending</strong>
                                 <small>Waiting for superadmin approval...</small>
@@ -823,8 +821,7 @@ function toggleActionButtons(status, reapplyRequested = false, reapplyRequestedA
 
                     floatingReapplyActions.innerHTML = `
                         <button class="btn-floating btn-reapply-floating" id="floatingReapplyBtn">
-                            <i class="fas fa-redo-alt"></i>
-                            <span>Request Reapply</span>
+                            <span>Request Re-application</span>
                         </button>
                     `;
                     floatingReapplyActions.style.display = 'flex';
@@ -1256,7 +1253,7 @@ function showReapplyRequestModal() {
     if (modalLoading) modalLoading.style.display = "none";
     if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Request';
+        confirmBtn.textContent = 'Send Request';
     }
     
     const reapplyModal = new bootstrap.Modal(document.getElementById('reapplyRequestModal'));
@@ -1297,7 +1294,7 @@ async function processReapplyRequest() {
         if (modalLoading) modalLoading.style.display = "none";
         if (confirmBtn) {
             confirmBtn.disabled = false;
-            confirmBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Request';
+            confirmBtn.textContent = 'Send Request';
         }
     }
 }
@@ -1457,7 +1454,6 @@ document.addEventListener('DOMContentLoaded', () => {
     attachRestoreButtonEvents();
     setupModalPointerEvents();
 });
-
 
 
 

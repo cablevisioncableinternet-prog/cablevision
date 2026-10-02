@@ -478,8 +478,7 @@
 <!-- BAGO: REJECTED - REQUEST REAPPLY BUTTON -->
 <div class="floating-actions" id="floatingReapplyActions" style="display: none;">
     <button class="btn-floating btn-reapply-floating" id="floatingReapplyBtn">
-        <i class="fas fa-redo-alt"></i>
-        <span>Request Reapply</span>
+        <span>Request Re-application</span>
     </button>
 </div>
 
@@ -490,9 +489,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-ban"></i> Reject Application
-                </h5>
+                <h5 class="modal-title">Reject Application</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -525,16 +522,11 @@
 <div id="approveModal" class="modal fade" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #166534 0%, #22c55e 100%);">
-                <h5 class="modal-title">
-                    <i class="fas fa-check-circle"></i> Request Approval
-                </h5>
+            <div class="modal-header">
+                <h5 class="modal-title">Request Approval</h5>
                 <button type="button" class="btn-close" id="closeApproveModal" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-3">
-                    <i class="fas fa-question-circle" style="font-size: 48px; color: #166534;"></i>
-                </div>
                 <p class="text-center">
                     Are you sure you want to request <strong class="text-success">APPROVAL</strong> for this application?
                 </p>
@@ -542,14 +534,13 @@
                     Applicant: <strong id="approveApplicantName">Loading...</strong>
                 </p>
                 <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i>
                     <small>This request will be sent to the Super Admin for final approval. The application status will change to "Request Sent" while waiting for the Super Admin's decision.</small>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancelApproveBtn">Cancel</button>
                 <button type="button" class="btn btn-success btn-approve-confirm" id="confirmApproveBtn">
-                    <i class="fas fa-check-circle"></i> Yes, Request Approval
+                    Yes, Request Approval
                 </button>
             </div>
             <div id="approveModalLoading" style="display:none; text-align:center; padding:20px;">
@@ -604,43 +595,31 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-redo-alt"></i> Request Re-application
-                </h5>
+                <h5 class="modal-title">Request Re-application</h5>
                 <button type="button" class="btn-close" id="closeReapplyRequestModal" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-3">
-                    <i class="fas fa-redo-alt" style="font-size: 32px; color: #0912b4; background: rgba(9, 9, 181, 0.08); padding: 12px; border-radius: 50%; border: 2px solid rgba(181, 83, 9, 0.15);"></i>
-                </div>
-                <p class="text-center">
-                    Are you sure you want to request <strong style="color:#000000;">RE-APPLICATION</strong> for this application?
-                </p>
-                
                 <label class="form-label fw-bold mt-3">
-                    <i class="fas fa-exclamation-circle"></i> Rejection Reason
+                    Rejection Reason
                 </label>
                 <div id="reapplyRejectionReasonBox" class="alert alert-danger" style="white-space: pre-wrap;"></div>
                 
                 <label for="reapplyMessage" class="form-label fw-bold mt-3">
-                    <i class="fas fa-comment-dots"></i> Message for the Customer *
+                    Message for the Customer *
                 </label>
                 <textarea id="reapplyMessage" class="form-control" rows="4" maxlength="1000" placeholder="Explain what the customer needs to correct or add when re-applying..."></textarea>
                 <div class="form-text"><span id="reapplyMsgCount">0</span>/1000 characters</div>
                 <div id="reapplyMessageError" class="text-danger d-none">
-                    <i class="fas fa-exclamation-triangle"></i> <span>Please enter a message for the customer</span>
+                    <span>Please enter a message for the customer</span>
                 </div>
                 
                 <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i>
                     <small>This request will be sent to the Super Admin. If approved, the customer will receive an email with a re-apply link and your message.</small>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancelReapplyRequestBtn">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmReapplyRequestBtn" style="background: linear-gradient(135deg, #056cb1 0%, #0b61f5 100%); border: none;">
-                    <i class="fas fa-paper-plane"></i> Send Request
-                </button>
+                <button type="button" class="btn btn-primary" id="confirmReapplyRequestBtn">Send Request</button>
             </div>
             <div id="reapplyRequestModalLoading" style="display:none; text-align:center; padding:20px;">
                 <div class="spinner-border" role="status"></div>

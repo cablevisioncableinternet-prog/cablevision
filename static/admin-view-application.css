@@ -2926,6 +2926,459 @@ body {
 }
 
 
+/* ================= REAPPLY CONTROL REDESIGN ================= */
+.floating-actions .btn-reapply-floating {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 24px;
+  border: 1px solid #064785;
+  border-radius: 12px;
+  background: #075a9e;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.floating-actions .btn-reapply-floating::before {
+  display: none;
+}
+
+.floating-actions .btn-reapply-floating:hover {
+  border-color: #064785;
+  background: #064785;
+  box-shadow: 0 7px 20px rgba(7, 90, 158, 0.26);
+  transform: translateY(-1px);
+}
+
+.floating-actions .btn-reapply-floating:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.floating-actions .btn-reapply-floating.btn-reapply-disabled,
+.floating-actions .btn-reapply-floating.btn-reapply-disabled:hover {
+  border-color: #cbd5df;
+  background: #eef1f4;
+  color: #64748b;
+  opacity: 1;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.floating-actions .reapply-btn-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.3;
+}
+
+.floating-actions .reapply-btn-text strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.floating-actions .reapply-btn-text small {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+#reapplyRequestModal {
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+#reapplyRequestModal .modal-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  padding: 0;
+}
+
+#reapplyRequestModal .modal-content {
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid #d9e1e9;
+  border-radius: 8px;
+  background: #fff !important;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+}
+
+#reapplyRequestModal .modal-header {
+  min-height: 58px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e4eaf0;
+  background: #fff;
+}
+
+#reapplyRequestModal .modal-header h5 {
+  color: #202b3c;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#reapplyRequestModal .btn-close {
+  filter: none;
+  opacity: 0.65;
+  border-radius: 5px;
+}
+
+#reapplyRequestModal .btn-close:hover {
+  opacity: 1;
+  background-color: #f1f3f6;
+  transform: none;
+}
+
+#reapplyRequestModal .modal-body {
+  max-height: calc(90vh - 112px);
+  padding: 16px 18px;
+  overflow-y: auto;
+  background: #fff;
+  text-align: left;
+}
+
+#reapplyRequestModal .modal-body label {
+  margin: 0 0 6px;
+  color: #526477;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+#reapplyRequestModal #reapplyRejectionReasonBox {
+  margin-bottom: 14px;
+  padding: 9px 11px;
+  border: 1px solid #f0d2d4;
+  border-left: 3px solid #b4232c;
+  border-radius: 5px;
+  background: #fff5f5;
+  color: #8f252d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#reapplyRequestModal .modal-body .form-control {
+  min-height: 112px;
+  padding: 10px 11px;
+  border: 1px solid #cbd7e3;
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#reapplyRequestModal .modal-body .form-text {
+  margin-top: 5px;
+  color: #778397;
+  font-size: 10px;
+  text-align: right;
+}
+
+#reapplyRequestModal .modal-body .alert-info {
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border: 1px solid #cfe0ef;
+  border-radius: 5px;
+  background: #f2f7fb;
+  color: #36536c;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#reapplyRequestModal .modal-body .text-danger:not(.d-none) {
+  display: block !important;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #f0d2d4;
+  border-radius: 5px;
+  background: #fff5f5;
+  color: #a61f2a;
+  font-size: 11px;
+}
+
+#reapplyRequestModal .modal-footer {
+  gap: 8px;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  border-radius: 0;
+  background: #fff;
+}
+
+#reapplyRequestModal .modal-footer .btn-secondary,
+#reapplyRequestModal .modal-footer .btn-primary {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#reapplyRequestModal .modal-footer .btn-secondary {
+  border-color: #cbd5df;
+  background: #fff;
+  color: #465368;
+}
+
+#reapplyRequestModal .modal-footer .btn-secondary:hover {
+  border-color: #bbc5d1;
+  background: #f3f5f7;
+  transform: none;
+}
+
+#reapplyRequestModal .modal-footer .btn-primary {
+  border-color: #075a9e;
+  background: #075a9e;
+  color: #fff;
+}
+
+#reapplyRequestModal .modal-footer .btn-primary:hover {
+  border-color: #064785;
+  background: #064785;
+  transform: none;
+}
+
+#reapplyRequestModal :is(button, textarea):focus-visible,
+.floating-actions .btn-reapply-floating:focus-visible {
+  outline: 3px solid rgba(40, 118, 185, 0.28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 575px) {
+  #reapplyRequestModal .modal-dialog {
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin: 0 auto;
+  }
+
+  #reapplyRequestModal .modal-content {
+    max-height: 90vh;
+  }
+
+  #reapplyRequestModal .modal-header {
+    min-height: 54px;
+    padding: 10px 14px;
+  }
+
+  #reapplyRequestModal .modal-header h5 {
+    font-size: 14px;
+  }
+
+  #reapplyRequestModal .modal-body {
+    max-height: calc(90vh - 108px);
+    padding: 12px 14px;
+  }
+
+  #reapplyRequestModal .modal-footer {
+    flex-direction: row;
+    padding: 10px 14px;
+  }
+
+  #reapplyRequestModal .modal-footer .btn-secondary,
+  #reapplyRequestModal .modal-footer .btn-primary {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .floating-actions .btn-reapply-floating {
+    width: 100%;
+    min-width: 0;
+    padding: 11px 14px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-actions .btn-reapply-floating,
+  #reapplyRequestModal .btn-close,
+  #reapplyRequestModal .modal-footer .btn-secondary,
+  #reapplyRequestModal .modal-footer .btn-primary {
+    transition: none;
+  }
+}
+
+/* ================= SERVICE CONTRACT PREVIEW MODAL REDESIGN ================= */
+.contract-preview-modal .modal-dialog {
+  width: min(1120px, calc(100vw - 32px));
+  max-width: 1120px;
+  padding: 0;
+}
+
+.contract-preview-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid #d9e1e9;
+  border-radius: 8px;
+  background: #fff !important;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+}
+
+.contract-preview-modal .modal-header {
+  min-height: 58px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e4eaf0;
+  background: #fff;
+}
+
+.contract-preview-modal .modal-header h5 {
+  color: #202b3c;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.contract-preview-modal .modal-header h5 i {
+  color: #075a9e;
+}
+
+.contract-preview-modal .btn-close {
+  filter: none;
+  opacity: 0.65;
+  border-radius: 5px;
+}
+
+.contract-preview-modal .btn-close:hover {
+  opacity: 1;
+  background-color: #f1f3f6;
+  transform: none;
+}
+
+.contract-preview-modal .modal-body {
+  min-height: 0;
+  max-height: calc(90vh - 112px);
+  padding: 16px 18px;
+  overflow: auto;
+  background: #f5f7f9;
+}
+
+.contract-preview-modal .contract-preview-container {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.contract-preview-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #fff;
+}
+
+.contract-preview-modal .modal-footer .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.contract-preview-modal .modal-footer .btn-secondary {
+  border-color: #cbd5df;
+  background: #fff;
+  color: #465368;
+}
+
+.contract-preview-modal .modal-footer .btn-secondary:hover {
+  border-color: #bbc5d1;
+  background: #f3f5f7;
+  transform: none;
+}
+
+.contract-preview-modal .modal-footer .btn-primary {
+  border-color: #075a9e;
+  background: #075a9e;
+  color: #fff;
+}
+
+.contract-preview-modal .modal-footer .btn-primary:hover {
+  border-color: #064785;
+  background: #064785;
+  transform: none;
+}
+
+.contract-preview-modal :is(button):focus-visible {
+  outline: 3px solid rgba(40, 118, 185, 0.28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 575px) {
+  .contract-preview-modal .modal-dialog {
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin: 0 auto;
+  }
+
+  .contract-preview-modal .modal-content {
+    max-height: 90vh;
+    border-radius: 8px;
+  }
+
+  .contract-preview-modal .modal-header {
+    min-height: 54px;
+    padding: 10px 14px;
+  }
+
+  .contract-preview-modal .modal-header h5 {
+    font-size: 14px;
+  }
+
+  .contract-preview-modal .modal-body {
+    max-height: calc(90vh - 108px);
+    padding: 12px;
+  }
+
+  .contract-preview-modal .modal-footer {
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .contract-preview-modal .modal-footer .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 8px;
+    font-size: 11px;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contract-preview-modal .btn-close,
+  .contract-preview-modal .modal-footer .btn {
+    transition: none;
+  }
+}
+
 /* ================= ADDENDUM AND INSTALLMENT STYLES (ADD TO ADMIN CSS) ================= */
 
 /* Addendum Section */
@@ -3062,6 +3515,336 @@ body {
         border-radius: 40px;
         order: 1;
     }
+}
+
+/* ================= APPROVAL AND REJECTION ACTIONS ================= */
+#floatingActions {
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(500px, calc(100vw - 32px));
+  max-width: 500px;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #d9e1e9;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+#floatingActions .btn-floating {
+  min-width: 0;
+  min-height: 42px;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#floatingActions .btn-floating::before,
+#floatingActions .btn-floating::after {
+  display: none;
+}
+
+#floatingActions .btn-floating i {
+  position: static;
+  flex: 0 0 auto;
+  font-size: 13px;
+}
+
+#floatingActions .btn-floating span {
+  position: static;
+  min-width: 0;
+  font-size: inherit;
+}
+
+#floatingActions .btn-approve-floating {
+  border-color: #12653f;
+  background: #167a4a;
+  color: #fff;
+}
+
+#floatingActions .btn-approve-floating:hover {
+  border-color: #105d38;
+  background: #12653f;
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+#floatingActions .btn-reject-floating {
+  border-color: #a61f2a;
+  background: #b4232c;
+  color: #fff;
+}
+
+#floatingActions .btn-reject-floating:hover {
+  border-color: #941b23;
+  background: #941b23;
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+#rejectModal,
+#approveModal {
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+#rejectModal .modal-dialog,
+#approveModal .modal-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-width: 480px;
+  padding: 0;
+}
+
+#rejectModal .modal-content,
+#approveModal .modal-content {
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid #d9e1e9;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+}
+
+#rejectModal .modal-header,
+#approveModal .modal-header {
+  min-height: 58px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e4eaf0;
+  border-radius: 0;
+  background: #fff !important;
+  color: #202b3c;
+}
+
+#rejectModal .modal-header h5,
+#approveModal .modal-header h5 {
+  color: #202b3c;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#rejectModal .btn-close,
+#approveModal .btn-close {
+  filter: none;
+  opacity: 0.65;
+  border-radius: 5px;
+}
+
+#rejectModal .btn-close:hover,
+#approveModal .btn-close:hover {
+  opacity: 1;
+  background-color: #f1f3f6;
+  transform: none;
+}
+
+#rejectModal .modal-body,
+#approveModal .modal-body {
+  max-height: calc(90vh - 112px);
+  padding: 16px 18px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+#approveModal .modal-body p {
+  margin-bottom: 10px;
+  color: #263246;
+  font-size: 13px;
+}
+
+#approveModal .modal-body p:last-of-type {
+  margin-bottom: 0;
+}
+
+#approveModal .text-muted {
+  color: #68798b !important;
+}
+
+#rejectModal label {
+  margin-bottom: 6px;
+  color: #526477;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.25px;
+}
+
+#rejectModal .form-control,
+#rejectModal .form-select {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #cbd7e3;
+  border-radius: 5px;
+  color: #263246;
+  font-family: inherit;
+  font-size: 12px;
+  box-shadow: none;
+}
+
+#rejectModal textarea.form-control {
+  min-height: 88px;
+  resize: vertical;
+}
+
+#rejectModal .form-control:focus,
+#rejectModal .form-select:focus {
+  border-color: #2876b9;
+  box-shadow: 0 0 0 3px rgba(40, 118, 185, 0.12);
+}
+
+#approveModal .alert-info {
+  margin-top: 12px !important;
+  margin-bottom: 0;
+  padding: 9px 11px;
+  border: 1px solid #cfe0ef;
+  border-radius: 5px;
+  background: #f2f7fb;
+  color: #36536c;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+#rejectModal .modal-footer,
+#approveModal .modal-footer {
+  gap: 8px;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  border-radius: 0;
+  background: #fff;
+}
+
+#rejectModal .modal-footer .btn,
+#approveModal .modal-footer .btn {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+#rejectModal .modal-footer .btn-secondary,
+#approveModal .modal-footer .btn-secondary {
+  border-color: #cbd5df;
+  background: #fff;
+  color: #465368;
+}
+
+#rejectModal .modal-footer .btn-secondary:hover,
+#approveModal .modal-footer .btn-secondary:hover {
+  border-color: #bbc5d1;
+  background: #f3f5f7;
+  transform: none;
+}
+
+#rejectModal .modal-footer .btn-danger {
+  border-color: #a61f2a;
+  background: #b4232c;
+  color: #fff;
+}
+
+#rejectModal .modal-footer .btn-danger:hover {
+  border-color: #941b23;
+  background: #941b23;
+  transform: none;
+}
+
+#approveModal .modal-footer .btn-approve-confirm {
+  border-color: #12653f;
+  background: #167a4a;
+  color: #fff;
+}
+
+#approveModal .modal-footer .btn-approve-confirm:hover {
+  border-color: #105d38;
+  background: #12653f;
+  box-shadow: none;
+  transform: none;
+}
+
+#floatingActions :is(button):focus-visible,
+#rejectModal :is(button, input, select, textarea):focus-visible,
+#approveModal :is(button):focus-visible {
+  outline: 3px solid rgba(40, 118, 185, 0.28);
+  outline-offset: 2px;
+}
+
+@media (max-width: 575px) {
+  #floatingActions {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: calc(100vw - 20px);
+    gap: 6px;
+    padding: 6px;
+  }
+
+  #floatingActions .btn-floating {
+    min-height: 42px;
+    gap: 6px;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  #floatingActions .btn-floating span {
+    overflow-wrap: anywhere;
+  }
+
+  #rejectModal .modal-dialog,
+  #approveModal .modal-dialog {
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin: 0 auto;
+  }
+
+  #rejectModal .modal-header,
+  #approveModal .modal-header {
+    min-height: 54px;
+    padding: 10px 14px;
+  }
+
+  #rejectModal .modal-header h5,
+  #approveModal .modal-header h5 {
+    font-size: 14px;
+  }
+
+  #rejectModal .modal-body,
+  #approveModal .modal-body {
+    max-height: calc(90vh - 108px);
+    padding: 12px 14px;
+  }
+
+  #rejectModal .modal-footer,
+  #approveModal .modal-footer {
+    flex-direction: row;
+    padding: 10px 14px;
+  }
+
+  #rejectModal .modal-footer .btn,
+  #approveModal .modal-footer .btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #floatingActions .btn-floating,
+  #rejectModal .modal-footer .btn,
+  #approveModal .modal-footer .btn {
+    transition: none;
+  }
 }
 
 

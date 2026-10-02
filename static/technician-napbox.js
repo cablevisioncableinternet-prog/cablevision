@@ -5185,7 +5185,7 @@ function showCustomerLocationMarkerOnMap() {
         <div style="padding: 4px 0; min-width: 160px;">
             <div style="font-weight: 600; color: #1e293b; font-size: 14px; margin-bottom: 4px; text-align: center;">
                 <i class="fas fa-map-pin" style="color: #2563eb;"></i> 
-                SUbscriber's Location
+                Subscriber's Location
             </div>
             <div style="font-size: 12px; color: #475569; text-align: center; padding: 6px 10px; border-radius: 6px;">
                 <i class="fas fa-info-circle" style="color: #2563eb;"></i> 
