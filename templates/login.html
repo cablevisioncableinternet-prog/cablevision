@@ -57,61 +57,8 @@
    </form>
 
    <div class="footer-text">© Cablevision Cable-Internet</div>
-
-   <!-- VIEW ACCOUNT ID LINK -->
-<div class="guide-link">
-    <a href="#" id="accountGuideBtn" class="guide-link-btn">
-        <i class="fas fa-id-card"></i> View Account IDs
-    </a>
 </div>
 
-<!-- ACCOUNT GUIDE MODAL (SMALL SQUARE) - PROFESSIONAL -->
-<div id="accountGuideModal" class="guide-modal">
-    <div class="guide-modal-content">
-        <div class="guide-modal-header">
-            <h4><i class="fas fa-id-card"></i> ID Reference Guide</h4>
-            <button class="guide-modal-close">&times;</button>
-        </div>
-        <div class="guide-modal-body">
-            <!-- Administrator -->
-            <div class="info-card">
-                <div class="info-label">
-                    <span>Administrator</span>
-                </div>
-                <div class="info-code">ACV</div>
-                <div class="info-note"><i class="fas fa-lock"></i> Authorized Personnel</div>
-            </div>
-
-            <!-- Technical Staff -->
-            <div class="info-card">
-                <div class="info-label">
-                    <span>Technical Staff</span>
-                </div>
-                <div class="tech-items">
-                    <div class="tech-code">
-                        <span class="tech-id">TPIL</span>
-                        <span class="tech-location">Pila</span>
-                    </div>
-                    <div class="tech-code">
-                        <span class="tech-id">TSTC</span>
-                        <span class="tech-location">Santa Cruz</span>
-                    </div>
-                    <div class="tech-code">
-                        <span class="tech-id">TMAG</span>
-                        <span class="tech-location">Magdalena</span>
-                    </div>
-                    <div class="tech-code">
-                        <span class="tech-id">TPSN</span>
-                        <span class="tech-location">Pagsanjan</span>
-                    </div>
-                </div>
-                <div class="info-note"><i class="fas fa-key"></i> Authorized Technical Personnel</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-</div>
 
 <!-- FORGOT PASSWORD MODAL -->
 <div id="forgotPasswordModal" class="forgot-modal">
@@ -133,7 +80,6 @@
                 <button id="sendCodeBtn" class="forgot-btn-primary">
                     <i class="fas fa-paper-plane"></i> Send Verification Code
                 </button>
-                <div id="fpMessage" class="forgot-message"></div>
             </div>
 
             <!-- STEP 2: 6-digit OTP boxes + new password -->
@@ -197,7 +143,7 @@
             <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
             <input type="text" maxlength="1" class="code-digit ga-code-digit" inputmode="numeric" autocomplete="one-time-code">
         </div>
-        <button type="button" id="gaVerifyBtn" class="login-btn" style="margin-top: 16px;">Verify Code</button>
+        <button type="button" id="gaVerifyBtn" class="login-btn">Verify Code</button>
         <div id="gaModalError" class="error-message" style="display:none; margin-top: 12px;"></div>
     </div>
 </div>

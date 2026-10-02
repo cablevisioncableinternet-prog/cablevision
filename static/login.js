@@ -741,37 +741,6 @@ window.logout = async function() {
 
 console.log("Login page initialized with MySQL backend ✅");
 
-// ==================== ACCOUNT GUIDE MODAL ====================
-const guideBtn = document.getElementById('accountGuideBtn');
-const guideModal = document.getElementById('accountGuideModal');
-const modalClose = document.querySelector('.guide-modal-close');
-
-if (guideBtn && guideModal) {
-    guideBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        guideModal.classList.add('show');
-    });
-    
-    function closeModal() {
-        guideModal.classList.remove('show');
-    }
-    
-    if (modalClose) {
-        modalClose.addEventListener('click', closeModal);
-    }
-    
-    guideModal.addEventListener('click', (e) => {
-        if (e.target === guideModal) {
-            closeModal();
-        }
-    });
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && guideModal.classList.contains('show')) {
-            closeModal();
-        }
-    });
-}
 
 // ==================== GOOGLE AUTHENTICATOR MODAL ====================
 const gaModal = document.getElementById('gaVerificationModal');
