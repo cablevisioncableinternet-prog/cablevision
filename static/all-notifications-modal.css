@@ -420,22 +420,23 @@
 
 #allNotificationsModal #markAllReadFromModalBtn {
   border-color: #cbd5e1;
-  background: #fff;
-  color: #334155;
-}
-
-#allNotificationsModal #markAllReadFromModalBtn:hover {
-  border-color: #94a3b8;
-  background: #f1f5f9;
-}
-
-#allNotificationsModal #closeAllNotificationsBtn {
   background: #1769aa;
   color: #fff;
 }
 
-#allNotificationsModal #closeAllNotificationsBtn:hover {
+#allNotificationsModal #markAllReadFromModalBtn:hover {
   background: #125487;
+  border-color: #94a3b8;
+  
+}
+
+#allNotificationsModal #closeAllNotificationsBtn {
+  background: #fff;
+  color: #334155;
+}
+
+#allNotificationsModal #closeAllNotificationsBtn:hover {
+  background: #f1f5f9;
 }
 
 @media (max-width: 520px) {
