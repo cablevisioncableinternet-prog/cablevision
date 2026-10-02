@@ -431,6 +431,10 @@
                 <label>Account Status</label>
                 <div class="info-status-wrapper">
                   <span id="infoStatus" class="info-status-badge"></span>
+                  <select id="infoStatusSelect" class="info-input" style="display:none;">
+                    <option value="Active">Active</option>
+                    <option value="Deactivated">Deactivated</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -442,6 +446,15 @@
       <div class="info-modal-footer">
         <button class="info-modal-btn" id="closeInfoModalBtn">
           <i class="fas fa-times"></i> Close
+        </button>
+        <button type="button" class="info-modal-btn" id="editAdminBtn">
+          <i class="fas fa-pen"></i> Edit
+        </button>
+        <button type="button" class="info-modal-btn" id="cancelAdminEditBtn" style="display:none;">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="button" class="info-modal-btn" id="saveAdminEditBtn" style="display:none;">
+          <i class="fas fa-save"></i> Save Changes
         </button>
       </div>
     </div>
@@ -472,6 +485,25 @@
   </div>
 </div>
 
+
+<!-- ================= CONFIRM ADMIN EDIT MODAL ================= -->
+<div id="confirmAdminEditModal" class="modal">
+  <div class="modal-content">
+    <div class="admin-edit-confirm-header">
+      <div>
+        <h3>Confirm Changes</h3>
+        <p>Review the administrator updates before saving</p>
+      </div>
+      <button type="button" class="admin-edit-confirm-close" id="closeConfirmAdminEditModal" aria-label="Close">&times;</button>
+    </div>
+    <div id="confirmAdminEditContent" class="admin-edit-review-content"></div>
+    <div class="modal-actions admin-edit-confirm-actions">
+      <button type="button" id="cancelAdminEditConfirmBtn" class="btn cancel">Cancel</button>
+      <button type="button" id="confirmAdminEditBtn" class="btn confirm"><i class="fas fa-save"></i> Confirm &amp; Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= ALL NOTIFICATIONS MODAL ================= -->
 <div id="allNotificationsModal" class="modal">
     <div class="modal-content all-notifications-modal-content">
@@ -497,6 +529,8 @@
         </div>
     </div>
 </div>
+
+
 
 <script src="{{ url_for('static', filename='superadmin-admins.js') }}"></script>
 <script src="/static/notification-system.js"></script>

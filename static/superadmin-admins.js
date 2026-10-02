@@ -519,28 +519,59 @@ if (cancelStatusBtn) {
 const viewInfoModal = document.getElementById("viewInfoModal");
 const closeInfoModalBtn = document.getElementById("closeInfoModalBtn");
 
+// ================= ADMIN VIEW / EDIT STATE =================
+let currentViewedAdmin = null;
+let pendingAdminChanges = null;
+let isAdminEditMode = false;
+
+function escapeAdminHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+function toggleEl(id, visible) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visible ? "" : "none";
+}
+
+// I-fill ang lahat ng fields ng modal gamit ang admin data
+function renderAdminInfo(admin) {
+    currentViewedAdmin = admin;
+
+    const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    };
+
+    setValue("infoAdminId", admin.admin_id || "");
+    setValue("infoName", admin.username || "");
+    setValue("infoEmail", admin.email || "");
+    setValue("infoContact", admin.mobile || "Not provided");
+    setValue("infoArea", admin.area || "");
+
+    const infoStatus = document.getElementById("infoStatus");
+    if (infoStatus) {
+        const statusText = admin.status || "Inactive";
+        infoStatus.textContent = statusText;
+        infoStatus.className = `info-status-badge ${statusText === "Active" ? "active" : "inactive"}`;
+    }
+}
+
 function openViewInfoModal(adminId) {
+    // Siguraduhing nasa viewing mode at walang naiwang data
+    currentViewedAdmin = null;
+    exitAdminEditMode(false);
+
     fetch(`/api/superadmin/admins/${adminId}`)
         .then((res) => res.json())
         .then((admin) => {
-            const infoAdminId = document.getElementById("infoAdminId");
-            const infoName = document.getElementById("infoName");
-            const infoEmail = document.getElementById("infoEmail");
-            const infoContact = document.getElementById("infoContact");
-            const infoArea = document.getElementById("infoArea");
-            const infoStatus = document.getElementById("infoStatus");
-
-            if (infoAdminId) infoAdminId.value = admin.admin_id || "";
-            if (infoName) infoName.value = admin.username || "";
-            if (infoEmail) infoEmail.value = admin.email || "";
-            if (infoContact) infoContact.value = admin.mobile || "Not provided";
-            if (infoArea) infoArea.value = admin.area || "";
-
-            if (infoStatus) {
-                const statusText = admin.status || "Inactive";
-                infoStatus.textContent = statusText;
-                infoStatus.className = `info-status-badge ${statusText === "Active" ? "active" : "inactive"}`;
+            if (!admin || !admin.admin_id) {
+                throw new Error(admin && admin.error ? admin.error : "Admin not found");
             }
+
+            renderAdminInfo(admin);
 
             if (viewInfoModal) {
                 viewInfoModal.classList.add("show");
@@ -551,11 +582,209 @@ function openViewInfoModal(adminId) {
 }
 
 function closeInfoModal() {
+    closeConfirmAdminEditModal();
+    exitAdminEditMode(false);
     if (viewInfoModal) {
         viewInfoModal.classList.remove("show");
         viewInfoModal.style.display = "none";
     }
 }
+
+// ================= EDIT MODE =================
+function enterAdminEditMode() {
+    const a = currentViewedAdmin;
+    if (!a) return;
+
+    isAdminEditMode = true;
+
+    // EMAIL - editable
+    const emailEl = document.getElementById("infoEmail");
+    if (emailEl) {
+        emailEl.readOnly = false;
+        emailEl.classList.add("editing");
+    }
+
+    // STATUS - editable
+    const statusSelect = document.getElementById("infoStatusSelect");
+    if (statusSelect) statusSelect.value = a.status === "Active" ? "Active" : "Deactivated";
+    toggleEl("infoStatus", false);
+    toggleEl("infoStatusSelect", true);
+
+    // Buttons
+    toggleEl("closeInfoModalBtn", false);
+    toggleEl("editAdminBtn", false);
+    toggleEl("cancelAdminEditBtn", true);
+    toggleEl("saveAdminEditBtn", true);
+
+    if (emailEl) emailEl.focus();
+}
+
+function exitAdminEditMode(restore = true) {
+    isAdminEditMode = false;
+
+    const emailEl = document.getElementById("infoEmail");
+    if (emailEl) {
+        emailEl.readOnly = true;
+        emailEl.classList.remove("editing");
+    }
+
+    toggleEl("infoStatus", true);
+    toggleEl("infoStatusSelect", false);
+
+    toggleEl("closeInfoModalBtn", true);
+    toggleEl("editAdminBtn", true);
+    toggleEl("cancelAdminEditBtn", false);
+    toggleEl("saveAdminEditBtn", false);
+
+    // Ibalik ang original values (cancel)
+    if (restore && currentViewedAdmin) {
+        renderAdminInfo(currentViewedAdmin);
+    }
+}
+
+// ================= SAVE -> CONFIRMATION =================
+function requestSaveAdminChanges() {
+    const a = currentViewedAdmin;
+    if (!a) return;
+
+    const newEmail = document.getElementById("infoEmail").value.trim();
+    const newStatus = document.getElementById("infoStatusSelect").value;
+
+    // Validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!newEmail) {
+        showToast("Email is required", "error");
+        return;
+    }
+    if (!emailRegex.test(newEmail)) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+    }
+
+    // Alamin kung ano ang nagbago
+    const payload = {};
+    const rows = [];
+
+    if (newEmail !== (a.email || "")) {
+        payload.email = newEmail;
+        rows.push({ label: "Email", oldValue: a.email || "—", newValue: newEmail });
+    }
+
+    const oldStatus = a.status === "Active" ? "Active" : "Deactivated";
+    if (newStatus !== oldStatus) {
+        payload.status = newStatus;
+        rows.push({ label: "Status", oldValue: oldStatus, newValue: newStatus });
+    }
+
+    if (rows.length === 0) {
+        showToast("No changes to save", "info");
+        return;
+    }
+
+    pendingAdminChanges = {
+        adminId: a.admin_id,
+        username: a.username,
+        payload,
+        rows
+    };
+
+    openConfirmAdminEditModal();
+}
+
+function openConfirmAdminEditModal() {
+    const modal = document.getElementById("confirmAdminEditModal");
+    const content = document.getElementById("confirmAdminEditContent");
+    if (!modal || !content || !pendingAdminChanges) return;
+
+    const rowsHtml = pendingAdminChanges.rows.map(r => `
+        <div class="admin-edit-row">
+            <span class="admin-edit-label">${escapeAdminHtml(r.label)}</span>
+            <span class="admin-edit-values">
+                <span class="admin-edit-old">${escapeAdminHtml(r.oldValue)}</span>
+                <span class="admin-edit-arrow" aria-hidden="true">&rarr;</span>
+                <span class="admin-edit-new">${escapeAdminHtml(r.newValue)}</span>
+            </span>
+        </div>
+    `).join("");
+
+    content.innerHTML = `
+        <p class="admin-edit-target">Updating <strong>${escapeAdminHtml(pendingAdminChanges.username || "")}</strong> (${escapeAdminHtml(pendingAdminChanges.adminId)})</p>
+        <div class="admin-edit-group">${rowsHtml}</div>
+    `;
+
+    modal.classList.add("show");
+    modal.style.display = "flex";
+}
+
+function closeConfirmAdminEditModal() {
+    const modal = document.getElementById("confirmAdminEditModal");
+    if (modal) {
+        modal.classList.remove("show");
+        modal.style.display = "none";
+    }
+    pendingAdminChanges = null;
+}
+
+async function confirmAdminChanges() {
+    if (!pendingAdminChanges) return;
+
+    const { adminId, username, payload } = pendingAdminChanges;
+    const confirmBtn = document.getElementById("confirmAdminEditBtn");
+    const originalHtml = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const res = await fetch(`/api/superadmin/admins/${adminId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
+            showToast(`Admin "${username}" (${adminId}) updated successfully!`, "success");
+            closeConfirmAdminEditModal();
+
+            // Kunin ang bagong data at bumalik sa viewing mode
+            try {
+                const freshRes = await fetch(`/api/superadmin/admins/${adminId}`);
+                const fresh = await freshRes.json();
+                if (fresh && fresh.admin_id) currentViewedAdmin = fresh;
+            } catch (e) {
+                console.warn("Could not refresh admin info:", e);
+            }
+            exitAdminEditMode(true);
+
+            // I-refresh ang table
+            sessionStorage.removeItem("adminsCache");
+            await loadAdmins(true);
+        } else {
+            showToast(data.error || "Failed to update admin", "error");
+            closeConfirmAdminEditModal(); // nasa edit mode pa rin para maitama
+        }
+    } catch (error) {
+        console.error("Error updating admin:", error);
+        showToast("Network error. Please try again.", "error");
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalHtml;
+    }
+}
+
+// ================= EDIT MODE EVENTS =================
+document.getElementById("editAdminBtn")?.addEventListener("click", enterAdminEditMode);
+document.getElementById("cancelAdminEditBtn")?.addEventListener("click", () => exitAdminEditMode(true));
+document.getElementById("saveAdminEditBtn")?.addEventListener("click", requestSaveAdminChanges);
+
+document.getElementById("closeConfirmAdminEditModal")?.addEventListener("click", closeConfirmAdminEditModal);
+document.getElementById("cancelAdminEditConfirmBtn")?.addEventListener("click", closeConfirmAdminEditModal);
+document.getElementById("confirmAdminEditBtn")?.addEventListener("click", confirmAdminChanges);
+document.getElementById("confirmAdminEditModal")?.addEventListener("click", function (e) {
+    if (e.target === this) closeConfirmAdminEditModal();
+});
+
+
 
 if (closeInfoModalBtn) {
     closeInfoModalBtn.onclick = closeInfoModal;

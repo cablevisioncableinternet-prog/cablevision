@@ -2912,48 +2912,65 @@ def get_admin(admin_id):
     
 
 # ===============================
-# UPDATE ADMIN (PUT) - CONVERTED TO MYSQL
+# UPDATE ADMIN (PUT) - EMAIL AND STATUS ONLY
 # ===============================
 @app.route("/api/superadmin/admins/<admin_id>", methods=["PUT"])
 def update_admin(admin_id):
     try:
-        data = request.json
-        username = data.get("username")
+        data = request.json or {}
         email = data.get("email")
-        area = data.get("area")
-        
-        # Check if admin exists
-        check_query = "SELECT admin_id FROM admins WHERE admin_id = %s"
-        exists = execute_query(check_query, (admin_id,), fetch_one=True)
-        
-        if not exists:
+        status = data.get("status")
+
+        # Check if admin exists (kunin ang current values)
+        current = execute_query(
+            "SELECT admin_id, email, status FROM admins WHERE admin_id = %s",
+            (admin_id,),
+            fetch_one=True
+        )
+        if not current:
             return jsonify({"error": "Admin not found"}), 404
-        
-        # Check for duplicate username/email (excluding current admin)
-        duplicate_query = """
-            SELECT username, email, area FROM admins 
-            WHERE (username = %s OR email = %s OR area = %s) AND admin_id != %s
-        """
-        duplicate = execute_query(duplicate_query, (username, email, area, admin_id), fetch_one=True)
-        
-        if duplicate:
-            if duplicate.get('username') == username:
-                return jsonify({"error": "Username already exists"}), 400
-            if duplicate.get('email') == email:
-                return jsonify({"error": "Email already exists"}), 400
-            if duplicate.get('area') == area:
-                return jsonify({"error": "This area already has an administrator assigned. Choose a different area."}), 400
-        
-        # Update admin
-        update_query = """
-            UPDATE admins 
-            SET username = %s, email = %s, area = %s
-            WHERE admin_id = %s
-        """
-        execute_query(update_query, (username, email, area, admin_id))
-        
+
+        updates = []
+        params = []
+
+        # ---------- EMAIL ----------
+        if email is not None:
+            email = email.strip()
+            email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+            if not email_pattern.match(email):
+                return jsonify({"error": "Invalid email address"}), 400
+
+            if email.lower() != (current.get("email") or "").lower():
+                dup_query = """
+                    SELECT
+                        (SELECT COUNT(*) FROM technicians WHERE email = %s) AS tech_count,
+                        (SELECT COUNT(*) FROM admins WHERE email = %s AND admin_id != %s) AS admin_count,
+                        (SELECT COUNT(*) FROM superadmins WHERE email = %s) AS superadmin_count
+                """
+                dup = execute_query(dup_query, (email, email, admin_id, email), fetch_one=True) or {}
+                if (dup.get("tech_count", 0) or 0) > 0 or (dup.get("admin_count", 0) or 0) > 0 or (dup.get("superadmin_count", 0) or 0) > 0:
+                    return jsonify({"error": f"Email '{email}' already exists"}), 400
+
+            updates.append("email = %s")
+            params.append(email)
+
+        # ---------- STATUS ----------
+        if status is not None:
+            if status not in ["Active", "Deactivated"]:
+                return jsonify({"error": "Invalid status. Use 'Active' or 'Deactivated'"}), 400
+            updates.append("status = %s")
+            params.append(status)
+
+        if not updates:
+            return jsonify({"error": "No fields to update"}), 400
+
+        params.append(admin_id)
+        update_query = f"UPDATE admins SET {', '.join(updates)} WHERE admin_id = %s"
+        execute_query(update_query, tuple(params))
+
+        print(f" Admin {admin_id} updated successfully")
         return jsonify({"message": "Admin updated successfully"})
-        
+
     except Exception as e:
         print(f"Error updating admin: {e}")
         return jsonify({"error": str(e)}), 500
