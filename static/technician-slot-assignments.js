@@ -90,7 +90,7 @@ async function initTechnicianData() {
             sessionStorage.setItem('technicianTeamId', data.team_id);
             console.log(` Technician belongs to team: ${data.team_id}`);
         } else {
-            console.log('Technician has no team assigned, falling back to area-based');
+            console.log('Technician has no team assigned, no customers will be shown');
             sessionStorage.removeItem('technicianTeamId');
         }
         
@@ -432,18 +432,73 @@ if (document.readyState === 'loading') {
     restorePendingAssignmentFlow();
 }
 
+// ==================== GET LATEST TEAM ID ====================
+async function getFreshTeamId(technicianId) {
+    const tabId = getTabId();
+    const res = await fetch(`/api/technician/profile?technician_id=${encodeURIComponent(technicianId)}&tab_id=${tabId}`);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    if (data.area) sessionStorage.setItem('technicianArea', data.area);
+
+    if (data.team_id) {
+        sessionStorage.setItem('technicianTeamId', data.team_id);
+        return data.team_id;
+    }
+
+    sessionStorage.removeItem('technicianTeamId');
+    return null;
+}
+
+// ==================== NO TEAM STATE ====================
+function renderNoTeamState() {
+    allCustomers = [];
+    filteredCustomers = [];
+
+    const tbody = document.getElementById('customersBody');
+    const countEl = document.getElementById('customerCount');
+    if (countEl) countEl.innerText = '0';
+
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10">
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash"></i>
+                        <p>You are not assigned to any team yet.</p>
+                        <small>Please contact your administrator to be assigned to a team.</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    const paginationContainer = document.getElementById('paginationControls');
+    if (paginationContainer) paginationContainer.style.display = 'none';
+}
+
 // ==================== LOAD CUSTOMERS (TEAM-BASED) ====================
 async function loadCustomers() {
     const tbody = document.getElementById('customersBody');
     const technicianId = sessionStorage.getItem('technicianId');
     
     if (!technicianId) {
-        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Please login again.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Please login again.</p></div></td></tr>`;
         document.getElementById('customerCount').innerText = '0';
         return;
     }
     
     try {
+        // I-check muna ang pinakabagong team ng technician
+        const teamId = await getFreshTeamId(technicianId);
+
+        // WALANG TEAM = WALANG DATA
+        if (!teamId) {
+            renderNoTeamState();
+            return;
+        }
+
         let url = `/api/technician/pending-customers?technician_id=${encodeURIComponent(technicianId)}&limit=100`;
         
         const tabId = getTabId();
@@ -453,19 +508,13 @@ async function loadCustomers() {
         if (data.error) throw new Error(data.error);
         
         allCustomers = data.customers || [];
-        
-        // Display team info if available
-        if (data.team_id) {
-            console.log(`Showing customers for team: ${data.team_id}`);
-        } else {
-            console.log(`Showing customers for area: ${data.technician_area}`);
-        }
+        console.log(`Showing customers for team: ${teamId}`);
         
         applyFiltersAndPaginate();
         
     } catch (err) {
         console.error(err);
-        tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading customers: ${err.message}</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading customers: ${err.message}</p></div></td></tr>`;
     }
 }
 
@@ -506,7 +555,7 @@ function renderCurrentPage() {
 
     if (totalItems === 0) {
         const teamId = sessionStorage.getItem('technicianTeamId');
-        const message = teamId ? 'No customers assigned to your team' : 'No customers found';
+        const message = teamId ? 'No customers assigned to your team' : 'You are not assigned to any team yet.';
         tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i><p>${message}</p></div></td></tr>`;
         const paginationContainer = document.getElementById('paginationControls');
         if (paginationContainer) paginationContainer.style.display = 'none';
@@ -2286,4 +2335,12 @@ document.getElementById('confirmCancelInstallationBtn')?.addEventListener('click
 
 window.addEventListener('click', (e) => {
     if (e.target === document.getElementById('cancelInstallationModal')) closeCancelInstallationModal();
+});
+
+
+// ==================== REFRESH WHEN TAB REGAINS FOCUS ====================
+window.addEventListener('focus', function () {
+    if (sessionStorage.getItem('technicianId')) {
+        loadCustomers();
+    }
 });

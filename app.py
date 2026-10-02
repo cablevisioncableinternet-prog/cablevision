@@ -17980,35 +17980,16 @@ def get_pending_customers_for_technician():
         
         print(f" Technician {technician_id} belongs to team: {team_id}")
         
-        # If technician has no team, fallback to area-based
+        # WALANG TEAM = WALANG DATA (walang area-based fallback)
         if not team_id:
-            print(f" Technician has no team, falling back to area-based: {technician_area}")
-            query = """
-                SELECT 
-                    c.application_number, c.first_name, c.last_name, c.middle_name, 
-                    c.suffix, c.email, c.mobile, c.address, c.barangay, c.city, 
-                    c.plan, c.approval_date, c.contract_number, c.installation_status,
-                    c.assigned_team_id,
-                    c.installation_date,
-                    c.latitude, c.longitude,
-                    a.plan_speed, a.preferred_napbox_id, a.preferred_napbox_name,
-                    a.installation_address, a.landmark,
-                    ns.id as slot_id, ns.slot_number, ns.status as slot_status, nb.napbox_name as assigned_napbox
-                FROM customers c
-                JOIN applications a ON c.application_number = a.application_number
-                LEFT JOIN users u ON u.application_number = c.application_number
-                LEFT JOIN napbox_slots ns ON c.application_number = ns.application_number AND ns.status = 'occupied'
-                LEFT JOIN napboxes nb ON ns.napbox_id = nb.id
-                WHERE c.status = 'Approved'
-                AND LOWER(c.city) = LOWER(%s)
-                AND (a.is_archived = 0 OR a.is_archived IS NULL)
-                AND (c.installation_status IS NULL OR c.installation_status NOT IN ('Cancelled', 'Terminated'))
-                AND (u.status IS NULL OR u.status != 'Terminated' OR (u.status = 'Terminated' AND c.installation_status IN ('Pending', 'Slot Assigned', 'Ongoing')))
-                ORDER BY 
-                    CASE WHEN ns.id IS NULL THEN 0 ELSE 1 END,
-                    c.approval_date ASC
-            """
-            params = [technician_area]
+            print(f" Technician {technician_id} has no team, returning no customers")
+            return jsonify({
+                "customers": [],
+                "technician_area": technician_area,
+                "team_id": None,
+                "total": 0,
+                "message": "Technician is not assigned to a team"
+            })
         else:
             # TEAM-BASED: Get customers assigned to this team
             query = """
