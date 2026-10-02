@@ -2612,8 +2612,6 @@ function showSlotDetails(slot) {
     slotDetailsContent.innerHTML = `
         <!-- Status Badge -->
         <div class="slot-status-badge ${slot.status}">
-            <i class="fas ${statusIcon}"></i>
-            <span>${statusDisplay}</span>
             ${showClearButton ? `<span class="has-data-badge"><i class="fas fa-history"></i> Has Previous Data</span>` : ''}
         </div>
         
