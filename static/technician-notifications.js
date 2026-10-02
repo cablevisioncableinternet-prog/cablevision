@@ -140,15 +140,7 @@ class TechnicianNotificationSystem {
 
         const html = this.notifications.map(notif => {
             const isUnread = !notif.read;
-            let icon = 'fa-info-circle';
-
-            if (notif.type === 'new_approved_application') {
-                icon = 'fa-check-circle';
-            } else if (notif.type === 'slot_assigned') {
-                icon = 'fa-tasks';
-            } else if (notif.type === 'installation_update') {
-                icon = 'fa-tools';
-            }
+            const icon = this.getNotificationIcon(notif.type);
 
             return `
                 <div class="notification-item ${isUnread ? 'unread' : ''}" data-id="${notif.id}" data-related-id="${notif.relatedId}">
@@ -170,9 +162,10 @@ class TechnicianNotificationSystem {
             item.addEventListener('click', async () => {
                 const id = item.dataset.id;
                 const relatedId = item.dataset.relatedId;
+                const clicked = this.notifications.find(n => n.id == id);
                 await this.markAsRead(id);
                 this.renderAllNotificationsModal();
-                if (relatedId) {
+                if (relatedId && relatedId !== 'null' && relatedId !== 'undefined' && this.isApplicationNotification(clicked)) {
                     window.location.href = `/technician/slot-assignments?application=${relatedId}`;
                 }
             });
@@ -273,12 +266,31 @@ class TechnicianNotificationSystem {
             newItem.addEventListener('click', async () => {
                 const id = newItem.dataset.id;
                 const relatedId = newItem.dataset.relatedId;
+                const clicked = this.notifications.find(n => n.id == id);
                 await this.markAsRead(id);
-                if (relatedId) {
+                if (relatedId && relatedId !== 'null' && relatedId !== 'undefined' && this.isApplicationNotification(clicked)) {
                     window.location.href = `/technician/slot-assignments?application=${relatedId}`;
                 }
             });
         });
+    }
+
+    getNotificationIcon(type) {
+        switch (type) {
+            case 'new_approved_application': return 'fa-check-circle';
+            case 'slot_assigned':            return 'fa-tasks';
+            case 'installation_update':      return 'fa-tools';
+            case 'area_change':              return 'fa-map-marker-alt';
+            case 'team_assigned':            return 'fa-user-plus';
+            case 'team_removed':             return 'fa-user-minus';
+            default:                         return 'fa-info-circle';
+        }
+    }
+
+    // Walang application na pupuntahan ang area/team notifications
+    isApplicationNotification(notif) {
+        if (!notif) return true;
+        return !['area_change', 'team_assigned', 'team_removed'].includes(notif.type);
     }
     
     escapeHtml(text) {

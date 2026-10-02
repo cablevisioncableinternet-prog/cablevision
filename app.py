@@ -3112,17 +3112,26 @@ def notify_technician(technician_id, title, message, notif_type="info", related_
         )
         technician_area = row.get("area") if row else None
 
+        # Ang `id` column ay walang AUTO_INCREMENT, kaya mag-generate manually
+        id_row = execute_query(
+            "SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM technician_notifications",
+            fetch_one=True
+        )
+        next_id = int(id_row.get("next_id", 1)) if id_row else 1
+
         execute_query(
             """
             INSERT INTO technician_notifications
-                (technician_id, technician_area, title, message, type, relatedId, timestamp, read_status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 0)
+                (id, technician_id, technician_area, title, message, type, relatedId, timestamp, read_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0)
             """,
-            (technician_id, technician_area, title, message, notif_type, related_id, ph_now_iso())
+            (next_id, technician_id, technician_area, title, message, notif_type, related_id, ph_now_iso())
         )
-        print(f" Notification sent to {technician_id}: {title}")
+        print(f" Notification sent to {technician_id}: {title} (id={next_id})")
     except Exception as e:
         print(f" Failed to notify technician {technician_id}: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def get_team_label(team_id):
