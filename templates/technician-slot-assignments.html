@@ -278,7 +278,7 @@
                 </section>
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel-installation" id="cancelInstallationBtn"> <i class="fas fa-ban"></i> Cancel Installation</button>
+                <button class="btn-cancel-installation" id="cancelInstallationBtn">Cancel Installation</button>
                 <div style="flex:1;"></div>
                 <button class="btn-cancel" id="cancelAssignBtn"> <i class="fas fa-times"></i> Close</button>
                 <button class="btn-confirm" id="confirmAssignBtn"> <i class="fas fa-check"></i> Assign Slot</button>
@@ -289,12 +289,9 @@
     <!-- ================= CANCEL INSTALLATION CONFIRM MODAL ================= -->
 <div id="cancelInstallationModal" class="modal">
     <div class="modal-content confirm-status-modal-content">
-        <button class="close-btn" id="closeCancelInstallationModal">&times;</button>
+        <button type="button" class="close-btn" id="closeCancelInstallationModal" aria-label="Close">&times;</button>
 
         <div class="confirm-status-modal-header cancelled">
-            <div class="confirm-status-modal-icon cancelled">
-                <i class="fas fa-ban"></i>
-            </div>
             <h3>Cancel Installation</h3>
             <p>This will cancel and archive this subscriber's application. This action cannot be undone from here.</p>
         </div>
@@ -319,10 +316,10 @@
 
         <div class="confirm-status-actions">
             <button id="closeCancelInstallationBtn2" class="btn btn-cancel">
-                <i class="fas fa-arrow-left"></i> Go Back
+                Go Back
             </button>
             <button id="confirmCancelInstallationBtn" class="btn btn-confirm-status cancelled">
-                <i class="fas fa-ban"></i> Confirm Cancellation
+                Confirm Cancellation
             </button>
         </div>
     </div>

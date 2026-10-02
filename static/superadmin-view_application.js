@@ -661,6 +661,7 @@ function toggleFloatingButtons(status) {
 
     if (floatingActions) {
         floatingActions.innerHTML = '';
+        floatingActions.classList.remove('has-admin-request');
 
         const statusLower = status ? status.toLowerCase() : '';
 
@@ -770,7 +771,9 @@ function toggleFloatingButtons(status) {
             
             console.log("Request details for display:", { requestedBy, requestedStatus, reason });
             
-            const reasonHtml = reason ? `<br><small style="color: #d97706;"><strong>Reason:</strong> ${escapeHtml(reason)}</small>` : '';
+            const reasonHtml = reason
+                ? `<div class="request-reason"><strong>Reason:</strong><span>${escapeHtml(reason)}</span></div>`
+                : '';
 
             let actionLabel = 'Reject';
             if (requestedStatus === 'Approved') actionLabel = 'Approve';
@@ -781,10 +784,13 @@ function toggleFloatingButtons(status) {
             requestContainer.className = 'request-container';
             requestContainer.innerHTML = `
                 <div class="request-info">
-                    <strong>Admin Request:</strong> ${actionLabel} this application<br>
-                    <small>Administrator <strong>${escapeHtml(requestedBy)}</strong> has requested to ${actionLabel.toLowerCase()} this application.</small>
+                    <div class="request-heading">
+                        <span class="request-label">Admin Request</span>
+                        <strong class="request-title">${actionLabel} this application</strong>
+                    </div>
+                    <p class="request-summary">Administrator <strong>${escapeHtml(requestedBy)}</strong> has requested to ${actionLabel.toLowerCase()} this application.</p>
                     ${reasonHtml}
-                    <br><small>Request ID: ${currentApprovalRequest.id}</small>
+                    <small class="request-id">Request ID: ${escapeHtml(currentApprovalRequest.id)}</small>
                 </div>
                 <div class="request-actions">
                     <button class="btn-accept-request" id="acceptRequestBtn">
@@ -797,6 +803,7 @@ function toggleFloatingButtons(status) {
             `;
 
             floatingActions.appendChild(requestContainer);
+            floatingActions.classList.add('has-admin-request');
             floatingActions.style.display = "flex";
 
             const acceptBtn = document.getElementById("acceptRequestBtn");
@@ -2474,6 +2481,8 @@ function openRequestModal(action, requestId, requestedStatus) {
         return;
     }
 
+    modal.classList.toggle('is-rejecting', action === 'reject');
+
     const requestedBy = currentApprovalRequest?.requested_by || currentApprovalRequest?.admin_id || 'Unknown Admin';
     const reason = currentApprovalRequest?.reason || '';
     const reasonHtml = reason ? `<br><br><strong>Reason:</strong> ${escapeHtml(reason)}` : '';
@@ -2541,6 +2550,11 @@ function openRequestModal(action, requestId, requestedStatus) {
             closeRequestModalFunc();
             processRequest(requestId, null, 'reject');
         };
+    }
+
+    const actionButton = document.getElementById('confirmRequestBtn');
+    if (actionButton) {
+        actionButton.textContent = action === 'accept' ? 'Accept Request' : 'Reject Request';
     }
     
     if (cancelRequestBtn) {
@@ -2654,11 +2668,11 @@ async function processRequest(requestId, requestedStatus, action) {
             }
 
             loadingDiv.innerHTML = `
-                <div class="loading-content">
-                    <div class="text-success mb-3" style="font-size: 48px;"></div>
-                    <p class="mt-2 mb-0 text-success fw-bold">Request rejected!</p>
-                    <p class="text-muted mt-2">${rejectMessage}</p>
-                    <small class="text-muted">Reloading page...</small>
+                <div class="loading-content request-result request-result-rejected" role="status" aria-live="polite">
+                    <span class="request-result-label">Admin request</span>
+                    <p class="request-result-title">Request rejected</p>
+                    <p class="request-result-detail">${rejectMessage}</p>
+                    <small class="request-result-next">Reloading page...</small>
                 </div>
             `;
 
@@ -2724,19 +2738,14 @@ function showRestoreModal() {
         restoreModal.innerHTML = `
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%); color: #ffffff;">
+                    <div class="modal-header">
                         <h5 class="modal-title">
-                            <i class="fas fa-undo"></i> ${isCancelled ? 'Restore & Approve' : 'Restore'} Application
+                            ${isCancelled ? 'Restore & Approve' : 'Restore'} Application
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center mb-3">
-                            <i class="fas fa-undo" style="font-size: 48px; color: var(--primary-blue);"></i>
-                        </div>
                         <p class="text-center fw-bold">Are you sure you want to ${restoreText} this application?</p>
                         <div class="alert ${isCancelled ? 'alert-success' : 'alert-warning'} mt-3">
-                            <i class="fas ${isCancelled ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
                             <strong>This will:</strong>
                             <ul class="mb-0 mt-2">
                                 <li>Change the status from <strong>${currentStatus}</strong> to <strong>${targetStatus}</strong></li>
@@ -2746,43 +2755,42 @@ function showRestoreModal() {
                         </div>
                         ${isCancelled ? `
                             <div class="alert alert-info mt-2">
-                                <i class="fas fa-info-circle"></i>
                                 <strong>Note:</strong> This application already has a contract and customer record. It will be restored to <strong>Approved</strong> status.
                             </div>
                             
                             <!-- TEAM ASSIGNMENT - ONLY FOR CANCELLED -->
                             <div class="mb-3 mt-3">
                                 <label for="restoreTeamAssignment" class="form-label fw-bold">
-                                    <i class="fas fa-users"></i> Assign Installation Team *
+                                    Assign Installation Team *
                                 </label>
                                 <select id="restoreTeamAssignment" class="form-select">
                                     <option value="" disabled selected>-- Select Team --</option>
                                 </select>
                                 <div class="form-text">Select the team that will handle the installation.</div>
                                 <div id="restoreTeamError" class="text-danger d-none mt-1">
-                                    <i class="fas fa-exclamation-triangle"></i> Please select a team
+                                    Please select a team
                                 </div>
                             </div>
                             
                             <!-- INSTALLATION DATE - ONLY FOR CANCELLED -->
                             <div class="mb-3">
                                 <label for="restoreInstallationDate" class="form-label fw-bold">
-                                    <i class="fas fa-calendar-check"></i> Installation Date *
+                                    Installation Date *
                                 </label>
                                 <input type="date" 
                                        id="restoreInstallationDate" 
                                        class="form-control">
                                 <div class="form-text">Select the date when the installation will be performed.</div>
                                 <div id="restoreDateError" class="text-danger d-none mt-1">
-                                    <i class="fas fa-exclamation-triangle"></i> Please select a valid installation date
+                                    Please select a valid installation date
                                 </div>
                             </div>
                         ` : ''}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="confirmRestoreBtn" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%); border: none;">
-                            <i class="fas fa-undo"></i> ${isCancelled ? 'Yes, Restore & Approve' : 'Yes, Restore Application'}
+                        <button type="button" class="btn btn-primary" id="confirmRestoreBtn">
+                            ${isCancelled ? 'Yes, Restore & Approve' : 'Yes, Restore Application'}
                         </button>
                     </div>
                 </div>
@@ -2793,13 +2801,12 @@ function showRestoreModal() {
         // Update the message with current status
         const titleEl = restoreModal.querySelector('.modal-title');
         if (titleEl) {
-            titleEl.innerHTML = `<i class="fas fa-undo"></i> ${isCancelled ? 'Restore & Approve' : 'Restore'} Application`;
+            titleEl.textContent = `${isCancelled ? 'Restore & Approve' : 'Restore'} Application`;
         }
         
         const alertDiv = restoreModal.querySelector('.alert-warning, .alert-success');
         if (alertDiv) {
             alertDiv.className = `alert ${isCancelled ? 'alert-success' : 'alert-warning'} mt-3`;
-            alertDiv.querySelector('i').className = `fas ${isCancelled ? 'fa-check-circle' : 'fa-exclamation-triangle'}`;
             const ul = alertDiv.querySelector('ul');
             if (ul) {
                 ul.innerHTML = `
@@ -2818,7 +2825,6 @@ function showRestoreModal() {
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'alert alert-info mt-2';
                 infoDiv.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
                     <strong>Note:</strong> This application already has a contract and customer record. It will be restored to <strong>Approved</strong> status.
                 `;
                 body.appendChild(infoDiv);
@@ -2832,14 +2838,14 @@ function showRestoreModal() {
                 teamDiv.className = 'mb-3 mt-3';
                 teamDiv.innerHTML = `
                     <label for="restoreTeamAssignment" class="form-label fw-bold">
-                        <i class="fas fa-users"></i> Assign Installation Team *
+                        Assign Installation Team *
                     </label>
                     <select id="restoreTeamAssignment" class="form-select">
                         <option value="" disabled selected>-- Select Team --</option>
                     </select>
                     <div class="form-text">Select the team that will handle the installation.</div>
                     <div id="restoreTeamError" class="text-danger d-none mt-1">
-                        <i class="fas fa-exclamation-triangle"></i> Please select a team
+                        Please select a team
                     </div>
                 `;
                 body.appendChild(teamDiv);
@@ -2852,14 +2858,14 @@ function showRestoreModal() {
                 dateDiv.className = 'mb-3';
                 dateDiv.innerHTML = `
                     <label for="restoreInstallationDate" class="form-label fw-bold">
-                        <i class="fas fa-calendar-check"></i> Installation Date *
+                        Installation Date *
                     </label>
                     <input type="date" 
                            id="restoreInstallationDate" 
                            class="form-control">
                     <div class="form-text">Select the date when the installation will be performed.</div>
                     <div id="restoreDateError" class="text-danger d-none mt-1">
-                        <i class="fas fa-exclamation-triangle"></i> Please select a valid installation date
+                        Please select a valid installation date
                     </div>
                 `;
                 body.appendChild(dateDiv);
@@ -2880,7 +2886,7 @@ function showRestoreModal() {
         
         const confirmBtn = restoreModal.querySelector('#confirmRestoreBtn');
         if (confirmBtn) {
-            confirmBtn.innerHTML = `<i class="fas fa-undo"></i> ${isCancelled ? 'Yes, Restore & Approve' : 'Yes, Restore Application'}`;
+            confirmBtn.textContent = isCancelled ? 'Yes, Restore & Approve' : 'Yes, Restore Application';
         }
     }
     
@@ -3124,18 +3130,27 @@ async function executeRestore() {
             } catch (e) {}
         }
 
+        const resultTitle = modalHeader?.querySelector('.modal-title');
+        if (resultTitle) resultTitle.textContent = isCancelled ? 'Restore & Approve Complete' : 'Restore Complete';
+
         modalBody.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;"></div>
-                <p class="mt-2 mb-0 text-success fw-bold">Application restored successfully!</p>
-                <p class="text-muted mt-2">Status changed from <strong>${currentStatus}</strong> to <strong>${targetStatus}</strong>.</p>
-                <p class="text-muted">The application has been <strong>unarchived</strong> and is now visible in the main list.</p>
+            <div class="restore-result restore-result-success" role="status" aria-live="polite">
+                <span class="restore-result-label">Restore complete</span>
+                <h3 class="restore-result-title">${isCancelled ? 'Application restored and approved' : 'Application restored'}</h3>
+                <div class="restore-result-status">
+                    <span>${escapeHtml(currentStatus)}</span>
+                    <span class="restore-result-status-arrow">to</span>
+                    <strong>${escapeHtml(targetStatus)}</strong>
+                </div>
+                <p class="restore-result-detail">The application has been unarchived and is available in the main applications list.</p>
                 ${isCancelled ? `
-                    <p class="text-muted"><i class="fas fa-users"></i> Team: <strong>${teamName}</strong></p>
-                    <p class="text-muted"><i class="fas fa-calendar-check"></i> Installation Date: <strong>${new Date(installationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</strong></p>
+                    <dl class="restore-result-meta">
+                        <div><dt>Installation team</dt><dd>${escapeHtml(teamName)}</dd></div>
+                        <div><dt>Installation date</dt><dd>${new Date(installationDateValue).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</dd></div>
+                    </dl>
                 ` : ''}
-                <p class="text-muted">The customer has been notified via email.</p>
-                <small class="text-muted">Reloading page...</small>
+                <p class="restore-result-detail restore-result-notice">The customer has been notified by email.</p>
+                <small class="restore-result-next">Returning to applications...</small>
             </div>
         `;
 
@@ -3145,11 +3160,14 @@ async function executeRestore() {
 
     } catch (err) {
         console.error("Restore error:", err);
+        const resultTitle = modalHeader?.querySelector('.modal-title');
+        if (resultTitle) resultTitle.textContent = 'Restore Failed';
+
         modalBody.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;"></div>
-                <p class="mt-2 mb-0 text-danger fw-bold">Failed to restore application</p>
-                <small class="text-muted">${err.message}</small>
+            <div class="restore-result restore-result-error" role="alert">
+                <span class="restore-result-label">Restore failed</span>
+                <h3 class="restore-result-title">Could not restore application</h3>
+                <p class="restore-result-detail">${escapeHtml(err.message)}</p>
                 <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
             </div>
         `;
@@ -3169,7 +3187,8 @@ function addStatusBadge(status) {
         if (existingBadge) existingBadge.remove();
 
         const statusSpan = document.createElement("span");
-        statusSpan.className = `status-badge-header status-${status.toLowerCase()}`;
+        const statusClass = status.trim().toLowerCase().replace(/[\s_]+/g, '-');
+        statusSpan.className = `status-badge-header status-${statusClass}`;
         statusSpan.innerHTML = `<i class="fas fa-circle"></i> Status: ${status}`;
         appNumberDiv.appendChild(statusSpan);
     }
@@ -3635,36 +3654,28 @@ function showDeleteModal() {
         deleteModal.innerHTML = `
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header" style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); color: #ffffff;">
-                        <h5 class="modal-title">
-                            <i class="fas fa-trash"></i> Delete Application
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+                    <div class="modal-header">
+                        <h5 class="modal-title">Delete Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="text-center mb-3">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #dc2626;"></i>
-                        </div>
-                        <p class="text-center fw-bold">Are you sure you want to delete this application?</p>
-                        <div class="alert alert-danger mt-3">
-                            <i class="fas fa-exclamation-circle"></i> 
-                            <strong>This action cannot be undone!</strong>
+                        <p class="delete-intro">Are you sure you want to delete this application?</p>
+                        <div class="delete-warning">
+                            <strong>This action cannot be undone.</strong>
                             <ul class="mb-0 mt-2">
                                 <li>This will permanently delete the application record</li>
                                 <li>All associated data will be removed</li>
                                 <li>The customer will NOT be notified</li>
                             </ul>
                         </div>
-                        <div class="alert alert-warning mt-2">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Application Number:</strong> <span id="deleteAppNumber" style="font-weight: 700; color: #991b1b;"></span>
+                        <div class="delete-app-number">
+                            <span>Application Number</span>
+                            <strong id="deleteAppNumber">--</strong>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                            <i class="fas fa-trash"></i> Yes, Delete Permanently
-                        </button>
+                        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Permanently</button>
                     </div>
                 </div>
             </div>
@@ -3733,13 +3744,13 @@ async function executeDelete() {
         sessionStorage.setItem('refresh_admin_applications', 'true');
 
         modalBody.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;"></div>
-                <p class="mt-2 mb-0 text-success fw-bold">Application deleted successfully!</p>
-                <p class="text-muted mt-2">The application has been permanently removed from the system.</p>
-                <small class="text-muted">Redirecting to applications list...</small>
+            <div class="delete-result delete-result-success" role="status" aria-live="polite">
+                <p class="delete-result-title">Application deleted</p>
+                <p class="delete-result-detail">The application has been permanently removed from the system.</p>
+                <small>Redirecting to applications list...</small>
             </div>
         `;
+        modalFooter.style.display = 'none';
 
         setTimeout(() => {
             redirectToApplicationsList();
@@ -3748,11 +3759,10 @@ async function executeDelete() {
     } catch (err) {
         console.error("Delete error:", err);
         modalBody.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;"></div>
-                <p class="mt-2 mb-0 text-danger fw-bold">Failed to delete application</p>
-                <small class="text-muted">${err.message}</small>
-                <button class="btn btn-primary mt-3" onclick="location.reload()">Try Again</button>
+            <div class="delete-result delete-result-error" role="alert">
+                <p class="delete-result-title">Could not delete application</p>
+                <p class="delete-result-detail">${escapeHtml(err.message)}</p>
+                <button class="btn btn-primary" onclick="location.reload()">Try Again</button>
             </div>
         `;
         modalFooter.style.display = 'flex';
@@ -3779,32 +3789,25 @@ function showReapplyRequestModal() {
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-redo-alt"></i> Request Re-application
-                        </h5>
+                        <h5 class="modal-title">Request Re-application</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <label class="form-label fw-bold"><i class="fas fa-exclamation-circle"></i> Rejection Reason</label>
-                        <div class="alert alert-danger mb-3" id="reapplyRejectionReasonBox">
-                            <i class="fas fa-exclamation-circle"></i>
+                        <label class="form-label fw-bold">Rejection Reason</label>
+                        <div class="reapply-rejection-reason" id="reapplyRejectionReasonBox">
                             <span></span>
                         </div>
 
                         <label for="reapplyMessage" class="form-label fw-bold">
-                            <i class="fas fa-comment-dots"></i> Message for the Customer *
+                            Message for the Customer <span class="required-mark">*</span>
                         </label>
                         <textarea id="reapplyMessage" class="form-control" rows="4" maxlength="1000" placeholder="Explain what the customer needs to correct or add when re-applying..."></textarea>
                         <div class="form-text"><span id="reapplyMsgCount">0</span>/1000 characters</div>
-                        <div id="reapplyMessageError" class="text-danger d-none mt-1">
-                            <i class="fas fa-exclamation-triangle"></i> <span>Please enter a message for the customer</span>
-                        </div>
+                        <div id="reapplyMessageError" class="reapply-message-error d-none">Please enter a message for the customer.</div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="confirmReapplyRequestBtn">
-                            <i class="fas fa-paper-plane"></i> Send Request
-                        </button>
+                        <button type="button" class="btn btn-primary" id="confirmReapplyRequestBtn">Send Request</button>
                     </div>
                 </div>
             </div>
@@ -3904,11 +3907,11 @@ async function executeReapplyRequest() {
         currentReapplyRequestedAt = new Date().toISOString();
 
         modalBody.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-success mb-3" style="font-size: 48px;"></div>
-                <p class="mt-2 mb-0 text-success fw-bold">Reapply request sent!</p>
-                <p class="text-muted mt-2">The customer has been notified via email with the reapply link.</p>
-                <small class="text-muted">Closing...</small>
+            <div class="reapply-result reapply-result-success" role="status" aria-live="polite">
+                <span class="reapply-result-label">Request sent</span>
+                <p class="reapply-result-title">Re-application request sent</p>
+                <p class="reapply-result-detail">The customer has been notified by email with the re-application link.</p>
+                <small>Closing...</small>
             </div>
         `;
 
@@ -3933,10 +3936,9 @@ async function executeReapplyRequest() {
     } catch (err) {
         console.error("Reapply request error:", err);
         modalBody.innerHTML = `
-            <div class="text-center py-4">
-                <div class="text-danger mb-3" style="font-size: 48px;"></div>
-                <p class="mt-2 mb-0 text-danger fw-bold">Failed to send reapply request</p>
-                <small class="text-muted">${err.message}</small>
+            <div class="reapply-result reapply-result-error" role="alert">
+                <p class="reapply-result-title">Could not send request</p>
+                <p class="reapply-result-detail">${escapeHtml(err.message)}</p>
             </div>
         `;
         modalFooter.style.display = 'flex';

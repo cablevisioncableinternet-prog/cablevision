@@ -279,7 +279,7 @@ function renderNapboxBanner(options) {
     let bodyHtml = '';
 
     if (type === 'assigned') {
-        icon = 'fa-robot';
+        icon = '';
         title = `System Assigned NAP Box: <span style="font-weight:700; color:#1e293b;">${escapeHtml(napboxName)}</span>`;
         bodyHtml = `
             <div style="font-size:11px; color:#64748b; margin-top:2px;">
@@ -329,7 +329,7 @@ function renderNapboxBanner(options) {
     let noticeCardHtml = `
         <div style="background:#fef9e7; padding:12px 16px; border-radius:8px; margin-bottom:10px; border-left: 4px solid #f59e0b;">
             <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <i class="fas ${icon}" style="color:#d97706; font-size:18px; margin-top:2px; flex-shrink:0;"></i>
+                ${icon ? `<i class="fas ${icon}" style="color:#d97706; font-size:18px; margin-top:2px; flex-shrink:0;"></i>` : ''}
                 <div style="flex:1; min-width:0;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
                         <strong style="color:#92400e; font-size:13px;">${title}</strong>
@@ -2245,7 +2245,7 @@ async function executeCancelInstallation() {
     const confirmBtn = document.getElementById('confirmCancelInstallationBtn');
 
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+    confirmBtn.textContent = 'Cancelling...';
 
     try {
         const tabId = getTabId();
@@ -2275,7 +2275,7 @@ async function executeCancelInstallation() {
         showToast('Error cancelling installation', 'error');
     } finally {
         confirmBtn.disabled = false;
-        confirmBtn.innerHTML = '<i class="fas fa-ban"></i> Confirm Cancellation';
+        confirmBtn.textContent = 'Confirm Cancellation';
     }
 }
 

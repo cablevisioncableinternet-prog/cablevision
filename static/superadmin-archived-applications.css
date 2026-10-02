@@ -2078,81 +2078,97 @@ tbody tr:last-child td {
 
 /* ================= DELETE MODAL - RED THEME ================= */
 #deleteModal {
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  justify-content: center;
+  align-items: center;
+}
+
+#deleteModal.show {
+  display: flex !important;
 }
 
 #deleteModal .modal-dialog {
-    margin: 0 auto;
-    max-width: 500px;
-    width: 100%;
-    padding: 12px;
+  width: min(480px, calc(100vw - 32px));
+  max-width: 480px;
+  margin: auto;
+  padding: 0;
 }
 
 #deleteModal .modal-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 90vh;
+  padding: 0 !important;
+  overflow: hidden;
+  border: 1px solid #d9e1e9;
+  border-radius: 8px;
     background: #ffffff !important;
-    border-radius: 20px;
-    border: 1px solid var(--border-gray);
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    max-height: 95vh;
-    display: flex;
-    flex-direction: column;
-    padding: 0 !important;  /* 🔥 IMPORTANTE - TANGGALIN ANG PADDING */
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+  text-align: left;
 }
 
-/* 🔥 RED THEME HEADER - SOLID RED */
 #deleteModal .modal-header {
-    background: #dc2626 !important;
-    color: #ffffff;
-    padding: 14px 24px;  /* 🔥 PINALAKI ANG PADDING */
-    border-bottom: none;
-    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0 !important;  /* 🔥 TANGGALIN ANG MARGIN */
-    border-radius: 0 !important;  /* 🔥 TANGGALIN ANG BORDER RADIUS */
+  min-height: 58px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e4eaf0;
+  background: #ffffff;
 }
 
 #deleteModal .modal-header h5 {
-    font-weight: 700;
-    font-size: 16px;
     margin: 0;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-#deleteModal .modal-header h5 i {
-    font-size: 18px;
+  color: #202b3c;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 #deleteModal .btn-close {
-    filter: brightness(0) invert(1);
-    opacity: 0.8;
-    transition: var(--transition);
-    font-size: 18px;
-    padding: 4px 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 #deleteModal .btn-close:hover {
-    opacity: 1;
-    transform: rotate(90deg);
+  background: #f1f3f6;
+  color: #263246;
+  transform: none;
 }
 
 #deleteModal .modal-body {
-    padding: 20px 24px 16px;  /* 🔥 PINALAKI ANG PADDING */
-    background: #ffffff;
     flex: 1;
     overflow-y: auto;
-    max-height: calc(95vh - 140px);
+  max-height: calc(90vh - 112px);
+  padding: 16px 18px;
+  background: #ffffff;
+  text-align: left;
 }
 
 #deleteModal .modal-body::-webkit-scrollbar {
@@ -2174,125 +2190,115 @@ tbody tr:last-child td {
 }
 
 #deleteModal .alert-danger {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    margin: 0 0 12px 0;  /* 🔥 TANGGALIN ANG EXTRA MARGIN */
+  margin: 0;
 }
 
-#deleteModal .alert-danger i {
-    margin-right: 6px;
+#deleteModal .delete-confirm-message {
+  margin: 0 0 12px;
+  color: #263246;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-#deleteModal .alert-danger ul {
-    padding-left: 20px;
-    margin: 8px 0 0 0;
+#deleteModal .delete-warning-panel {
+  padding: 10px 12px;
+  border: 1px solid #f0d2d4;
+  border-left: 3px solid #b4232c;
+  border-radius: 5px;
+  background: #fff5f5;
+  color: #78353a;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
-#deleteModal .alert-danger ul li {
-    margin-bottom: 4px;
-    font-size: 12px;
+#deleteModal .delete-warning-panel ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
 }
 
-#deleteModal .alert-danger ul li:last-child {
-    margin-bottom: 0;
+#deleteModal .delete-warning-panel li {
+  margin-bottom: 3px;
 }
 
-#deleteModal .alert-warning {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #92400e;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 13px;
+#deleteModal .delete-warning-panel li:last-child {
+  margin-bottom: 0;
 }
 
 #deleteModal .modal-footer {
-    padding: 12px 24px 20px;  /* 🔥 PINALAKI ANG PADDING */
-    border-top: 1px solid #eef2f6;
-    background: #ffffff;
-    border-radius: 0 0 20px 20px;
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    margin: 0 !important;  /* 🔥 TANGGALIN ANG MARGIN */
+  gap: 8px;
+  padding: 11px 18px;
+  border-top: 1px solid #edf0f3;
+  background: #ffffff;
 }
 
-/* 🔥 CANCEL BUTTON - GRAY */
 #deleteModal .btn-secondary {
-    background: #e5e7eb;
-    color: #374151;
-    border: 1px solid #d1d5db;
-    border-radius: 40px;
-    padding: 8px 24px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid #cbd5df;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #465368;
+  font-family: inherit;
+  font-size: 12px;
     font-weight: 600;
-    font-size: 13px;
-    transition: var(--transition);
+  line-height: 1.2;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 40px;
-    border: none;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 #deleteModal .btn-secondary:hover {
-    background: #d1d5db;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #bbc5d1;
+  background: #f3f5f7;
+  transform: none;
 }
 
-/* 🔥 DELETE BUTTON - SOLID RED */
 #deleteModal .btn-danger {
-    background: #dc2626 !important;
-    color: #ffffff;
-    border: none;
-    border-radius: 40px;
-    padding: 8px 24px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid #a61f2a;
+  border-radius: 5px;
+  background: #b4232c !important;
+  color: #ffffff !important;
+  font-family: inherit;
+  font-size: 12px;
     font-weight: 600;
-    font-size: 13px;
-    transition: var(--transition);
+  line-height: 1.2;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 40px;
-}
-
-#deleteModal .btn-danger i {
-    font-size: 14px;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 #deleteModal .btn-danger:hover {
-    background: #b91c1c !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+  border-color: #941b23;
+  background: #941b23 !important;
+  transform: none;
+  box-shadow: none;
 }
 
 #deleteModal .btn-danger:active {
-    transform: translateY(0) scale(0.97);
+  transform: none;
 }
 
-/* Responsive for delete modal */
 @media (max-width: 575px) {
     #deleteModal .modal-dialog {
-        padding: 8px;
-        max-width: 100%;
-        margin: 0;
+    width: calc(100vw - 24px);
+    max-width: none;
+    margin: auto;
     }
     
     #deleteModal .modal-content {
-        border-radius: 16px;
-        max-height: 98vh;
+    max-height: 90vh;
+    border-radius: 8px;
     }
     
     #deleteModal .modal-header {
-        padding: 12px 16px;
+    min-height: 54px;
+    padding: 10px 14px;
     }
     
     #deleteModal .modal-header h5 {
@@ -2300,42 +2306,31 @@ tbody tr:last-child td {
     }
     
     #deleteModal .modal-body {
-        padding: 14px 16px 12px;
-        max-height: calc(98vh - 110px);
-    }
-    
-    #deleteModal .alert-danger {
-        padding: 10px 12px;
-        font-size: 12px;
-    }
-    
-    #deleteModal .alert-danger ul li {
-        font-size: 11px;
+      max-height: calc(90vh - 108px);
+      padding: 12px 14px;
     }
     
     #deleteModal .modal-footer {
-        padding: 10px 16px 14px;
-        flex-direction: column-reverse;
-        gap: 8px;
+      padding: 10px 14px;
     }
     
     #deleteModal .btn-secondary,
     #deleteModal .btn-danger {
-        width: 100%;
-        justify-content: center;
-        padding: 8px 16px;
-        font-size: 13px;
-        height: 38px;
-    }
-    
-    #deleteModal .btn-secondary {
-        order: 2;
-    }
-    
-    #deleteModal .btn-danger {
-        order: 1;
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 38px;
+      padding: 7px 8px;
+      font-size: 11px;
     }
 }
+
+  @media (prefers-reduced-motion: reduce) {
+    #deleteModal .btn-close,
+    #deleteModal .btn-secondary,
+    #deleteModal .btn-danger {
+      transition: none;
+    }
+  }
 
 /* ================= TABLE BORDER RADIUS (FINAL) ================= */
 .main-content :is(.table-wrapper,.table-responsive) {

@@ -1348,20 +1348,22 @@ function openArchiveModal(id, name) {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'archiveModal';
-        modal.className = 'modal';
+        modal.className = 'modal archive-confirm-modal';
         modal.innerHTML = `
             <div class="modal-content">
-                <span class="close" id="closeArchiveModal">&times;</span>
-                <h2> Archive Application</h2>
-                <p id="archiveModalMessage">Are you sure you want to archive this application?</p>
-                <p style="font-size: 13px; color: #6b7280; margin-top: 4px;">
-                    <i class="fas fa-info-circle"></i> 
-                    Archived applications will be hidden from the main list but can still be accessed if needed.
-                </p>
-                <div class="modal-buttons">
-                    <button id="confirmArchiveBtn" class="btn-confirm" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);">
-                        <i class="fas fa-archive"></i> Archive
-                    </button>
+                <div class="archive-modal-header">
+                    <h2>Archive Application</h2>
+                    <button type="button" class="close" id="closeArchiveModal" aria-label="Close">&times;</button>
+                </div>
+                <div class="archive-modal-body">
+                    <p id="archiveModalMessage">Are you sure you want to archive this application?</p>
+                    <div class="archive-modal-notice">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <span>Archived applications are hidden from the main list but remain accessible in Archived Applications.</span>
+                    </div>
+                </div>
+                <div class="modal-buttons archive-modal-footer">
+                    <button id="confirmArchiveBtn" class="btn-confirm">Archive Application</button>
                     <button id="cancelArchiveBtn" class="btn-cancel">Cancel</button>
                 </div>
             </div>
