@@ -3095,6 +3095,51 @@ def generate_next_team_id(area):
         return f"TEAM-{int(datetime.now().timestamp())}"
 
 # ===============================
+# TECHNICIAN NOTIFICATION HELPERS
+# ===============================
+def notify_technician(technician_id, title, message, notif_type="info", related_id=None):
+    """Mag-insert ng notification para sa isang specific na technician.
+    Hindi nagre-raise ng error para hindi masira ang main action."""
+    try:
+        if not technician_id:
+            return
+
+        # Kunin ang current area ng technician
+        row = execute_query(
+            "SELECT area FROM technicians WHERE technician_id = %s",
+            (technician_id,),
+            fetch_one=True
+        )
+        technician_area = row.get("area") if row else None
+
+        execute_query(
+            """
+            INSERT INTO technician_notifications
+                (technician_id, technician_area, title, message, type, relatedId, timestamp, read_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 0)
+            """,
+            (technician_id, technician_area, title, message, notif_type, related_id, ph_now_iso())
+        )
+        print(f" Notification sent to {technician_id}: {title}")
+    except Exception as e:
+        print(f" Failed to notify technician {technician_id}: {e}")
+
+
+def get_team_label(team_id):
+    """Ibalik ang 'Team Name (TEAM-ID)' para sa message"""
+    try:
+        row = execute_query(
+            "SELECT team_name FROM teams WHERE team_id = %s",
+            (team_id,),
+            fetch_one=True
+        )
+        if row and row.get("team_name"):
+            return f"{row['team_name']} ({team_id})"
+    except Exception as e:
+        print(f" Error getting team label: {e}")
+    return str(team_id)
+
+# ===============================
 # CREATE TEAM
 # ===============================
 @app.route("/api/superadmin/teams", methods=["POST"])
@@ -3174,6 +3219,14 @@ def create_team():
             """
             execute_query(update_tech_query, (team_id, team_leader_id))
             print(f" Team leader {team_leader_id} added as member of team {team_id}")
+
+            notify_technician(
+                team_leader_id,
+                "Assigned to a Team",
+                f"You have been assigned to team {team_name} ({team_id}) as team leader.",
+                "team_assigned",
+                team_id
+            )
         
         return jsonify({
             "message": "Team created successfully",
@@ -3346,6 +3399,21 @@ def update_team(team_id):
             member_count = count_result.get('count', 0) if count_result else 0
             
             print(f" Updated {member_count} technicians' area from '{old_area}' to '{area}'")
+
+            # NOTIFY ALL MEMBERS
+            members_to_notify = execute_query(
+                "SELECT technician_id FROM technicians WHERE team_id = %s",
+                (team_id,),
+                fetch=True
+            ) or []
+            for m in members_to_notify:
+                notify_technician(
+                    m.get("technician_id"),
+                    "Area Updated",
+                    f"Your assigned area has been changed from {old_area or 'None'} to {area} because the area of your team was updated.",
+                    "area_change",
+                    team_id
+                )
         
         # ==============================================
         # 3. I-HANDLE ANG TEAM LEADER CHANGES
@@ -3362,6 +3430,14 @@ def update_team(team_id):
                 update_tech = "UPDATE technicians SET team_id = %s WHERE technician_id = %s"
                 execute_query(update_tech, (team_id, team_leader_id))
                 print(f" New team leader {team_leader_id} added as member")
+
+                notify_technician(
+                    team_leader_id,
+                    "Assigned to a Team",
+                    f"You have been assigned to team {get_team_label(team_id)} as team leader.",
+                    "team_assigned",
+                    team_id
+                )
         
         print(f" Team updated successfully: {team_id}")
         
@@ -3397,7 +3473,7 @@ def add_team_member(team_id):
     
     try:
         # Check if team exists
-        team_query = "SELECT team_id FROM teams WHERE team_id = %s"
+        team_query = "SELECT team_id, team_name FROM teams WHERE team_id = %s"
         team = execute_query(team_query, (team_id,), fetch_one=True)
         if not team:
             print(f" Team {team_id} not found")
@@ -3420,6 +3496,16 @@ def add_team_member(team_id):
         execute_query(update_query, (team_id, technician_id))
         
         print(f" Successfully added {technician_id} to {team_id}")
+
+        # NOTIFY TECHNICIAN
+        notify_technician(
+            technician_id,
+            "Assigned to a Team",
+            f"You have been assigned to team {team.get('team_name')} ({team_id}).",
+            "team_assigned",
+            team_id
+        )
+
         return jsonify({"message": "Member added to team successfully"})
         
     except Exception as e:
@@ -3457,11 +3543,24 @@ def remove_team_member(team_id):
             print(f" Technician {technician_id} is in team {current.get('team_id')}, not {team_id}")
             return jsonify({"error": "Technician is not in this team"}), 400
         
+        # Kunin ang team label bago i-remove
+        team_label = get_team_label(team_id)
+
         # Remove technician from team
         update_query = "UPDATE technicians SET team_id = NULL WHERE technician_id = %s"
         execute_query(update_query, (technician_id,))
         
         print(f" Successfully removed {technician_id} from {team_id}")
+
+        # NOTIFY TECHNICIAN
+        notify_technician(
+            technician_id,
+            "Removed from Team",
+            f"You have been removed from team {team_label}.",
+            "team_removed",
+            team_id
+        )
+
         return jsonify({"message": "Member removed from team successfully"})
         
     except Exception as e:
@@ -3670,6 +3769,16 @@ def create_technician():
         execute_query(insert_query, params)
         print(f" Technician saved successfully: {technician_id}")
         print(f" Password: {default_password}")
+
+        # NOTIFY kung may team na na-assign
+        if team_id:
+            notify_technician(
+                technician_id,
+                "Assigned to a Team",
+                f"You have been assigned to team {get_team_label(team_id)}.",
+                "team_assigned",
+                team_id
+            )
         
         # Send email
         try:
@@ -4309,8 +4418,41 @@ def update_technician(technician_id):
         params.append(technician_id)
         update_query = f"UPDATE technicians SET {', '.join(updates)} WHERE technician_id = %s"
         execute_query(update_query, tuple(params))
-
+        
         print(f" Technician {technician_id} updated successfully")
+
+        # ---------- NOTIFICATIONS ----------
+        old_area = current.get("area") or ""
+        old_team_id = current.get("team_id")
+
+        # Nagbago ang area
+        if area is not None and area != old_area:
+            notify_technician(
+                technician_id,
+                "Area Updated",
+                f"Your assigned area has been changed from {old_area or 'None'} to {area}.",
+                "area_change"
+            )
+
+        # Nagbago ang team (kung may pinadalang team_id)
+        if data.get("team_id") is not None and (team_id or None) != (old_team_id or None):
+            if team_id:
+                notify_technician(
+                    technician_id,
+                    "Assigned to a Team",
+                    f"You have been assigned to team {get_team_label(team_id)}.",
+                    "team_assigned",
+                    team_id
+                )
+            elif old_team_id:
+                notify_technician(
+                    technician_id,
+                    "Removed from Team",
+                    f"You have been removed from team {get_team_label(old_team_id)}.",
+                    "team_removed",
+                    old_team_id
+                )
+
         return jsonify({"message": "Technician updated successfully"})
 
     except Exception as e:
@@ -4330,6 +4472,13 @@ def delete_team(team_id):
         if not team:
             return jsonify({"error": "Team not found"}), 404
         
+        # Kunin muna ang mga members para ma-notify pagkatapos
+        members = execute_query(
+            "SELECT technician_id FROM technicians WHERE team_id = %s",
+            (team_id,),
+            fetch=True
+        ) or []
+
         # Remove team_id from technicians before deleting
         update_techs = "UPDATE technicians SET team_id = NULL WHERE team_id = %s"
         execute_query(update_techs, (team_id,))
@@ -4337,6 +4486,16 @@ def delete_team(team_id):
         # Delete team
         delete_query = "DELETE FROM teams WHERE team_id = %s"
         execute_query(delete_query, (team_id,))
+
+        # NOTIFY ALL FORMER MEMBERS
+        for m in members:
+            notify_technician(
+                m.get("technician_id"),
+                "Removed from Team",
+                f"You have been removed from team {team['team_name']} ({team_id}) because the team was deleted.",
+                "team_removed",
+                team_id
+            )
         
         return jsonify({"message": f"Team '{team['team_name']}' deleted successfully"})
         
