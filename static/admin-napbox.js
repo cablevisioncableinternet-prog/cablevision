@@ -967,7 +967,6 @@ function showAdminSlotDetails(slot) {
             <div class="slot-section-title">
                 <i class="fas fa-user"></i>
                 <span>${slot.customer_name ? 'Customer Information' : 'No Customer Data'}</span>
-                ${slot.customer_name ? `<span class="customer-status ${slot.status}">${slot.status.toUpperCase()}</span>` : ''}
             </div>
             ${slot.customer_name ? `
             <div class="slot-customer-grid">
