@@ -1864,6 +1864,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadInstallationStatusChart();
     await loadSuperadminGrowthChart("all", String(new Date().getFullYear()), "all");
     initFilterButton();
+    initFilterButtonWithValidation();   // papalit sa lumang click handler ng Apply Filter
+    setupDateValidation();              // min/max limits ng Start at End date
     initInstallationChartMode();
     setupSuperadminExportButton();
     
@@ -2134,3 +2136,141 @@ function initFilterButtonWithValidation() {
         });
     }
 })();
+
+
+// ============================================================
+// DATE FILTER LIMITS (Installation / Applications chart)
+// - Start date: hanggang today lang
+// - End date: simula sa Start date, hanggang today lang
+// ============================================================
+function getLocalDateStr(date = new Date()) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function setupDateValidation() {
+    const startDateInput = document.getElementById("startDate");
+    const endDateInput = document.getElementById("endDate");
+    const resetBtn = document.getElementById("resetBtn");
+    if (!startDateInput || !endDateInput) return;
+    if (startDateInput.dataset.limitsReady === "true") return;
+    startDateInput.dataset.limitsReady = "true";
+
+    const todayStr = getLocalDateStr();
+
+    // Bawal ang future date sa pareho
+    startDateInput.max = todayStr;
+    endDateInput.max = todayStr;
+
+    // Error message elements
+    function ensureError(input, id) {
+        const group = input.closest('.filter-group');
+        if (group && !group.querySelector('.date-error')) {
+            const span = document.createElement('span');
+            span.className = 'date-error';
+            span.id = id;
+            group.appendChild(span);
+        }
+        return document.getElementById(id);
+    }
+    const startError = ensureError(startDateInput, 'startDateError');
+    const endError = ensureError(endDateInput, 'endDateError');
+
+    function showError(el, msg) {
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // START DATE changed
+    startDateInput.addEventListener('change', function () {
+        const startDate = this.value;
+
+        // Safety kung na-type manually ang future date
+        if (startDate && startDate > todayStr) {
+            this.value = '';
+            endDateInput.removeAttribute('min');
+            showError(startError, 'Start date cannot be in the future');
+            return;
+        }
+
+        if (startDate) {
+            // End date: bawal ang bago ng start date
+            endDateInput.min = startDate;
+
+            // Kung may napili nang end date na mas maaga sa bagong start date, i-clear
+            if (endDateInput.value && endDateInput.value < startDate) {
+                endDateInput.value = '';
+                showError(endError, 'End date was cleared. It must be on or after the start date');
+            }
+        } else {
+            endDateInput.removeAttribute('min');
+        }
+    });
+
+    // END DATE changed
+    endDateInput.addEventListener('change', function () {
+        const endDate = this.value;
+        const startDate = startDateInput.value;
+
+        if (endDate && endDate > todayStr) {
+            this.value = '';
+            showError(endError, 'End date cannot be in the future');
+            return;
+        }
+        if (startDate && endDate && endDate < startDate) {
+            this.value = '';
+            showError(endError, 'End date must be on or after the start date');
+        }
+    });
+
+    // Reset button: ibalik ang limits
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            endDateInput.removeAttribute('min');
+            startDateInput.max = todayStr;
+            endDateInput.max = todayStr;
+        });
+    }
+}
+
+function initFilterButtonWithValidation() {
+    const filterBtn = document.getElementById("filterBtn");
+    if (!filterBtn) return;
+
+    // Alisin ang lumang click listener (para hindi dalawang beses mag-run)
+    const newFilterBtn = filterBtn.cloneNode(true);
+    filterBtn.parentNode.replaceChild(newFilterBtn, filterBtn);
+
+    newFilterBtn.addEventListener("click", function () {
+        const startDate = document.getElementById("startDate")?.value || "";
+        const endDate = document.getElementById("endDate")?.value || "";
+        const area = document.getElementById("areaFilter")?.value || "";
+        const todayStr = getLocalDateStr();
+
+        if ((startDate && !endDate) || (!startDate && endDate)) {
+            showToast("Please select both start and end date", "error");
+            return;
+        }
+        if (startDate && startDate > todayStr) {
+            showToast("Start date cannot be in the future", "error");
+            return;
+        }
+        if (endDate && endDate > todayStr) {
+            showToast("End date cannot be in the future", "error");
+            return;
+        }
+        if (startDate && endDate && endDate < startDate) {
+            showToast("End date must be on or after the start date", "error");
+            return;
+        }
+
+        const loadingIndicator = document.getElementById("installationLoading");
+        if (loadingIndicator) loadingIndicator.style.display = "flex";
+
+        loadInstallationStatusChart(startDate, endDate, area);
+    });
+}
