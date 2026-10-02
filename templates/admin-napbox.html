@@ -615,16 +615,13 @@
 <div id="clearSlotModal" class="modal">
     <div class="modal-content clear-slot-modal-content">
         <button class="close-btn" id="closeClearSlotModal">&times;</button>
-        
+
         <!-- Modal Header -->
         <div class="clear-slot-modal-header">
-            <div class="clear-slot-modal-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3 id="clearSlotModalTitle"> Clear Slot Data</h3>
-            <p id="clearSlotModalText">This will permanently remove all customer data from this slot.</p>
+            <h3 id="clearSlotModalTitle">Clear Slot Data</h3>
+            <p id="clearSlotModalText">This will permanently remove all subscriber data from this slot.</p>
         </div>
-        
+
         <!-- Slot Info -->
         <div class="clear-slot-info" id="clearSlotInfo">
             <div class="clear-slot-detail">
@@ -640,16 +637,13 @@
                 <span class="clear-value" id="clearCustomerName">---</span>
             </div>
         </div>
-        
+
         <!-- Warning -->
         <div class="clear-slot-warning">
-            <i class="fas fa-skull"></i>
-            <div>
-                <strong>This action CANNOT be undone!</strong>
-                <p>This will permanently remove subscriber's name, phone, application number, contract number, and installation date from this slot.</p>
-            </div>
+            <strong>This action cannot be undone.</strong>
+            <p>The subscriber's name, phone, application number, contract number, and installation date will be permanently removed from this slot.</p>
         </div>
-        
+
         <!-- Modal Actions -->
         <div class="clear-slot-actions">
             <button id="cancelClearSlot" class="btn btn-cancel">
