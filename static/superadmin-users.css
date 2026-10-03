@@ -3365,26 +3365,29 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
   }
 }
 
-/* ================= FIX: SEARCH & FILTER ICON OVERLAP ================= */
+/* ================= FIX: SEARCH ICON OVERLAP (USERS & TERMINATED) ================= */
 /* Ibinabalik ang left padding para hindi tumakip ang icon sa text/placeholder */
 
-.main-content .search-filter-row .search-wrapper input {
+.main-content .search-section input#searchInput,
+.main-content .search-section input#terminatedSearchInput {
   padding: 8px 40px 8px 40px !important;
+  border-radius: 6px !important;
 }
 
-.main-content .search-filter-row .filter-wrapper select,
-.main-content .search-filter-row .sort-wrapper select {
-  padding: 8px 36px 8px 38px !important;
-}
-
-/* Siguradong nasa ibabaw ang icon at hindi nakaharang sa click */
-.main-content .search-filter-row :is(.search-icon, .filter-icon, .sort-icon) {
+/* Siguradong nasa ibabaw ng input ang icon at hindi nakaharang sa click */
+.main-content .search-section .search-icon-wrapper {
+  left: 14px;
   z-index: 2;
   pointer-events: none;
 }
 
-/* Ang X (clear) button ay tinamaan din ng global button rule, kaya ibalik sa maliit */
-.main-content .search-wrapper .clear-search {
+.main-content .search-section .search-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Ang X (clear) button ay tinamaan ng global button rule, kaya ibalik sa maliit na bilog */
+.main-content .search-section .search-clear-btn {
   min-height: 0 !important;
   width: 24px;
   height: 24px;
@@ -3394,7 +3397,7 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
   z-index: 2;
 }
 
-.main-content .search-wrapper .clear-search:hover {
+.main-content .search-section .search-clear-btn:hover {
   background: #f1f5f9;
-  color: #ef4444;
+  color: var(--primary-blue);
 }

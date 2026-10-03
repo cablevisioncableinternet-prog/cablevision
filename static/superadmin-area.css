@@ -2122,3 +2122,20 @@ body {
     border-radius: 6px !important;
   }
 }
+
+/* ================= FIX: SEARCH ICON OVERLAP (MANAGE AREA) ================= */
+/* Ibinabalik ang left padding para hindi tumakip ang icon sa text/placeholder */
+
+.main-content .search-filter-row .search-wrapper input.search-input {
+  padding: 8px 14px 8px 40px !important;
+  border-radius: 6px !important;
+}
+
+/* Siguradong nasa ibabaw ng input ang icon at hindi nakaharang sa click */
+.main-content .search-filter-row .search-wrapper .search-icon {
+  left: 14px;
+  z-index: 2;
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 1;
+}
