@@ -3203,3 +3203,38 @@ body.modal-open {
     transform: rotate(90deg);
   }
 }
+
+
+/* ================= FIX: SEARCH & FILTER ICON OVERLAP ================= */
+/* Ibinabalik ang left padding para hindi tumakip ang icon sa text/placeholder */
+
+.main-content .search-filter-row .search-wrapper input {
+  padding: 8px 40px 8px 40px !important;
+}
+
+.main-content .search-filter-row .filter-wrapper select,
+.main-content .search-filter-row .sort-wrapper select {
+  padding: 8px 36px 8px 38px !important;
+}
+
+/* Siguradong nasa ibabaw ang icon at hindi nakaharang sa click */
+.main-content .search-filter-row :is(.search-icon, .filter-icon, .sort-icon) {
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Ang X (clear) button ay tinamaan din ng global button rule, kaya ibalik sa maliit */
+.main-content .search-wrapper .clear-search {
+  min-height: 0 !important;
+  width: 24px;
+  height: 24px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: none;
+  z-index: 2;
+}
+
+.main-content .search-wrapper .clear-search:hover {
+  background: #f1f5f9;
+  color: #ef4444;
+}
