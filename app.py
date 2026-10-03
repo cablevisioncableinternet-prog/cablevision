@@ -2368,9 +2368,11 @@ def create_admin():
         return jsonify({"error": "All fields are required"}), 400
 
     # USERNAME VALIDATION
-    username_pattern = re.compile(r"^[a-zA-Z0-9_-]{4,20}$")
+    # Pinapayagan: letters, numbers, spaces, at ang special characters na / , - _ ( )
+    username = re.sub(r"\s+", " ", str(username)).strip()  # gawing iisang space ang magkakasunod na spaces
+    username_pattern = re.compile(r"^[a-zA-Z0-9 /,\-_()]{4,50}$")
     if not username_pattern.match(username):
-        return jsonify({"error": "Invalid username. Use 4-20 characters (letters, numbers, _, -)"}), 400
+        return jsonify({"error": "Invalid admin name. Use 4-50 characters (letters, numbers, spaces, / , - _ ( ))"}), 400
 
     # EMAIL VALIDATION
     email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")

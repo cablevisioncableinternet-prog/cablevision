@@ -1023,9 +1023,10 @@ if (createAdminForm) {
             return;
         }
 
-        const usernameRegex = /^[a-zA-Z0-9_-]{4,20}$/;
+        // Pinapayagan: letters, numbers, spaces, at ang special characters na / , - _ ( )
+        const usernameRegex = /^[a-zA-Z0-9\s\/,\-_()]{4,50}$/;
         if (!usernameRegex.test(username)) {
-            showToast("Username must be 4-20 characters and can only contain letters, numbers, underscores, and hyphens.", 'error');
+            showToast("Admin name must be 4-50 characters and can only contain letters, numbers, spaces, and these characters: / , - _ ( )", 'error');
             return;
         }
 
