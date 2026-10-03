@@ -735,7 +735,7 @@ body {
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -774,7 +774,7 @@ body {
   font-size: 0.9rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
+  border-radius: 6px;
   background: #ffffff;
   transition: all 0.2s ease;
   color: var(--text-dark);
@@ -1695,7 +1695,7 @@ th:nth-child(3), th:nth-child(4) {
   }
   
   .form-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px;
   }
 }

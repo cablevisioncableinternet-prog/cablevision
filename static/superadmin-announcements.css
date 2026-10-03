@@ -2163,3 +2163,107 @@ body {
   .main-content .announcement-column { padding:10px; }
 }
 @media (max-width:380px) { .main-content .button-group > :is(.btn-primary,.btn-secondary) { width:100%!important; max-width:none; } }
+
+
+/* ================= CREATE ANNOUNCEMENT - 2x2 COMPACT GRID ================= */
+.main-content .create-card-body {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "title   expiry"
+    "message image"
+    "actions actions";
+  gap: 14px 18px !important;
+  padding: 18px !important;
+  align-items: start;
+}
+
+/* Alisin ang default bottom margin ng input-group sa loob ng grid */
+.main-content .create-card-body > .input-group {
+  margin-bottom: 0 !important;
+}
+
+/* I-assign ang bawat field sa kanyang grid area */
+.main-content .create-card-body > .input-group:nth-child(1) { grid-area: title; }
+.main-content .create-card-body > .input-group:nth-child(2) { grid-area: message; }
+.main-content .create-card-body > .input-group:nth-child(3) { grid-area: image; }
+.main-content .create-card-body > .input-group:nth-child(4) { grid-area: expiry; }
+
+.main-content .create-card-body > .button-group {
+  grid-area: actions;
+  margin-top: 4px !important;
+  padding-top: 14px !important;
+  border-top: 1px solid #eef2f6;
+}
+
+/* Compact na inputs */
+.main-content .create-card-body .input-wrapper input,
+.main-content .create-card-body .input-wrapper textarea,
+.main-content .create-card-body .expiry-row input,
+.main-content .create-card-body .expiry-row select {
+  min-height: 38px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  border-radius: 6px !important;
+  width: 100%;
+}
+
+/* Textarea — pantay ang height sa image column */
+.main-content .create-card-body .input-wrapper textarea {
+  min-height: 170px !important;
+  resize: vertical;
+}
+
+/* Expiry row */
+.main-content .create-card-body .expiry-row {
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+.main-content .create-card-body .expiry-row > div {
+  flex: 1 1 0 !important;
+  min-width: 0;
+}
+
+/* Image field — gawing compact at hindi lumampas sa column */
+.main-content .create-card-body > .input-group[style],
+.main-content .create-card-body > .input-group:nth-child(3) {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.main-content .create-card-body #imagePreviewContainer {
+  margin-top: 8px !important;
+}
+
+.main-content .create-card-body #imagePreview {
+  max-width: 100% !important;
+  max-height: 120px !important;
+  object-fit: contain !important;
+  display: block;
+}
+
+/* File input — paikliin ang lapad */
+.main-content .create-card-body input[type="file"] {
+  font-size: 12px !important;
+  padding: 7px 10px !important;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 767px) {
+  .main-content .create-card-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "expiry"
+      "message"
+      "image"
+      "actions";
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .main-content .create-card-body .input-wrapper textarea {
+    min-height: 120px !important;
+  }
+}
