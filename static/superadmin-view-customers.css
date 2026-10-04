@@ -2454,3 +2454,15 @@ tbody tr:last-child td {
   background: #f1f5f9;
   color: var(--primary-blue);
 }
+
+
+/* ================= PLAN & AREA FILTERS ================= */
+.filter-section .filter-group .filter-select {
+  min-width: 160px;
+}
+
+@media (max-width: 767px) {
+  .filter-section .filter-group .filter-select {
+    min-width: 0;
+  }
+}

@@ -40,9 +40,15 @@ const rejectedRowsPerPage = 10;
 
 // ==================== CACHE SYSTEM ====================
 function setCache(key, data, ttlMinutes = 5) {
-    const now = new Date();
-    const item = { data, expiry: now.getTime() + ttlMinutes * 60 * 1000 };
-    sessionStorage.setItem(key, JSON.stringify(item));
+    try {
+        const now = new Date();
+        const item = { data, expiry: now.getTime() + ttlMinutes * 60 * 1000 };
+        sessionStorage.setItem(key, JSON.stringify(item));
+    } catch (err) {
+        // Puno na ang storage: laktawan ang cache, tuloy pa rin ang page
+        console.warn("Cache skipped (storage full):", err);
+        sessionStorage.removeItem(key);
+    }
 }
 
 function getCache(key) {
@@ -1032,6 +1038,23 @@ async function populateFilterOptions() {
     fillFilterSelect('rejectedAreaFilter', 'All Areas', areaValues);
 }
 
+// ==================== FETCH ALL APPLICATIONS (PAGINATED) ====================
+async function fetchAllApplicationsFull(pageSize = 1000) {
+    const all = [];
+    let offset = 0;
+    while (true) {
+        const qs = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
+        const res = await fetch(`/api/superadmin/applications/full?${qs.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const items = await res.json();
+        if (!Array.isArray(items)) break;
+        all.push(...items);
+        if (items.length < pageSize) break;
+        offset += pageSize;
+    }
+    return all;
+}
+
 // ==================== FETCH WITH CACHE & AUTO-UPDATE ====================
 async function fetchApplications(forceRefresh = false) {
     if (isFetching && !forceRefresh) return;
@@ -1050,9 +1073,8 @@ async function fetchApplications(forceRefresh = false) {
     }
 
     try {
-        const appsRes = await fetch(`/api/superadmin/applications?limit=100`);
-        let appsData = await appsRes.json();
-        
+        const appsData = await fetchAllApplicationsFull();
+
         applicationsData = appsData;
         setCache(CACHE_KEY_APPS, appsData, 5);
         updateCacheTimestamp();

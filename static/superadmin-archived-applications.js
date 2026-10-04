@@ -37,9 +37,15 @@ const rowsPerPage = 10;
 
 // ==================== CACHE SYSTEM ====================
 function setCache(key, data, ttlMinutes = 5) {
-    const now = new Date();
-    const item = { data, expiry: now.getTime() + ttlMinutes * 60 * 1000 };
-    sessionStorage.setItem(key, JSON.stringify(item));
+    try {
+        const now = new Date();
+        const item = { data, expiry: now.getTime() + ttlMinutes * 60 * 1000 };
+        sessionStorage.setItem(key, JSON.stringify(item));
+    } catch (err) {
+        // Puno na ang storage: laktawan ang cache, tuloy pa rin ang page
+        console.warn("Cache skipped (storage full):", err);
+        sessionStorage.removeItem(key);
+    }
 }
 
 function getCache(key) {
@@ -555,6 +561,17 @@ function setupSearchAndFilter() {
             );
         }
 
+        const planValue = (document.getElementById("archivedPlanFilter")?.value || "all").trim().toLowerCase();
+        const areaValue = (document.getElementById("archivedAreaFilter")?.value || "all").trim().toLowerCase();
+
+        if (planValue !== "all") {
+            filtered = filtered.filter(app => String(app.plan || '').trim().toLowerCase() === planValue);
+        }
+
+        if (areaValue !== "all") {
+            filtered = filtered.filter(app => String(app.city || '').trim().toLowerCase() === areaValue);
+        }
+
         filteredArchivedData = sortArchivedApplications(filtered);
 
         currentPage = 1;
@@ -575,6 +592,14 @@ function setupSearchAndFilter() {
     if (archivedSearchInput) archivedSearchInput.addEventListener("input", applyArchivedFilters);
     if (archivedStatusFilter) archivedStatusFilter.addEventListener("change", applyArchivedFilters);
 
+    // Plan & Area filters (onchange para hindi dumoble ang listener tuwing mag-fetch)
+    ['archivedPlanFilter', 'archivedAreaFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.onchange = applyArchivedFilters;
+    });
+
+    populateFilterOptions();
+
     const archivedClearBtn = document.getElementById("archivedClearSearch");
     if (archivedClearBtn && archivedSearchInput) {
         archivedClearBtn.addEventListener("click", () => {
@@ -590,6 +615,99 @@ function setupSearchAndFilter() {
 
     applyArchivedFilters();
 }
+
+
+// ==================== FETCH ALL ARCHIVED (PAGINATED) ====================
+async function fetchAllArchivedFull(pageSize = 1000) {
+    const all = [];
+    let offset = 0;
+    while (true) {
+        const qs = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
+        const res = await fetch(`/api/superadmin/archived-applications/full?${qs.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const items = await res.json();
+        if (!Array.isArray(items)) break;
+        all.push(...items);
+        if (items.length < pageSize) break;
+        offset += pageSize;
+    }
+    return all;
+}
+
+// ==================== PLAN & AREA FILTER OPTIONS ====================
+let planNamesFromDb = null;
+let areaNamesFromDb = null;
+
+async function loadFilterSources() {
+    if (!planNamesFromDb) {
+        try {
+            const res = await fetch('/api/superadmin/plans');
+            if (res.ok) {
+                const plans = await res.json();
+                planNamesFromDb = (Array.isArray(plans) ? plans : [])
+                    .map(p => String(p.name || '').trim())
+                    .filter(Boolean);
+            }
+        } catch (err) {
+            console.error('Failed to load plans for filter:', err);
+        }
+    }
+
+    if (!areaNamesFromDb) {
+        try {
+            const res = await fetch('/api/superadmin/areas');
+            if (res.ok) {
+                const areas = await res.json();
+                areaNamesFromDb = [...new Set(
+                    (Array.isArray(areas) ? areas : [])
+                        .map(a => String(a.city || '').trim())
+                        .filter(Boolean)
+                )];
+            }
+        } catch (err) {
+            console.error('Failed to load areas for filter:', err);
+        }
+    }
+}
+
+function fillFilterSelect(selectId, allLabel, values) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const current = select.value || 'all';
+    const unique = new Map();
+
+    values.forEach(v => {
+        const text = String(v || '').trim();
+        if (!text) return;
+        const key = text.toLowerCase();
+        if (!unique.has(key)) unique.set(key, text);
+    });
+
+    const sorted = [...unique.values()].sort((a, b) => a.localeCompare(b));
+    const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    select.innerHTML =
+        `<option value="all">${allLabel}</option>` +
+        sorted.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+    const stillExists = [...select.options].some(o => o.value === current);
+    select.value = stillExists ? current : 'all';
+}
+
+async function populateFilterOptions() {
+    await loadFilterSources();
+
+    fillFilterSelect('archivedPlanFilter', 'All Plans', [
+        ...(planNamesFromDb || []),
+        ...archivedApplicationsData.map(a => a.plan)
+    ]);
+    fillFilterSelect('archivedAreaFilter', 'All Areas', [
+        ...(areaNamesFromDb || []),
+        ...archivedApplicationsData.map(a => a.city)
+    ]);
+}
+
 
 // ==================== FETCH WITH CACHE ====================
 async function fetchArchivedApplications(forceRefresh = false) {
@@ -608,8 +726,7 @@ async function fetchArchivedApplications(forceRefresh = false) {
     }
 
     try {
-        const res = await fetch(`/api/superadmin/archived-applications?limit=100`);
-        const data = await res.json();
+        const data = await fetchAllArchivedFull();
 
         archivedApplicationsData = data;
         setCache(CACHE_KEY_ARCHIVED, data, 5);

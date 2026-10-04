@@ -6589,6 +6589,58 @@ def superadmin_get_all_applications():
         print("Superadmin get applications error:", e)
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/superadmin/applications/full", methods=["GET"])
+def superadmin_get_applications_full():
+    try:
+        limit = int(request.args.get("limit", 1000))
+        offset = int(request.args.get("offset", 0))
+        include_archived = request.args.get("include_archived", "false").lower() == "true"
+
+        query = """
+            SELECT application_number, first_name, last_name, email, plan,
+                   date_submitted, time_submitted, barangay, city, birthdate,
+                   status, rejection_reason, is_archived
+            FROM applications
+            WHERE 1 = 1
+        """
+
+        if not include_archived:
+            query += " AND (is_archived = 0 OR is_archived IS NULL)"
+
+        query += " ORDER BY timestamp DESC, application_number DESC LIMIT %s OFFSET %s"
+
+        rows = execute_query(query, (limit, offset), fetch=True) or []
+
+        apps = []
+        for app in rows:
+            datetime_submitted = None
+            if app.get("date_submitted") and app.get("time_submitted"):
+                datetime_submitted = f"{app.get('date_submitted')} {app.get('time_submitted')}"
+            elif app.get("date_submitted"):
+                datetime_submitted = app.get("date_submitted")
+
+            apps.append({
+                "id": app.get("application_number", ""),
+                "application_number": app.get("application_number", ""),
+                "first_name": app.get("first_name", ""),
+                "last_name": app.get("last_name", ""),
+                "email": app.get("email", ""),
+                "plan": app.get("plan", "") or "",
+                "date_submitted": datetime_submitted,
+                "barangay": app.get("barangay", ""),
+                "city": app.get("city", ""),
+                "birthdate": app.get("birthdate", ""),
+                "status": app.get("status", "Pending"),
+                "rejection_reason": app.get("rejection_reason", ""),
+                "is_archived": app.get("is_archived", 0) == 1
+            })
+
+        return jsonify(apps)
+
+    except Exception as e:
+        print("Superadmin applications full error:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/superadmin/applications/count", methods=["GET"])
 def superadmin_applications_count():
@@ -6624,7 +6676,7 @@ def superadmin_applications_count():
         return jsonify({"error": str(e)}), 500
 
 
-        
+
 # ===============================
 # View Single Application Page (Superadmin)
 # ===============================
@@ -11406,6 +11458,51 @@ def superadmin_get_archived_applications():
         print("Superadmin get archived applications error:", e)
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/superadmin/archived-applications/full", methods=["GET"])
+def superadmin_get_archived_applications_full():
+    try:
+        limit = int(request.args.get("limit", 1000))
+        offset = int(request.args.get("offset", 0))
+
+        query = """
+            SELECT application_number, first_name, last_name, email, plan,
+                   date_submitted, time_submitted, barangay, city, birthdate,
+                   status, rejection_reason, is_archived
+            FROM applications
+            WHERE is_archived = 1
+            ORDER BY timestamp DESC, application_number DESC
+            LIMIT %s OFFSET %s
+        """
+
+        rows = execute_query(query, (limit, offset), fetch=True) or []
+
+        apps = []
+        for app in rows:
+            ds, ts = app.get("date_submitted"), app.get("time_submitted")
+            datetime_submitted = f"{ds} {ts}" if ds and ts else ds
+
+            apps.append({
+                "id": app.get("application_number", ""),
+                "application_number": app.get("application_number", ""),
+                "first_name": app.get("first_name", ""),
+                "last_name": app.get("last_name", ""),
+                "email": app.get("email", ""),
+                "plan": app.get("plan", "") or "",
+                "date_submitted": datetime_submitted,
+                "barangay": app.get("barangay", ""),
+                "city": app.get("city", ""),
+                "birthdate": app.get("birthdate", ""),
+                "status": app.get("status", "Rejected"),
+                "rejection_reason": app.get("rejection_reason", ""),
+                "is_archived": True
+            })
+
+        return jsonify(apps)
+
+    except Exception as e:
+        print("Superadmin archived applications full error:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 # ===============================
 # UNARCHIVE APPLICATION (RESTORE TO PENDING)
@@ -11574,7 +11671,62 @@ def get_approved_customers():
         print("Error fetching customers:", e)
         return jsonify({"error": str(e)}), 500
     
+@app.route("/api/superadmin/approved-applications/full", methods=["GET"])
+def get_approved_customers_full():
+    try:
+        limit = int(request.args.get("limit", 1000))
+        offset = int(request.args.get("offset", 0))
 
+        query = """
+            SELECT 
+                c.application_number, c.contract_number, c.first_name, c.last_name, 
+                c.middle_name, c.suffix, c.email, c.mobile, c.address, c.barangay, c.city, 
+                c.province, c.zip, c.plan, c.plan_speed, c.plan_price, c.status, c.installation_status, 
+                c.approval_date, c.billing_date, c.created_at,
+                CASE WHEN u.user_id IS NOT NULL THEN 1 ELSE 0 END as user_created
+            FROM customers c
+            LEFT JOIN users u ON c.application_number = u.application_number
+            WHERE c.status = 'Approved'
+            ORDER BY c.approval_date DESC, c.application_number DESC
+            LIMIT %s OFFSET %s
+        """
+
+        rows = execute_query(query, (limit, offset), fetch=True) or []
+
+        customers_list = []
+        for cust in rows:
+            parts = [cust.get('first_name'), cust.get('middle_name'),
+                     cust.get('last_name'), cust.get('suffix')]
+            full_name = ' '.join(p for p in parts if p).strip() or 'N/A'
+
+            customers_list.append({
+                "id": cust.get('application_number'),
+                "application_number": cust.get('application_number', ''),
+                "contract_number": cust.get('contract_number', 'N/A'),
+                "first_name": cust.get('first_name', ''),
+                "last_name": cust.get('last_name', ''),
+                "full_name": full_name,
+                "email": cust.get('email', ''),
+                "mobile": cust.get('mobile', ''),
+                "plan": cust.get('plan', ''),
+                "plan_speed": cust.get('plan_speed', 'N/A'),
+                "plan_price": cust.get('plan_price', 'N/A'),
+                "status": cust.get('status', 'Approved'),
+                "installation_status": cust.get('installation_status', 'Pending'),
+                "approval_date": cust.get('approval_date', ''),
+                "billing_date": cust.get('billing_date', ''),
+                "city": cust.get('city', ''),
+                "barangay": cust.get('barangay', ''),
+                "address": cust.get('address', ''),
+                "user_created": cust.get('user_created', 0)
+            })
+
+        return jsonify(customers_list)
+
+    except Exception as e:
+        print("Error fetching customers full:", e)
+        return jsonify({"error": str(e)}), 500
+    
 
 @app.route("/api/superadmin/installation-summary", methods=["GET"])
 def get_superadmin_installation_summary():

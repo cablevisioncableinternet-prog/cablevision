@@ -131,9 +131,15 @@ function sortCustomersByInstallationStatus(customers) {
 
 // ==================== CACHE SYSTEM ====================
 function setCache(key, data, ttlMinutes = 5) {
-    const now = new Date();
-    const item = { data, expiry: now.getTime() + ttlMinutes * 60 * 1000 };
-    sessionStorage.setItem(key, JSON.stringify(item));
+    try {
+        const now = new Date();
+        const item = { data, expiry: now.getTime() + ttlMinutes * 60 * 1000 };
+        sessionStorage.setItem(key, JSON.stringify(item));
+    } catch (err) {
+        // Puno na ang storage: laktawan ang cache, tuloy pa rin ang page
+        console.warn("Cache skipped (storage full):", err);
+        sessionStorage.removeItem(key);
+    }
 }
 
 function getCache(key) {
@@ -599,6 +605,17 @@ function setupSearchAndFilter() {
                 customer.installation_status && customer.installation_status.toLowerCase() === statusValue.toLowerCase()
             );
         }
+        const planValue = (document.getElementById("planFilter")?.value || "all").trim().toLowerCase();
+        const areaValue = (document.getElementById("areaFilter")?.value || "all").trim().toLowerCase();
+
+        if (planValue !== "all") {
+            filtered = filtered.filter(c => String(c.plan || '').trim().toLowerCase() === planValue);
+        }
+
+        if (areaValue !== "all") {
+            filtered = filtered.filter(c => String(c.city || '').trim().toLowerCase() === areaValue);
+        }
+
         filteredData = filtered;
         const customerCountSpan = document.getElementById("customerCount");
         if (customerCountSpan) customerCountSpan.textContent = filtered.length;
@@ -608,6 +625,14 @@ function setupSearchAndFilter() {
     
     searchInput.addEventListener("input", window.applyFiltersAndPaginate);
     statusFilter.addEventListener("change", window.applyFiltersAndPaginate);
+
+    // Plan & Area filters (onchange para hindi dumoble ang listener tuwing mag-fetch)
+    ['planFilter', 'areaFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.onchange = window.applyFiltersAndPaginate;
+    });
+
+    populateFilterOptions();
     
     const clearBtn = document.getElementById("clearSearch");
     if (clearBtn) {
@@ -621,6 +646,99 @@ function setupSearchAndFilter() {
         });
     }
 }
+
+
+// ==================== FETCH ALL CUSTOMERS (PAGINATED) ====================
+async function fetchAllCustomersFull(pageSize = 1000) {
+    const all = [];
+    let offset = 0;
+    while (true) {
+        const qs = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
+        const res = await fetch(`/api/superadmin/approved-applications/full?${qs.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const items = await res.json();
+        if (!Array.isArray(items)) break;
+        all.push(...items);
+        if (items.length < pageSize) break;
+        offset += pageSize;
+    }
+    return all;
+}
+
+// ==================== PLAN & AREA FILTER OPTIONS ====================
+let planNamesFromDb = null;
+let areaNamesFromDb = null;
+
+async function loadFilterSources() {
+    if (!planNamesFromDb) {
+        try {
+            const res = await fetch('/api/superadmin/plans');
+            if (res.ok) {
+                const plans = await res.json();
+                planNamesFromDb = (Array.isArray(plans) ? plans : [])
+                    .map(p => String(p.name || '').trim())
+                    .filter(Boolean);
+            }
+        } catch (err) {
+            console.error('Failed to load plans for filter:', err);
+        }
+    }
+
+    if (!areaNamesFromDb) {
+        try {
+            const res = await fetch('/api/superadmin/areas');
+            if (res.ok) {
+                const areas = await res.json();
+                areaNamesFromDb = [...new Set(
+                    (Array.isArray(areas) ? areas : [])
+                        .map(a => String(a.city || '').trim())
+                        .filter(Boolean)
+                )];
+            }
+        } catch (err) {
+            console.error('Failed to load areas for filter:', err);
+        }
+    }
+}
+
+function fillFilterSelect(selectId, allLabel, values) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const current = select.value || 'all';
+    const unique = new Map();
+
+    values.forEach(v => {
+        const text = String(v || '').trim();
+        if (!text) return;
+        const key = text.toLowerCase();
+        if (!unique.has(key)) unique.set(key, text);
+    });
+
+    const sorted = [...unique.values()].sort((a, b) => a.localeCompare(b));
+    const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    select.innerHTML =
+        `<option value="all">${allLabel}</option>` +
+        sorted.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+    const stillExists = [...select.options].some(o => o.value === current);
+    select.value = stillExists ? current : 'all';
+}
+
+async function populateFilterOptions() {
+    await loadFilterSources();
+
+    fillFilterSelect('planFilter', 'All Plans', [
+        ...(planNamesFromDb || []),
+        ...approvedCustomersData.map(c => c.plan)
+    ]);
+    fillFilterSelect('areaFilter', 'All Areas', [
+        ...(areaNamesFromDb || []),
+        ...approvedCustomersData.map(c => c.city)
+    ]);
+}
+
 
 // ==================== FETCH CUSTOMERS ====================
 async function fetchCustomers(forceRefresh = false) {
@@ -645,10 +763,7 @@ async function fetchCustomers(forceRefresh = false) {
     }
     try {
         console.log("Fetching fresh customer data from API...");
-        const res = await fetch("/api/superadmin/approved-applications?limit=100");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        let data = await res.json();
-        const customers = Array.isArray(data) ? data : (data.customers || []);
+        const customers = await fetchAllCustomersFull();
         const sortedData = sortCustomersByInstallationStatus(customers);
         approvedCustomersData = sortedData;
         filteredData = [...sortedData];
