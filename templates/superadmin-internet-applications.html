@@ -250,13 +250,27 @@
             </button>
           </div>
           
-          <div class="filter-wrapper">
+                    <div class="filter-wrapper">
             <i class="fas fa-filter filter-icon"></i>
             <select id="activeStatusFilter">
               <option value="all">All Status</option>
               <option value="Pending">Pending</option>
               <option value="Approved">Approved</option>
               <option value="Request Sent">Requested</option>
+            </select>
+          </div>
+
+          <div class="filter-wrapper">
+            <i class="fas fa-wifi filter-icon"></i>
+            <select id="activePlanFilter">
+              <option value="all">All Plans</option>
+            </select>
+          </div>
+
+          <div class="filter-wrapper">
+            <i class="fas fa-map-marker-alt filter-icon"></i>
+            <select id="activeAreaFilter">
+              <option value="all">All Areas</option>
             </select>
           </div>
           
@@ -341,6 +355,20 @@
             </button>
           </div>
           
+          <div class="filter-wrapper">
+            <i class="fas fa-wifi filter-icon"></i>
+            <select id="rejectedPlanFilter">
+              <option value="all">All Plans</option>
+            </select>
+          </div>
+
+          <div class="filter-wrapper">
+            <i class="fas fa-map-marker-alt filter-icon"></i>
+            <select id="rejectedAreaFilter">
+              <option value="all">All Areas</option>
+            </select>
+          </div>
+
           <div class="sort-wrapper">
             <i class="fas fa-calendar-alt sort-icon"></i>
             <select id="rejectedDateSortFilter">

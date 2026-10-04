@@ -2241,3 +2241,15 @@ tbody tr:last-child td {
   background: #f1f5f9;
   color: #ef4444;
 }
+
+/* ================= PLAN & AREA FILTERS ================= */
+.search-filter-row .filter-wrapper {
+  min-width: 170px;
+}
+
+@media (max-width: 991px) {
+  .search-filter-row .filter-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+}

@@ -763,6 +763,17 @@ function setupSearchAndFilter() {
             );
         }
         
+        const planValue = (document.getElementById("activePlanFilter")?.value || "all").trim().toLowerCase();
+        const areaValue = (document.getElementById("activeAreaFilter")?.value || "all").trim().toLowerCase();
+
+        if (planValue !== "all") {
+            filtered = filtered.filter(app => String(app.plan || '').trim().toLowerCase() === planValue);
+        }
+
+        if (areaValue !== "all") {
+            filtered = filtered.filter(app => String(app.city || '').trim().toLowerCase() === areaValue);
+        }
+
         filteredActiveData = sortActiveApplications(filtered);
         
         currentPage = 1;
@@ -776,7 +787,7 @@ function setupSearchAndFilter() {
             if (activeTable) activeTable.style.display = "none";
             if (noDataEl) {
                 noDataEl.style.display = "block";
-                if (searchTerm || statusValue !== "all") {
+                if (searchTerm || statusValue !== "all" || planValue !== "all" || areaValue !== "all") {
                     noDataEl.innerHTML = `
                         <div style="text-align: center; padding: 30px 20px;">
                             <i class="fas fa-search" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
@@ -827,6 +838,17 @@ function setupSearchAndFilter() {
             });
         }
         
+        const planValue = (document.getElementById("rejectedPlanFilter")?.value || "all").trim().toLowerCase();
+        const areaValue = (document.getElementById("rejectedAreaFilter")?.value || "all").trim().toLowerCase();
+
+        if (planValue !== "all") {
+            filtered = filtered.filter(app => String(app.plan || '').trim().toLowerCase() === planValue);
+        }
+
+        if (areaValue !== "all") {
+            filtered = filtered.filter(app => String(app.city || '').trim().toLowerCase() === areaValue);
+        }
+
         filteredRejectedData = sortRejectedApplications(filtered);
         
         currentRejectedPage = 1;
@@ -853,7 +875,7 @@ function setupSearchAndFilter() {
                     rejectedNoData.innerHTML = `
                         <div style="text-align: center; padding: 30px 20px;">
                             <p style="font-weight: 600; color: #1e293b; margin: 0;">No rejected applications found</p>
-                            <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">All applications are active</p>
+                            <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">Try adjusting your filters</p>
                         </div>
                     `;
                 }
@@ -884,6 +906,16 @@ function setupSearchAndFilter() {
     
     // Rejected card event listeners
     if (rejectedSearchInput) rejectedSearchInput.addEventListener("input", applyRejectedFilters);
+
+    // Plan & Area filters (onchange para hindi dumoble ang listener tuwing mag-fetch)
+    ['activePlanFilter', 'activeAreaFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.onchange = applyActiveFilters;
+    });
+    ['rejectedPlanFilter', 'rejectedAreaFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.onchange = applyRejectedFilters;
+    });
     
     // Clear buttons
     const activeClearBtn = document.getElementById("activeClearSearch");
@@ -912,9 +944,92 @@ function setupSearchAndFilter() {
         });
     }
     
+    populateFilterOptions();
+
     // Initial loads
     applyActiveFilters();
     applyRejectedFilters();
+}
+
+
+// ==================== PLAN & AREA FILTER OPTIONS ====================
+let planNamesFromDb = null;
+let areaNamesFromDb = null;
+
+async function loadFilterSources() {
+    if (!planNamesFromDb) {
+        try {
+            const res = await fetch('/api/superadmin/plans');
+            if (res.ok) {
+                const plans = await res.json();
+                planNamesFromDb = (Array.isArray(plans) ? plans : [])
+                    .map(p => String(p.name || '').trim())
+                    .filter(Boolean);
+            }
+        } catch (err) {
+            console.error('Failed to load plans for filter:', err);
+        }
+    }
+
+    if (!areaNamesFromDb) {
+        try {
+            const res = await fetch('/api/superadmin/areas');
+            if (res.ok) {
+                const areas = await res.json();
+                areaNamesFromDb = [...new Set(
+                    (Array.isArray(areas) ? areas : [])
+                        .map(a => String(a.city || '').trim())
+                        .filter(Boolean)
+                )];
+            }
+        } catch (err) {
+            console.error('Failed to load areas for filter:', err);
+        }
+    }
+}
+
+function fillFilterSelect(selectId, allLabel, values) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const current = select.value || 'all';
+    const unique = new Map();
+
+    values.forEach(v => {
+        const text = String(v || '').trim();
+        if (!text) return;
+        const key = text.toLowerCase();
+        if (!unique.has(key)) unique.set(key, text);
+    });
+
+    const sorted = [...unique.values()].sort((a, b) => a.localeCompare(b));
+    const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    select.innerHTML =
+        `<option value="all">${allLabel}</option>` +
+        sorted.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+    // Panatilihin ang napili kung meron pa rin
+    const stillExists = [...select.options].some(o => o.value === current);
+    select.value = stillExists ? current : 'all';
+}
+
+async function populateFilterOptions() {
+    await loadFilterSources();
+
+    const planValues = [
+        ...(planNamesFromDb || []),
+        ...applicationsData.map(a => a.plan)
+    ];
+    const areaValues = [
+        ...(areaNamesFromDb || []),
+        ...applicationsData.map(a => a.city)
+    ];
+
+    fillFilterSelect('activePlanFilter', 'All Plans', planValues);
+    fillFilterSelect('rejectedPlanFilter', 'All Plans', planValues);
+    fillFilterSelect('activeAreaFilter', 'All Areas', areaValues);
+    fillFilterSelect('rejectedAreaFilter', 'All Areas', areaValues);
 }
 
 // ==================== FETCH WITH CACHE & AUTO-UPDATE ====================
