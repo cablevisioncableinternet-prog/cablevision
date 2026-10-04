@@ -2026,3 +2026,15 @@ th:nth-child(8), td:nth-child(8) { width: 9%; text-align: center; }
   #allNotificationsModal .modal-footer { flex-wrap: wrap; gap: 8px; }
   #allNotificationsModal .modal-footer button { flex: 1 1 120px; }
 }
+
+
+/* ================= PLAN FILTER ================= */
+.main-content .filter-section .filter-group .filter-select {
+  min-width: 160px;
+}
+
+@media (max-width: 767px) {
+  .main-content .filter-section .filter-group .filter-select {
+    min-width: 0;
+  }
+}

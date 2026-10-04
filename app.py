@@ -16374,7 +16374,7 @@ def get_admin_approved_applications():
         # ========== GET CUSTOMERS FROM MYSQL ==========
         customers_query = """
             SELECT application_number, contract_number, first_name, last_name, email,
-                   plan, plan_speed, plan_price, status, installation_status, city,
+                   plan, plan_speed, plan_price, status, installation_status, city, barangay,
                    approval_date, created_at
             FROM customers 
             WHERE status = 'Approved'
@@ -16400,8 +16400,9 @@ def get_admin_approved_applications():
                     "plan_price": cust.get("plan_price", "N/A"),
                     "status": cust.get("status", "Approved"),
                     "installation_status": cust.get("installation_status", "Pending"),
+                    "city": cust.get("city", ""),
+                    "barangay": cust.get("barangay", ""),
                     "approval_date": cust.get("approval_date"),
-                    "created_at": cust.get("created_at")
                 })
 
         return jsonify(approved_apps), 200

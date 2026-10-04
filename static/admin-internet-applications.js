@@ -819,6 +819,61 @@ function attachButtonEvents() {
     });
 }
 
+
+// ===============================
+// PLAN FILTER OPTIONS
+// ===============================
+let planNamesFromDb = null;
+let planOptionsDataRef = null;
+
+async function loadPlanNames() {
+    if (planNamesFromDb) return;
+    try {
+        const res = await fetch('/api/superadmin/plans');
+        if (res.ok) {
+            const plans = await res.json();
+            planNamesFromDb = (Array.isArray(plans) ? plans : [])
+                .map(p => String(p.name || '').trim())
+                .filter(Boolean);
+        }
+    } catch (err) {
+        console.error('Failed to load plans for filter:', err);
+    }
+}
+
+function fillPlanSelect(selectId, values) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const current = select.value || 'all';
+    const unique = new Map();
+    values.forEach(v => {
+        const text = String(v || '').trim();
+        if (!text) return;
+        const key = text.toLowerCase();
+        if (!unique.has(key)) unique.set(key, text);
+    });
+
+    const sorted = [...unique.values()].sort((a, b) => a.localeCompare(b));
+    const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    select.innerHTML =
+        '<option value="all">All Plans</option>' +
+        sorted.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+    const stillExists = [...select.options].some(o => o.value === current);
+    select.value = stillExists ? current : 'all';
+}
+
+async function populatePlanOptions() {
+    await loadPlanNames();
+    const values = [...(planNamesFromDb || []), ...applicationsData.map(a => a.plan)];
+    fillPlanSelect('activePlanFilter', values);
+    fillPlanSelect('rejectedPlanFilter', values);
+}
+
+
+
 // ===============================
 // FETCH APPLICATIONS - WITH TAB ID
 // ===============================
@@ -884,6 +939,12 @@ async function fetchApplications(forceRefresh = false) {
 // SEARCH & FILTER LOGIC - FIXED
 // ===============================
 function applyFilters() {
+    // I-populate ang plan dropdown kapag bagong data lang
+    if (planOptionsDataRef !== applicationsData) {
+        planOptionsDataRef = applicationsData;
+        populatePlanOptions();
+    }
+
     if (activeDateSortFilter) {
         activeDateSort = activeDateSortFilter.value;
     }
@@ -922,6 +983,13 @@ function applyFilters() {
         );
     }
     
+    const activePlanValue = (document.getElementById("activePlanFilter")?.value || "all").trim().toLowerCase();
+    if (activePlanValue !== "all") {
+        activeFiltered = activeFiltered.filter(app =>
+            String(app.plan || '').trim().toLowerCase() === activePlanValue
+        );
+    }
+
     filteredActiveData = sortActiveApplications(activeFiltered);
     
     // ============ FILTER REJECTED APPLICATIONS ============
@@ -950,6 +1018,13 @@ function applyFilters() {
         });
     }
     
+    const rejectedPlanValue = (document.getElementById("rejectedPlanFilter")?.value || "all").trim().toLowerCase();
+    if (rejectedPlanValue !== "all") {
+        rejectedFiltered = rejectedFiltered.filter(app =>
+            String(app.plan || '').trim().toLowerCase() === rejectedPlanValue
+        );
+    }
+
     filteredRejectedData = sortRejectedApplications(rejectedFiltered);
     
     // ============ RESET PAGES ============
@@ -965,7 +1040,7 @@ function applyFilters() {
         if (activeTable) activeTable.style.display = "none";
         if (activeNoData) {
             activeNoData.style.display = "block";
-            if (activeSearchTerm || activeStatusValue !== "all") {
+            if (activeSearchTerm || activeStatusValue !== "all" || activePlanValue !== "all") {
                 activeNoData.innerHTML = `
                     <div style="text-align: center; padding: 30px 20px;">
                         <i class="fas fa-search" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
@@ -1007,7 +1082,7 @@ function applyFilters() {
         if (rejectedTable) rejectedTable.style.display = "none";
         if (rejectedNoData) {
             rejectedNoData.style.display = "block";
-            if (rejectedSearchTerm) {
+            if (rejectedSearchTerm || rejectedPlanValue !== "all") {
                 rejectedNoData.innerHTML = `
                     <div style="text-align: center; padding: 30px 20px;">
                         <i class="fas fa-search" style="font-size: 28px; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
@@ -1053,6 +1128,11 @@ function setupSearchAndFilter() {
     }
     
     if (rejectedSearchInput) rejectedSearchInput.addEventListener("input", applyFilters);
+
+    ['activePlanFilter', 'rejectedPlanFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", applyFilters);
+    });
     if (rejectedDateSortFilter) {
         rejectedDateSortFilter.addEventListener("change", () => {
             rejectedDateSort = rejectedDateSortFilter.value;

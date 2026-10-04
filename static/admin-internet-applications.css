@@ -2903,3 +2903,19 @@ tbody tr:last-child td {
     color: var(--text-light);
     font-weight: 500;
 }
+
+
+/* ================= PLAN FILTER ================= */
+.main-content .search-filter-row .filter-wrapper {
+  min-width: 170px;
+}
+
+.main-content .search-filter-row .filter-wrapper select {
+  padding-left: 38px;
+}
+
+@media (max-width: 767px) {
+  .main-content .search-filter-row .filter-wrapper {
+    min-width: 0;
+  }
+}

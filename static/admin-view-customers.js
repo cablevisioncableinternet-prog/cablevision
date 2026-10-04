@@ -280,6 +280,12 @@ function renderPaginationControls(totalPages, totalItems) {
 }
 
 function renderCurrentPage() {
+    // I-populate ang plan dropdown kapag bagong data lang
+    if (planOptionsDataRef !== approvedData) {
+        planOptionsDataRef = approvedData;
+        populatePlanOptions();
+    }
+
     const totalItems = filteredData.length;
     const totalPages = Math.ceil(totalItems / rowsPerPage);
     
@@ -302,6 +308,55 @@ function renderCurrentPage() {
     renderTable(pageData);
     renderPaginationControls(totalPages, totalItems);
 }
+
+
+// ================= PLAN FILTER OPTIONS =================
+let planNamesFromDb = null;
+let planOptionsDataRef = null;
+
+async function loadPlanNames() {
+    if (planNamesFromDb) return;
+    try {
+        const res = await fetch('/api/superadmin/plans');
+        if (res.ok) {
+            const plans = await res.json();
+            planNamesFromDb = (Array.isArray(plans) ? plans : [])
+                .map(p => String(p.name || '').trim())
+                .filter(Boolean);
+        }
+    } catch (err) {
+        console.error('Failed to load plans for filter:', err);
+    }
+}
+
+async function populatePlanOptions() {
+    await loadPlanNames();
+
+    const select = document.getElementById('planFilter');
+    if (!select) return;
+
+    const values = [...(planNamesFromDb || []), ...approvedData.map(c => c.plan)];
+    const unique = new Map();
+    values.forEach(v => {
+        const text = String(v || '').trim();
+        if (!text || text.toUpperCase() === 'N/A') return;
+        const key = text.toLowerCase();
+        if (!unique.has(key)) unique.set(key, text);
+    });
+
+    const sorted = [...unique.values()].sort((a, b) => a.localeCompare(b));
+    const esc = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const current = select.value || 'all';
+
+    select.innerHTML =
+        '<option value="all">All Plans</option>' +
+        sorted.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+
+    const stillExists = [...select.options].some(o => o.value === current);
+    select.value = stillExists ? current : 'all';
+}
+
+
 
 // ================= FETCH (WITH CACHE AND TAB ID) =================
 async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
@@ -604,13 +659,20 @@ function applyFiltersAndPaginate() {
 
     if (searchTerm) {
         filtered = filtered.filter(app =>
-            (app.application_number + " " + app.first_name + " " + app.last_name + " " + (app.email || "")).toLowerCase().includes(searchTerm)
+            (app.application_number + " " + app.first_name + " " + app.last_name + " " + (app.email || "") + " " + (app.barangay || "") + " " + (app.contract_number || "")).toLowerCase().includes(searchTerm)
         );
     }
 
     if (selectedStatus !== "all") {
         filtered = filtered.filter(app => 
             (app.installation_status || "pending").toLowerCase() === selectedStatus.toLowerCase()
+        );
+    }
+
+    const planValue = (document.getElementById("planFilter")?.value || "all").trim().toLowerCase();
+    if (planValue !== "all") {
+        filtered = filtered.filter(app =>
+            String(app.plan || '').trim().toLowerCase() === planValue
         );
     }
 
@@ -628,6 +690,11 @@ if (searchInput) {
 const statusFilter = document.getElementById("statusFilter");
 if (statusFilter) {
     statusFilter.addEventListener("change", applyFiltersAndPaginate);
+}
+
+const planFilterEl = document.getElementById("planFilter");
+if (planFilterEl) {
+    planFilterEl.addEventListener("change", applyFiltersAndPaginate);
 }
 
 const clearSearchBtn = document.getElementById("clearSearch");

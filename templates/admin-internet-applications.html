@@ -157,7 +157,7 @@
       <div class="search-filter-row">
         <div class="search-wrapper">
           <i class="fas fa-search search-icon"></i>
-          <input type="text" id="activeSearchInput" placeholder="Search by name, email, or application #">
+          <input type="text" id="activeSearchInput" placeholder="Search by name, email, barangay, or application #">
           <button class="clear-search" id="activeClearSearch" style="display: none;">
             <i class="fas fa-times-circle"></i>
           </button>
@@ -170,6 +170,13 @@
             <option value="Pending">Pending</option>
             <option value="Approved">Approved</option>
             <option value="Request Sent">Requested</option>
+          </select>
+        </div>
+
+        <div class="filter-wrapper">
+          <i class="fas fa-wifi filter-icon"></i>
+          <select id="activePlanFilter">
+            <option value="all">All Plans</option>
           </select>
         </div>
         
@@ -248,12 +255,19 @@
       <div class="search-filter-row">
         <div class="search-wrapper">
           <i class="fas fa-search search-icon"></i>
-          <input type="text" id="rejectedSearchInput" placeholder="Search by name, email, or application #">
+          <input type="text" id="rejectedSearchInput" placeholder="Search by name, email, barangay, or application #">
           <button class="clear-search" id="rejectedClearSearch" style="display: none;">
             <i class="fas fa-times-circle"></i>
           </button>
         </div>
         
+        <div class="filter-wrapper">
+          <i class="fas fa-wifi filter-icon"></i>
+          <select id="rejectedPlanFilter">
+            <option value="all">All Plans</option>
+          </select>
+        </div>
+
         <div class="sort-wrapper">
           <i class="fas fa-calendar-alt sort-icon"></i>
           <select id="rejectedDateSortFilter">
