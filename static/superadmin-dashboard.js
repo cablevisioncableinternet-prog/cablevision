@@ -1637,70 +1637,23 @@ function renderTotalCustomers(data){
 // ==================== FETCH ACTIVE APPLICATIONS COUNT ====================
 async function fetchActiveApplicationsCount(){
     try {
-        const res = await fetch("/api/superadmin/applications?limit=1000&include_archived=true");
-        if(!res.ok) throw new Error("Failed to fetch applications");
-        const applications = await res.json();
-        
-        let appsArray = [];
-        if (Array.isArray(applications)) {
-            appsArray = applications;
-        } else if (applications && applications.data) {
-            appsArray = applications.data;
-        } else if (applications && applications.applications) {
-            appsArray = applications.applications;
-        } else {
-            appsArray = Object.values(applications).find(val => Array.isArray(val)) || [];
-        }
+        const res = await fetch("/api/superadmin/applications/count?include_archived=true");
+        if(!res.ok) throw new Error("Failed to fetch applications count");
+        const c = await res.json();
 
-        // ✅ COUNT ALL APPLICATIONS (including Cancelled, Terminated, Rejected)
-        const allApplications = appsArray;
-        const activeCount = allApplications.length;
+        const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
 
-        const totalApplicantsSpan = document.getElementById("totalApplicants");
-        if(totalApplicantsSpan) totalApplicantsSpan.textContent = activeCount;
+        set("totalApplicants", c.total);
+        set("applicationsToday", c.today);
+        set("applicationsWeek", c.week);
+        set("applicationsMonth", c.month);
 
-        const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-        let todayCount = 0, weekCount = 0, monthCount = 0;
-
-        allApplications.forEach(app => {
-            let createdDate = null;
-            
-            if (app.date_submitted) {
-                createdDate = new Date(app.date_submitted);
-            } else if (app.timestamp) {
-                createdDate = new Date(app.timestamp);
-            } else if (app.created_at) {
-                createdDate = new Date(app.created_at);
-            } else if (app.date_created) {
-                createdDate = new Date(app.date_created);
-            } else if (app.application_date) {
-                createdDate = new Date(app.application_date);
-            } else if (app.createdAt) {
-                createdDate = new Date(app.createdAt);
-            }
-            
-            if (createdDate && !isNaN(createdDate.getTime())) {
-                if (createdDate >= todayStart) todayCount++;
-                if (createdDate >= weekStart) weekCount++;
-                if (createdDate >= monthStart) monthCount++;
-            }
-        });
-
-        const applicationsToday = document.getElementById("applicationsToday");
-        const applicationsWeek = document.getElementById("applicationsWeek");
-        const applicationsMonth = document.getElementById("applicationsMonth");
-
-        if (applicationsToday) applicationsToday.textContent = todayCount;
-        if (applicationsWeek) applicationsWeek.textContent = weekCount;
-        if (applicationsMonth) applicationsMonth.textContent = monthCount;
-        
-        return activeCount;
+        return c.total;
     } catch(err) {
-        console.error("Error fetching active applications:", err);
+        console.error("Error fetching applications count:", err);
         return 0;
     }
 }

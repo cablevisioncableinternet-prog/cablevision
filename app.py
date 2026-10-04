@@ -6590,6 +6590,41 @@ def superadmin_get_all_applications():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/superadmin/applications/count", methods=["GET"])
+def superadmin_applications_count():
+    try:
+        include_archived = request.args.get("include_archived", "false").lower() == "true"
+
+        where = "WHERE 1 = 1"
+        if not include_archived:
+            where += " AND (is_archived = 0 OR is_archived IS NULL)"
+
+        query = f"""
+            SELECT
+                COUNT(*) AS total,
+                COALESCE(SUM(DATE(date_submitted) >= CURDATE()), 0) AS today,
+                COALESCE(SUM(DATE(date_submitted) >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)), 0) AS week,
+                COALESCE(SUM(DATE(date_submitted) >= DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE()) - 1 DAY)), 0) AS month
+            FROM applications
+            {where}
+        """
+
+        rows = execute_query(query, (), fetch=True) or [{}]
+        row = rows[0]
+
+        return jsonify({
+            "total": int(row.get("total") or 0),
+            "today": int(row.get("today") or 0),
+            "week": int(row.get("week") or 0),
+            "month": int(row.get("month") or 0)
+        })
+
+    except Exception as e:
+        print("Superadmin applications count error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+        
 # ===============================
 # View Single Application Page (Superadmin)
 # ===============================
