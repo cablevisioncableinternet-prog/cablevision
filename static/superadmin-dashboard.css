@@ -3003,3 +3003,72 @@ body {
   .date-filter.full-width-filter, .growth-filter-row { grid-template-columns: minmax(0, 1fr); }
   .filter-actions { width: 100%; }
 }
+
+
+/* ================= STAT CARD TOOLTIP ================= */
+.stat-card.has-tooltip {
+  position: relative;
+  cursor: help;
+  outline: none;
+}
+
+.stat-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(6px);
+  width: max-content;
+  max-width: 280px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  z-index: 50;
+}
+
+.stat-tooltip strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.stat-tooltip span {
+  display: block;
+}
+
+/* Arrow sa ibaba ng tooltip */
+.stat-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(15, 23, 42, 0.95);
+}
+
+.stat-card.has-tooltip:hover .stat-tooltip,
+.stat-card.has-tooltip:focus .stat-tooltip,
+.stat-card.has-tooltip:focus-within .stat-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 575px) {
+  .stat-tooltip {
+    max-width: 220px;
+    font-size: 11px;
+  }
+}
