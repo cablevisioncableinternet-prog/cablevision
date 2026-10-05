@@ -232,7 +232,12 @@
 <!-- STATISTICS SECTION - CARDS ONLY -->
 <div class="stats-grid">
     <!-- Card 1 - Total Applications -->
-    <div class="stat-card">
+    <div class="stat-card has-tooltip" tabindex="0">
+      <div class="stat-tooltip" role="tooltip">
+        <strong>Total Applications</strong>
+        <span>Shows the total number of applications across all statuses: Pending, Approved, Rejected, and Cancelled.</span>
+        <span class="stat-tooltip-area"><i class="fas fa-map-marker-alt"></i> Area: <b class="js-admin-area">Your assigned area</b></span>
+      </div>
       <div class="stat-icon-wrapper">
         <i class="fas fa-file-alt stat-icon"></i>
       </div>
@@ -257,7 +262,12 @@
     </div>
 
     <!-- Card 2 - Total Customers -->
-    <div class="stat-card">
+    <div class="stat-card has-tooltip" tabindex="0">
+      <div class="stat-tooltip" role="tooltip">
+        <strong>Total Subscribers</strong>
+        <span>Shows the subscribers whose applications have been approved.</span>
+        <span class="stat-tooltip-area"><i class="fas fa-map-marker-alt"></i> Area: <b class="js-admin-area">Your assigned area</b></span>
+      </div>
       <div class="stat-icon-wrapper">
         <i class="fas fa-users stat-icon"></i>
       </div>
@@ -507,6 +517,42 @@
   </div>
 
   <!-- JS SCRIPT -->
+
+  <!-- Fills the area name inside the stat card tooltips -->
+<script>
+(function () {
+  function setArea(area) {
+    document.querySelectorAll('.js-admin-area').forEach(function (el) {
+      el.textContent = area;
+    });
+  }
+
+  async function loadAdminArea() {
+    // 1) Try sessionStorage first
+    var keys = ['adminArea', 'area', 'adminCity', 'city'];
+    for (var i = 0; i < keys.length; i++) {
+      var v = sessionStorage.getItem(keys[i]);
+      if (v) { setArea(v); return; }
+    }
+
+    // 2) Fallback: ask the profile API
+    try {
+      var tabId = sessionStorage.getItem('tab_id') || '';
+      var res = await fetch('/api/admin/profile?tab_id=' + tabId);
+      if (!res.ok) return;
+      var p = await res.json();
+      var area = p.area || p.city || p.assigned_area || p.areas;
+      if (area) setArea(Array.isArray(area) ? area.join(', ') : area);
+    } catch (e) {
+      console.error('Could not load admin area:', e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadAdminArea);
+})();
+</script>
+
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="/static/admin-dashboard.js"></script>
 <script src="/static/admin-notifications.js"></script>
