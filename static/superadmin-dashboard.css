@@ -3012,11 +3012,22 @@ body {
   outline: none;
 }
 
+/* Keep the normal arrow cursor on everything inside the card */
+.stat-card.has-tooltip * {
+  cursor: default;
+}
+
+/* Raise the hovered card so its tooltip is not covered by elements below it */
+.stat-card.has-tooltip:hover,
+.stat-card.has-tooltip:focus-within {
+  z-index: 60;
+}
+
 .stat-tooltip {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 10px);
-  transform: translateX(-50%) translateY(6px);
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(-6px);
   width: max-content;
   max-width: 280px;
   padding: 12px 14px;
@@ -3047,34 +3058,38 @@ body {
   display: block;
 }
 
-/* Arrow sa ibaba ng tooltip */
+/* Area line (used in the admin dashboard) */
+.stat-tooltip .stat-tooltip-area {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.stat-tooltip .stat-tooltip-area i {
+  margin-right: 4px;
+  color: #60a5fa;
+}
+
+/* Tooltip arrow (points up, since the tooltip is below the card) */
 .stat-tooltip::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: rgba(15, 23, 42, 0.95);
+  border-bottom-color: rgba(15, 23, 42, 0.95);
 }
 
+/* Only the hovered/focused card shows its own tooltip */
 .stat-card.has-tooltip:hover .stat-tooltip,
 .stat-card.has-tooltip:focus .stat-tooltip,
 .stat-card.has-tooltip:focus-within .stat-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
-}
-
-/* Show BOTH tooltips (left and right card) when hovering either card.
-   Desktop/tablet only, where the cards sit side by side. */
-@media (min-width: 576px) {
-  .stats-grid:has(.stat-card.has-tooltip:hover) .stat-tooltip,
-  .stats-grid:has(.stat-card.has-tooltip:focus-within) .stat-tooltip {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-  }
 }
 
 @media (max-width: 575px) {
