@@ -3008,7 +3008,7 @@ body {
 /* ================= STAT CARD TOOLTIP ================= */
 .stat-card.has-tooltip {
   position: relative;
-  cursor: help;
+  cursor: default;
   outline: none;
 }
 
@@ -3064,6 +3064,17 @@ body {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Show BOTH tooltips (left and right card) when hovering either card.
+   Desktop/tablet only, where the cards sit side by side. */
+@media (min-width: 576px) {
+  .stats-grid:has(.stat-card.has-tooltip:hover) .stat-tooltip,
+  .stats-grid:has(.stat-card.has-tooltip:focus-within) .stat-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 @media (max-width: 575px) {
