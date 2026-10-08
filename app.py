@@ -17807,6 +17807,27 @@ def add_or_update_napbox():
         
         if not napbox_name or not latitude or not longitude or not area:
             return jsonify({"error": "Missing required fields"}), 400
+
+        napbox_name = str(napbox_name).strip()
+
+        # ===== DUPLICATE NAME CHECK (case-insensitive, excluding itself kapag edit) =====
+        if napbox_id:
+            dup_query = """
+                SELECT id FROM napboxes
+                WHERE UPPER(TRIM(napbox_name)) = UPPER(%s) AND id <> %s
+                LIMIT 1
+            """
+            duplicate = execute_query(dup_query, (napbox_name, napbox_id), fetch_one=True)
+        else:
+            dup_query = """
+                SELECT id FROM napboxes
+                WHERE UPPER(TRIM(napbox_name)) = UPPER(%s)
+                LIMIT 1
+            """
+            duplicate = execute_query(dup_query, (napbox_name,), fetch_one=True)
+
+        if duplicate:
+            return jsonify({"error": f"NAP box name '{napbox_name}' already exists. Please use a different name."}), 409
         
         # Get barangay from coordinates if not provided
         if not barangay:
@@ -18153,7 +18174,94 @@ def delete_napbox_post():
         return jsonify({"error": str(e)}), 500
         
 
+# ===============================
+# API: CHECK IF NAP BOX NAME EXISTS
+# ===============================
+@app.route("/api/technician/napbox/check-name", methods=["GET"])
+def check_napbox_name():
+    """Check kung may existing na napbox na may ganitong pangalan"""
+    try:
+        name = (request.args.get("name") or "").strip()
+        exclude_id = request.args.get("exclude_id")
 
+        if not name:
+            return jsonify({"exists": False})
+
+        if exclude_id:
+            query = """
+                SELECT id FROM napboxes
+                WHERE UPPER(TRIM(napbox_name)) = UPPER(%s) AND id <> %s
+                LIMIT 1
+            """
+            result = execute_query(query, (name, exclude_id), fetch_one=True)
+        else:
+            query = """
+                SELECT id FROM napboxes
+                WHERE UPPER(TRIM(napbox_name)) = UPPER(%s)
+                LIMIT 1
+            """
+            result = execute_query(query, (name,), fetch_one=True)
+
+        return jsonify({"exists": bool(result)})
+
+    except Exception as e:
+        print(f"Error checking napbox name: {e}")
+        return jsonify({"exists": False, "error": str(e)}), 500
+
+
+# ===============================
+# API: RENAME NAP BOX (NAME LANG)
+# ===============================
+@app.route("/api/technician/napbox/rename", methods=["POST"])
+def rename_napbox():
+    """Palitan ang pangalan ng NAP box (name lang ang mababago)"""
+    try:
+        data = request.get_json() or {}
+        napbox_id = data.get("napbox_id")
+        new_name = (data.get("napbox_name") or "").strip()
+
+        if not napbox_id or not new_name:
+            return jsonify({"error": "NAP box ID and name are required"}), 400
+
+        existing = execute_query(
+            "SELECT id, napbox_name FROM napboxes WHERE id = %s",
+            (napbox_id,), fetch_one=True
+        )
+        if not existing:
+            return jsonify({"error": "NAP Box not found"}), 404
+
+        # DUPLICATE CHECK (excluding itself)
+        duplicate = execute_query(
+            """
+            SELECT id FROM napboxes
+            WHERE UPPER(TRIM(napbox_name)) = UPPER(%s) AND id <> %s
+            LIMIT 1
+            """,
+            (new_name, napbox_id), fetch_one=True
+        )
+        if duplicate:
+            return jsonify({"error": f"NAP box name '{new_name}' already exists. Please use a different name."}), 409
+
+        execute_query(
+            "UPDATE napboxes SET napbox_name = %s, location = %s, updated_at = NOW() WHERE id = %s",
+            (new_name, new_name, napbox_id)
+        )
+
+        print(f" Renamed NAP box {napbox_id}: '{existing.get('napbox_name')}' -> '{new_name}'")
+
+        return jsonify({
+            "success": True,
+            "message": f"NAP box renamed to '{new_name}'",
+            "id": napbox_id,
+            "napbox_name": new_name
+        })
+
+    except Exception as e:
+        print(f" Error renaming NAP box: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+        
 # ===============================
 # TECHNICIAN SLOT ASSIGNMENT PAGE
 # ===============================

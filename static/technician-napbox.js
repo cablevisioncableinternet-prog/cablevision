@@ -1396,22 +1396,56 @@ function addNapboxMarkers(napboxes) {
 
             // I-SECURE ANG NAPBOX NAME PARA MAI-SAVE SA BUTTON
             const safeNapboxName = napbox.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const attrNapboxName = escapeAttr(napbox.name);
             
             marker.bindPopup(`
-                <div style="min-width: 180px;">
-                    <b style="font-size:14px;">${napbox.name}</b><br>
-                    <small style="color:#666;">${napbox.barangay || napbox.location || 'Pinned Location'}</small>
+                <div style="min-width: 200px;">
+                    <!-- VIEW MODE -->
+                    <div id="napboxNameView-${napbox.id}">
+                        <b style="font-size:14px;">${escapeHtml(napbox.name)}</b>
+                    </div>
+
+                    <!-- EDIT MODE (NAME LANG) -->
+                    <div id="napboxNameEdit-${napbox.id}" style="display:none;">
+                        <input type="text" id="napboxNameInput-${napbox.id}" value="${attrNapboxName}"
+                            autocomplete="off"
+                            onkeydown="if(event.key==='Enter'){saveNapboxName(${napbox.id});} else if(event.key==='Escape'){cancelEditNapboxName(${napbox.id});}"
+                            style="width:100%; padding:7px 9px; border:1.5px solid #cbd5e1; border-radius:6px;
+                                   font-size:13px; font-weight:600; box-sizing:border-box; outline:none;">
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <button onclick="saveNapboxName(${napbox.id})"
+                                style="flex:1; padding:6px; background:#0755a5; color:white; border:none;
+                                       border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">
+                                Save
+                            </button>
+                            <button onclick="cancelEditNapboxName(${napbox.id})"
+                                style="flex:1; padding:6px; background:#f1f5f9; color:#465368; border:1px solid #d6dde6;
+                                       border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <small style="color:#666;">${escapeHtml(napbox.barangay || napbox.location || 'Pinned Location')}</small>
                     <hr style="margin:6px 0;">
                     <b>Coverage:</b> ${napbox.coverage_radius || 500}m<br>
                     <span style="color:#22c55e">● Available: ${availableCount}</span><br>
                     <span style="color:#ef4444">● Occupied: ${occupiedCount}</span>
                     <hr style="margin:6px 0;">
-                    <button onclick="showDeleteNapboxModal(${napbox.id}, '${safeNapboxName}')"
-                        style="width:100%; padding:8px; background:#dc2626; color:white; border:none;
-                               border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;
-                               transition: all 0.2s ease; pointer-events: auto !important;">
-                        Delete NAP Box
-                    </button>
+                    <div style="display:flex; gap:6px;">
+                        <button id="napboxEditBtn-${napbox.id}" onclick="startEditNapboxName(${napbox.id})"
+                            style="flex:1; padding:8px; background:#0755a5; color:white; border:none;
+                                   border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;
+                                   pointer-events: auto !important;">
+                            Edit Name
+                        </button>
+                        <button onclick="showDeleteNapboxModal(${napbox.id}, '${safeNapboxName}')"
+                            style="flex:1; padding:8px; background:#dc2626; color:white; border:none;
+                                   border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;
+                                   transition: all 0.2s ease; pointer-events: auto !important;">
+                            Delete
+                        </button>
+                    </div>
                 </div>
             `);
 
@@ -1570,6 +1604,151 @@ window.showDeleteNapboxModal = showDeleteNapboxModal;
 window.closeDeleteNapboxModal = closeDeleteNapboxModal;
 window.executeDeleteNapbox = executeDeleteNapbox;
 window.deleteNapbox = deleteNapbox;
+
+
+
+
+// ================= ESCAPE FOR HTML ATTRIBUTE =================
+function escapeAttr(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// ================= CHECK DUPLICATE NAP BOX NAME =================
+async function checkNapboxNameExists(name, excludeId = null) {
+    const cleanName = (name || '').trim();
+    if (!cleanName) return false;
+
+    // QUICK LOCAL CHECK MUNA
+    const localDuplicate = currentNapboxes.some(n =>
+        (n.name || '').trim().toLowerCase() === cleanName.toLowerCase() &&
+        (excludeId === null || String(n.id) !== String(excludeId))
+    );
+    if (localDuplicate) return true;
+
+    // SERVER CHECK (global, kasama ang ibang area)
+    try {
+        const tabId = getTabId();
+        let url = `/api/technician/napbox/check-name?name=${encodeURIComponent(cleanName)}&tab_id=${tabId}`;
+        if (excludeId !== null) url += `&exclude_id=${encodeURIComponent(excludeId)}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+        return !!data.exists;
+    } catch (err) {
+        console.error('Error checking napbox name:', err);
+        return false; // ang server ay may final check pa rin
+    }
+}
+
+// ================= EDIT NAP BOX NAME (SA MAP POPUP) =================
+function startEditNapboxName(napboxId) {
+    const view = document.getElementById(`napboxNameView-${napboxId}`);
+    const edit = document.getElementById(`napboxNameEdit-${napboxId}`);
+    const editBtn = document.getElementById(`napboxEditBtn-${napboxId}`);
+    const input = document.getElementById(`napboxNameInput-${napboxId}`);
+
+    if (!view || !edit || !input) return;
+
+    view.style.display = 'none';
+    edit.style.display = 'block';
+    if (editBtn) editBtn.style.display = 'none';
+
+    input.focus();
+    input.select();
+}
+
+function cancelEditNapboxName(napboxId) {
+    const view = document.getElementById(`napboxNameView-${napboxId}`);
+    const edit = document.getElementById(`napboxNameEdit-${napboxId}`);
+    const editBtn = document.getElementById(`napboxEditBtn-${napboxId}`);
+    const input = document.getElementById(`napboxNameInput-${napboxId}`);
+
+    // IBALIK ANG ORIGINAL NA PANGALAN SA INPUT
+    const original = currentNapboxes.find(n => String(n.id) === String(napboxId));
+    if (input && original) {
+        input.value = original.name || '';
+        input.style.borderColor = '#cbd5e1';
+    }
+
+    if (view) view.style.display = 'block';
+    if (edit) edit.style.display = 'none';
+    if (editBtn) editBtn.style.display = '';
+}
+
+async function saveNapboxName(napboxId) {
+    const input = document.getElementById(`napboxNameInput-${napboxId}`);
+    if (!input) return;
+
+    const newName = input.value.trim();
+    const original = currentNapboxes.find(n => String(n.id) === String(napboxId));
+
+    if (!newName) {
+        input.style.borderColor = '#dc2626';
+        showToast('NAP box name cannot be empty', 'error');
+        input.focus();
+        return;
+    }
+
+    // WALANG PAGBABAGO
+    if (original && (original.name || '').trim() === newName) {
+        cancelEditNapboxName(napboxId);
+        return;
+    }
+
+    // DUPLICATE CHECK (excluding itself)
+    const exists = await checkNapboxNameExists(newName, napboxId);
+    if (exists) {
+        input.style.borderColor = '#dc2626';
+        showToast(`NAP box name "${newName}" already exists`, 'error');
+        input.focus();
+        return;
+    }
+
+    try {
+        showToast('Saving NAP box name...', 'loading');
+
+        const tabId = getTabId();
+        const response = await fetch(`/api/technician/napbox/rename?tab_id=${tabId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                napbox_id: napboxId,
+                napbox_name: newName,
+                tab_id: tabId
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || result.message || 'Failed to rename NAP box');
+        }
+
+        if (map) map.closePopup();
+        showToast(`NAP box renamed to "${newName}"`, 'success');
+
+        // I-RELOAD PARA MAG-UPDATE ANG MARKERS AT SLOTS GRID
+        await loadNapboxSlots();
+
+    } catch (error) {
+        console.error('Error renaming NAP box:', error);
+        input.style.borderColor = '#dc2626';
+        showToast(error.message || 'Failed to rename NAP box', 'error');
+    }
+}
+
+window.startEditNapboxName = startEditNapboxName;
+window.cancelEditNapboxName = cancelEditNapboxName;
+window.saveNapboxName = saveNapboxName;
+window.checkNapboxNameExists = checkNapboxNameExists;
+
+
 
 // ================= POINT-IN-BOUNDARY CHECK =================
 function isPointInsideBoundary(lat, lng) {
@@ -2408,6 +2587,18 @@ async function confirmAddNapbox() {
     
     if (!pendingLocation) {
         showToast('Please select location on map or enter coordinates', 'error');
+        return;
+    }
+
+    // ===== DUPLICATE NAME CHECK =====
+    const nameAlreadyExists = await checkNapboxNameExists(napboxName);
+    if (nameAlreadyExists) {
+        showToast(`NAP box name "${napboxName}" already exists. Please use a different name.`, 'error');
+        const dupInput = document.getElementById('napboxName');
+        if (dupInput) {
+            dupInput.focus();
+            dupInput.style.borderColor = '#dc2626';
+        }
         return;
     }
     
