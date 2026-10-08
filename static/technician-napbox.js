@@ -1449,6 +1449,25 @@ function addNapboxMarkers(napboxes) {
                 </div>
             `);
 
+            // ===== PIGILAN ANG POPUP NA MAG-CLOSE KAPAG NAGDI-DITO SA LOOB =====
+            const napboxPopup = marker.getPopup();
+            napboxPopup.options.closeOnClick = false;      // hindi magsasara kapag may click sa map
+            napboxPopup.options.autoClose = false;         // hindi magsasara kapag may ibang popup na bumukas
+            napboxPopup.options.closeOnEscapeKey = false;  // Esc ay para sa Cancel Edit lang
+
+            marker.on('popupopen', (ev) => {
+                const popupEl = ev.popup.getElement();
+                if (!popupEl) return;
+
+                // Huwag ipasa sa map ang mga events mula sa loob ng popup
+                L.DomEvent.disableClickPropagation(popupEl);
+                L.DomEvent.disableScrollPropagation(popupEl);
+                ['keydown', 'keypress', 'keyup', 'mousedown', 'mouseup',
+                 'dblclick', 'contextmenu', 'touchstart'].forEach(evtName => {
+                    L.DomEvent.on(popupEl, evtName, L.DomEvent.stopPropagation);
+                });
+            });
+
             marker.on('click', () => {
                 currentFilter = 'all';
                 currentBarangayFilter = '';
