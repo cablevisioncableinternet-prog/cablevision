@@ -85,6 +85,63 @@ let currentStatus = null;
 let currentPage = 1;
 const rowsPerPage = 10;
 
+// ==================== PAGE STATE (para mabalik ang page pagbalik galing View) ====================
+const PAGE_STATE_KEY = 'admin_customers_page_state';
+let pendingRestoreState = null;
+
+function savePageState() {
+    try {
+        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify({
+            page: currentPage,
+            search: document.getElementById("searchInput")?.value || "",
+            status: document.getElementById("statusFilter")?.value || "all",
+            plan: document.getElementById("planFilter")?.value || "all"
+        }));
+    } catch (e) {
+        console.warn("Could not save page state:", e);
+    }
+}
+
+function consumePageState() {
+    try {
+        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        sessionStorage.removeItem(PAGE_STATE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Ire-render ang table gamit ang kasalukuyang filters/page (o ang naibalik na state)
+async function applyStateAfterLoad() {
+    if (planOptionsDataRef !== approvedData) {
+        planOptionsDataRef = approvedData;
+        await populatePlanOptions();
+    }
+
+    if (pendingRestoreState) {
+        const s = pendingRestoreState;
+        pendingRestoreState = null;
+
+        const search = document.getElementById("searchInput");
+        const status = document.getElementById("statusFilter");
+        const plan = document.getElementById("planFilter");
+        const clearBtn = document.getElementById("clearSearch");
+
+        if (search) search.value = s.search || "";
+        if (status) status.value = s.status || "all";
+        if (plan) {
+            const exists = [...plan.options].some(o => o.value === s.plan);
+            plan.value = exists ? s.plan : "all";
+        }
+        if (clearBtn) clearBtn.style.display = (s.search ? "flex" : "none");
+
+        currentPage = parseInt(s.page, 10) || 1;
+    }
+
+    applyFiltersAndPaginate(true);
+}
+
 const tableBody = document.getElementById("approvedCustomersBody");
 const noData = document.getElementById("noData");
 const searchInput = document.getElementById("searchInput");
@@ -378,9 +435,7 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
         const cachedCustomers = loadCustomersFromCache();
         if (cachedCustomers && cachedCustomers.length > 0) {
             approvedData = sortCustomersByInstallationStatus(cachedCustomers);
-            filteredData = [...approvedData];
-            currentPage = 1;
-            renderCurrentPage();
+            await applyStateAfterLoad();
             console.log("Customers loaded from cache and sorted (Pending first, then Ongoing, then Installed)");
             return;
         }
@@ -405,12 +460,10 @@ async function fetchApprovedCustomers(forceRefresh = false, silent = false) {
         data = sortCustomersByInstallationStatus(data || []);
         
         approvedData = data || [];
-        filteredData = [...approvedData];
         
         saveCustomersToCache(approvedData);
         
-        currentPage = 1;
-        renderCurrentPage();
+        await applyStateAfterLoad();
         console.log("Customers loaded from API, cached, and sorted (Pending first, then Ongoing, then Installed)");
 
     } catch (err) {
@@ -646,12 +699,15 @@ loadAdminProfile();
 // ================= BUTTON EVENTS =================
 function attachEvents() {
     document.querySelectorAll(".btn-view").forEach(btn =>
-        btn.addEventListener("click", () => window.location.href = `/admin/view-customer-application/${btn.dataset.id}`)
+        btn.addEventListener("click", () => {
+            savePageState();
+            window.location.href = `/admin/view-customer-application/${btn.dataset.id}`;
+        })
     );
 }
 
 // ================= SEARCH & FILTER =================
-function applyFiltersAndPaginate() {
+function applyFiltersAndPaginate(keepPage = false) {
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : "";
     const selectedStatus = document.getElementById("statusFilter") ? document.getElementById("statusFilter").value : "all";
 
@@ -679,7 +735,7 @@ function applyFiltersAndPaginate() {
     filtered = sortCustomersByInstallationStatus(filtered);
     
     filteredData = filtered;
-    currentPage = 1;
+    if (keepPage !== true) currentPage = 1;
     renderCurrentPage();
 }
 
@@ -820,6 +876,9 @@ document.addEventListener('visibilitychange', async () => {
 
 // ================= INITIAL LOAD =================
 document.addEventListener("DOMContentLoaded", async () => {
+    // Kunin ang naka-save na page/filters (kung galing sa View page)
+    pendingRestoreState = consumePageState();
+
     // First, refresh admin info from session
     await refreshAdminInfo();
     
