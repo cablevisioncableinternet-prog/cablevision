@@ -632,7 +632,7 @@ function showStatusModal(userId, currentStatus) {
   
   // UPDATE CONFIRM BUTTON TEXT AND STYLE
   if (confirmBtn) {
-    confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${actionText}`;
+    confirmBtn.textContent = actionText;
     if (isDeactivate) {
       confirmBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
       confirmBtn.style.boxShadow = "0 4px 16px rgba(220, 38, 38, 0.25)";
