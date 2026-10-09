@@ -222,6 +222,19 @@ let usersData = [];
 const CACHE_KEY = "superadminUsers";
 let pendingAction = null;
 
+// ==================== NORMALIZE USER ====================
+function normalizeUser(u) {
+  return {
+    user_id: u.user_id,
+    full_name: u.full_name || "N/A",
+    contract_number: u.contract_number || "",
+    status: u.status || "Active",
+    connection_status: (u.connection_status || "Disconnected").trim(),
+    has_pending_request: !!u.has_pending_request,
+    pending_reassignment: !!u.pending_reassignment
+  };
+}
+
 // ==================== PAGINATION ====================
 const PAGE_SIZE = 10;
 let usersPage = 1;
@@ -1044,17 +1057,7 @@ async function fetchUsers(forceRefresh = false) {
     
     const data = await res.json();
 
-    usersData = data.map(u => ({
-      user_id: u.user_id,
-      full_name: u.full_name || "N/A",
-      email: u.email || "",
-      status: u.status || "Active",
-      connection_status: (u.connection_status || "Disconnected").trim(),
-      contract_number: u.contract_number || "",
-            has_pending_request: !!u.has_pending_request,
-      pending_reassignment: !!u.pending_reassignment
-    }));
-
+    usersData = data.map(normalizeUser);
     console.log("Fetched users:", usersData.length);
 
     setCache(usersData);
@@ -1267,7 +1270,7 @@ function renderTerminatedUsers(data) {
     tr.innerHTML = `
       <td>${escapeHtml(user.user_id || "N/A")}</td>
       <td>${escapeHtml(user.full_name || "N/A")}</td>
-      <td>${escapeHtml(user.email || "N/A")}</td>
+      <td>${escapeHtml(String(user.contract_number || "N/A"))}</td>
       <td style="text-align: center;">
         <span class="status-terminated" style="
             display: inline-block;
@@ -1587,15 +1590,7 @@ async function performFullRefresh(showToastMsg = true, isManual = false) {
         
         const data = await res.json();
         
-        const newUsersData = data.map(u => ({
-            user_id: u.user_id,
-            full_name: u.full_name || "N/A",
-            email: u.email || "",
-            status: u.status || "Active",
-            connection_status: (u.connection_status || "Disconnected").trim(),
-            has_pending_request: !!u.has_pending_request,
-            pending_reassignment: !!u.pending_reassignment
-        }));
+        const newUsersData = data.map(normalizeUser);
         
         // Update data
         usersData = newUsersData;
@@ -1735,15 +1730,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const res = await fetch("/api/superadmin/users?t=" + Date.now());
                 if (res.ok) {
                     const data = await res.json();
-                    const newUsersData = data.map(u => ({
-                        user_id: u.user_id,
-                        full_name: u.full_name || "N/A",
-                        email: u.email || "",
-                        status: u.status || "Active",
-                        connection_status: (u.connection_status || "Disconnected").trim(),
-                        has_pending_request: !!u.has_pending_request,
-                        pending_reassignment: !!u.pending_reassignment
-                    }));
+                    const newUsersData = data.map(normalizeUser);
                     
                     const newHash = generateHash(newUsersData);
                     if (newHash !== lastDataHash) {
