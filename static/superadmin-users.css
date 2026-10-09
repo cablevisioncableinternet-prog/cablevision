@@ -3474,3 +3474,16 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
     font-size: 0.75rem !important;
   }
 }
+
+/* ================= DEACTIVATE BUTTON (RED) ================= */
+.main-content button.statusBtn {
+  background: #b4232c !important;
+  border-color: #b4232c !important;
+  color: #fff !important;
+}
+
+.main-content button.statusBtn:hover {
+  background: #941b23 !important;
+  border-color: #941b23 !important;
+  filter: none;
+}
