@@ -101,6 +101,62 @@ async function checkSession() {
 // ==================== PAGINATION VARIABLES ====================
 let currentPage = 1;    
 const rowsPerPage = 10;
+
+// ==================== PAGE STATE (para mabalik ang page pagbalik galing View) ====================
+const PAGE_STATE_KEY = 'superadmin_customers_page_state';
+let pendingRestoreState = null;
+
+function savePageState() {
+    try {
+        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify({
+            page: currentPage,
+            search: document.getElementById("searchInput")?.value || "",
+            status: document.getElementById("statusFilter")?.value || "all",
+            plan: document.getElementById("planFilter")?.value || "all",
+            area: document.getElementById("areaFilter")?.value || "all"
+        }));
+    } catch (e) {
+        console.warn("Could not save page state:", e);
+    }
+}
+
+function consumePageState() {
+    try {
+        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        sessionStorage.removeItem(PAGE_STATE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const exists = [...el.options].some(o => o.value === value);
+    el.value = exists ? value : el.options[0]?.value;
+}
+
+// Ibabalik ang naka-save na page/filters (kung galing sa View page)
+function applyRestoredState() {
+    if (!pendingRestoreState) return;
+    const s = pendingRestoreState;
+    pendingRestoreState = null;
+
+    const search = document.getElementById("searchInput");
+    if (search) search.value = s.search || "";
+
+    setSelectValue("statusFilter", s.status || "all");
+    setSelectValue("planFilter", s.plan || "all");
+    setSelectValue("areaFilter", s.area || "all");
+
+    const clearBtn = document.getElementById("clearSearch");
+    if (clearBtn) clearBtn.style.display = s.search ? "flex" : "none";
+
+    currentPage = parseInt(s.page, 10) || 1;
+}
+
+
 let paginatedData = [];
 const paginationContainer = document.getElementById("paginationControls");
 
@@ -571,7 +627,10 @@ function escapeHtml(str) {
 // ==================== ATTACH BUTTON EVENTS ====================
 function attachEvents() {
     document.querySelectorAll(".btn-view").forEach(btn => {
-        btn.onclick = () => window.location.href = `/superadmin/view-customer-application/${btn.dataset.id}`;
+        btn.onclick = () => {
+            savePageState();
+            window.location.href = `/superadmin/view-customer-application/${btn.dataset.id}`;
+        };
     });
     document.querySelectorAll(".btn-create-account").forEach(btn => {
         btn.onclick = () => openCreateAccountModal(btn.dataset.id);
@@ -581,12 +640,12 @@ function attachEvents() {
 // ==================== SEARCH & FILTER FUNCTIONS ====================
 let searchInput, statusFilter;
 
-function setupSearchAndFilter() {
+async function setupSearchAndFilter() {
     searchInput = document.getElementById("searchInput");
     statusFilter = document.getElementById("statusFilter");
     if (!searchInput || !statusFilter) return;
     
-    window.applyFiltersAndPaginate = function() {
+    window.applyFiltersAndPaginate = function(keepPage = false) {
         const searchTerm = searchInput.value.toLowerCase().trim();
         const statusValue = statusFilter.value;
         let filtered = [...approvedCustomersData];
@@ -619,12 +678,12 @@ function setupSearchAndFilter() {
         filteredData = filtered;
         const customerCountSpan = document.getElementById("customerCount");
         if (customerCountSpan) customerCountSpan.textContent = filtered.length;
-        currentPage = 1;
+        if (keepPage !== true) currentPage = 1;
         renderCurrentPage();
     };
     
-    searchInput.addEventListener("input", window.applyFiltersAndPaginate);
-    statusFilter.addEventListener("change", window.applyFiltersAndPaginate);
+    searchInput.oninput = window.applyFiltersAndPaginate;
+    statusFilter.onchange = window.applyFiltersAndPaginate;
 
     // Plan & Area filters (onchange para hindi dumoble ang listener tuwing mag-fetch)
     ['planFilter', 'areaFilter'].forEach(id => {
@@ -632,7 +691,8 @@ function setupSearchAndFilter() {
         if (el) el.onchange = window.applyFiltersAndPaginate;
     });
 
-    populateFilterOptions();
+    await populateFilterOptions();
+    applyRestoredState();
     
     const clearBtn = document.getElementById("clearSearch");
     if (clearBtn) {
@@ -750,11 +810,8 @@ async function fetchCustomers(forceRefresh = false) {
         if (cached && cached.length > 0) {
             approvedCustomersData = sortCustomersByInstallationStatus(cached);
             filteredData = [...approvedCustomersData];
-            setupSearchAndFilter();
-            currentPage = 1;
-            renderCurrentPage();
-            const customerCountSpan = document.getElementById("customerCount");
-            if (customerCountSpan) customerCountSpan.textContent = cached.length;
+            await setupSearchAndFilter();
+            window.applyFiltersAndPaginate(true);
             showTable();
             console.log("Customers loaded from cache and sorted");
             isFetching = false;
@@ -769,11 +826,8 @@ async function fetchCustomers(forceRefresh = false) {
         filteredData = [...sortedData];
         setCache(CACHE_KEY, sortedData, 5);
         updateCacheTimestamp();
-        setupSearchAndFilter();
-        currentPage = 1;
-        renderCurrentPage();
-        const customerCountSpan = document.getElementById("customerCount");
-        if (customerCountSpan) customerCountSpan.textContent = sortedData.length;
+        await setupSearchAndFilter();
+        window.applyFiltersAndPaginate(true);
         showTable();
         console.log(`Customers loaded from API: ${sortedData.length} customers found`);
         isManualRefresh = false;
@@ -1012,6 +1066,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     if (!isValid) return;
     
     detectPageRefresh();
+    pendingRestoreState = consumePageState();
     trackPageLoads();
     const hasCacheBuster = checkForCacheBusting();
     const hasRefreshFlag = checkForCustomerRefreshFlag();
