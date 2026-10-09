@@ -235,6 +235,19 @@ function normalizeUser(u) {
   };
 }
 
+// ==================== NORMALIZE USER ====================
+function normalizeUser(u) {
+  return {
+    user_id: u.user_id,
+    full_name: u.full_name || "N/A",
+    contract_number: u.contract_number || "",
+    status: u.status || "Active",
+    connection_status: (u.connection_status || "Disconnected").trim(),
+    has_pending_request: !!u.has_pending_request,
+    pending_reassignment: !!u.pending_reassignment
+  };
+}
+
 // ==================== PAGINATION ====================
 const PAGE_SIZE = 10;
 let usersPage = 1;
@@ -1663,16 +1676,7 @@ async function autoRefreshUsers() {
         const res = await fetch("/api/superadmin/users?t=" + Date.now());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        const data = await res.json();
-        const newUsersData = data.map(u => ({
-            user_id: u.user_id,
-            full_name: u.full_name || "N/A",
-            email: u.email || "",
-            status: u.status || "Active",
-            connection_status: (u.connection_status || "Disconnected").trim(),
-            has_pending_request: !!u.has_pending_request,
-            pending_reassignment: !!u.pending_reassignment
-        }));
+        const newUsersData = data.map(normalizeUser);
 
         const newHash = generateHash(newUsersData);
         
