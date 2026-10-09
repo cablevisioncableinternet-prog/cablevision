@@ -245,18 +245,6 @@ function paginate(list, page) {
   return list.slice(start, start + PAGE_SIZE);
 }
 
-function getPageNumbers(current, total) {
-  const pages = [];
-  for (let i = 1; i <= total; i++) {
-    if (i === 1 || i === total || Math.abs(i - current) <= 1) {
-      pages.push(i);
-    } else if (pages[pages.length - 1] !== '...') {
-      pages.push('...');
-    }
-  }
-  return pages;
-}
-
 function renderPagination(containerId, currentPage, totalItems, onChange) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -267,32 +255,51 @@ function renderPagination(containerId, currentPage, totalItems, onChange) {
   }
 
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-  const start = (currentPage - 1) * PAGE_SIZE + 1;
-  const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+  const isFirst = currentPage === 1;
+  const isLast = currentPage === totalPages;
 
-  let html = `<span class="pagination-info">Showing ${start}-${end} of ${totalItems}</span>`;
-
-  if (totalPages > 1) {
-    html += '<div class="pagination-controls">';
-    html += `<button type="button" class="pagination-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
-
-    getPageNumbers(currentPage, totalPages).forEach(p => {
-      if (p === '...') {
-        html += '<span class="pagination-ellipsis">...</span>';
-      } else {
-        html += `<button type="button" class="pagination-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
-      }
-    });
-
-    html += `<button type="button" class="pagination-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
-    html += '</div>';
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, startPage + 4);
+  if (endPage - startPage < 4) {
+    startPage = Math.max(1, endPage - 4);
   }
+
+  let html = '';
+
+  html += `<button type="button" class="pagination-btn" data-page="1" ${isFirst ? 'disabled' : ''}><i class="fas fa-angle-double-left"></i></button>`;
+  html += `<button type="button" class="pagination-btn" data-page="${currentPage - 1}" ${isFirst ? 'disabled' : ''}><i class="fas fa-chevron-left"></i> Prev</button>`;
+
+  if (startPage > 1) {
+    html += `<button type="button" class="pagination-btn" data-page="1">1</button>`;
+    if (startPage > 2) {
+      html += `<span class="pagination-ellipsis">...</span>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    html += `<button type="button" class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      html += `<span class="pagination-ellipsis">...</span>`;
+    }
+    html += `<button type="button" class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+  }
+
+  html += `<button type="button" class="pagination-btn" data-page="${currentPage + 1}" ${isLast ? 'disabled' : ''}>Next <i class="fas fa-chevron-right"></i></button>`;
+  html += `<button type="button" class="pagination-btn" data-page="${totalPages}" ${isLast ? 'disabled' : ''}><i class="fas fa-angle-double-right"></i></button>`;
+
+  const from = (currentPage - 1) * PAGE_SIZE + 1;
+  const to = Math.min(currentPage * PAGE_SIZE, totalItems);
+  html += `<div class="pagination-info"><i class="fas fa-database"></i> Showing ${from} - ${to} of ${totalItems} entries</div>`;
 
   el.innerHTML = html;
 
   el.querySelectorAll('.pagination-btn:not([disabled])').forEach(btn => {
     btn.addEventListener('click', () => {
-      onChange(parseInt(btn.dataset.page, 10));
+      const page = parseInt(btn.dataset.page, 10);
+      if (page !== currentPage) onChange(page);
     });
   });
 }

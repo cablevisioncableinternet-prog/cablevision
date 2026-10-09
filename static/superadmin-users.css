@@ -3406,72 +3406,71 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
 /* ================= PAGINATION ================= */
 .pagination {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 16px 0;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 14px;
 }
 
 .pagination:empty {
   display: none;
 }
 
-.pagination-info {
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
 .main-content .pagination-btn {
-  min-width: 34px !important;
-  min-height: 34px !important;
-  padding: 0 10px !important;
-  border: 1px solid #cbd7e3 !important;
-  border-radius: 6px !important;
+  min-height: 0 !important;
+  padding: 8px 16px !important;
   background: #fff !important;
-  color: #334155 !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
+  border: 1.5px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  color: #1a1a1a !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.main-content .pagination-btn:hover:not([disabled]):not(.active) {
-  background: #edf5ff !important;
-  border-color: #0755a5 !important;
-  color: #0755a5 !important;
+.main-content .pagination-btn:hover:not(:disabled) {
+  background: #0047ab !important;
+  border-color: #0047ab !important;
+  color: #fff !important;
+  transform: translateY(-2px);
 }
 
 .main-content .pagination-btn.active {
-  background: #0755a5 !important;
-  border-color: #0755a5 !important;
+  background: #0047ab !important;
+  border-color: #0047ab !important;
   color: #fff !important;
 }
 
-.main-content .pagination-btn[disabled] {
-  opacity: 0.45;
+.main-content .pagination-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .pagination-ellipsis {
-  padding: 0 4px;
-  color: #94a3b8;
-  font-size: 13px;
+  padding: 8px 4px;
+  color: #666666;
+  font-weight: 500;
+}
+
+.pagination-info {
+  margin-left: 16px;
+  font-size: 0.8rem;
+  color: #666666;
+  font-weight: 500;
 }
 
 @media (max-width: 575px) {
-  .pagination {
-    justify-content: center;
+  .pagination-info {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .main-content .pagination-btn {
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
   }
 }
