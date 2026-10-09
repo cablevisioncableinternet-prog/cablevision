@@ -35,6 +35,64 @@ const paginationContainer = document.getElementById("archivedPaginationControls"
 let currentPage = 1;
 const rowsPerPage = 10;
 
+// ==================== PAGE STATE (para mabalik ang page pagbalik galing View) ====================
+const PAGE_STATE_KEY = 'superadmin_archived_page_state';
+let pendingRestoreState = null;
+
+function savePageState() {
+    try {
+        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify({
+            page: currentPage,
+            search: document.getElementById("archivedSearchInput")?.value || "",
+            status: document.getElementById("archivedStatusFilter")?.value || "all",
+            plan: document.getElementById("archivedPlanFilter")?.value || "all",
+            area: document.getElementById("archivedAreaFilter")?.value || "all",
+            sort: document.getElementById("archivedDateSortFilter")?.value || "newest"
+        }));
+    } catch (e) {
+        console.warn("Could not save page state:", e);
+    }
+}
+
+function consumePageState() {
+    try {
+        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        sessionStorage.removeItem(PAGE_STATE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const exists = [...el.options].some(o => o.value === value);
+    el.value = exists ? value : el.options[0]?.value;
+}
+
+// Ibabalik ang naka-save na page/filters (kung galing sa View page)
+function applyRestoredState() {
+    if (!pendingRestoreState) return;
+    const s = pendingRestoreState;
+    pendingRestoreState = null;
+
+    const search = document.getElementById("archivedSearchInput");
+    if (search) search.value = s.search || "";
+
+    setSelectValue("archivedStatusFilter", s.status || "all");
+    setSelectValue("archivedPlanFilter", s.plan || "all");
+    setSelectValue("archivedAreaFilter", s.area || "all");
+    setSelectValue("archivedDateSortFilter", s.sort || "newest");
+
+    archivedDateSort = s.sort || "newest";
+
+    const clearBtn = document.getElementById("archivedClearSearch");
+    if (clearBtn) clearBtn.style.display = s.search ? "flex" : "none";
+
+    currentPage = parseInt(s.page, 10) || 1;
+}
+
 // ==================== CACHE SYSTEM ====================
 function setCache(key, data, ttlMinutes = 5) {
     try {
@@ -513,7 +571,10 @@ function renderArchivedApplications(data) {
 // ==================== ATTACH BUTTON EVENTS ====================
 function attachEvents() {
     document.querySelectorAll(".btn-view").forEach(btn => {
-        btn.onclick = () => window.location.href = `/superadmin/view-application/${btn.dataset.id}?from=archived`;
+        btn.onclick = () => {
+            savePageState();
+            window.location.href = `/superadmin/view-application/${btn.dataset.id}?from=archived`;
+        };
     });
 
     document.querySelectorAll(".btn-delete").forEach(btn => {
@@ -526,20 +587,21 @@ function attachEvents() {
 // ==================== SEARCH & FILTER ====================
 let archivedSearchInput, archivedStatusFilter, archivedDateSortFilter;
 
-function setupSearchAndFilter() {
+async function setupSearchAndFilter() {
     archivedSearchInput = document.getElementById("archivedSearchInput");
     archivedStatusFilter = document.getElementById("archivedStatusFilter");
     archivedDateSortFilter = document.getElementById("archivedDateSortFilter");
 
     if (archivedDateSortFilter) {
         archivedDateSort = archivedDateSortFilter.value;
-        archivedDateSortFilter.addEventListener("change", () => {
+        archivedDateSortFilter.onchange = () => {
             archivedDateSort = archivedDateSortFilter.value;
             applyArchivedFilters();
-        });
+        };
     }
 
-    function applyArchivedFilters() {
+    function applyArchivedFilters(keepPage = false) {
+        const pageToKeep = currentPage;
         const searchTerm = archivedSearchInput ? archivedSearchInput.value.toLowerCase().trim() : "";
         const statusValue = archivedStatusFilter ? archivedStatusFilter.value : "all";
 
@@ -574,46 +636,52 @@ function setupSearchAndFilter() {
 
         filteredArchivedData = sortArchivedApplications(filtered);
 
-        currentPage = 1;
-
         const totalItems = filteredArchivedData.length;
         const totalPages = Math.ceil(totalItems / rowsPerPage);
+
+        if (keepPage === true) {
+            currentPage = Math.max(1, Math.min(pageToKeep, totalPages || 1));
+        } else {
+            currentPage = 1;
+        }
 
         if (totalItems === 0) {
             renderArchivedApplications([]);
             if (paginationContainer) paginationContainer.style.display = "none";
         } else {
-            const pageData = filteredArchivedData.slice(0, Math.min(rowsPerPage, totalItems));
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const pageData = filteredArchivedData.slice(startIndex, startIndex + rowsPerPage);
             renderArchivedApplications(pageData);
             renderPaginationControls(totalPages, totalItems);
         }
     }
 
-    if (archivedSearchInput) archivedSearchInput.addEventListener("input", applyArchivedFilters);
-    if (archivedStatusFilter) archivedStatusFilter.addEventListener("change", applyArchivedFilters);
+    if (archivedSearchInput) archivedSearchInput.oninput = () => applyArchivedFilters();
+    if (archivedStatusFilter) archivedStatusFilter.onchange = () => applyArchivedFilters();
 
     // Plan & Area filters (onchange para hindi dumoble ang listener tuwing mag-fetch)
     ['archivedPlanFilter', 'archivedAreaFilter'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.onchange = applyArchivedFilters;
+        if (el) el.onchange = () => applyArchivedFilters();
     });
 
-    populateFilterOptions();
+    await populateFilterOptions();
+    applyRestoredState();
 
     const archivedClearBtn = document.getElementById("archivedClearSearch");
     if (archivedClearBtn && archivedSearchInput) {
-        archivedClearBtn.addEventListener("click", () => {
+        archivedClearBtn.onclick = () => {
             archivedSearchInput.value = "";
             applyArchivedFilters();
             archivedClearBtn.style.display = "none";
-        });
+        };
 
         archivedSearchInput.addEventListener("input", () => {
             archivedClearBtn.style.display = archivedSearchInput.value ? "flex" : "none";
         });
     }
 
-    applyArchivedFilters();
+    applyArchivedFilters(true);
 }
 
 
@@ -971,6 +1039,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isValid = await checkSession();
     if (!isValid) return;
 
+    pendingRestoreState = consumePageState();
     detectPageRefresh();
 
     await fetchArchivedApplications(false);
