@@ -222,6 +222,68 @@ let usersData = [];
 const CACHE_KEY = "superadminUsers";
 let pendingAction = null;
 
+// ==================== PAGINATION ====================
+const PAGE_SIZE = 10;
+let usersPage = 1;
+let terminatedPage = 1;
+
+function paginate(list, page) {
+  const start = (page - 1) * PAGE_SIZE;
+  return list.slice(start, start + PAGE_SIZE);
+}
+
+function getPageNumbers(current, total) {
+  const pages = [];
+  for (let i = 1; i <= total; i++) {
+    if (i === 1 || i === total || Math.abs(i - current) <= 1) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+  return pages;
+}
+
+function renderPagination(containerId, currentPage, totalItems, onChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  if (!totalItems) {
+    el.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, totalItems);
+
+  let html = `<span class="pagination-info">Showing ${start}-${end} of ${totalItems}</span>`;
+
+  if (totalPages > 1) {
+    html += '<div class="pagination-controls">';
+    html += `<button type="button" class="pagination-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+
+    getPageNumbers(currentPage, totalPages).forEach(p => {
+      if (p === '...') {
+        html += '<span class="pagination-ellipsis">...</span>';
+      } else {
+        html += `<button type="button" class="pagination-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+      }
+    });
+
+    html += `<button type="button" class="pagination-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+
+  el.querySelectorAll('.pagination-btn:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      onChange(parseInt(btn.dataset.page, 10));
+    });
+  });
+}
+
 
 // ==================== BALANCE INPUT VALIDATION ====================
 function setupBalanceInputValidation() {
@@ -988,7 +1050,8 @@ async function fetchUsers(forceRefresh = false) {
       email: u.email || "",
       status: u.status || "Active",
       connection_status: (u.connection_status || "Disconnected").trim(),
-      has_pending_request: !!u.has_pending_request,
+      contract_number: u.contract_number || "",
+            has_pending_request: !!u.has_pending_request,
       pending_reassignment: !!u.pending_reassignment
     }));
 
@@ -1056,7 +1119,7 @@ function renderUsers(data) {
     tr.innerHTML = `
       <td>${escapeHtml(user.user_id || "N/A")}</td>
       <td>${escapeHtml(user.full_name || "N/A")}</td>
-      <td>${escapeHtml(user.email || "N/A")}</td>
+      <td>${escapeHtml(String(user.contract_number || "N/A"))}</td>
       <td style="text-align: center;">
         <span style="
             display: inline-block;
@@ -1356,6 +1419,7 @@ function setupSearchAndFilter() {
   if (!searchInput || !statusFilter || !connectionFilter) return;
   
   function filterUsers() {
+    usersPage = 1;
     applyCurrentFilters();
   }
   
@@ -1388,6 +1452,7 @@ function setupTerminatedSearch() {
     if (clearBtn) {
       clearBtn.style.display = this.value ? "flex" : "none";
     }
+    terminatedPage = 1;
     applyCurrentFilters();
   });
   
@@ -1395,6 +1460,7 @@ function setupTerminatedSearch() {
     clearBtn.addEventListener("click", () => {
       searchInput.value = "";
       clearBtn.style.display = "none";
+      terminatedPage = 1;
       applyCurrentFilters();
     });
   }
@@ -1415,7 +1481,7 @@ function applyCurrentFilters() {
     activeInactiveFiltered = activeInactiveFiltered.filter(user => 
       (user.user_id && String(user.user_id).toLowerCase().includes(searchTerm)) ||
       (user.full_name && user.full_name.toLowerCase().includes(searchTerm)) ||
-      (user.email && user.email.toLowerCase().includes(searchTerm))
+      (user.contract_number && String(user.contract_number).toLowerCase().includes(searchTerm))
     );
   }
   
@@ -1445,7 +1511,14 @@ function applyCurrentFilters() {
   if (userCountSpan) userCountSpan.textContent = activeInactiveFiltered.length;
   
   // I-RENDER ANG ACTIVE + INACTIVE SA IISANG TABLE
-  renderUsers(activeInactiveFiltered);
+  const usersTotalPages = Math.max(1, Math.ceil(activeInactiveFiltered.length / PAGE_SIZE));
+  if (usersPage > usersTotalPages) usersPage = usersTotalPages;
+
+  renderUsers(paginate(activeInactiveFiltered, usersPage));
+  renderPagination("usersPagination", usersPage, activeInactiveFiltered.length, (p) => {
+    usersPage = p;
+    applyCurrentFilters();
+  });
   
   // ====== FILTER TERMINATED USERS (hiwalay na table) ======
   let terminatedFiltered = usersData.filter(u => u.status === "Terminated");
@@ -1455,7 +1528,7 @@ function applyCurrentFilters() {
     terminatedFiltered = terminatedFiltered.filter(user => 
       (user.user_id && String(user.user_id).toLowerCase().includes(termSearch)) ||
       (user.full_name && user.full_name.toLowerCase().includes(termSearch)) ||
-      (user.email && user.email.toLowerCase().includes(termSearch))
+      (user.contract_number && String(user.contract_number).toLowerCase().includes(termSearch))
     );
   }
   
@@ -1472,7 +1545,14 @@ function applyCurrentFilters() {
   }
   
   // I-RENDER ANG TERMINATED SA HIWALAY NA TABLE
-  renderTerminatedUsers(terminatedFiltered);
+  const terminatedTotalPages = Math.max(1, Math.ceil(terminatedFiltered.length / PAGE_SIZE));
+  if (terminatedPage > terminatedTotalPages) terminatedPage = terminatedTotalPages;
+
+  renderTerminatedUsers(paginate(terminatedFiltered, terminatedPage));
+  renderPagination("terminatedPagination", terminatedPage, terminatedFiltered.length, (p) => {
+    terminatedPage = p;
+    applyCurrentFilters();
+  });
 }
 
 // ==================== CORE REFRESH FUNCTION ====================

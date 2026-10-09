@@ -234,7 +234,7 @@
         <p class="header-subtitle">Manage and monitor all subscriber accounts</p>
       </div>
       <div class="stats-badge">
-        <span id="userCount">0</span> active users
+        <span id="userCount">0</span> users
       </div>
     </div>
     
@@ -244,7 +244,7 @@
         <div class="search-icon-wrapper">
           <i class="fas fa-search search-icon"></i>
         </div>
-        <input type="text" id="searchInput" placeholder="Search by name, email, or user ID...">
+        <input type="text" id="searchInput" placeholder="Search by name, contract number, or user ID...">
         <button class="search-clear-btn" id="clearSearch" style="display: none;">
           <i class="fas fa-times"></i>
         </button>
@@ -277,7 +277,7 @@
             <tr>
               <th>User ID</th>
               <th>Full Name</th>
-              <th>Email</th>
+              <th>Contract Number</th>
               <th>Status</th>
               <th>Connection</th>
               <th>Actions</th>
@@ -302,6 +302,9 @@
           </tbody>
         </table>
       </div>
+
+           <!-- Pagination -->
+      <div class="pagination" id="usersPagination"></div>
 
       <!-- No Data Message -->
       <div id="noData" class="no-data-message">
@@ -343,7 +346,7 @@
             <tr>
               <th>User ID</th>
               <th>Full Name</th>
-              <th>Email</th>
+              <th>Contract Number</th>
               <th>Status</th>
               <th>Connection</th>
               <th>Actions</th>
@@ -361,6 +364,9 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination for Terminated -->
+      <div class="pagination" id="terminatedPagination"></div>
 
       <!-- No Data Message for Terminated -->
       <div id="noTerminatedData" class="no-data-message" style="display: none;">

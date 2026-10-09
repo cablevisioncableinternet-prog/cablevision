@@ -5086,16 +5086,32 @@ def get_users():
     try:
         # Query users table for customer role (with pending request flag and pending reassignment flag)
         users_query = """
-            SELECT u.user_id, u.email, u.status, u.connection_status, 
+            SELECT u.user_id, u.email, u.status, u.connection_status,
                    u.first_name, u.last_name, u.middle_name, u.suffix,
                    u.customer_id, u.application_number,
-                   CASE WHEN r_pending.request_id IS NOT NULL THEN 1 ELSE 0 END AS has_pending_request,
-                   CASE WHEN u.status = 'Terminated' AND (c.installation_status IN ('Pending', 'Slot Assigned', 'Ongoing')) THEN 1 ELSE 0 END AS pending_reassignment
+                   COALESCE(
+                       NULLIF(u.contract_number, ''),
+                       (SELECT c2.contract_number
+                          FROM customers c2
+                         WHERE u.application_number IS NOT NULL
+                           AND u.application_number <> ''
+                           AND c2.application_number = u.application_number
+                         LIMIT 1)
+                   ) AS contract_number,
+                   CASE WHEN EXISTS (
+                        SELECT 1 FROM reconnect_requests r
+                         WHERE r.user_id = u.user_id AND r.status = 'Pending'
+                   ) THEN 1 ELSE 0 END AS has_pending_request,
+                   CASE WHEN u.status = 'Terminated' AND EXISTS (
+                        SELECT 1 FROM customers c
+                         WHERE c.installation_status IN ('Pending', 'Slot Assigned', 'Ongoing')
+                           AND (
+                                (u.application_number IS NOT NULL AND u.application_number <> '' AND c.application_number = u.application_number)
+                             OR (u.email IS NOT NULL AND u.email <> '' AND c.email = u.email)
+                             OR (u.contract_number IS NOT NULL AND u.contract_number <> '' AND c.contract_number = u.contract_number)
+                           )
+                   ) THEN 1 ELSE 0 END AS pending_reassignment
             FROM users u
-            LEFT JOIN reconnect_requests r_pending 
-                   ON r_pending.user_id = u.user_id AND r_pending.status = 'Pending'
-            LEFT JOIN customers c 
-                   ON (c.application_number = u.application_number OR c.email = u.email OR c.contract_number = u.contract_number)
             WHERE u.role = 'customer'
         """
         users_data = execute_query(users_query, fetch=True) or []
@@ -5124,7 +5140,8 @@ def get_users():
             users.append({
                 "user_id": user_id,
                 "full_name": full_name,
-                "email": user.get('email', ''),
+                "email": user.get('email', '') or '',
+                "contract_number": user.get('contract_number') or '',
                 "status": user.get('status', 'Active'),
                 "connection_status": user.get('connection_status', 'Disconnected'),
                 "has_pending_request": bool(user.get('has_pending_request', 0)),
