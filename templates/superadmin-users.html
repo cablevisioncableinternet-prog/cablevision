@@ -386,6 +386,8 @@
     
     <!-- Modal Header -->
     <div class="status-modal-header">
+      <div class="status-modal-icon" id="statusModalIcon">
+      </div>
       <h3 id="statusTitle">Confirm Action</h3>
       <p id="statusText">Are you sure you want to perform this action?</p>
     </div>
@@ -394,6 +396,7 @@
     <div id="balanceField" style="display: none;">
       <div class="balance-input-wrapper">
         <div class="balance-input-label">
+          <i class="fas fa-coins"></i>
           <span>Remaining Balance</span>
         </div>
         <div class="balance-input-group">
@@ -413,10 +416,10 @@
     <!-- Modal Actions -->
     <div class="status-modal-actions">
       <button id="cancelStatus" class="btn btn-cancel">
-        Cancel
+        <i class="fas fa-times"></i> Cancel
       </button>
       <button id="confirmStatus" class="btn btn-confirm">
-        Confirm
+        <i class="fas fa-check"></i> Confirm
       </button>
     </div>
   </div>
