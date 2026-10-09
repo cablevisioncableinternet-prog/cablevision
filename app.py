@@ -5113,6 +5113,7 @@ def get_users():
                    ) THEN 1 ELSE 0 END AS pending_reassignment
             FROM users u
             WHERE u.role = 'customer'
+            ORDER BY u.created_at ASC, LENGTH(u.user_id) ASC, u.user_id ASC
         """
         users_data = execute_query(users_query, fetch=True) or []
         
