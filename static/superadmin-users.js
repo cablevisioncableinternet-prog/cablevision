@@ -552,12 +552,12 @@ function showNoData() {
 }
 
 // ================= SHOW STATUS MODAL (ENHANCED WITH RED THEME) =================
+// ================= SHOW STATUS MODAL (ENHANCED WITH RED THEME, NO ICONS) =================
 function showStatusModal(userId, currentStatus) {
   const modal = document.getElementById("statusModal");
   const modalContent = modal?.querySelector('.modal-content');
   const title = document.getElementById("statusTitle");
   const text = document.getElementById("statusText");
-  const icon = document.getElementById("statusModalIcon");
   const balanceField = document.getElementById("balanceField");
   const balanceInput = document.getElementById("balanceInput");
   const confirmBtn = document.getElementById("confirmStatus");
@@ -566,38 +566,28 @@ function showStatusModal(userId, currentStatus) {
   let newStatus;
   let actionText;
   let showBalance = false;
-  let iconClass = "fa-user-cog";
-  let iconBg = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
   let isDeactivate = false;
   
   if (currentStatus === "Active") {
     newStatus = "Inactive";
     actionText = "Deactivate";
     showBalance = true;
-    iconClass = "fa-user-slash"; // Pinalitan ng user-slash
-    iconBg = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
     isDeactivate = true;
   } else if (currentStatus === "Inactive") {
     newStatus = "Active";
     actionText = "Activate";
     showBalance = false;
-    iconClass = "fa-user-check";
-    iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
   } else if (currentStatus === "Terminated") {
     newStatus = "Active";
     actionText = "Reactivate";
     showBalance = false;
-    iconClass = "fa-undo-alt";
-    iconBg = "linear-gradient(135deg, #0047ab 0%, #007bff 100%)";
   } else {
     newStatus = "Active";
     actionText = "Activate";
     showBalance = false;
-    iconClass = "fa-user-check";
-    iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
   }
   
-  if (!modal || !title || !text || !icon) return;
+  if (!modal || !title || !text) return;
   
   // REMOVE OLD THEME CLASSES
   if (modalContent) {
@@ -608,10 +598,6 @@ function showStatusModal(userId, currentStatus) {
   if (isDeactivate) {
     modalContent.classList.add('red-theme');
   }
-  
-  // SET ICON
-  icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
-  icon.style.background = iconBg;
   
   // SET TITLE & TEXT
   title.textContent = `Confirm ${actionText}`;
@@ -626,18 +612,14 @@ function showStatusModal(userId, currentStatus) {
   } else {
     balanceField.style.display = "none";
     balanceInput.value = "";
-    balanceField.style.display = "block";
-    balanceInput.value = "";
     balanceInput.classList.remove('field-error');
     const errorMsg = document.getElementById('balanceError');
     if (errorMsg) errorMsg.style.display = 'none';
   }
-
   
-  
-  // UPDATE CONFIRM BUTTON TEXT AND STYLE
+  // UPDATE CONFIRM BUTTON TEXT AND STYLE (WALANG ICON)
   if (confirmBtn) {
-    confirmBtn.innerHTML = `<i class="fas fa-check"></i> ${actionText}`;
+    confirmBtn.innerHTML = actionText;
     if (isDeactivate) {
       confirmBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
       confirmBtn.style.boxShadow = "0 4px 16px rgba(220, 38, 38, 0.25)";
