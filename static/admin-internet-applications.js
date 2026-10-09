@@ -120,6 +120,77 @@ let currentRejectedPage = 1;
 const rowsPerPage = 10;
 const rejectedRowsPerPage = 10;
 
+// ==================== PAGE STATE (para mabalik ang page pagbalik galing View) ====================
+const PAGE_STATE_KEY = 'admin_applications_page_state';
+let pendingRestoreState = null;
+
+function savePageState() {
+    try {
+        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify({
+            page: currentPage,
+            rejectedPage: currentRejectedPage,
+            activeSearch: document.getElementById("activeSearchInput")?.value || "",
+            activeStatus: document.getElementById("activeStatusFilter")?.value || "all",
+            activePlan: document.getElementById("activePlanFilter")?.value || "all",
+            activeSort: document.getElementById("activeDateSortFilter")?.value || "oldest",
+            rejectedSearch: document.getElementById("rejectedSearchInput")?.value || "",
+            rejectedPlan: document.getElementById("rejectedPlanFilter")?.value || "all",
+            rejectedSort: document.getElementById("rejectedDateSortFilter")?.value || "oldest"
+        }));
+    } catch (e) {
+        console.warn("Could not save page state:", e);
+    }
+}
+
+function consumePageState() {
+    try {
+        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        sessionStorage.removeItem(PAGE_STATE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const exists = [...el.options].some(o => o.value === value);
+    el.value = exists ? value : el.options[0]?.value;
+}
+
+// Ire-render gamit ang kasalukuyang filters/page (o ang naibalik na state)
+async function applyStateAfterLoad() {
+    if (planOptionsDataRef !== applicationsData) {
+        planOptionsDataRef = applicationsData;
+        await populatePlanOptions();
+    }
+
+    if (pendingRestoreState) {
+        const s = pendingRestoreState;
+        pendingRestoreState = null;
+
+        if (activeSearchInput) activeSearchInput.value = s.activeSearch || "";
+        if (rejectedSearchInput) rejectedSearchInput.value = s.rejectedSearch || "";
+
+        setSelectValue("activeStatusFilter", s.activeStatus || "all");
+        setSelectValue("activePlanFilter", s.activePlan || "all");
+        setSelectValue("activeDateSortFilter", s.activeSort || "oldest");
+        setSelectValue("rejectedPlanFilter", s.rejectedPlan || "all");
+        setSelectValue("rejectedDateSortFilter", s.rejectedSort || "oldest");
+
+        const activeClear = document.getElementById("activeClearSearch");
+        const rejectedClear = document.getElementById("rejectedClearSearch");
+        if (activeClear) activeClear.style.display = s.activeSearch ? "flex" : "none";
+        if (rejectedClear) rejectedClear.style.display = s.rejectedSearch ? "flex" : "none";
+
+        currentPage = parseInt(s.page, 10) || 1;
+        currentRejectedPage = parseInt(s.rejectedPage, 10) || 1;
+    }
+
+    applyFilters(true);
+}
+
 // Sort variables
 let activeDateSort = "oldest";
 let rejectedDateSort = "oldest";
@@ -814,6 +885,7 @@ function escapeHtml(str) {
 function attachButtonEvents() {
     document.querySelectorAll(".btn-view").forEach(btn => {
         btn.addEventListener("click", () => {
+            savePageState();
             window.location.href = `/admin/view-application/${btn.dataset.id}`;
         });
     });
@@ -897,7 +969,7 @@ async function fetchApplications(forceRefresh = false) {
         const cachedApplications = loadApplicationsFromCache();
         if (cachedApplications && cachedApplications.length > 0) {
             applicationsData = cachedApplications;
-            applyFilters();
+            await applyStateAfterLoad();
             console.log("Applications loaded from cache");
             return;
         }
@@ -922,7 +994,7 @@ async function fetchApplications(forceRefresh = false) {
             saveApplicationsToCache(applicationsData);
         }
         
-        applyFilters();
+        await applyStateAfterLoad();
         console.log(`Loaded ${applicationsData.length} applications`);
 
     } catch (err) {
@@ -938,7 +1010,7 @@ async function fetchApplications(forceRefresh = false) {
 // ===============================
 // SEARCH & FILTER LOGIC - FIXED
 // ===============================
-function applyFilters() {
+function applyFilters(keepPage = false) {
     // I-populate ang plan dropdown kapag bagong data lang
     if (planOptionsDataRef !== applicationsData) {
         planOptionsDataRef = applicationsData;
@@ -1027,9 +1099,11 @@ function applyFilters() {
 
     filteredRejectedData = sortRejectedApplications(rejectedFiltered);
     
-    // ============ RESET PAGES ============
-    currentPage = 1;
-    currentRejectedPage = 1;
+    // ============ RESET PAGES (maliban kung refresh/restore lang) ============
+    if (keepPage !== true) {
+        currentPage = 1;
+        currentRejectedPage = 1;
+    }
     
     // ============ RENDER ACTIVE TABLE ============
     const activeTotalItems = filteredActiveData.length;
@@ -1065,8 +1139,9 @@ function applyFilters() {
         if (activeNoData) activeNoData.style.display = "none";
         
         const activeTotalPages = Math.ceil(activeTotalItems / rowsPerPage);
-        const startIndex = 0;
-        const endIndex = Math.min(rowsPerPage, activeTotalItems);
+        if (currentPage > activeTotalPages) currentPage = activeTotalPages;
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, activeTotalItems);
         const pageData = filteredActiveData.slice(startIndex, endIndex);
         renderApplications(pageData);
         renderPaginationControls(activeTotalPages, activeTotalItems);
@@ -1109,8 +1184,9 @@ function applyFilters() {
         if (rejectedCardElement) rejectedCardElement.style.display = "block";
         
         const rejectedTotalPages = Math.ceil(rejectedTotalItems / rejectedRowsPerPage);
-        const startIndex = 0;
-        const endIndex = Math.min(rejectedRowsPerPage, rejectedTotalItems);
+        if (currentRejectedPage > rejectedTotalPages) currentRejectedPage = rejectedTotalPages;
+        const startIndex = (currentRejectedPage - 1) * rejectedRowsPerPage;
+        const endIndex = Math.min(startIndex + rejectedRowsPerPage, rejectedTotalItems);
         const pageData = filteredRejectedData.slice(startIndex, endIndex);
         renderRejectedApplications(pageData);
         renderRejectedPaginationControls(rejectedTotalPages, rejectedTotalItems);
@@ -1376,6 +1452,9 @@ window.refreshApplications = function() {
 // INITIALIZE
 // ===============================
 document.addEventListener("DOMContentLoaded", async () => {
+    // Kunin ang naka-save na pages/filters (kung galing sa View page)
+    pendingRestoreState = consumePageState();
+
     // First, refresh admin info from session
     await refreshAdminInfo();
     
