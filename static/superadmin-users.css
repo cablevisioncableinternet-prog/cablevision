@@ -3212,10 +3212,7 @@ th:nth-child(6), td:nth-child(6) { width: 13%; }
 }
 
 #statusModal .status-modal-content.red-theme .status-modal-header {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  align-items: center;
-  column-gap: 12px;
+  display: block;
   padding: 22px 48px 18px 22px;
   border-bottom: 1px solid #f0dddd;
   background: #fff;

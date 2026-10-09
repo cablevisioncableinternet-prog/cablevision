@@ -557,7 +557,6 @@ function showStatusModal(userId, currentStatus) {
   const modalContent = modal?.querySelector('.modal-content');
   const title = document.getElementById("statusTitle");
   const text = document.getElementById("statusText");
-  const icon = document.getElementById("statusModalIcon");
   const balanceField = document.getElementById("balanceField");
   const balanceInput = document.getElementById("balanceInput");
   const confirmBtn = document.getElementById("confirmStatus");
@@ -597,7 +596,7 @@ function showStatusModal(userId, currentStatus) {
     iconBg = "linear-gradient(135deg, #059669 0%, #10b981 100%)";
   }
   
-  if (!modal || !title || !text || !icon) return;
+  if (!modal || !title || !text) return;
   
   // REMOVE OLD THEME CLASSES
   if (modalContent) {
@@ -608,10 +607,6 @@ function showStatusModal(userId, currentStatus) {
   if (isDeactivate) {
     modalContent.classList.add('red-theme');
   }
-  
-  // SET ICON
-  icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
-  icon.style.background = iconBg;
   
   // SET TITLE & TEXT
   title.textContent = `Confirm ${actionText}`;
