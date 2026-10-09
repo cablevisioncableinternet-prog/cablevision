@@ -38,6 +38,78 @@ let currentRejectedPage = 1;
 const rowsPerPage = 10;
 const rejectedRowsPerPage = 10;
 
+// ==================== PAGE STATE (para mabalik ang page pagbalik galing View) ====================
+const PAGE_STATE_KEY = 'superadmin_applications_page_state';
+let pendingRestoreState = null;
+
+function savePageState() {
+    try {
+        sessionStorage.setItem(PAGE_STATE_KEY, JSON.stringify({
+            page: currentPage,
+            rejectedPage: currentRejectedPage,
+            activeSearch: document.getElementById("activeSearchInput")?.value || "",
+            activeStatus: document.getElementById("activeStatusFilter")?.value || "all",
+            activePlan: document.getElementById("activePlanFilter")?.value || "all",
+            activeArea: document.getElementById("activeAreaFilter")?.value || "all",
+            activeSort: document.getElementById("activeDateSortFilter")?.value || "oldest",
+            rejectedSearch: document.getElementById("rejectedSearchInput")?.value || "",
+            rejectedPlan: document.getElementById("rejectedPlanFilter")?.value || "all",
+            rejectedArea: document.getElementById("rejectedAreaFilter")?.value || "all",
+            rejectedSort: document.getElementById("rejectedDateSortFilter")?.value || "oldest"
+        }));
+    } catch (e) {
+        console.warn("Could not save page state:", e);
+    }
+}
+
+function consumePageState() {
+    try {
+        const raw = sessionStorage.getItem(PAGE_STATE_KEY);
+        sessionStorage.removeItem(PAGE_STATE_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setSelectValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const exists = [...el.options].some(o => o.value === value);
+    el.value = exists ? value : el.options[0]?.value;
+}
+
+// Ibabalik ang naka-save na page/filters (kung galing sa View page)
+function applyRestoredState() {
+    if (!pendingRestoreState) return;
+    const s = pendingRestoreState;
+    pendingRestoreState = null;
+
+    const activeSearch = document.getElementById("activeSearchInput");
+    const rejectedSearch = document.getElementById("rejectedSearchInput");
+    if (activeSearch) activeSearch.value = s.activeSearch || "";
+    if (rejectedSearch) rejectedSearch.value = s.rejectedSearch || "";
+
+    setSelectValue("activeStatusFilter", s.activeStatus || "all");
+    setSelectValue("activePlanFilter", s.activePlan || "all");
+    setSelectValue("activeAreaFilter", s.activeArea || "all");
+    setSelectValue("activeDateSortFilter", s.activeSort || "oldest");
+    setSelectValue("rejectedPlanFilter", s.rejectedPlan || "all");
+    setSelectValue("rejectedAreaFilter", s.rejectedArea || "all");
+    setSelectValue("rejectedDateSortFilter", s.rejectedSort || "oldest");
+
+    activeDateSort = s.activeSort || "oldest";
+    rejectedDateSort = s.rejectedSort || "oldest";
+
+    const activeClear = document.getElementById("activeClearSearch");
+    const rejectedClear = document.getElementById("rejectedClearSearch");
+    if (activeClear) activeClear.style.display = s.activeSearch ? "flex" : "none";
+    if (rejectedClear) rejectedClear.style.display = s.rejectedSearch ? "flex" : "none";
+
+    currentPage = parseInt(s.page, 10) || 1;
+    currentRejectedPage = parseInt(s.rejectedPage, 10) || 1;
+}
+
 // ==================== CACHE SYSTEM ====================
 function setCache(key, data, ttlMinutes = 5) {
     try {
@@ -701,7 +773,10 @@ function renderRejectedApplications(data) {
 // ==================== ATTACH BUTTON EVENTS ====================
 function attachEvents() {
     document.querySelectorAll(".btn-view").forEach(btn => {
-        btn.onclick = () => window.location.href = `/superadmin/view-application/${btn.dataset.id}`;
+        btn.onclick = () => {
+            savePageState();
+            window.location.href = `/superadmin/view-application/${btn.dataset.id}`;
+        };
     });
     
     // ✅ ARCHIVE BUTTON EVENTS - ito lang ang natira
@@ -718,7 +793,7 @@ function attachEvents() {
 let activeSearchInput, activeStatusFilter, activeDateSortFilter;
 let rejectedSearchInput, rejectedDateSortFilter;
 
-function setupSearchAndFilter() {
+async function setupSearchAndFilter() {
     // Active card elements
     activeSearchInput = document.getElementById("activeSearchInput");
     activeStatusFilter = document.getElementById("activeStatusFilter");
@@ -745,7 +820,8 @@ function setupSearchAndFilter() {
         });
     }
     
-    function applyActiveFilters() {
+    function applyActiveFilters(keepPage = false) {
+        const pageToKeep = currentPage;
         const searchTerm = activeSearchInput ? activeSearchInput.value.toLowerCase().trim() : "";
         const statusValue = activeStatusFilter ? activeStatusFilter.value : "all";
         
@@ -817,15 +893,19 @@ function setupSearchAndFilter() {
             if (noDataEl) noDataEl.style.display = "none";
             
             const totalPages = Math.ceil(totalItems / rowsPerPage);
-            const startIndex = 0;
-            const endIndex = Math.min(rowsPerPage, totalItems);
+            if (keepPage === true) {
+                currentPage = Math.min(pageToKeep, totalPages);
+            }
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
             const pageData = filteredActiveData.slice(startIndex, endIndex);
             renderApplications(pageData);
             renderPaginationControls(totalPages, totalItems);
         }
     }
     
-    function applyRejectedFilters() {
+    function applyRejectedFilters(keepPage = false) {
+        const pageToKeep = currentRejectedPage;
         const searchTerm = rejectedSearchInput ? rejectedSearchInput.value.toLowerCase().trim() : "";
         
         let filtered = applicationsData.filter(app => app.status === "Rejected" && !app.is_archived);
@@ -898,8 +978,11 @@ function setupSearchAndFilter() {
             if (rejectedCardEl) rejectedCardEl.style.display = "block";
             
             const totalPages = Math.ceil(totalItems / rejectedRowsPerPage);
-            const startIndex = 0;
-            const endIndex = Math.min(rejectedRowsPerPage, totalItems);
+            if (keepPage === true) {
+                currentRejectedPage = Math.min(pageToKeep, totalPages);
+            }
+            const startIndex = (currentRejectedPage - 1) * rejectedRowsPerPage;
+            const endIndex = Math.min(startIndex + rejectedRowsPerPage, totalItems);
             const pageData = filteredRejectedData.slice(startIndex, endIndex);
             renderRejectedApplications(pageData);
             renderRejectedPaginationControls(totalPages, totalItems);
@@ -950,11 +1033,12 @@ function setupSearchAndFilter() {
         });
     }
     
-    populateFilterOptions();
+    await populateFilterOptions();
+    applyRestoredState();
 
-    // Initial loads
-    applyActiveFilters();
-    applyRejectedFilters();
+    // Initial loads (panatilihin ang kasalukuyang page)
+    applyActiveFilters(true);
+    applyRejectedFilters(true);
 }
 
 
@@ -1429,6 +1513,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!isValid) return;
     
     detectPageRefresh();
+    pendingRestoreState = consumePageState();
     trackPageLoads();
     
     const hasCacheBuster = checkForCacheBusting();
