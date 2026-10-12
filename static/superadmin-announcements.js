@@ -712,9 +712,23 @@ async function confirmDelete() {
 
 // ==================== IMAGE PREVIEW WITH VALIDATION ====================
 function previewImage(input, previewId) {
-    var container = input.closest('.input-group').querySelector('#' + previewId + 'Container');
+    var container = document.getElementById(previewId + 'Container');
     var previewImg = document.getElementById(previewId);
-    var emptyState = input.id === 'editAnnouncementImage' ? document.getElementById('editImageEmptyState') : null;
+    var isEdit = input.id === 'editAnnouncementImage';
+    var emptyState = isEdit ? document.getElementById('editImageEmptyState') : null;
+
+    // Ibalik sa dating itsura (kasalukuyang image sa edit modal, o walang preview sa create)
+    function resetPreview() {
+        if (isEdit && window.currentEditImagePath) {
+            if (previewImg) previewImg.src = window.currentEditImagePath;
+            if (container) container.style.display = 'block';
+            if (emptyState) emptyState.style.display = 'none';
+        } else {
+            if (previewImg) previewImg.src = '';
+            if (container) container.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'grid';
+        }
+    }
     
     if (input.files && input.files[0]) {
         var file = input.files[0];
@@ -725,23 +739,20 @@ function previewImage(input, previewId) {
         if (!validTypes.includes(fileExt)) {
             showToast("Only PNG and JPEG images are allowed!", "error");
             input.value = '';
-            if (container) container.style.display = 'none';
-            if (previewImg) previewImg.src = '';
-            if (emptyState) emptyState.style.display = 'grid';
+            resetPreview();
             return;
         }
         
         var reader = new FileReader();
         reader.onload = function(e) {
-            previewImg.src = e.target.result;
+            if (previewImg) previewImg.src = e.target.result;
             if (container) container.style.display = 'block';
             if (emptyState) emptyState.style.display = 'none';
+            if (isEdit) window.editImageRemoved = false;
         };
         reader.readAsDataURL(file);
     } else {
-        if (container) container.style.display = 'none';
-        if (previewImg) previewImg.src = '';
-        if (emptyState) emptyState.style.display = 'grid';
+        resetPreview();
     }
 }
 
