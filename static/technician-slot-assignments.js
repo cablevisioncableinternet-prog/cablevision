@@ -718,7 +718,7 @@ function renderCustomers(customers) {
                 <td><strong>${escapeHtml(cust.application_number)}</strong></td>
                 <td><strong>${escapeHtml(contractNumber)}</strong>${installDateDisplay}</td>
                 <td>${escapeHtml(cust.first_name || '')} ${escapeHtml(cust.last_name || '')}</td>
-                <td>${escapeHtml(cust.mobile || 'N/A')}<br><small>${escapeHtml(cust.email || '')}</small></td>
+                <td>${escapeHtml(cust.mobile || 'N/A')}<br></td>
                 <td>${escapeHtml(cust.plan || 'N/A')}</td>
                 <td>${escapeHtml(cust.barangay || 'N/A')}</td>
                 <td style="text-align: center;">${slotDisplay}</td>
