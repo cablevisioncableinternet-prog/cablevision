@@ -366,6 +366,19 @@ function renderAnnouncementCard(a) {
     var hasImage = a.imagePath && a.imagePath !== '';
     var messageDisplay = hasMessage ? a.message : '';
     var isImageOnly = !hasTitle && !hasMessage && hasImage;
+
+    // ID lang ang ipinapasa sa onclick (ligtas kahit may ' " o bagong linya ang title/message)
+    var safeId = String(a.id).replace(/[^a-zA-Z0-9_-]/g, '');
+    var actionsHtml = `
+        <div class="announcement-actions">
+            <button type="button" class="edit-btn btn-edit" onclick="openEditModal('${safeId}')">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button type="button" class="delete-btn btn-delete" onclick="openDeleteModal('${safeId}')">
+                <i class="fas fa-trash-alt"></i> Delete
+            </button>
+        </div>
+    `;
     
     if (isImageOnly) {
         return `
@@ -377,14 +390,7 @@ function renderAnnouncementCard(a) {
                         </div>
                         ${expiryHtml ? '<div class="announcement-expiry">' + expiryHtml + '</div>' : ''}
                     </div>
-                    <div class="announcement-actions">
-                        <button class="edit-btn btn-edit" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="delete-btn btn-delete" onclick="openDeleteModal('${a.id}')">
-                            <i class="fas fa-trash-alt"></i> Delete
-                        </button>
-                    </div>
+                    ${actionsHtml}
                 </div>
                 ${imageHtml}
             </div>
@@ -401,14 +407,7 @@ function renderAnnouncementCard(a) {
                     </div>
                     ${expiryHtml ? '<div class="announcement-expiry">' + expiryHtml + '</div>' : ''}
                 </div>
-                <div class="announcement-actions">
-                    <button class="edit-btn btn-edit" onclick="openEditModal('${a.id}', '${escapeHtml(a.title || '')}', '${escapeHtml(a.message || '')}', '${a.imagePath || ''}', '${a.expirationDate || ''}')">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="delete-btn btn-delete" onclick="openDeleteModal('${a.id}')">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
-                </div>
+                ${actionsHtml}
             </div>
             ${hasMessage ? '<div class="announcement-message">' + escapeHtml(messageDisplay) + '</div>' : ''}
             ${imageHtml}
@@ -419,10 +418,12 @@ function renderAnnouncementCard(a) {
 // ==================== ESCAPE HTML ====================
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
+    return String(str).replace(/[&<>"']/g, function(m) {
         if (m === '&') return '&amp;';
         if (m === '<') return '&lt;';
         if (m === '>') return '&gt;';
+        if (m === '"') return '&quot;';
+        if (m === "'") return '&#39;';
         return m;
     });
 }
@@ -531,7 +532,17 @@ function setupEditCharCounter() {
 }
 
 // ==================== EDIT MODAL ====================
-function openEditModal(id, title, message, imagePath, expirationDate) {
+function openEditModal(id) {
+    var ann = allAnnouncements.find(function(a) { return String(a.id) === String(id); });
+    if (!ann) {
+        showToast("Announcement not found. Please refresh the page.", "error");
+        return;
+    }
+    var title = ann.title || '';
+    var message = ann.message || '';
+    var imagePath = ann.imagePath || '';
+    var expirationDate = ann.expirationDate || '';
+
     editID = id;
     document.getElementById("editTitle").value = title || '';
     document.getElementById("editMessage").value = message || '';
