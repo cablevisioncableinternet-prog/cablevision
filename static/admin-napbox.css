@@ -6017,3 +6017,155 @@ body {
     min-width: 0;
   }
 }
+
+
+
+/* ============================================================
+   ADMIN SLOT CARDS - SAME DESIGN & SIZE AS TECHNICIAN
+   ============================================================ */
+
+/* ---- Wrapper: alisin ang extra padding / double scroll ---- */
+.slots-grid-container {
+  padding: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+/* ---- Grid: 6 columns desktop (parang technician) ---- */
+#adminSlotsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  padding: clamp(10px, 1.5vw, 20px);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ---- Card box ---- */
+.main-content .slot-card {
+  background: #fff;
+  border: 2px solid var(--border-gray);
+  border-radius: 6px;
+  padding: clamp(6px, 0.8vw, 12px) clamp(4px, 0.6vw, 10px) clamp(8px, 1vw, 14px);
+  min-height: clamp(140px, 22vh, 180px);
+  height: auto;
+  width: 100%;
+  max-width: 100%;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.main-content .slot-card.available {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.main-content .slot-card.occupied {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.main-content .slot-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 9px rgba(18, 45, 73, 0.1);
+}
+
+/* ---- Customer name: pwedeng mag-wrap kahit mahabang pangalan ---- */
+.slot-card .slot-customer {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  width: 100%;
+  min-width: 0;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* ---- Tablet (768px - 991px) ---- */
+@media (max-width: 991px) {
+  #adminSlotsGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 991px) and (min-width: 768px) {
+  #adminSlotsGrid {
+    gap: 12px;
+    padding: 16px;
+    max-height: 500px;
+  }
+
+  .main-content .slot-card {
+    min-height: clamp(150px, 20vh, 170px);
+    padding: 8px 6px 10px;
+  }
+}
+
+/* ---- Mobile (480px - 767px) ---- */
+@media (max-width: 767px) {
+  #adminSlotsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) and (min-width: 480px) {
+  #adminSlotsGrid {
+    gap: 12px;
+    padding: 12px;
+    max-height: 400px;
+  }
+
+  .main-content .slot-card {
+    min-height: clamp(145px, 24vh, 160px);
+    padding: 6px 4px 8px;
+    border-width: 1.5px;
+  }
+}
+
+/* ---- Small mobile (under 480px) ---- */
+@media (max-width: 479px) {
+  #adminSlotsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 8px;
+    max-height: 350px;
+  }
+
+  .main-content .slot-card {
+    min-height: clamp(135px, 26vh, 150px);
+    padding: 5px 3px 6px;
+    border-width: 1.5px;
+  }
+}
+
+/* ---- Extra small mobile (under 380px) ---- */
+@media (max-width: 379px) {
+  #adminSlotsGrid {
+    padding: 6px;
+    max-height: 300px;
+  }
+
+  .main-content .slot-card {
+    min-height: clamp(125px, 28vh, 140px);
+    padding: 4px 2px 5px;
+    border-width: 1px;
+  }
+}
+
+/* ---- Landscape ---- */
+@media (max-height: 500px) and (orientation: landscape) {
+  #adminSlotsGrid {
+    padding: 10px;
+    max-height: 250px;
+  }
+
+  .main-content .slot-card {
+    min-height: clamp(110px, 30vh, 140px);
+    padding: 4px 6px 6px;
+  }
+}

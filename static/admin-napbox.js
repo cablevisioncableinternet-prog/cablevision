@@ -518,12 +518,15 @@ function renderAdminSlotsGrid() {
         
         const slotData = JSON.stringify(slot).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
         
-        // CUSTOMER NAME - one line, walang ellipsis
+        // CUSTOMER NAME - same sizing as technician (long-name / very-long-name)
         let customerDisplay = '';
         if (slot.customer_name) {
             const customerName = slot.customer_name;
-            const isLongName = customerName.length > 15;
-            const longNameClass = isLongName ? 'long-name' : '';
+            const longNameClass = customerName.length > 30
+                ? 'very-long-name'
+                : customerName.length > 15
+                    ? 'long-name'
+                    : '';
             customerDisplay = `<span class="slot-customer ${longNameClass}">${escapeHtml(customerName)}</span>`;
         }
         
