@@ -1131,6 +1131,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-align: center;
 }
 
 .edit-btn i {
@@ -1156,6 +1157,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-align: center;
 }
 
 .delete-btn i {
