@@ -1131,7 +1131,6 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  text-align: center;
 }
 
 .edit-btn i {
@@ -1157,7 +1156,6 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  text-align: center;
 }
 
 .delete-btn i {
@@ -2146,7 +2144,7 @@ body {
 .main-content :is(input,select,textarea):focus { border-color:var(--page-blue); box-shadow:0 0 0 3px rgba(0,71,171,.12); outline:0; }
 .main-content .announcement-card { border:1px solid var(--page-border); border-radius:8px; background:#fff; box-shadow:0 3px 10px rgba(0,26,51,.06); }
 .main-content .announcement-actions { display:flex; flex-wrap:wrap; gap:6px; }
-.main-content .announcement-actions button { flex:0 0 auto; min-width:92px; min-height:36px; padding:7px 10px!important; border-radius:6px; font-size:11px; }
+.main-content .announcement-actions button { flex:0 0 auto; min-width:92px; min-height:36px; padding:7px 10px!important; border-radius:6px; font-size:11px; display:inline-flex!important; align-items:center!important; justify-content:center!important; text-align:center; gap:6px; }
 .main-content .btn-primary { background:#0755a5!important; border-color:#0755a5!important; color:#fff!important; }
 .main-content .btn-secondary { background:#475569!important; border-color:#475569!important; color:#fff!important; }
 .main-content .announcement-actions .btn-edit { background:#0755a5!important; border-color:#0755a5!important; color:#fff!important; }
