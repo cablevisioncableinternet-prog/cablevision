@@ -7458,7 +7458,74 @@ def download_pdf(application_number):
     )
 
 
+def notify_team_technicians(cursor, assigned_team_id, app_id, applicant_name,
+                            application_city, installation_date=None, via_request=False):
+    """Mag-insert ng notification sa lahat ng active technician na under sa assigned team."""
+    import time
+    import traceback
 
+    if not assigned_team_id:
+        print(f" No assigned_team_id for {app_id}, skipping technician notification")
+        return 0
+
+    try:
+        cursor.execute("""
+            SELECT technician_id
+            FROM technicians
+            WHERE team_id = %s AND status = 'Active'
+        """, (assigned_team_id,))
+        technicians = cursor.fetchall()
+        print(f" Found {len(technicians)} technicians in team {assigned_team_id}")
+
+        if not technicians:
+            return 0
+
+        title = "New Installation Assigned to Your Team"
+        if via_request:
+            title += " (via Admin Request)"
+
+        message = (
+            f"Application {app_id} from {applicant_name} has been APPROVED and assigned to your team. "
+            f"Please assign a slot and schedule the installation"
+        )
+        if installation_date:
+            message += f" (target date: {installation_date})"
+        message += "."
+
+        base_id = int(time.time() * 1000)
+        count = 0
+
+        for idx, tech in enumerate(technicians):
+            technician_id = tech.get("technician_id")
+            if not technician_id:
+                continue
+
+            cursor.execute("""
+                INSERT INTO technician_notifications
+                (id, technician_id, technician_area, title, message, type, relatedId,
+                 application_number, customer_name, timestamp, read_status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
+            """, (
+                base_id + idx + 1,
+                str(technician_id),
+                application_city,
+                title,
+                message,
+                "new_approved_application",
+                app_id,
+                app_id,
+                applicant_name,
+                ph_now_iso()
+            ))
+            count += 1
+
+        print(f" Created {count} technician notifications for team {assigned_team_id}")
+        return count
+
+    except Exception as e:
+        print(f" Technician notification error: {e}")
+        traceback.print_exc()
+        return 0
 
 # ==================== UPDATE APPLICATION STATUS - CONVERTED TO MYSQL ====================
 # ==================== UPDATE APPLICATION STATUS - FIXED ====================
@@ -7726,11 +7793,25 @@ def update_internet_application_status(app_id):
                 else:
                     print(f" Contract already exists for {app_id}")
                 
-            except Exception as contract_err:
-                print(f" Contract error: {contract_err}")
-                import traceback
-                traceback.print_exc()
-                # Don't rollback here, we want to keep the application update
+            # ========== NOTIFY TECHNICIANS OF ASSIGNED TEAM ==========
+            try:
+                applicant_name = ' '.join(filter(None, [
+                    app_data.get('first_name', ''),
+                    app_data.get('last_name', '')
+                ])).strip()
+
+                notify_team_technicians(
+                    cursor=cursor,
+                    assigned_team_id=assigned_team_id,
+                    app_id=app_id,
+                    applicant_name=applicant_name,
+                    application_city=app_data.get("city", ""),
+                    installation_date=installation_date,
+                    via_request=False
+                )
+                conn.commit()
+            except Exception as tech_err:
+                print(f" Technician notification error: {tech_err}")
 
                 # ========== SEND EMAIL NOTIFICATION (Background Thread) ==========
         try:
@@ -11070,56 +11151,17 @@ def approve_request(req_id):
 
         cursor.execute(admin_notif_query, admin_notif_params)
 
-        # ========== 5. CREATE NOTIFICATION FOR TECHNICIANS (if approved) ==========
+        # ========== 5. NOTIFY TECHNICIANS OF ASSIGNED TEAM (if approved) ==========
         if requested_status == "Approved":
-            try:
-                application_city = app_data.get("city", "")
-                print(f" Creating technician notification for area: {application_city}")
-
-                tech_query = "SELECT technician_id FROM technicians WHERE UPPER(area) = UPPER(%s) AND status = 'Active'"
-                cursor.execute(tech_query, (application_city,))
-                technicians = cursor.fetchall()
-
-                print(f" Found {len(technicians)} technicians in area: {application_city}")
-
-                if technicians:
-                    import time
-                    success_count = 0
-                    base_id = int(time.time() * 1000)
-
-                    for idx, tech in enumerate(technicians):
-                        technician_id = tech.get('technician_id')
-                        if technician_id:
-                            notification_id = base_id + idx + 1
-
-                            tech_notif_query = """
-                                INSERT INTO technician_notifications
-                                (id, technician_id, technician_area, title, message, type, relatedId,
-                                 application_number, customer_name, timestamp, read_status, created_at)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, NOW())
-                            """
-                            cursor.execute(tech_notif_query, (
-                                notification_id,
-                                technician_id,
-                                application_city,
-                                "New Application Approved (via Admin Request)",
-                                f"New application from {applicant_name} (Application: {app_id}) has been APPROVED and is ready for slot assignment.",
-                                "new_approved_application",
-                                app_id,
-                                app_id,
-                                applicant_name,
-                                ph_now_iso()
-                            ))
-                            success_count += 1
-
-                    print(f" Created {success_count} technician notifications in area: {application_city}")
-                else:
-                    print(f" No active technicians found in area: {application_city}")
-
-            except Exception as tech_err:
-                print(f" Technician notification error: {tech_err}")
-                import traceback
-                traceback.print_exc()
+            notify_team_technicians(
+                cursor=cursor,
+                assigned_team_id=assigned_team_id,
+                app_id=app_id,
+                applicant_name=applicant_name,
+                application_city=app_data.get("city", ""),
+                installation_date=installation_date,
+                via_request=True
+            )
 
         # ========== 6. MARK REQUEST AS DONE ==========
         processed_at_str = ph_now_iso()
@@ -15254,7 +15296,7 @@ def get_admin_applications_total():
         print(f"Error in get_admin_applications_total: {e}")
         return jsonify({"error": str(e)}), 500
 
-        
+
 
 # ===============================
 # ADMIN REQUEST (NOT DIRECT APPROVE)
