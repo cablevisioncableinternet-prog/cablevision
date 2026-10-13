@@ -559,7 +559,10 @@ function openViewModal(requestId) {
     
     // Fill plan details
     document.getElementById('viewPlanName').textContent = request.current_plan || 'N/A';
-    document.getElementById('viewPlanSpeed').textContent = (request.current_speed || 'N/A') + ' Mbps';
+    const speedRaw = String(request.current_speed || '').trim();
+    document.getElementById('viewPlanSpeed').textContent = speedRaw
+        ? (/mbps/i.test(speedRaw) ? speedRaw : speedRaw + ' Mbps')
+        : 'N/A';
     document.getElementById('viewPlanPrice').textContent = formatPrice(request.current_price);
     
     // Fill reason
