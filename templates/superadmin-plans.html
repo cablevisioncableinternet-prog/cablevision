@@ -389,20 +389,21 @@
             <h3 class="edit-section-title">Plan Image</h3>
             <div class="edit-image-grid">
               <div class="edit-field">
-                <label>Current Image</label>
-                <div class="edit-image-preview-wrapper">
-                  <div class="edit-image-preview-container">
-                    <img id="edit_image_preview" src="/static/default-plan.jpg" alt="Current plan image">
-                  </div>
-                </div>
-              </div>
-
-              <div class="edit-field">
+                <label for="edit_image">Upload New Image</label>
                 <div class="edit-file-wrapper">
                   <input type="file" id="edit_image" accept="image/jpeg,image/png">
                   <span class="edit-file-hint">
                     <i class="fas fa-info-circle"></i> JPG or PNG, landscape orientation
                   </span>
+                </div>
+              </div>
+
+              <div class="edit-field">
+                <label>Current Image</label>
+                <div class="edit-image-preview-wrapper">
+                  <div class="edit-image-preview-container">
+                    <img id="edit_image_preview" src="/static/default-plan.jpg" alt="Current plan image">
+                  </div>
                 </div>
               </div>
             </div>

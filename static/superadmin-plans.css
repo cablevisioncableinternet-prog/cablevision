@@ -1940,11 +1940,16 @@ body {
   letter-spacing: 0.6px;
 }
 
-#editPlanModal .edit-fields-grid,
-#editPlanModal .edit-image-grid {
+#editPlanModal .edit-fields-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px 10px;
+}
+
+#editPlanModal .edit-image-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 
 #editPlanModal .edit-field {
@@ -2012,20 +2017,20 @@ body {
 }
 
 #editPlanModal .edit-image-preview-container {
-  min-height: 116px;
-  max-height: 150px;
+  min-height: 140px;
+  max-height: 220px;
   padding: 8px;
   background: #f8f9fb;
 }
 
 #editPlanModal .edit-image-preview-container img {
   width: 100%;
-  max-height: 132px;
+  max-height: 200px;
   object-fit: contain;
 }
 
 #editPlanModal .edit-file-wrapper input[type="file"] {
-  min-height: 116px;
+  min-height: 64px;
   margin: 0;
   padding: 12px;
   border: 1px dashed #cbd3de;
