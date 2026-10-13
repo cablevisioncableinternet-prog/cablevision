@@ -349,7 +349,8 @@ async function fetchActiveApplicationsCount() {
     if (!username) return 0;
     
     try {
-        const res = await fetch(`/api/admin/internet-applications?username=${username}&tab_id=${tabId}`);
+        // BAGO: hiwalay na endpoint, kasama lahat (Rejected, Cancelled, Archived)
+        const res = await fetch(`/api/admin/applications-total?username=${username}&tab_id=${tabId}`);
         if (!res.ok) throw new Error("Failed to fetch applications");
         const applications = await res.json();
         
@@ -364,7 +365,8 @@ async function fetchActiveApplicationsCount() {
             appsArray = Object.values(applications).find(val => Array.isArray(val)) || [];
         }
 
-        const activeApplications = appsArray.filter(app => app.status !== "Rejected");
+        // BAGO: walang filter, kasama lahat
+        const activeApplications = appsArray;
         const activeCount = activeApplications.length;
 
         const totalApplicantsSpan = document.getElementById("totalApplicants");

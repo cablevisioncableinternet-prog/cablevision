@@ -15196,6 +15196,67 @@ def get_admin_internet_applications():
 
 
 # ===============================
+# ADMIN APPLICATIONS TOTAL (DASHBOARD COUNT)
+# Kasama lahat: Rejected, Cancelled, at Archived
+# ===============================
+@app.route("/api/admin/applications-total", methods=["GET"])
+def get_admin_applications_total():
+    try:
+        username = request.args.get("username") or session.get("admin_username") or session.get("adminUsername")
+        tab_id = request.args.get("tab_id", "")
+
+        if not username:
+            return jsonify({"error": "Username required"}), 400
+
+        if tab_id:
+            user_session = session.get(f"admin_{tab_id}")
+            if user_session:
+                session_username = user_session.get("admin_username") or user_session.get("user_name")
+                if session_username and session_username != username:
+                    username = session_username
+
+        admin_query = "SELECT area FROM admins WHERE username = %s OR admin_id = %s"
+        admin_data = execute_query(admin_query, (username, username), fetch_one=True)
+
+        if not admin_data:
+            return jsonify({"error": "Admin not found"}), 404
+
+        admin_area = str(admin_data.get("area", "")).strip().lower()
+
+        # Walang status filter at walang is_archived filter
+        apps_query = """
+            SELECT city, status, date_submitted, time_submitted
+            FROM applications
+            ORDER BY timestamp DESC
+        """
+        all_apps = execute_query(apps_query, fetch=True) or []
+
+        result = []
+        for app in all_apps:
+            app_city = str(app.get("city", "")).strip().lower()
+            if not (admin_area in app_city or app_city in admin_area):
+                continue
+
+            datetime_submitted = None
+            if app.get("date_submitted") and app.get("time_submitted"):
+                datetime_submitted = f"{app.get('date_submitted')} {app.get('time_submitted')}"
+            elif app.get("date_submitted"):
+                datetime_submitted = str(app.get("date_submitted"))
+
+            result.append({
+                "status": app.get("status", "Pending"),
+                "date_submitted": datetime_submitted
+            })
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print(f"Error in get_admin_applications_total: {e}")
+        return jsonify({"error": str(e)}), 500
+
+        
+
+# ===============================
 # ADMIN REQUEST (NOT DIRECT APPROVE)
 # MYSQL / RAILWAY READY
 # ===============================
