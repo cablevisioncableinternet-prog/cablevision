@@ -672,7 +672,43 @@ function setupDropzone() {
     const fileInput = document.getElementById('adFile');
     if (!dropzone || !fileInput) return;
 
-    dropzone.addEventListener('click', () => fileInput.click());
+    // ✅ Gumagamit ng showOpenFilePicker (walang "All Files"), may fallback sa normal na input
+    dropzone.addEventListener('click', async () => {
+        if (!window.showOpenFilePicker) {
+            fileInput.click();
+            return;
+        }
+
+        try {
+            const [handle] = await window.showOpenFilePicker({
+                multiple: false,
+                excludeAcceptAllOption: true, // tinatanggal ang "All Files"
+                types: [{
+                    description: 'PNG Images and MP4 Videos',
+                    accept: {
+                        'image/png': ['.png'],
+                        'video/mp4': ['.mp4']
+                    }
+                }]
+            });
+
+            const file = await handle.getFile();
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+
+            // Hindi nagfa-fire ang 'change' kapag code ang nagtakda ng files,
+            // kaya direktang tinatawag ang previewFile
+            previewFile(fileInput);
+        } catch (err) {
+            // AbortError = nag-cancel lang ang user
+            if (err.name !== 'AbortError') {
+                console.error('File picker error:', err);
+                fileInput.click(); // fallback sa normal na picker
+            }
+        }
+    });
 
     dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
