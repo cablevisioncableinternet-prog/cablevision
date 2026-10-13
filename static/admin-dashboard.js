@@ -441,21 +441,29 @@ async function loadTotalCustomers() {
     if (!username) return 0;
     
     try {
-        const response = await fetch(`/api/admin/internet-applications?username=${username}&tab_id=${tabId}`);
+        // BAGO: customers/subscribers list na ang gamit, hindi applications
+        const response = await fetch(`/api/admin/approved-applications?username=${username}&tab_id=${tabId}`);
         const data = await response.json();
         
-        let applicationsArray = [];
+        let customersArray = [];
         if (Array.isArray(data)) {
-            applicationsArray = data;
+            customersArray = data;
         } else if (data && data.data) {
-            applicationsArray = data.data;
+            customersArray = data.data;
         } else if (data && data.applications) {
-            applicationsArray = data.applications;
+            customersArray = data.applications;
         } else {
-            applicationsArray = Object.values(data).find(val => Array.isArray(val)) || [];
+            customersArray = Object.values(data).find(val => Array.isArray(val)) || [];
         }
+
+        // BAGO: huwag isama ang status na Cancelled
+        const isCancelled = (c) => [c.status, c.installation_status, c.install_status].some(s => {
+            const v = String(s || "").trim().toLowerCase();
+            return v === "cancelled" || v === "canceled";
+        });
+        customersArray = customersArray.filter(c => !isCancelled(c));
         
-        const totalCustomers = applicationsArray.length;
+        const totalCustomers = customersArray.length;
         const totalCustomersEl = document.getElementById("totalCustomers");
         if (totalCustomersEl) totalCustomersEl.textContent = totalCustomers;
         
@@ -466,19 +474,19 @@ async function loadTotalCustomers() {
 
         let todayCount = 0, weekCount = 0, monthCount = 0;
 
-        applicationsArray.forEach(application => {
+        customersArray.forEach(customer => {
             let createdDate = null;
             
-            if (application.date_submitted) {
-                createdDate = new Date(application.date_submitted);
-            } else if (application.timestamp) {
-                createdDate = new Date(application.timestamp);
-            } else if (application.created_at) {
-                createdDate = new Date(application.created_at);
-            } else if (application.date_created) {
-                createdDate = new Date(application.date_created);
-            } else if (application.approval_date) {
-                createdDate = new Date(application.approval_date);
+            if (customer.approval_date) {
+                createdDate = new Date(customer.approval_date);
+            } else if (customer.date_submitted) {
+                createdDate = new Date(customer.date_submitted);
+            } else if (customer.timestamp) {
+                createdDate = new Date(customer.timestamp);
+            } else if (customer.created_at) {
+                createdDate = new Date(customer.created_at);
+            } else if (customer.date_created) {
+                createdDate = new Date(customer.date_created);
             }
             
             if (createdDate && !isNaN(createdDate.getTime())) {
