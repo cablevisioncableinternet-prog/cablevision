@@ -394,6 +394,14 @@
               <h4 class="edit-section-title">Announcement Image</h4>
               <div class="edit-image-grid">
                 <div class="input-group edit-field">
+                  <label for="editAnnouncementImage">Upload New Image</label>
+                  <div class="edit-upload-box">
+                    <input type="file" id="editAnnouncementImage" accept="image/png,image/jpeg" onchange="previewImage(this, 'editImagePreview')">
+                  </div>
+                  <small class="edit-file-hint"><i class="fas fa-info-circle"></i> PNG and JPEG only</small>
+                </div>
+
+                <div class="input-group edit-field">
                   <label>Current Image</label>
                   <div id="editImagePreviewContainer" class="edit-image-preview-container" style="display: none;">
                     <img id="editImagePreview" alt="Current announcement image">
@@ -401,16 +409,7 @@
                   </div>
                   <div id="editImageEmptyState" class="edit-image-empty">No current image</div>
                 </div>
-
-                <div class="input-group edit-field">
-                  <div class="edit-upload-box">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>Choose a PNG or JPEG image</span>
-                    <input type="file" id="editAnnouncementImage" accept="image/png,image/jpeg" onchange="previewImage(this, 'editImagePreview')">
-                  </div>
-                  <small class="edit-file-hint"><i class="fas fa-info-circle"></i> PNG and JPEG only</small>
-                </div>
-            </div>
+              </div>
             </section>
         </div>
         

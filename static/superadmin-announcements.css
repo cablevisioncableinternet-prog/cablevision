@@ -1735,11 +1735,16 @@ body {
   letter-spacing: 0.6px;
 }
 
-#editModal .edit-fields-grid,
-#editModal .edit-image-grid {
+#editModal .edit-fields-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px 10px;
+}
+
+#editModal .edit-image-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 
 #editModal .edit-field {
@@ -1824,7 +1829,7 @@ body {
 
 #editModal .edit-image-preview-container img {
   width: 100%;
-  max-height: 145px;
+  max-height: 200px;
   display: block;
   object-fit: contain;
 }
@@ -1853,38 +1858,35 @@ body {
 }
 
 #editModal .edit-upload-box {
-  min-height: 130px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 12px;
-  border: 1px dashed #cbd3de;
-  border-radius: 5px;
-  background: #f8f9fb;
-  color: #687487;
-  font-size: 11px;
-  text-align: center;
-}
-
-#editModal .edit-upload-box > i {
-  color: #075a9e;
-  font-size: 18px;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 #editModal .edit-upload-box input[type="file"] {
   width: 100%;
-  max-width: 230px;
-  color: #465368;
-  font-size: 10px;
+  max-width: none;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #24364b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#editModal .edit-upload-box input[type="file"]:hover {
+  border-color: #0047ab;
 }
 
 #editModal .edit-file-hint {
   display: block;
-  margin-top: 5px;
-  color: #778397;
-  font-size: 10px;
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 #editModal .edit-modal-footer {
