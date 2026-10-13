@@ -892,3 +892,50 @@ loadPlans = async function(showLoader = true) {
         }
     }, 100);
 };
+
+
+// ==================== IMAGE-ONLY FILE PICKER (walang "All Files") ====================
+function setupImageOnlyPicker(inputId) {
+    const input = document.getElementById(inputId);
+
+    // Kung hindi supported ang browser, normal na file input ang gagamitin
+    if (!input || !window.showOpenFilePicker) return;
+
+    input.addEventListener('click', async function(e) {
+        e.preventDefault(); // huwag buksan ang default na file manager
+
+        try {
+            const [handle] = await window.showOpenFilePicker({
+                multiple: false,
+                excludeAcceptAllOption: true, // tinatanggal ang "All Files"
+                types: [{
+                    description: 'Images (JPG, PNG)',
+                    accept: {
+                        'image/jpeg': ['.jpg', '.jpeg'],
+                        'image/png': ['.png']
+                    }
+                }]
+            });
+
+            const file = await handle.getFile();
+
+            // Ilagay ang napiling file sa original input
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+
+            // I-trigger ang change para gumana ang preview sa edit modal
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch (err) {
+            // AbortError = nag-cancel lang ang user
+            if (err.name !== 'AbortError') {
+                console.error('File picker error:', err);
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupImageOnlyPicker('image');       // Create Plan
+    setupImageOnlyPicker('edit_image');  // Edit Plan modal
+});
