@@ -7793,6 +7793,11 @@ def update_internet_application_status(app_id):
                 else:
                     print(f" Contract already exists for {app_id}")
                 
+            except Exception as contract_err:
+                print(f" Contract error: {contract_err}")
+                import traceback
+                traceback.print_exc()
+                # Don't rollback here, we want to keep the application update
             # ========== NOTIFY TECHNICIANS OF ASSIGNED TEAM ==========
             try:
                 applicant_name = ' '.join(filter(None, [
@@ -7812,7 +7817,6 @@ def update_internet_application_status(app_id):
                 conn.commit()
             except Exception as tech_err:
                 print(f" Technician notification error: {tech_err}")
-
                 # ========== SEND EMAIL NOTIFICATION (Background Thread) ==========
         try:
             customer_email = app_data.get("email")
