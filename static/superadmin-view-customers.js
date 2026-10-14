@@ -456,7 +456,7 @@ function openCreateAccountModal(applicationId) {
             
             document.getElementById('generatedUserId').textContent = generatedUserId;
             currentDefaultPassword = customer.password || '123456';
-            document.getElementById('defaultPassword').textContent = '*'.repeat(currentDefaultPassword.length);
+            document.getElementById('defaultPassword').textContent = '********';
             document.getElementById('accountFullName').textContent = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
             document.getElementById('accountAppNumber').textContent = customer.application_number || 'N/A';
             document.getElementById('accountContractNumber').textContent = customer.contract_number || 'N/A';

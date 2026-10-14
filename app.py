@@ -12116,6 +12116,9 @@ def superadmin_create_user_account():
             print(f" Generated fallback password: {default_password}")
         
         current_time = ph_now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # I-hash ang password para sa database (plain ang gagamitin sa email at response)
+        hashed_default_password = generate_password_hash(default_password)
         
         # Get data from customer record
         first_name = customer.get('first_name', '')
@@ -12128,15 +12131,17 @@ def superadmin_create_user_account():
         address = customer.get('address', '')
         
         # Insert user into users table
+        # must_change_password = 1 -> mapipilitang magpalit ng password sa unang login
         insert_user_query = """
             INSERT INTO users 
             (user_id, customer_id, application_number, email, username, password, 
              created_at, role, connection_status, contract_number, status,
-             first_name, last_name, middle_name, suffix, contact_number, address)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             first_name, last_name, middle_name, suffix, contact_number, address,
+             must_change_password)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
         """
         execute_query(insert_user_query, (
-            new_user_id, application_number, application_number, email, email, default_password,
+            new_user_id, application_number, application_number, email, email, hashed_default_password,
             current_time, "customer", "Connected", contract_number, "Active",
             first_name, last_name, middle_name, suffix, mobile, address
         ))
@@ -12308,7 +12313,7 @@ def send_account_creation_email(to_email, user_id, password, first_name, contrac
                                     Password Change Required
                                 </div>
                                 <div style="font-size: 12px; color: #92400e;">
-                                    For security, please change your password after your first login.
+                                    For your security, you will be required to change this temporary password the first time you log in.
                                 </div>
                             </div>
                         </div>
