@@ -161,26 +161,33 @@ let paginatedData = [];
 const paginationContainer = document.getElementById("paginationControls");
 
 // ==================== SORTING FUNCTION ====================
+// Pagkakasunod: Pending -> Ongoing -> Installed (walang account) -> Installed (may account) -> Terminated -> Cancelled
+function getSortRank(customer) {
+    const status = customer.installation_status || 'Pending';
+    const hasAccount = Number(customer.user_created) === 1;
+
+    switch (status) {
+        case 'Pending':    return 1;
+        case 'Ongoing':    return 2;
+        case 'Installed':  return hasAccount ? 4 : 3;
+        case 'Terminated': return 5;
+        case 'Cancelled':  return 6;
+        default:           return 99;
+    }
+}
+
 function sortCustomersByInstallationStatus(customers) {
-    const statusOrder = {
-        'Pending': 1,
-        'Ongoing': 2,
-        'Installed': 3,
-        'Terminated': 4,    // BAGO
-        'Cancelled': 5      // BAGO
-    };
-    
     return [...customers].sort((a, b) => {
-        const orderA = statusOrder[a.installation_status] || 99;
-        const orderB = statusOrder[b.installation_status] || 99;
-        
+        const orderA = getSortRank(a);
+        const orderB = getSortRank(b);
+
         if (orderA !== orderB) {
             return orderA - orderB;
         }
-        
+
         const dateA = a.approval_date ? new Date(a.approval_date) : new Date(0);
         const dateB = b.approval_date ? new Date(b.approval_date) : new Date(0);
-        
+
         return dateA - dateB;
     });
 }
@@ -422,6 +429,7 @@ function renderCurrentPage() {
 // ==================== CREATE ACCOUNT FUNCTIONALITY ====================
 let currentCreateAccountCustomer = null;
 let currentGeneratedUserId = null;
+let currentDefaultPassword = null;
 
 function openCreateAccountModal(applicationId) {
     console.log("Opening create account modal for:", applicationId);
@@ -447,7 +455,8 @@ function openCreateAccountModal(applicationId) {
             currentGeneratedUserId = generatedUserId;
             
             document.getElementById('generatedUserId').textContent = generatedUserId;
-            document.getElementById('defaultPassword').textContent = customer.password || '123456';
+            currentDefaultPassword = customer.password || '123456';
+            document.getElementById('defaultPassword').textContent = '*'.repeat(currentDefaultPassword.length);
             document.getElementById('accountFullName').textContent = `${customer.first_name || ''} ${customer.last_name || ''}`.trim();
             document.getElementById('accountAppNumber').textContent = customer.application_number || 'N/A';
             document.getElementById('accountContractNumber').textContent = customer.contract_number || 'N/A';
@@ -490,11 +499,8 @@ function createUserAccount() {
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Creating...';
     
-    // ✅ KUNIN ANG PASSWORD NA NAKALAGAY SA MODAL
-    const passwordDisplay = document.getElementById('defaultPassword');
-    const passwordToSend = passwordDisplay ? passwordDisplay.textContent : null;
-    
-    console.log("📤 Sending password to backend:", passwordToSend); // PARA MAKITA KUNG ANO ANG IPINAPADALA
+    // ✅ KUNIN ANG TOTOONG PASSWORD (hindi ang naka-asterisk na display)
+    const passwordToSend = currentDefaultPassword;
     
     fetch('/api/superadmin/create-user-account', {
         method: 'POST',
@@ -546,6 +552,7 @@ function closeCreateAccountModal() {
     modal.classList.remove('show');
     currentCreateAccountCustomer = null;
     currentGeneratedUserId = null;
+    currentDefaultPassword = null;
     
     const loadingDiv = document.getElementById('createAccountLoading');
     const contentDiv = document.getElementById('createAccountContent');
@@ -566,9 +573,8 @@ function renderApprovedCustomers(data) {
     }
     const customerCountSpan = document.getElementById("customerCount");
     if (customerCountSpan) customerCountSpan.textContent = filteredData.length;
-    const sortedData = sortCustomersByInstallationStatus(data);
     
-    sortedData.forEach(app => {
+    data.forEach(app => {
         const installationStatus = app.installation_status || "Pending";
         // I-validate kung valid ang status para sa CSS class
         let statusClass = installationStatus.toLowerCase().replace(/ /g, '-');
@@ -675,7 +681,7 @@ async function setupSearchAndFilter() {
             filtered = filtered.filter(c => String(c.city || '').trim().toLowerCase() === areaValue);
         }
 
-        filteredData = filtered;
+        filteredData = sortCustomersByInstallationStatus(filtered);
         const customerCountSpan = document.getElementById("customerCount");
         if (customerCountSpan) customerCountSpan.textContent = filtered.length;
         if (keepPage !== true) currentPage = 1;
