@@ -6726,8 +6726,9 @@ def superadmin_get_single_application(app_id):
                 timestamp, rejection_reason, user_created, user_created_at,
                 user_id, zip, tv_qty, tv_brand, tv_type,
                 assigned_team_id, installation_date, reapplied_count,
-                reapply_requested, reapply_requested_at, reapply_message
-            FROM applications 
+                reapply_requested, reapply_requested_at, reapply_message,
+                preferred_napbox_id, preferred_napbox_name
+            FROM applications
             WHERE application_number = %s
         """
         application = execute_query(query, (app_id,), fetch_one=True)
@@ -6761,6 +6762,43 @@ def superadmin_get_single_application(app_id):
             except:
                 application['tv_type'] = []
         
+        # ========== NAP BOX NAME + DISTANCE ==========
+        application['napbox_name'] = application.get('preferred_napbox_name') or ''
+        application['nap_distance'] = None
+
+        napbox_id = application.get('preferred_napbox_id')
+        if napbox_id:
+            try:
+                napbox = execute_query(
+                    "SELECT name, latitude, longitude FROM napboxes WHERE id = %s LIMIT 1",
+                    (napbox_id,),
+                    fetch_one=True
+                )
+                if napbox:
+                    # Gamitin ang pangalan mula sa napboxes table
+                    if napbox.get('name'):
+                        application['napbox_name'] = napbox['name']
+
+                    # Haversine distance (meters) - kapareho ng calculateDistance sa JS
+                    import math
+                    try:
+                        lat1 = float(application.get('latitude'))
+                        lng1 = float(application.get('longitude'))
+                        lat2 = float(napbox.get('latitude'))
+                        lng2 = float(napbox.get('longitude'))
+
+                        R = 6371000
+                        d_lat = math.radians(lat2 - lat1)
+                        d_lng = math.radians(lng2 - lng1)
+                        a = (math.sin(d_lat / 2) ** 2 +
+                             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+                             math.sin(d_lng / 2) ** 2)
+                        application['nap_distance'] = round(R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 2)
+                    except (TypeError, ValueError):
+                        pass
+            except Exception as nap_err:
+                print(f" NAP box lookup failed (non-blocking): {nap_err}")
+
         # Keep id field for frontend compatibility
         application['id'] = application.get('application_number')
         
