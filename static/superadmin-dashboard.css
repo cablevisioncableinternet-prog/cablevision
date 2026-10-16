@@ -3238,6 +3238,7 @@ body {
   .reviews-viewport { overflow-y: auto; }
 }
 
+/* ================= REVIEWS: TRANSACTION ================= */
 .review-txn-badge {
   background: #eefaf3;
   color: #167a4a;
@@ -3245,4 +3246,10 @@ body {
   border-radius: 5px;
   font-weight: 600;
 }
-.review-txn-id { color: #94a3b8; font-size: 11px; }
+.review-txn-badge i { margin-right: 4px; }
+.review-txn-id {
+  color: #94a3b8;
+  font-size: 11px;
+  margin-bottom: 6px;
+  word-break: break-all;
+}

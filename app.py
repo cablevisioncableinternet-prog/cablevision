@@ -2363,6 +2363,15 @@ def mask_name(name):
         return name[0] + "*"
     return name[0] + "*" * (len(name) - 2) + name[-1]
 
+    
+def mask_name(name):
+    """Anonymous: first at last letter lang ng fullname ang kita, asterisk ang iba."""
+    name = (name or "").strip()
+    if not name:
+        return "Anonymous"
+    if len(name) <= 2:
+        return name[0] + "*"
+    return name[0] + "*" * (len(name) - 2) + name[-1]
 
 
 @app.route("/api/superadmin/reviews")
@@ -2407,7 +2416,7 @@ def superadmin_reviews():
         for row in cur.fetchall():
             distribution[int(row["rating"])] = row["cnt"]
 
-        # Latest 10 + full name (palitan ang columns kung iba ang users table mo)
+        # Latest 10 + fullname (palitan ang columns kung iba ang users table mo)
         cur.execute(f"""
             SELECT r.id, r.user_id, r.transaction_type, r.transaction_id, r.plan_name,
                    r.rating, r.comment, r.is_anonymous, r.created_at,
@@ -2457,6 +2466,7 @@ def superadmin_reviews():
     finally:
         cur.close()
         conn.close()
+
 
 
 

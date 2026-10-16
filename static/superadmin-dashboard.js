@@ -1909,7 +1909,6 @@ function formatTransactionType(type) {
         .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-
 function buildReviewItem(r) {
     const name = r.display_name || "User";
     const comment = r.comment && r.comment.trim()
@@ -1922,7 +1921,7 @@ function buildReviewItem(r) {
                 <span class="review-stars">${renderStarIcons(r.rating)}</span>
             </div>
             <div class="review-meta">
-                ${r.transaction_type ? `<span class="review-txn-badge"><i class="fas fa-receipt"></i> ${escapeHtml(formatTransactionType(r.transaction_type))}</span>` : ""}
+                ${r.transaction_type ? `<span class="review-txn-badge"><i class="fas fa-receipt"></i>${escapeHtml(formatTransactionType(r.transaction_type))}</span>` : ""}
                 ${r.plan_name ? `<span class="review-plan-badge">${escapeHtml(r.plan_name)}</span>` : ""}
                 <span>${formatReviewDate(r.created_at)}</span>
             </div>
@@ -1961,6 +1960,7 @@ function renderReviewsList(reviews) {
 }
 
 async function loadReviews() {
+    const plan = document.getElementById("reviewsPlanFilter")?.value || "all";
     const transaction = document.getElementById("reviewsTransactionFilter")?.value || "all";
     const comment = document.getElementById("reviewsCommentFilter")?.value || "all";
     const rating = document.getElementById("reviewsStarFilter")?.value || "all";
@@ -1992,6 +1992,7 @@ async function loadReviews() {
 async function initReviewsCard() {
     if (!document.getElementById("reviewsTrack")) return;
 
+    // Unang load: kunin din ang listahan ng plans at transaction types para sa dropdowns
     const data = await loadReviews();
 
     const fillSelect = (id, items, labelFn = v => v) => {
@@ -2010,12 +2011,14 @@ async function initReviewsCard() {
         fillSelect("reviewsTransactionFilter", data.transaction_types, formatTransactionType);
     }
 
-    ["reviewsPlanFilter", "reviewsTransactionFilter", "reviewsCommentFilter", "reviewsStarFilter"].forEach(id => {
+    const filterIds = ["reviewsPlanFilter", "reviewsTransactionFilter", "reviewsCommentFilter", "reviewsStarFilter"];
+
+    filterIds.forEach(id => {
         document.getElementById(id)?.addEventListener("change", loadReviews);
     });
 
     document.getElementById("reviewsResetBtn")?.addEventListener("click", () => {
-        ["reviewsPlanFilter", "reviewsTransactionFilter", "reviewsCommentFilter", "reviewsStarFilter"].forEach(id => {
+        filterIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = "all";
         });
