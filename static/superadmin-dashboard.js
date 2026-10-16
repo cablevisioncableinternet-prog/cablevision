@@ -1902,15 +1902,8 @@ function renderReviewsSummary(summary) {
     document.getElementById("reviewsDistribution").innerHTML = rows;
 }
 
-function formatTransactionType(type) {
-    if (!type) return "";
-    return String(type)
-        .replace(/[_-]+/g, " ")
-        .replace(/\b\w/g, c => c.toUpperCase());
-}
-
 function buildReviewItem(r) {
-    const name = r.display_name || "User";
+    const name = r.is_anonymous ? "Anonymous" : (r.user_name || r.user_id || "User");
     const comment = r.comment && r.comment.trim()
         ? `<div class="review-comment">${escapeHtml(r.comment)}</div>`
         : `<div class="review-comment none">No comment</div>`;
@@ -1921,11 +1914,9 @@ function buildReviewItem(r) {
                 <span class="review-stars">${renderStarIcons(r.rating)}</span>
             </div>
             <div class="review-meta">
-                ${r.transaction_type ? `<span class="review-txn-badge"><i class="fas fa-receipt"></i>${escapeHtml(formatTransactionType(r.transaction_type))}</span>` : ""}
                 ${r.plan_name ? `<span class="review-plan-badge">${escapeHtml(r.plan_name)}</span>` : ""}
                 <span>${formatReviewDate(r.created_at)}</span>
             </div>
-            ${r.transaction_id ? `<div class="review-txn-id">Txn ID: ${escapeHtml(r.transaction_id)}</div>` : ""}
             ${comment}
         </div>`;
 }
@@ -1961,11 +1952,10 @@ function renderReviewsList(reviews) {
 
 async function loadReviews() {
     const plan = document.getElementById("reviewsPlanFilter")?.value || "all";
-    const transaction = document.getElementById("reviewsTransactionFilter")?.value || "all";
     const comment = document.getElementById("reviewsCommentFilter")?.value || "all";
     const rating = document.getElementById("reviewsStarFilter")?.value || "all";
 
-    const params = new URLSearchParams({ plan, transaction, comment, rating });
+    const params = new URLSearchParams({ plan, comment, rating });
 
     try {
         const res = await fetch(`/api/superadmin/reviews?${params.toString()}`);
@@ -1992,36 +1982,26 @@ async function loadReviews() {
 async function initReviewsCard() {
     if (!document.getElementById("reviewsTrack")) return;
 
-    // Unang load: kunin din ang listahan ng plans at transaction types para sa dropdowns
+    // Unang load: kunin din ang listahan ng plans para sa dropdown
     const data = await loadReviews();
-
-    const fillSelect = (id, items, labelFn = v => v) => {
-        const select = document.getElementById(id);
-        if (!select || !Array.isArray(items)) return;
-        items.forEach(item => {
+    const planSelect = document.getElementById("reviewsPlanFilter");
+    if (planSelect && data && Array.isArray(data.plans)) {
+        data.plans.forEach(plan => {
             const opt = document.createElement("option");
-            opt.value = item;
-            opt.textContent = labelFn(item);
-            select.appendChild(opt);
+            opt.value = plan;
+            opt.textContent = plan;
+            planSelect.appendChild(opt);
         });
-    };
-
-    if (data) {
-        fillSelect("reviewsPlanFilter", data.plans);
-        fillSelect("reviewsTransactionFilter", data.transaction_types, formatTransactionType);
     }
 
-    const filterIds = ["reviewsPlanFilter", "reviewsTransactionFilter", "reviewsCommentFilter", "reviewsStarFilter"];
-
-    filterIds.forEach(id => {
+    ["reviewsPlanFilter", "reviewsCommentFilter", "reviewsStarFilter"].forEach(id => {
         document.getElementById(id)?.addEventListener("change", loadReviews);
     });
 
     document.getElementById("reviewsResetBtn")?.addEventListener("click", () => {
-        filterIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = "all";
-        });
+        document.getElementById("reviewsPlanFilter").value = "all";
+        document.getElementById("reviewsCommentFilter").value = "all";
+        document.getElementById("reviewsStarFilter").value = "all";
         loadReviews();
         showToast("Reviews filters reset successfully", "success");
     });
