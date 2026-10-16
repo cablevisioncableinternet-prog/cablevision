@@ -296,24 +296,90 @@ async function loadApplication() {
     }
 }
 
-// =========================
-// MAP INITIALIZATION
-// =========================
-function initMap(data){
+function initMap(data) {
     const lat = parseFloat(data.latitude) || 14.6091;
     const lng = parseFloat(data.longitude) || 121.0223;
 
     const mapEl = document.getElementById("map");
-    if(!mapEl) return;
+    if (!mapEl) return;
 
-    const map = L.map("map").setView([lat,lng], 16);
-
+    const map = L.map("map").setView([lat, lng], 16);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors"
     }).addTo(map);
 
-    L.marker([lat,lng]).addTo(map)
-        .bindPopup("Customer Location")
+    // ---------- helpers ----------
+    const esc = (s) => String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+    const formatDistance = (d) => {
+        if (d === null || d === undefined || d === '') return '';
+        if (typeof d === 'string' && /[a-z]/i.test(d)) return d;
+        const n = parseFloat(d);
+        if (isNaN(n)) return '';
+        return n >= 1000 ? `${(n / 1000).toFixed(2)} km` : `${Math.round(n)} m`;
+    };
+
+    // ---------- data ----------
+    const barangay = (data.barangay && data.barangay !== 'none') ? String(data.barangay) : 'N/A';
+    const napBox = data.napbox_name || data.nap_box || data.nap_box_name || '';
+    const napBoxBarangay = data.napbox_barangay || '';
+    const distance = formatDistance(data.nap_distance);
+    const hasNapBox = !!napBox;
+
+    // ---------- NAP box note ----------
+    const napNoteHtml = hasNapBox
+        ? `<div class="pin-popup-note available">
+               <span>NAP Box available in this location</span>
+           </div>`
+        : `<div class="pin-popup-note unavailable">
+               <span>No NAP Box available in this location</span>
+           </div>`;
+
+    // ---------- popup ----------
+    let popupHtml;
+    if (hasNapBox) {
+        popupHtml = `
+            <div class="pin-popup-header">
+                <div class="pin-popup-check"><i class="fas fa-check"></i></div>
+                <div>
+                    <div class="pin-popup-title">LOCATION PINNED</div>
+                    <div class="pin-popup-sub">NAP Box assigned</div>
+                </div>
+            </div>
+            <div class="pin-popup-body">
+                <div class="pin-popup-row"><span class="k">Barangay</span><span class="v">${esc(barangay)}</span></div>
+                <div class="pin-popup-row"><span class="k">NAP Box</span><span class="v">${esc(napBox)}</span></div>
+                ${distance ? `<div class="pin-popup-row"><span class="k">Distance</span><span class="v distance">${esc(distance)}</span></div>` : ''}
+            </div>
+            ${napNoteHtml}
+        `;
+    } else {
+        popupHtml = `
+            <div class="pin-popup-header">
+                <div class="pin-popup-check"><i class="fas fa-check"></i></div>
+                <div>
+                    <div class="pin-popup-title">LOCATION PINNED</div>
+                    <div class="pin-popup-sub">Location saved successfully</div>
+                </div>
+            </div>
+            <div class="pin-popup-body">
+                <div class="pin-popup-row"><span class="k">Barangay</span><span class="v">${esc(barangay)}</span></div>
+            </div>
+            ${napNoteHtml}
+        `;
+    }
+
+    L.marker([lat, lng]).addTo(map)
+        .bindPopup(popupHtml, {
+            className: 'pin-status-popup',
+            closeButton: false,
+            autoClose: false,
+            closeOnClick: false,
+            minWidth: 260,
+            offset: [0, -4]
+        })
         .openPopup();
 }
 

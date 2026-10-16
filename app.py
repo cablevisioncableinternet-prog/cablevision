@@ -6762,42 +6762,104 @@ def superadmin_get_single_application(app_id):
             except:
                 application['tv_type'] = []
         
-        # ========== NAP BOX NAME + DISTANCE ==========
-        application['napbox_name'] = application.get('preferred_napbox_name') or ''
+         # ========== NAP BOX NAME + DISTANCE (with auto-detect) ==========
+        application['napbox_name'] = ''
+        application['napbox_barangay'] = ''
         application['nap_distance'] = None
+        application['has_napbox'] = False
 
-        napbox_id = application.get('preferred_napbox_id')
-        if napbox_id:
+        import math
+
+        def _haversine_m(lat1, lng1, lat2, lng2):
+            R = 6371000
+            d_lat = math.radians(lat2 - lat1)
+            d_lng = math.radians(lng2 - lng1)
+            a = (math.sin(d_lat / 2) ** 2 +
+                math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+                math.sin(d_lng / 2) ** 2)
+            return round(R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 2)
+
+        try:
+            app_lat = None
+            app_lng = None
             try:
+                app_lat = float(application.get('latitude')) if application.get('latitude') else None
+                app_lng = float(application.get('longitude')) if application.get('longitude') else None
+            except (TypeError, ValueError):
+                pass
+
+            napbox = None
+            distance = None
+
+            # Priority 1: yung naka-save na napbox sa application
+            napbox_id = application.get('preferred_napbox_id')
+            if napbox_id:
                 napbox = execute_query(
-                    "SELECT name, latitude, longitude FROM napboxes WHERE id = %s LIMIT 1",
-                    (napbox_id,),
-                    fetch_one=True
+                    "SELECT id, napbox_name, latitude, longitude, barangay, area, coverage_radius "
+                    "FROM napboxes WHERE id = %s LIMIT 1",
+                    (napbox_id,), fetch_one=True
                 )
-                if napbox:
-                    # Gamitin ang pangalan mula sa napboxes table
-                    if napbox.get('name'):
-                        application['napbox_name'] = napbox['name']
-
-                    # Haversine distance (meters) - kapareho ng calculateDistance sa JS
-                    import math
+                if napbox and app_lat and app_lng:
                     try:
-                        lat1 = float(application.get('latitude'))
-                        lng1 = float(application.get('longitude'))
-                        lat2 = float(napbox.get('latitude'))
-                        lng2 = float(napbox.get('longitude'))
+                        distance = _haversine_m(app_lat, app_lng, float(napbox['latitude']), float(napbox['longitude']))
+                    except:
+                        distance = None
 
-                        R = 6371000
-                        d_lat = math.radians(lat2 - lat1)
-                        d_lng = math.radians(lng2 - lng1)
-                        a = (math.sin(d_lat / 2) ** 2 +
-                             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-                             math.sin(d_lng / 2) ** 2)
-                        application['nap_distance'] = round(R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 2)
-                    except (TypeError, ValueError):
-                        pass
-            except Exception as nap_err:
-                print(f" NAP box lookup failed (non-blocking): {nap_err}")
+            # Priority 2: hanapin pinakamalapit na NAP box NA MAY AVAILABLE SLOT
+            # at pasok sa coverage_radius ng bawat NAP box
+            if not napbox and app_lat is not None and app_lng is not None:
+                all_napboxes = execute_query(
+                    """
+                    SELECT 
+                        n.id, n.napbox_name, n.latitude, n.longitude, 
+                        n.barangay, n.area, n.coverage_radius,
+                        COUNT(CASE WHEN ns.status = 'available' THEN 1 END) AS available_slots
+                    FROM napboxes n
+                    LEFT JOIN napbox_slots ns ON n.id = ns.napbox_id
+                    WHERE n.latitude IS NOT NULL AND n.longitude IS NOT NULL 
+                      AND n.latitude <> 0 AND n.longitude <> 0
+                    GROUP BY n.id, n.napbox_name, n.latitude, n.longitude, 
+                             n.barangay, n.area, n.coverage_radius
+                    HAVING available_slots > 0
+                    """,
+                    fetch=True
+                ) or []
+
+                print(f" [NAP AUTO-DETECT] App coords: {app_lat},{app_lng} | NAP boxes with available slots: {len(all_napboxes)}")
+
+                nearest = None
+                nearest_dist = None
+                for c in all_napboxes:
+                    try:
+                        d = _haversine_m(app_lat, app_lng, float(c['latitude']), float(c['longitude']))
+                    except:
+                        continue
+                    coverage = c.get('coverage_radius') or 500
+                    within_coverage = d <= coverage
+                    print(f" [NAP AUTO-DETECT]   - {c.get('napbox_name')} ({c.get('area')}): {d} m, coverage {coverage} m, available {c.get('available_slots')} -> {'IN' if within_coverage else 'OUT'}")
+                    if not within_coverage:
+                        continue
+                    if nearest_dist is None or d < nearest_dist:
+                        nearest_dist = d
+                        nearest = c
+
+                if nearest:
+                    napbox = nearest
+                    distance = nearest_dist
+                    print(f" [NAP AUTO-DETECT] MATCHED: {nearest.get('napbox_name')} at {nearest_dist} m (coverage {nearest.get('coverage_radius')} m)")
+                else:
+                    print(f" [NAP AUTO-DETECT] No eligible NAP box (walang available slot o lagpas sa coverage)")
+
+            if napbox:
+                application['napbox_name'] = napbox.get('napbox_name') or ''
+                application['napbox_barangay'] = napbox.get('barangay') or ''
+                application['nap_distance'] = distance
+                application['has_napbox'] = True
+
+        except Exception as nap_err:
+            print(f" NAP box lookup failed: {nap_err}")
+            import traceback
+            traceback.print_exc()
 
         # Keep id field for frontend compatibility
         application['id'] = application.get('application_number')
@@ -12055,6 +12117,115 @@ def get_single_customer(customer_id):
             except:
                 result['tv_type'] = []
         
+        # ============================================================
+        # ✅ NAP BOX NAME + DISTANCE (with auto-detect) 
+        # ============================================================
+        result['napbox_name'] = ''
+        result['napbox_barangay'] = ''
+        result['nap_distance'] = None
+        result['has_napbox'] = False
+
+        import math
+
+        def _haversine_m(lat1, lng1, lat2, lng2):
+            R = 6371000
+            d_lat = math.radians(lat2 - lat1)
+            d_lng = math.radians(lng2 - lng1)
+            a = (math.sin(d_lat / 2) ** 2 +
+                 math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+                 math.sin(d_lng / 2) ** 2)
+            return round(R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 2)
+
+        try:
+            app_lat = None
+            app_lng = None
+            try:
+                app_lat = float(result.get('latitude')) if result.get('latitude') else None
+                app_lng = float(result.get('longitude')) if result.get('longitude') else None
+            except (TypeError, ValueError):
+                pass
+
+            napbox = None
+            distance = None
+
+            # Priority 1: yung naka-save na napbox sa customer/application
+            napbox_id = result.get('preferred_napbox_id')
+            if napbox_id:
+                napbox = execute_query(
+                    "SELECT id, napbox_name, latitude, longitude, barangay, area, coverage_radius "
+                    "FROM napboxes WHERE id = %s LIMIT 1",
+                    (napbox_id,), fetch_one=True
+                )
+                if napbox and app_lat and app_lng:
+                    try:
+                        distance = _haversine_m(
+                            app_lat, app_lng,
+                            float(napbox['latitude']), float(napbox['longitude'])
+                        )
+                    except:
+                        distance = None
+
+             # Priority 2: hanapin pinakamalapit na NAP box NA MAY AVAILABLE SLOT
+            # at pasok sa coverage_radius ng bawat NAP box
+            if not napbox and app_lat is not None and app_lng is not None:
+                all_napboxes = execute_query(
+                    """
+                    SELECT 
+                        n.id, n.napbox_name, n.latitude, n.longitude, 
+                        n.barangay, n.area, n.coverage_radius,
+                        COUNT(CASE WHEN ns.status = 'available' THEN 1 END) AS available_slots
+                    FROM napboxes n
+                    LEFT JOIN napbox_slots ns ON n.id = ns.napbox_id
+                    WHERE n.latitude IS NOT NULL AND n.longitude IS NOT NULL 
+                      AND n.latitude <> 0 AND n.longitude <> 0
+                    GROUP BY n.id, n.napbox_name, n.latitude, n.longitude, 
+                             n.barangay, n.area, n.coverage_radius
+                    HAVING available_slots > 0
+                    """,
+                    fetch=True
+                ) or []
+
+                print(f" [NAP AUTO-DETECT-CUSTOMER] App coords: {app_lat},{app_lng} | NAP boxes with available slots: {len(all_napboxes)}")
+
+                nearest = None
+                nearest_dist = None
+                for c in all_napboxes:
+                    try:
+                        d = _haversine_m(
+                            app_lat, app_lng,
+                            float(c['latitude']), float(c['longitude'])
+                        )
+                    except:
+                        continue
+                    coverage = c.get('coverage_radius') or 500
+                    within_coverage = d <= coverage
+                    print(f" [NAP AUTO-DETECT-CUSTOMER]   - {c.get('napbox_name')} ({c.get('area')}): {d} m, coverage {coverage} m, available {c.get('available_slots')} -> {'IN' if within_coverage else 'OUT'}")
+                    if not within_coverage:
+                        continue
+                    if nearest_dist is None or d < nearest_dist:
+                        nearest_dist = d
+                        nearest = c
+
+                if nearest:
+                    napbox = nearest
+                    distance = nearest_dist
+                    print(f" [NAP AUTO-DETECT-CUSTOMER] MATCHED: {nearest.get('napbox_name')} at {nearest_dist} m (coverage {nearest.get('coverage_radius')} m)")
+                else:
+                    print(f" [NAP AUTO-DETECT-CUSTOMER] No eligible NAP box (walang available slot o lagpas sa coverage)")
+
+            if napbox:
+                result['napbox_name'] = napbox.get('napbox_name') or ''
+                result['napbox_barangay'] = napbox.get('barangay') or ''
+                result['nap_distance'] = distance
+                result['has_napbox'] = True
+                print(f" [NAP AUTO-DETECT-CUSTOMER] Assigned: {napbox.get('napbox_name')} ({distance} m)")
+
+        except Exception as nap_err:
+            print(f" [NAP AUTO-DETECT-CUSTOMER] NAP box lookup failed: {nap_err}")
+            import traceback
+            traceback.print_exc()
+        # ============================================================
+        
         # ✅ IDAGDAG ANG PASSWORD SA RESPONSE
         result['password'] = random_password
         
@@ -16447,6 +16618,101 @@ def admin_get_single_application(app_id):
         
         # Add id field for frontend compatibility
         data['id'] = data.get('application_number')
+        
+                # ========== NAP BOX NAME + DISTANCE (auto-detect) ==========
+        data['napbox_name'] = ''
+        data['napbox_barangay'] = ''
+        data['nap_distance'] = None
+        data['has_napbox'] = False
+
+        import math
+
+        def _haversine_m(lat1, lng1, lat2, lng2):
+            R = 6371000
+            d_lat = math.radians(lat2 - lat1)
+            d_lng = math.radians(lng2 - lng1)
+            a = (math.sin(d_lat / 2) ** 2 +
+                 math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+                 math.sin(d_lng / 2) ** 2)
+            return round(R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 2)
+
+        try:
+            app_lat = None
+            app_lng = None
+            try:
+                app_lat = float(data.get('latitude')) if data.get('latitude') else None
+                app_lng = float(data.get('longitude')) if data.get('longitude') else None
+            except (TypeError, ValueError):
+                pass
+
+            napbox = None
+            distance = None
+
+            napbox_id = data.get('preferred_napbox_id')
+            if napbox_id:
+                napbox = execute_query(
+                    "SELECT id, napbox_name, latitude, longitude, barangay, area, coverage_radius "
+                    "FROM napboxes WHERE id = %s LIMIT 1",
+                    (napbox_id,), fetch_one=True
+                )
+                if napbox and app_lat and app_lng:
+                    try:
+                        distance = _haversine_m(app_lat, app_lng, float(napbox['latitude']), float(napbox['longitude']))
+                    except:
+                        distance = None
+
+            if not napbox and app_lat is not None and app_lng is not None:
+                all_napboxes = execute_query(
+                    """
+                    SELECT 
+                        n.id, n.napbox_name, n.latitude, n.longitude, 
+                        n.barangay, n.area, n.coverage_radius,
+                        COUNT(CASE WHEN ns.status = 'available' THEN 1 END) AS available_slots
+                    FROM napboxes n
+                    LEFT JOIN napbox_slots ns ON n.id = ns.napbox_id
+                    WHERE n.latitude IS NOT NULL AND n.longitude IS NOT NULL 
+                      AND n.latitude <> 0 AND n.longitude <> 0
+                    GROUP BY n.id, n.napbox_name, n.latitude, n.longitude, 
+                             n.barangay, n.area, n.coverage_radius
+                    HAVING available_slots > 0
+                    """,
+                    fetch=True
+                ) or []
+
+                print(f" [NAP AUTO-DETECT-ADMIN] App coords: {app_lat},{app_lng} | NAP boxes with available slots: {len(all_napboxes)}")
+
+                nearest = None
+                nearest_dist = None
+                for c in all_napboxes:
+                    try:
+                        d = _haversine_m(app_lat, app_lng, float(c['latitude']), float(c['longitude']))
+                    except:
+                        continue
+                    coverage = c.get('coverage_radius') or 500
+                    within_coverage = d <= coverage
+                    print(f" [NAP AUTO-DETECT-ADMIN]   - {c.get('napbox_name')} ({c.get('area')}): {d} m, coverage {coverage} m, available {c.get('available_slots')} -> {'IN' if within_coverage else 'OUT'}")
+                    if not within_coverage:
+                        continue
+                    if nearest_dist is None or d < nearest_dist:
+                        nearest_dist = d
+                        nearest = c
+
+                if nearest:
+                    napbox = nearest
+                    distance = nearest_dist
+                    print(f" [NAP AUTO-DETECT-ADMIN] MATCHED: {nearest.get('napbox_name')} at {nearest_dist} m (coverage {nearest.get('coverage_radius')} m)")
+                else:
+                    print(f" [NAP AUTO-DETECT-ADMIN] No eligible NAP box (walang available slot o lagpas sa coverage)")
+
+            if napbox:
+                data['napbox_name'] = napbox.get('napbox_name') or ''
+                data['napbox_barangay'] = napbox.get('barangay') or ''
+                data['nap_distance'] = distance
+                data['has_napbox'] = True
+
+        except Exception as nap_err:
+            print(f" [NAP AUTO-DETECT-ADMIN] NAP box lookup failed: {nap_err}")
+        # ============================================================
         
         return jsonify(data)
         

@@ -3257,54 +3257,66 @@ function initMap(data) {
         return n >= 1000 ? `${(n / 1000).toFixed(2)} km` : `${Math.round(n)} m`;
     };
 
-    // ---------- data na galing sa application ----------
-    const barangay = getCleanValue(String(data.barangay || '')) || 'N/A';
-    const napBox = getCleanValue(String(data.nap_box || data.napbox || data.nap_box_name || data.napbox_name || ''));
-    const distance = formatDistance(data.nap_distance ?? data.napbox_distance ?? data.nap_box_distance);
-    const hasNapBox = !!napBox;
+ // ---------- data na galing sa application ----------
+const barangay = getCleanValue(String(data.barangay || '')) || 'N/A';
+const napBox = getCleanValue(String(data.nap_box || data.napbox || data.nap_box_name || data.napbox_name || ''));
+const distance = formatDistance(data.nap_distance ?? data.napbox_distance ?? data.nap_box_distance);
+const napBoxBarangay = getCleanValue(String(data.napbox_barangay || ''));
+const hasNapBox = !!napBox;
 
-    // ---------- popup content (kapareho ng user-application) ----------
-    let popupHtml;
-    if (hasNapBox) {
-        popupHtml = `
-            <div class="pin-popup-header">
-                <div class="pin-popup-check"><i class="fas fa-check"></i></div>
-                <div>
-                    <div class="pin-popup-title">LOCATION PINNED</div>
-                    <div class="pin-popup-sub">NAP Box assigned</div>
-                </div>
-            </div>
-            <div class="pin-popup-body">
-                <div class="pin-popup-row"><span class="k">Barangay</span><span class="v">${esc(barangay)}</span></div>
-                <div class="pin-popup-row"><span class="k">NAP Box</span><span class="v">${esc(napBox)}</span></div>
-                ${distance ? `<div class="pin-popup-row"><span class="k">Distance</span><span class="v distance">${esc(distance)}</span></div>` : ''}
-            </div>
-        `;
-    } else {
-        popupHtml = `
-            <div class="pin-popup-header">
-                <div class="pin-popup-check"><i class="fas fa-check"></i></div>
-                <div>
-                    <div class="pin-popup-title">LOCATION PINNED</div>
-                    <div class="pin-popup-sub">Location saved successfully</div>
-                </div>
-            </div>
-            <div class="pin-popup-body">
-                <div class="pin-popup-row"><span class="k">Barangay</span><span class="v">${esc(barangay)}</span></div>
-            </div>
-        `;
-    }
+// ---------- note line (availability status) ----------
+const napNoteHtml = hasNapBox
+    ? `<div class="pin-popup-note available">
+           <span>NAP Box available in this location</span>
+       </div>`
+    : `<div class="pin-popup-note unavailable">
+           <span>No NAP Box available in this location</span>
+       </div>`;
 
-    L.marker([lat, lng]).addTo(map)
-        .bindPopup(popupHtml, {
-            className: 'pin-status-popup',
-            closeButton: false,
-            autoClose: false,
-            closeOnClick: false,
-            minWidth: 260,
-            offset: [0, -4]
-        })
-        .openPopup();
+// ---------- popup content ----------
+let popupHtml;
+if (hasNapBox) {
+    popupHtml = `
+        <div class="pin-popup-header">
+            <div class="pin-popup-check"><i class="fas fa-check"></i></div>
+            <div>
+                <div class="pin-popup-title">LOCATION PINNED</div>
+                <div class="pin-popup-sub">NAP Box assigned</div>
+            </div>
+        </div>
+        <div class="pin-popup-body">
+            <div class="pin-popup-row"><span class="k">Barangay</span><span class="v">${esc(barangay)}</span></div>
+            <div class="pin-popup-row"><span class="k">NAP Box</span><span class="v">${esc(napBox)}</span></div>
+            ${distance ? `<div class="pin-popup-row"><span class="k">Distance</span><span class="v distance">${esc(distance)}</span></div>` : ''}
+        </div>
+        ${napNoteHtml}
+    `;
+} else {
+    popupHtml = `
+        <div class="pin-popup-header">
+            <div class="pin-popup-check"><i class="fas fa-check"></i></div>
+            <div>
+                <div class="pin-popup-title">LOCATION PINNED</div>
+                <div class="pin-popup-sub">Location saved successfully</div>
+            </div>
+        </div>
+        <div class="pin-popup-body">
+            <div class="pin-popup-row"><span class="k">Barangay</span><span class="v">${esc(barangay)}</span></div>
+        </div>
+        ${napNoteHtml}
+    `;
+}
+
+L.marker([lat, lng]).addTo(map)
+    .bindPopup(popupHtml, {
+        className: 'pin-status-popup',
+        closeButton: false,
+        autoClose: false,
+        closeOnClick: false,
+        minWidth: 260,
+        offset: [0, -4]
+    })
+    .openPopup();
 }
 
 function initImageModal() {
