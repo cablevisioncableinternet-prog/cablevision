@@ -1822,6 +1822,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     initInstallationChartMode();
     setupSuperadminExportButton();
     
+    initReviewsCard();
+
     if (window.NotificationSystem) {
         window.NotificationSystem.init();
     }
@@ -1859,6 +1861,151 @@ setInterval(() => {
 
 console.log('Super Admin Dashboard loaded successfully!');
 
+
+// ==================== CUSTOMER REVIEWS ====================
+function renderStarIcons(rating) {
+    const full = Math.round(rating);
+    let html = "";
+    for (let i = 1; i <= 5; i++) {
+        html += `<i class="fas fa-star ${i <= full ? "" : "empty"}"></i>`;
+    }
+    return html;
+}
+
+function formatReviewDate(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function renderReviewsSummary(summary) {
+    const avg = Number(summary.average || 0);
+    const total = Number(summary.total || 0);
+    const dist = summary.distribution || {};
+
+    document.getElementById("reviewsAvg").textContent = avg.toFixed(1);
+    document.getElementById("reviewsAvgStars").innerHTML = renderStarIcons(avg);
+    document.getElementById("reviewsTotal").textContent = `${total} ${total === 1 ? "review" : "reviews"}`;
+
+    let rows = "";
+    for (let star = 5; star >= 1; star--) {
+        const count = Number(dist[star] || 0);
+        const pct = total > 0 ? (count / total) * 100 : 0;
+        rows += `
+            <div class="dist-row">
+                <span class="dist-label">${star} <i class="fas fa-star"></i></span>
+                <div class="dist-bar"><div class="dist-fill" style="width:${pct}%"></div></div>
+                <span class="dist-count">${count}</span>
+            </div>`;
+    }
+    document.getElementById("reviewsDistribution").innerHTML = rows;
+}
+
+function buildReviewItem(r) {
+    const name = r.is_anonymous ? "Anonymous" : (r.user_name || r.user_id || "User");
+    const comment = r.comment && r.comment.trim()
+        ? `<div class="review-comment">${escapeHtml(r.comment)}</div>`
+        : `<div class="review-comment none">No comment</div>`;
+    return `
+        <div class="review-item">
+            <div class="review-item-top">
+                <span class="review-user">${escapeHtml(String(name))}</span>
+                <span class="review-stars">${renderStarIcons(r.rating)}</span>
+            </div>
+            <div class="review-meta">
+                ${r.plan_name ? `<span class="review-plan-badge">${escapeHtml(r.plan_name)}</span>` : ""}
+                <span>${formatReviewDate(r.created_at)}</span>
+            </div>
+            ${comment}
+        </div>`;
+}
+
+function renderReviewsList(reviews) {
+    const track = document.getElementById("reviewsTrack");
+    if (!track) return;
+
+    track.classList.remove("scrolling");
+    track.style.removeProperty("--scroll-duration");
+
+    if (!reviews.length) {
+        track.innerHTML = `
+            <div class="reviews-empty">
+                <i class="fas fa-star-half-alt"></i>
+                <span>No reviews found for the selected filters.</span>
+            </div>`;
+        return;
+    }
+
+    const html = reviews.map(buildReviewItem).join("");
+
+    // Mag-scroll lang kapag 3 pataas ang reviews. I-duplicate para seamless ang loop.
+    if (reviews.length >= 3) {
+        track.innerHTML = html + html;
+        track.style.setProperty("--scroll-duration", `${reviews.length * 5}s`);
+        void track.offsetWidth; // restart animation
+        track.classList.add("scrolling");
+    } else {
+        track.innerHTML = html;
+    }
+}
+
+async function loadReviews() {
+    const plan = document.getElementById("reviewsPlanFilter")?.value || "all";
+    const comment = document.getElementById("reviewsCommentFilter")?.value || "all";
+    const rating = document.getElementById("reviewsStarFilter")?.value || "all";
+
+    const params = new URLSearchParams({ plan, comment, rating });
+
+    try {
+        const res = await fetch(`/api/superadmin/reviews?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        renderReviewsSummary(data.summary || {});
+        renderReviewsList(data.reviews || []);
+        return data;
+    } catch (err) {
+        console.error("Error loading reviews:", err);
+        const track = document.getElementById("reviewsTrack");
+        if (track) {
+            track.classList.remove("scrolling");
+            track.innerHTML = `
+                <div class="reviews-empty">
+                    <i class="fas fa-exclamation-triangle" style="color:#ef4444"></i>
+                    <span>Failed to load reviews.</span>
+                </div>`;
+        }
+    }
+}
+
+async function initReviewsCard() {
+    if (!document.getElementById("reviewsTrack")) return;
+
+    // Unang load: kunin din ang listahan ng plans para sa dropdown
+    const data = await loadReviews();
+    const planSelect = document.getElementById("reviewsPlanFilter");
+    if (planSelect && data && Array.isArray(data.plans)) {
+        data.plans.forEach(plan => {
+            const opt = document.createElement("option");
+            opt.value = plan;
+            opt.textContent = plan;
+            planSelect.appendChild(opt);
+        });
+    }
+
+    ["reviewsPlanFilter", "reviewsCommentFilter", "reviewsStarFilter"].forEach(id => {
+        document.getElementById(id)?.addEventListener("change", loadReviews);
+    });
+
+    document.getElementById("reviewsResetBtn")?.addEventListener("click", () => {
+        document.getElementById("reviewsPlanFilter").value = "all";
+        document.getElementById("reviewsCommentFilter").value = "all";
+        document.getElementById("reviewsStarFilter").value = "all";
+        loadReviews();
+        showToast("Reviews filters reset successfully", "success");
+    });
+}
 
 
 // ==================== DATE INPUT VALIDATION ====================

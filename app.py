@@ -2352,6 +2352,77 @@ def generate_next_admin_id():
         print(f"Error generating admin ID: {e}")
         return f"ACV-{int(datetime.now().timestamp())}"
 
+
+
+@app.route("/api/superadmin/reviews")
+def superadmin_reviews():
+    plan = request.args.get("plan", "all")
+    comment = request.args.get("comment", "all")   # all | with | without
+    rating = request.args.get("rating", "all")
+
+    where, params = [], []
+
+    if plan != "all":
+        where.append("plan_name = %s")
+        params.append(plan)
+
+    if comment == "with":
+        where.append("comment IS NOT NULL AND TRIM(comment) <> ''")
+    elif comment == "without":
+        where.append("(comment IS NULL OR TRIM(comment) = '')")
+
+    if rating != "all" and rating.isdigit() and 1 <= int(rating) <= 5:
+        where.append("rating = %s")
+        params.append(int(rating))
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    conn = get_db_connection()          # palitan ng DB helper mo
+    cur = conn.cursor(dictionary=True)  # mysql.connector style
+    try:
+        # Summary
+        cur.execute(f"SELECT COUNT(*) AS total, COALESCE(AVG(rating), 0) AS average "
+                    f"FROM reviews {where_sql}", params)
+        s = cur.fetchone()
+
+        # Distribution
+        cur.execute(f"SELECT rating, COUNT(*) AS cnt FROM reviews {where_sql} GROUP BY rating", params)
+        distribution = {i: 0 for i in range(1, 6)}
+        for row in cur.fetchall():
+            distribution[int(row["rating"])] = row["cnt"]
+
+        # Latest 10
+        cur.execute(f"""
+            SELECT id, user_id, plan_name, rating, comment, is_anonymous, created_at
+            FROM reviews {where_sql}
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, params)
+        reviews = cur.fetchall()
+        for r in reviews:
+            r["created_at"] = r["created_at"].isoformat() if r["created_at"] else None
+            r["is_anonymous"] = bool(r["is_anonymous"])
+
+        # Plans para sa dropdown
+        cur.execute("SELECT DISTINCT plan_name FROM reviews "
+                    "WHERE plan_name IS NOT NULL AND plan_name <> '' ORDER BY plan_name")
+        plans = [row["plan_name"] for row in cur.fetchall()]
+
+        return jsonify({
+            "summary": {
+                "total": s["total"],
+                "average": round(float(s["average"]), 2),
+                "distribution": distribution
+            },
+            "reviews": reviews,
+            "plans": plans
+        })
+    finally:
+        cur.close()
+        conn.close()
+
+
+        
 # ===============================
 # CREATE ADMIN (Super Admin Only) - CONVERTED TO MYSQL
 # ===============================
