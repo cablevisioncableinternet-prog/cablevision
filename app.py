@@ -6718,7 +6718,7 @@ def superadmin_get_single_application(app_id):
                 home_ownership, house_number, id_back, id_front,
                 installation_address, installation_fee, installation_phone,
                 installation_status, landmark, last_name, latitude, longitude,
-                middle_name, mobile, mother_maiden_name, occupation, phone,
+                middle_name, mobile, mobile_owner, mother_maiden_name, occupation, phone,
                 place_of_birth, plan, plan_price, plan_speed, profile_photo,
                 proof_billing, province, secondary_mobile, service_type, sex,
                 signature, spouse_employer, spouse_name, spouse_occupation,
