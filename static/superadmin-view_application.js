@@ -489,6 +489,7 @@ async function loadApplication() {
         setTextOrHide("full_name", getCleanFullName(data.first_name, data.middle_name, data.last_name, data.suffix), '.detail-item');
         setTextOrHide("email", data.email, '.detail-item');
         setTextOrHide("mobile", data.mobile, '.detail-item');
+        setTextOrHide("mobile_owner", data.mobile_owner, '.detail-item');
         setTextOrHide("secondary_mobile", data.secondary_mobile, '.detail-item');
         setTextOrHide("phone", data.phone, '.detail-item');
         

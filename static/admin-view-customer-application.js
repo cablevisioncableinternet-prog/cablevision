@@ -134,6 +134,7 @@ async function loadApplication() {
         // =========================
         setTextOrHide("email", data.email);
         setTextOrHide("mobile", data.mobile);
+        setTextOrHide("mobile_owner", data.mobile_owner)
         setTextOrHide("secondary_mobile", data.secondary_mobile);
         setTextOrHide("phone", data.phone);
 

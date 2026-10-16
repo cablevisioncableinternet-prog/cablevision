@@ -16567,7 +16567,7 @@ def admin_get_single_application(app_id):
     try:
         query = """
             SELECT application_number, first_name, last_name, middle_name, suffix,
-                   email, mobile, secondary_mobile, phone, birthdate, place_of_birth,
+                   email, mobile, mobile_owner, secondary_mobile, phone, birthdate, place_of_birth,
                    sex, civil_status, citizenship, occupation, home_ownership,
                    address, billing_address, house_number, landmark, mother_maiden_name,
                    barangay, city, province, zip, employer, business_address, father_name,
@@ -16864,7 +16864,7 @@ def admin_get_single_customer_application(app_id):
         # Query from applications table in MySQL
         query = """
             SELECT id, application_number, first_name, middle_name, last_name, suffix,
-                   email, mobile, secondary_mobile, phone, birthdate, place_of_birth,
+                   email, mobile, mobile_owner, secondary_mobile, phone, birthdate, place_of_birth,
                    mother_maiden_name, sex, civil_status, citizenship, occupation,
                    home_ownership, address, barangay, city, province, zip,
                    employer, business_address, business_phone, spouse_name,
