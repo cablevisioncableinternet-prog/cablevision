@@ -2354,25 +2354,41 @@ def generate_next_admin_id():
 
 
 
+def mask_name(name):
+    """Anonymous: first at last letter lang ang kita, asterisk ang gitna."""
+    name = (name or "").strip()
+    if not name:
+        return "Anonymous"
+    if len(name) <= 2:
+        return name[0] + "*"
+    return name[0] + "*" * (len(name) - 2) + name[-1]
+
+
+
 @app.route("/api/superadmin/reviews")
 def superadmin_reviews():
     plan = request.args.get("plan", "all")
+    transaction = request.args.get("transaction", "all")
     comment = request.args.get("comment", "all")   # all | with | without
     rating = request.args.get("rating", "all")
 
     where, params = [], []
 
     if plan != "all":
-        where.append("plan_name = %s")
+        where.append("r.plan_name = %s")
         params.append(plan)
 
+    if transaction != "all":
+        where.append("r.transaction_type = %s")
+        params.append(transaction)
+
     if comment == "with":
-        where.append("comment IS NOT NULL AND TRIM(comment) <> ''")
+        where.append("r.comment IS NOT NULL AND TRIM(r.comment) <> ''")
     elif comment == "without":
-        where.append("(comment IS NULL OR TRIM(comment) = '')")
+        where.append("(r.comment IS NULL OR TRIM(r.comment) = '')")
 
     if rating != "all" and rating.isdigit() and 1 <= int(rating) <= 5:
-        where.append("rating = %s")
+        where.append("r.rating = %s")
         params.append(int(rating))
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
@@ -2381,32 +2397,52 @@ def superadmin_reviews():
     cur = conn.cursor(dictionary=True)  # mysql.connector style
     try:
         # Summary
-        cur.execute(f"SELECT COUNT(*) AS total, COALESCE(AVG(rating), 0) AS average "
-                    f"FROM reviews {where_sql}", params)
+        cur.execute(f"SELECT COUNT(*) AS total, COALESCE(AVG(r.rating), 0) AS average "
+                    f"FROM reviews r {where_sql}", params)
         s = cur.fetchone()
 
         # Distribution
-        cur.execute(f"SELECT rating, COUNT(*) AS cnt FROM reviews {where_sql} GROUP BY rating", params)
+        cur.execute(f"SELECT r.rating, COUNT(*) AS cnt FROM reviews r {where_sql} GROUP BY r.rating", params)
         distribution = {i: 0 for i in range(1, 6)}
         for row in cur.fetchall():
             distribution[int(row["rating"])] = row["cnt"]
 
-        # Latest 10
+        # Latest 10 + full name (palitan ang columns kung iba ang users table mo)
         cur.execute(f"""
-            SELECT id, user_id, plan_name, rating, comment, is_anonymous, created_at
-            FROM reviews {where_sql}
-            ORDER BY created_at DESC
+            SELECT r.id, r.user_id, r.transaction_type, r.transaction_id, r.plan_name,
+                   r.rating, r.comment, r.is_anonymous, r.created_at,
+                   TRIM(CONCAT_WS(' ', u.first_name, u.last_name)) AS full_name
+            FROM reviews r
+            LEFT JOIN users u ON u.user_id = r.user_id
+            {where_sql}
+            ORDER BY r.created_at DESC
             LIMIT 10
         """, params)
-        reviews = cur.fetchall()
-        for r in reviews:
-            r["created_at"] = r["created_at"].isoformat() if r["created_at"] else None
-            r["is_anonymous"] = bool(r["is_anonymous"])
+        rows = cur.fetchall()
 
-        # Plans para sa dropdown
+        reviews = []
+        for r in rows:
+            full_name = (r["full_name"] or "").strip() or str(r["user_id"])
+            display_name = mask_name(full_name) if r["is_anonymous"] else full_name
+            reviews.append({
+                "id": r["id"],
+                "display_name": display_name,   # ito lang ang pangalang ipinapadala sa browser
+                "transaction_type": r["transaction_type"],
+                "transaction_id": r["transaction_id"],
+                "plan_name": r["plan_name"],
+                "rating": r["rating"],
+                "comment": r["comment"],
+                "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+            })
+
+        # Dropdown options
         cur.execute("SELECT DISTINCT plan_name FROM reviews "
                     "WHERE plan_name IS NOT NULL AND plan_name <> '' ORDER BY plan_name")
         plans = [row["plan_name"] for row in cur.fetchall()]
+
+        cur.execute("SELECT DISTINCT transaction_type FROM reviews "
+                    "WHERE transaction_type IS NOT NULL AND transaction_type <> '' ORDER BY transaction_type")
+        transaction_types = [row["transaction_type"] for row in cur.fetchall()]
 
         return jsonify({
             "summary": {
@@ -2415,14 +2451,15 @@ def superadmin_reviews():
                 "distribution": distribution
             },
             "reviews": reviews,
-            "plans": plans
+            "plans": plans,
+            "transaction_types": transaction_types
         })
     finally:
         cur.close()
         conn.close()
 
 
-        
+
 # ===============================
 # CREATE ADMIN (Super Admin Only) - CONVERTED TO MYSQL
 # ===============================
