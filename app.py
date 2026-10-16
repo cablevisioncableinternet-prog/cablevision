@@ -2382,7 +2382,7 @@ def superadmin_reviews():
         params.append(transaction)
 
     if comment == "with":
-        where.append("r.comment IS NOT NULL AND TRIM(r.comment) <> ''")
+        where.append("(r.comment IS NOT NULL AND TRIM(r.comment) <> '')")
     elif comment == "without":
         where.append("(r.comment IS NULL OR TRIM(r.comment) = '')")
 
@@ -2406,23 +2406,39 @@ def superadmin_reviews():
         for row in cur.fetchall():
             distribution[int(row["rating"])] = row["cnt"]
 
-        # Latest 10 + fullname (palitan ang columns kung iba ang users table mo)
+        # Latest 10 reviews (WALANG JOIN para iwas collation error)
         cur.execute(f"""
             SELECT r.id, r.user_id, r.transaction_type, r.transaction_id, r.plan_name,
-                   r.rating, r.comment, r.is_anonymous, r.created_at,
-                   TRIM(CONCAT_WS(' ', u.first_name, u.last_name)) AS full_name
+                   r.rating, r.comment, r.is_anonymous, r.created_at
             FROM reviews r
-            LEFT JOIN users u ON u.user_id = r.user_id
             {where_sql}
             ORDER BY r.created_at DESC
             LIMIT 10
         """, params)
         rows = cur.fetchall()
 
+        # Kunin ang full names sa hiwalay na query
+        names = {}
+        user_ids = list({str(r["user_id"]) for r in rows if r["user_id"]})
+        if user_ids:
+            placeholders = ",".join(["%s"] * len(user_ids))
+            cur.execute(
+                f"SELECT user_id, first_name, last_name FROM users WHERE user_id IN ({placeholders})",
+                user_ids
+            )
+            for u in cur.fetchall():
+                parts = [(u["first_name"] or "").strip(), (u["last_name"] or "").strip()]
+                names[str(u["user_id"])] = " ".join(p for p in parts if p)
+
         reviews = []
         for r in rows:
-            full_name = (r["full_name"] or "").strip() or str(r["user_id"])
+            uid = str(r["user_id"])
+            full_name = names.get(uid) or uid
             display_name = mask_name(full_name) if r["is_anonymous"] else full_name
+
+            created = r["created_at"]
+            created_str = created.isoformat() if hasattr(created, "isoformat") else (str(created) if created else None)
+
             reviews.append({
                 "id": r["id"],
                 "display_name": display_name,   # ito lang ang pangalang ipinapadala sa browser
@@ -2431,7 +2447,7 @@ def superadmin_reviews():
                 "plan_name": r["plan_name"],
                 "rating": r["rating"],
                 "comment": r["comment"],
-                "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+                "created_at": created_str,
             })
 
         # Dropdown options
@@ -2445,14 +2461,17 @@ def superadmin_reviews():
 
         return jsonify({
             "summary": {
-                "total": s["total"],
-                "average": round(float(s["average"]), 2),
+                "total": int(s["total"] or 0),
+                "average": round(float(s["average"] or 0), 2),
                 "distribution": distribution
             },
             "reviews": reviews,
             "plans": plans,
             "transaction_types": transaction_types
         })
+    except Exception as e:
+        traceback.print_exc()   # makikita ang totoong error sa terminal
+        return jsonify({"error": str(e)}), 500
     finally:
         cur.close()
         conn.close()
