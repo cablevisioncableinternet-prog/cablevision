@@ -14864,6 +14864,164 @@ def admin_dashboard():
     
     return render_template("admin-dashboard.html", name=name)
 
+
+def get_admin_area_for_reviews(username):
+    """Kinukuha ang area ng admin mula sa admins table (server-side, hindi galing sa browser)."""
+    row = execute_query(
+        "SELECT area FROM admins WHERE username = %s LIMIT 1",
+        (username,),
+        fetch_one=True
+    )
+    if not row:
+        return None
+
+    area = row.get("area") if isinstance(row, dict) else row[0]
+    area = (area or "").strip()
+    return area or None
+
+
+@app.route("/api/admin/reviews")
+def admin_reviews():
+    # TODO: kung may session/auth check ang ibang /api/admin/ routes mo, ilagay dito.
+    username = (request.args.get("username") or "").strip()
+    if not username:
+        return jsonify({"error": "Not logged in"}), 401
+
+    admin_area = get_admin_area_for_reviews(username)
+
+    empty_response = {
+        "summary": {"total": 0, "average": 0, "distribution": {i: 0 for i in range(1, 6)}},
+        "reviews": [],
+        "plans": [],
+        "transaction_types": [],
+        "area": admin_area
+    }
+    if not admin_area:
+        return jsonify(empty_response)
+
+    plan = request.args.get("plan", "all")
+    transaction = request.args.get("transaction", "all")
+    comment = request.args.get("comment", "all")   # all | with | without
+    rating = request.args.get("rating", "all")
+
+    # Laging naka-limit sa area ng admin
+    area_sql = "LOWER(TRIM(r.area)) = LOWER(TRIM(%s))"
+    where, params = [area_sql], [admin_area]
+
+    if plan != "all":
+        where.append("r.plan_name = %s")
+        params.append(plan)
+
+    if transaction != "all":
+        where.append("r.transaction_type = %s")
+        params.append(transaction)
+
+    if comment == "with":
+        where.append("(r.comment IS NOT NULL AND TRIM(r.comment) <> '')")
+    elif comment == "without":
+        where.append("(r.comment IS NULL OR TRIM(r.comment) = '')")
+
+    if rating != "all" and rating.isdigit() and 1 <= int(rating) <= 5:
+        where.append("r.rating = %s")
+        params.append(int(rating))
+
+    where_sql = "WHERE " + " AND ".join(where)
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        # Summary
+        cur.execute(f"SELECT COUNT(*) AS total, COALESCE(AVG(r.rating), 0) AS average "
+                    f"FROM reviews r {where_sql}", params)
+        s = cur.fetchone()
+
+        # Distribution
+        cur.execute(f"SELECT r.rating, COUNT(*) AS cnt FROM reviews r {where_sql} GROUP BY r.rating", params)
+        distribution = {i: 0 for i in range(1, 6)}
+        for row in cur.fetchall():
+            distribution[int(row["rating"])] = row["cnt"]
+
+        # Latest 10 reviews (walang JOIN para iwas collation error)
+        cur.execute(f"""
+            SELECT r.id, r.user_id, r.transaction_type, r.transaction_id, r.plan_name,
+                   r.rating, r.comment, r.is_anonymous, r.created_at
+            FROM reviews r
+            {where_sql}
+            ORDER BY r.created_at DESC
+            LIMIT 10
+        """, params)
+        rows = cur.fetchall()
+
+        # Full names sa hiwalay na query
+        names = {}
+        user_ids = list({str(r["user_id"]) for r in rows if r["user_id"]})
+        if user_ids:
+            placeholders = ",".join(["%s"] * len(user_ids))
+            cur.execute(
+                f"SELECT user_id, first_name, last_name FROM users WHERE user_id IN ({placeholders})",
+                user_ids
+            )
+            for u in cur.fetchall():
+                parts = [(u["first_name"] or "").strip(), (u["last_name"] or "").strip()]
+                names[str(u["user_id"])] = " ".join(p for p in parts if p)
+
+        reviews = []
+        for r in rows:
+            uid = str(r["user_id"])
+            full_name = names.get(uid) or uid
+            display_name = mask_name(full_name) if r["is_anonymous"] else full_name
+
+            created = r["created_at"]
+            created_str = created.isoformat() if hasattr(created, "isoformat") else (str(created) if created else None)
+
+            reviews.append({
+                "id": r["id"],
+                "display_name": display_name,
+                "transaction_type": r["transaction_type"],
+                "transaction_id": r["transaction_id"],
+                "plan_name": r["plan_name"],
+                "rating": r["rating"],
+                "comment": r["comment"],
+                "created_at": created_str,
+            })
+
+        # Dropdown options: area lang ng admin
+        cur.execute(
+            "SELECT DISTINCT r.plan_name FROM reviews r "
+            f"WHERE {area_sql} AND r.plan_name IS NOT NULL AND r.plan_name <> '' "
+            "ORDER BY r.plan_name",
+            [admin_area]
+        )
+        plans = [row["plan_name"] for row in cur.fetchall()]
+
+        cur.execute(
+            "SELECT DISTINCT r.transaction_type FROM reviews r "
+            f"WHERE {area_sql} AND r.transaction_type IS NOT NULL AND r.transaction_type <> '' "
+            "ORDER BY r.transaction_type",
+            [admin_area]
+        )
+        transaction_types = [row["transaction_type"] for row in cur.fetchall()]
+
+        return jsonify({
+            "summary": {
+                "total": int(s["total"] or 0),
+                "average": round(float(s["average"] or 0), 2),
+                "distribution": distribution
+            },
+            "reviews": reviews,
+            "plans": plans,
+            "transaction_types": transaction_types,
+            "area": admin_area
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+
+        
 # ===============================
 # SERVE ADMIN PROFILE PAGE
 # ===============================

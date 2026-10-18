@@ -481,6 +481,77 @@
             </div>
         </div>
     </div>
+
+    <!-- CUSTOMER REVIEWS (area ng admin lang) -->
+    <div class="chart-card reviews-card">
+        <div class="chart-header header-with-buttons">
+            <div class="header-left">
+                <div class="header-icon"><i class="fas fa-star"></i></div>
+                <div class="header-text">
+                    <h3>Customer Reviews</h3>
+                    <p class="chart-subtitle">Latest 10 ratings and overall average in your area</p>
+                </div>
+            </div>
+            <div class="header-buttons">
+                <button id="reviewsResetBtn" class="reset-btn small-oblong">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="reviews-body">
+            <!-- LEFT: scrolling latest reviews -->
+            <div class="reviews-left">
+                <div class="reviews-viewport" id="reviewsViewport">
+                    <div class="reviews-track" id="reviewsTrack"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT: average + star distribution -->
+            <div class="reviews-right">
+                <div class="reviews-average">
+                    <div class="reviews-average-number" id="reviewsAvg">0.0</div>
+                    <div class="reviews-average-stars" id="reviewsAvgStars"></div>
+                    <div class="reviews-average-total" id="reviewsTotal">0 reviews</div>
+                </div>
+                <div class="reviews-distribution" id="reviewsDistribution"></div>
+            </div>
+        </div>
+
+        <div class="date-filter full-width-filter">
+            <div class="filter-group">
+                <label><i class="fas fa-wifi"></i> Plan</label>
+                <select id="reviewsPlanFilter">
+                    <option value="all">All Plans</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-receipt"></i> Transaction</label>
+                <select id="reviewsTransactionFilter">
+                    <option value="all">All Transactions</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-comment"></i> Comment</label>
+                <select id="reviewsCommentFilter">
+                    <option value="all">All</option>
+                    <option value="with">With Comment</option>
+                    <option value="without">Without Comment</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fas fa-star"></i> Stars</label>
+                <select id="reviewsStarFilter">
+                    <option value="all">All Stars</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+            </div>
+        </div>
+    </div>
 </div>
 
     

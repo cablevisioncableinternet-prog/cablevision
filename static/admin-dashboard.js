@@ -1580,6 +1580,7 @@ async function initializeDashboard() {
         await loadInstallationStatusChart(adminUsernameGlobal);
         await loadAdminAreaPlanChartData(adminUsernameGlobal);
         await loadTrendChart(adminUsernameGlobal, "all", String(new Date().getFullYear()));
+        initAdminReviewsCard();
         await loadApplications();
         setupExportButton();
         
@@ -1883,4 +1884,181 @@ function initAdminResetFilterButton() {
             showToast("Filters reset successfully", "success");
         });
     }
+}
+
+
+// ==================== CUSTOMER REVIEWS (AREA NG ADMIN) ====================
+function escapeHtmlReviews(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+}
+
+function renderStarIcons(rating) {
+    const full = Math.round(rating);
+    let html = "";
+    for (let i = 1; i <= 5; i++) {
+        html += `<i class="fas fa-star ${i <= full ? "" : "empty"}"></i>`;
+    }
+    return html;
+}
+
+function formatReviewDate(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function formatTransactionType(type) {
+    if (!type) return "";
+    return String(type)
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function renderReviewsSummary(summary) {
+    const avg = Number(summary.average || 0);
+    const total = Number(summary.total || 0);
+    const dist = summary.distribution || {};
+
+    document.getElementById("reviewsAvg").textContent = avg.toFixed(1);
+    document.getElementById("reviewsAvgStars").innerHTML = renderStarIcons(avg);
+    document.getElementById("reviewsTotal").textContent = `${total} ${total === 1 ? "review" : "reviews"}`;
+
+    let rows = "";
+    for (let star = 5; star >= 1; star--) {
+        const count = Number(dist[star] || 0);
+        const pct = total > 0 ? (count / total) * 100 : 0;
+        rows += `
+            <div class="dist-row">
+                <span class="dist-label">${star} <i class="fas fa-star"></i></span>
+                <div class="dist-bar"><div class="dist-fill" style="width:${pct}%"></div></div>
+                <span class="dist-count">${count}</span>
+            </div>`;
+    }
+    document.getElementById("reviewsDistribution").innerHTML = rows;
+}
+
+function buildReviewItem(r) {
+    const name = r.display_name || "User";
+    const comment = r.comment && r.comment.trim()
+        ? `<div class="review-comment">${escapeHtmlReviews(r.comment)}</div>`
+        : `<div class="review-comment none">No comment</div>`;
+    return `
+        <div class="review-item">
+            <div class="review-item-top">
+                <span class="review-user">${escapeHtmlReviews(name)}</span>
+                <span class="review-stars">${renderStarIcons(r.rating)}</span>
+            </div>
+            <div class="review-meta">
+                ${r.transaction_type ? `<span class="review-txn-badge"><i class="fas fa-receipt"></i>${escapeHtmlReviews(formatTransactionType(r.transaction_type))}</span>` : ""}
+                ${r.plan_name ? `<span class="review-plan-badge">${escapeHtmlReviews(r.plan_name)}</span>` : ""}
+                <span>${formatReviewDate(r.created_at)}</span>
+            </div>
+            ${r.transaction_id ? `<div class="review-txn-id">Txn ID: ${escapeHtmlReviews(r.transaction_id)}</div>` : ""}
+            ${comment}
+        </div>`;
+}
+
+function renderReviewsList(reviews) {
+    const track = document.getElementById("reviewsTrack");
+    if (!track) return;
+
+    track.classList.remove("scrolling");
+    track.style.removeProperty("--scroll-duration");
+
+    if (!reviews.length) {
+        track.innerHTML = `
+            <div class="reviews-empty">
+                <i class="fas fa-star-half-alt"></i>
+                <span>No reviews found for your area.</span>
+            </div>`;
+        return;
+    }
+
+    const html = reviews.map(buildReviewItem).join("");
+
+    // Mag-scroll lang kapag 3 pataas. I-duplicate para seamless ang loop.
+    if (reviews.length >= 3) {
+        track.innerHTML = html + html;
+        track.style.setProperty("--scroll-duration", `${reviews.length * 5}s`);
+        void track.offsetWidth; // restart animation
+        track.classList.add("scrolling");
+    } else {
+        track.innerHTML = html;
+    }
+}
+
+async function loadAdminReviews() {
+    const username = await getAdminUsername();
+    const tabId = getTabId();
+    if (!username) return null;
+
+    const plan = document.getElementById("reviewsPlanFilter")?.value || "all";
+    const transaction = document.getElementById("reviewsTransactionFilter")?.value || "all";
+    const comment = document.getElementById("reviewsCommentFilter")?.value || "all";
+    const rating = document.getElementById("reviewsStarFilter")?.value || "all";
+
+    const params = new URLSearchParams({ username, tab_id: tabId, plan, transaction, comment, rating });
+
+    try {
+        const res = await fetch(`/api/admin/reviews?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        renderReviewsSummary(data.summary || {});
+        renderReviewsList(data.reviews || []);
+        return data;
+    } catch (err) {
+        console.error("Error loading reviews:", err);
+        const track = document.getElementById("reviewsTrack");
+        if (track) {
+            track.classList.remove("scrolling");
+            track.innerHTML = `
+                <div class="reviews-empty">
+                    <i class="fas fa-exclamation-triangle" style="color:#ef4444"></i>
+                    <span>Failed to load reviews.</span>
+                </div>`;
+        }
+        return null;
+    }
+}
+
+async function initAdminReviewsCard() {
+    if (!document.getElementById("reviewsTrack")) return;
+
+    // Unang load: kunin din ang plans at transaction types para sa dropdowns
+    const data = await loadAdminReviews();
+
+    const fillSelect = (id, items, labelFn = v => v) => {
+        const select = document.getElementById(id);
+        if (!select || !Array.isArray(items)) return;
+        items.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item;
+            opt.textContent = labelFn(item);
+            select.appendChild(opt);
+        });
+    };
+
+    if (data) {
+        fillSelect("reviewsPlanFilter", data.plans);
+        fillSelect("reviewsTransactionFilter", data.transaction_types, formatTransactionType);
+    }
+
+    const filterIds = ["reviewsPlanFilter", "reviewsTransactionFilter", "reviewsCommentFilter", "reviewsStarFilter"];
+
+    filterIds.forEach(id => {
+        document.getElementById(id)?.addEventListener("change", loadAdminReviews);
+    });
+
+    document.getElementById("reviewsResetBtn")?.addEventListener("click", () => {
+        filterIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "all";
+        });
+        loadAdminReviews();
+        showToast("Reviews filters reset successfully", "success");
+    });
 }
