@@ -822,7 +822,7 @@ async function loadAreasForSelect() {
             .filter(Boolean)
             .sort();
         
-        areaSelect.innerHTML = '<option value="" disabled selected hidden>Select Area</option>';
+        areaSelect.innerHTML = '<option value="" disabled selected hidden>-- Select Area --</option>';
         
         if (uniqueCities.length === 0) {
             areaSelect.innerHTML = '<option value="">No areas available.</option>';

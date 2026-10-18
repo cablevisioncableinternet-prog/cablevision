@@ -300,7 +300,7 @@ cityEl.addEventListener("change", async () => {
                 barangayEl.disabled = true;
                 showToast(`✓ Complete! All ${result.total_barangays} barangays have been added.`, "success");
             } else {
-                barangayEl.innerHTML = '<option value="" disabled selected hidden>Select Barangay</option>';
+                barangayEl.innerHTML = '<option value="" disabled selected hidden>-- Select Barangay --</option>';
                 missingBarangays.forEach(barangay => {
                     const displayBarangay = toProperCase(barangay);
                     barangayEl.innerHTML += `<option value="${barangay}">${displayBarangay}</option>`;
