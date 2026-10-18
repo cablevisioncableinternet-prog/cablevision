@@ -1170,7 +1170,7 @@ window.openAssignModal = function(appNumber, customerName, contractNumber, insta
     napboxSelect.disabled = true;
     napboxSelect.innerHTML = '<option value="">Loading NAP boxes...</option>';
 
-    slotSelect.innerHTML = '<option value="" disabled selected>-- First select NAP Box --</option>';
+    slotSelect.innerHTML = '<option value="" disabled selected hidden>-- First select NAP Box --</option>';
     slotSelect.disabled = true;
 
     // I-CLEAR ANG DATING BANNER (bago i-render ulit ng loadNapboxes)
@@ -1224,7 +1224,7 @@ async function loadSlotsForNapbox(napboxId) {
         
         if (data.slots && data.slots.length > 0) {
             // ANG UNANG OPTION AY DISABLED PLACEHOLDER
-            slotSelect.innerHTML = '<option value="" disabled selected>-- Select Slot --</option>';
+            slotSelect.innerHTML = '<option value="" disabled selected hidden>-- Select Slot --</option>';
             data.slots.forEach(slot => {
                 slotSelect.innerHTML += `<option value="${slot.id}">Slot ${slot.slot_number}</option>`;
             });
@@ -1238,7 +1238,7 @@ async function loadSlotsForNapbox(napboxId) {
             confirmBtn.style.cursor = 'not-allowed';
             confirmBtn.title = '';
         } else {
-            slotSelect.innerHTML = '<option value="" disabled selected>No available slots in this NAP Box</option>';
+            slotSelect.innerHTML = '<option value="" disabled selected hidden>No available slots in this NAP Box</option>';
             slotSelect.disabled = true;
             confirmBtn.disabled = true;
             confirmBtn.textContent = 'No slots available';
@@ -1338,7 +1338,7 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
         }
         
         if (filteredNapboxes && filteredNapboxes.length > 0) {
-            napboxSelect.innerHTML = '<option value="" disabled selected>-- Select NAP Box --</option>';
+            napboxSelect.innerHTML = '<option value="" disabled selected hidden>-- Select NAP Box --</option>';
             filteredNapboxes.forEach(napbox => {
                 napboxSelect.innerHTML += `<option value="${napbox.id}">${napbox.napbox_name} - ${napbox.barangay} (${napbox.available_slots} slots available)</option>`;
             });
@@ -1368,9 +1368,9 @@ async function loadNapboxes(customerLat = null, customerLng = null, customerBara
             }
         } else {
             // KUNG WALANG NAPBOX, I-DISABLE ANG DROPDOWN
-            napboxSelect.innerHTML = '<option value="">No NAP boxes available</option>';
+            napboxSelect.innerHTML = '<option value="" hidden>No NAP boxes available</option>';
             napboxSelect.disabled = true;
-            slotSelect.innerHTML = '<option value="" disabled selected>No NAP Box available</option>';
+            slotSelect.innerHTML = '<option value="" disabled selected hidden>No NAP Box available</option>';
             slotSelect.disabled = true;
             confirmBtn.disabled = true;
             confirmBtn.textContent = 'Select slot first';
@@ -1502,7 +1502,7 @@ document.getElementById('napboxSelect').addEventListener('change', async functio
     confirmBtn.title = '';
     
     if (!napboxId) {
-        slotSelect.innerHTML = '<option value="" disabled selected>-- First select NAP Box --</option>';
+        slotSelect.innerHTML = '<option value="" disabled selected hidden>-- First select NAP Box --</option>';
         slotSelect.disabled = true;
         return;
     }
@@ -1532,13 +1532,13 @@ document.getElementById('napboxSelect').addEventListener('change', async functio
         
         if (data.slots && data.slots.length > 0) {
             // ANG UNANG OPTION AY DISABLED PLACEHOLDER
-            slotSelect.innerHTML = '<option value="" disabled selected>-- Select Slot --</option>';
+            slotSelect.innerHTML = '<option value="" disabled selected hidden>-- Select Slot --</option>';
             data.slots.forEach(slot => {
                 slotSelect.innerHTML += `<option value="${slot.id}">Slot ${slot.slot_number}</option>`;
             });
             slotSelect.disabled = false;
         } else {
-            slotSelect.innerHTML = '<option value="" disabled selected>No available slots</option>';
+            slotSelect.innerHTML = '<option value="" disabled selected hidden>No available slots</option>';
             slotSelect.disabled = true;
             confirmBtn.disabled = true;
             confirmBtn.textContent = 'No slots available';
@@ -1669,11 +1669,11 @@ function closeAssignModal() {
     
     const napboxSelect = document.getElementById('napboxSelect');
     napboxSelect.disabled = false;
-    napboxSelect.innerHTML = '<option value="">-- Select NAP Box --</option>';
+    napboxSelect.innerHTML = '<option value="" hidden>-- Select NAP Box --</option>';
     
     // I-RESET ANG SLOT SELECT SA DISABLED PLACEHOLDER
     const slotSelect = document.getElementById('slotSelect');
-    slotSelect.innerHTML = '<option value="" disabled selected>-- Select Slot --</option>';
+    slotSelect.innerHTML = '<option value="" disabled selected hidden>-- Select Slot --</option>';
     slotSelect.disabled = true;
     
     // I-RESET ANG CONFIRM BUTTON

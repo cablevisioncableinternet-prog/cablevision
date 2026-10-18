@@ -643,7 +643,7 @@ async function populateInfoAreaSelect(currentArea) {
             cities.push(currentArea);
         }
 
-        select.innerHTML = '<option value="" disabled>Select Area</option>';
+        select.innerHTML = '<option value="" disabled hidden>Select Area</option>';
         cities.forEach(city => {
             const option = document.createElement("option");
             option.value = city;
@@ -944,10 +944,10 @@ async function loadAreasForSelect() {
             const selectId = select.id;
             const currentValue = currentValues[selectId] || '';
             
-            select.innerHTML = '<option value="" disabled selected>Select Area</option>';
+            select.innerHTML = '<option value="" disabled selected hidden>Select Area</option>';
             
             if (uniqueCities.length === 0) {
-                select.innerHTML = '<option value="">No areas available. Please add areas first.</option>';
+                select.innerHTML = '<option value="" hidden>No areas available. Please add areas first.</option>';
                 select.disabled = true;
                 return;
             }
@@ -1252,7 +1252,7 @@ async function loadTeamsForSelect() {
         // Populate technician team dropdown (for technician creation)
         if (teamSelect) {
             const currentValue = teamSelect.value;
-            teamSelect.innerHTML = '<option value="" disabled selected>Select a team</option>';
+            teamSelect.innerHTML = '<option value="" disabled selected hidden>Select a team</option>';
             teams.forEach(team => {
                 const option = document.createElement('option');
                 option.value = team.team_id;
@@ -1271,7 +1271,7 @@ async function loadTeamsForSelect() {
         if (leaderSelect) {
             const currentValue = leaderSelect.value;
             // Show all technicians initially (but will be filtered by area selection)
-            leaderSelect.innerHTML = '<option value="" disabled selected>Select Leader</option>';
+            leaderSelect.innerHTML = '<option value="" disabled selected hidden>Select Leader</option>';
             // We'll populate properly when area is selected
         }
         
@@ -1321,11 +1321,11 @@ function updateLeaderDropdownByArea() {
     const currentValue = leaderSelect.value;
     
     // Clear dropdown
-    leaderSelect.innerHTML = '<option value="">No leader assigned</option>';
+    leaderSelect.innerHTML = '<option value="" hidden>No leader assigned</option>';
     
     if (!selectedArea) {
         // No area selected - show message
-        leaderSelect.innerHTML = '<option value="">Select area first</option>';
+        leaderSelect.innerHTML = '<option value="" hidden>Select area first</option>';
         leaderSelect.disabled = true;
         console.log('ℹ️ No area selected, leader dropdown disabled');
         return;
@@ -1345,7 +1345,7 @@ function updateLeaderDropdownByArea() {
     console.log(`✅ ${filteredTechnicians.length} technicians found in area "${selectedArea}"`);
     
     // Add "No leader assigned" option
-    leaderSelect.innerHTML = '<option value="">No leader assigned</option>';
+    leaderSelect.innerHTML = '<option value="" hidden>No leader assigned</option>';
     
     // Add filtered technicians
     filteredTechnicians.forEach(tech => {
@@ -2050,13 +2050,13 @@ function updateAvailableTechniciansDropdown() {
     
     allAvailableTechnicians = available;
     
-    select.innerHTML = '<option value="">Select a technician to add</option>';
+    select.innerHTML = '<option value="" hidden>Select a technician to add</option>';
     
     if (available.length === 0) {
         if (teamArea) {
-            select.innerHTML = `<option value="">No available technicians in "${teamArea}" area</option>`;
+            select.innerHTML = `<option value="" hidden>No available technicians in "${teamArea}" area</option>`;
         } else {
-            select.innerHTML = '<option value="">No available technicians</option>';
+            select.innerHTML = '<option value="" hidden>No available technicians</option>';
         }
     } else {
         available.forEach(tech => {
@@ -2169,13 +2169,13 @@ async function loadAvailableTechnicians(teamId) {
         allAvailableTechnicians = available;
         
         // Populate dropdown
-        select.innerHTML = '<option value="">Select a technician to add</option>';
+        select.innerHTML = '<option value="" hidden>Select a technician to add</option>';
         
         if (available.length === 0) {
             if (teamArea) {
-                select.innerHTML = `<option value="">No available technicians in "${teamArea}" area</option>`;
+                select.innerHTML = `<option value="" hidden>No available technicians in "${teamArea}" area</option>`;
             } else {
-                select.innerHTML = '<option value="">No available technicians (all are assigned to teams)</option>';
+                select.innerHTML = '<option value="" hidden>No available technicians (all are assigned to teams)</option>';
             }
         } else {
             available.forEach(tech => {
@@ -2226,7 +2226,7 @@ async function loadTeamLeadersForEdit() {
         const currentValue = select.value;
         
         // Always show "No leader assigned" option
-        select.innerHTML = '<option value="">No leader assigned</option>';
+        select.innerHTML = '<option value="" hidden>No leader assigned</option>';
         
         // Only show technicians that are currently in the team (including pending)
         currentMembers.forEach(tech => {
@@ -2242,7 +2242,7 @@ async function loadTeamLeadersForEdit() {
         
         // If no members, show message
         if (currentMembers.length === 0) {
-            select.innerHTML = '<option value="">No leader assigned</option>';
+            select.innerHTML = '<option value="" hidden>No leader assigned</option>';
         }
         
         // If the current leader was removed, auto-set to "No leader assigned"
@@ -2851,7 +2851,7 @@ if (createTeamForm) {
                 // Reset leader dropdown to default
                 const leaderSelect = document.getElementById('teamLeader');
                 if (leaderSelect) {
-                    leaderSelect.innerHTML = '<option value="">Select area first</option>';
+                    leaderSelect.innerHTML = '<option value="" hidden>Select area first</option>';
                     leaderSelect.disabled = true;
                 }
                 

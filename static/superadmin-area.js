@@ -273,7 +273,7 @@ cityEl.addEventListener("change", async () => {
     const zipCode = getZipCodeByCity(selectedCity);
     
     if (!selectedCity) {
-        barangayEl.innerHTML = '<option value="">Select City first</option>';
+        barangayEl.innerHTML = '<option value="" hidden>Select City first</option>';
         barangayEl.disabled = true;
         zipCodeEl.value = '';
         return;
@@ -300,7 +300,7 @@ cityEl.addEventListener("change", async () => {
                 barangayEl.disabled = true;
                 showToast(`✓ Complete! All ${result.total_barangays} barangays have been added.`, "success");
             } else {
-                barangayEl.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+                barangayEl.innerHTML = '<option value="" disabled selected hidden>Select Barangay</option>';
                 missingBarangays.forEach(barangay => {
                     const displayBarangay = toProperCase(barangay);
                     barangayEl.innerHTML += `<option value="${barangay}">${displayBarangay}</option>`;

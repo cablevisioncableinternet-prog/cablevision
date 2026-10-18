@@ -314,7 +314,7 @@ async function loadTeamsForDropdown(city = null) {
         if (!teamSelect) return [];
         
         // I-clear ang dropdown
-        teamSelect.innerHTML = '<option value="" disabled selected>-- Select Team --</option>';
+        teamSelect.innerHTML = '<option value="" disabled selected hidden>-- Select Team --</option>';
         
         // I-FILTER ANG TEAMS: ACTIVE LANG + DAPAT MAY AT LEAST 1 MEMBER
         let filteredTeams = teams.filter(team => {
@@ -2765,7 +2765,7 @@ function showRestoreModal() {
                                     Assign Installation Team *
                                 </label>
                                 <select id="restoreTeamAssignment" class="form-select">
-                                    <option value="" disabled selected>-- Select Team --</option>
+                                    <option value="" disabled selected hidden>-- Select Team --</option>
                                 </select>
                                 <div class="form-text">Select the team that will handle the installation.</div>
                                 <div id="restoreTeamError" class="text-danger d-none mt-1">
@@ -2842,7 +2842,7 @@ function showRestoreModal() {
                         Assign Installation Team *
                     </label>
                     <select id="restoreTeamAssignment" class="form-select">
-                        <option value="" disabled selected>-- Select Team --</option>
+                        <option value="" disabled selected hidden>-- Select Team --</option>
                     </select>
                     <div class="form-text">Select the team that will handle the installation.</div>
                     <div id="restoreTeamError" class="text-danger d-none mt-1">
@@ -2929,7 +2929,7 @@ async function loadTeamsForRestore(city = null) {
         const teamSelect = document.getElementById('restoreTeamAssignment');
         if (!teamSelect) return [];
         
-        teamSelect.innerHTML = '<option value="" disabled selected>-- Select Team --</option>';
+        teamSelect.innerHTML = '<option value="" disabled selected hidden>-- Select Team --</option>';
         
         let filteredTeams = teams.filter(team => {
             if (team.status !== 'Active') {
