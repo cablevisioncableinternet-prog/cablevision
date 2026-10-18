@@ -252,7 +252,7 @@ async function loadProvinces() {
 // LOAD RESTRICTED CITIES - ONLY 4 SELECTED CITIES
 // =========================
 function loadRestrictedCities() {
-    cityEl.innerHTML = "<option value='' disabled selected>Select City/Municipality</option>";
+    cityEl.innerHTML = "<option value='' disabled selected hidden>-- Select City/Municipality --</option>";
     cityEl.disabled = false;
     
     const sortedCities = [...restrictedCitiesList].sort();

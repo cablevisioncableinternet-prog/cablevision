@@ -1321,7 +1321,7 @@ function updateLeaderDropdownByArea() {
     const currentValue = leaderSelect.value;
     
     // Clear dropdown
-    leaderSelect.innerHTML = '<option value="" hidden>No leader assigned</option>';
+    leaderSelect.innerHTML = '<option value="">No leader assigned</option>';
     
     if (!selectedArea) {
         // No area selected - show message
@@ -1345,7 +1345,7 @@ function updateLeaderDropdownByArea() {
     console.log(`✅ ${filteredTechnicians.length} technicians found in area "${selectedArea}"`);
     
     // Add "No leader assigned" option
-    leaderSelect.innerHTML = '<option value="" hidden>No leader assigned</option>';
+    leaderSelect.innerHTML = '<option value="">No leader assigned</option>';
     
     // Add filtered technicians
     filteredTechnicians.forEach(tech => {
@@ -2226,7 +2226,7 @@ async function loadTeamLeadersForEdit() {
         const currentValue = select.value;
         
         // Always show "No leader assigned" option
-        select.innerHTML = '<option value="" hidden>No leader assigned</option>';
+        select.innerHTML = '<option value="">No leader assigned</option>';
         
         // Only show technicians that are currently in the team (including pending)
         currentMembers.forEach(tech => {
@@ -2242,7 +2242,7 @@ async function loadTeamLeadersForEdit() {
         
         // If no members, show message
         if (currentMembers.length === 0) {
-            select.innerHTML = '<option value="" hidden>No leader assigned</option>';
+            select.innerHTML = '<option value="">No leader assigned</option>';
         }
         
         // If the current leader was removed, auto-set to "No leader assigned"
