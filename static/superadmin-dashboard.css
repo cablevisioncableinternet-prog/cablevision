@@ -3255,3 +3255,57 @@ body {
   margin-bottom: 6px;
   word-break: break-all;
 }
+
+
+
+
+/* ===== REVIEW VISIBILITY (EYE ICON) ===== */
+.review-eye-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0047ab;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.review-eye-btn:hover {
+    background: #eff6ff;
+    border-color: #0047ab;
+}
+.review-eye-btn.is-hidden {
+    color: #94a3b8;
+    background: #f1f5f9;
+}
+.review-eye-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+.review-card-hidden {
+    opacity: 0.55;
+}
+.review-hidden-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.review-top-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+/* Para madaling ma-click ang eye icon habang nag-i-scroll ang list */
+.reviews-viewport:hover .reviews-track.scrolling {
+    animation-play-state: paused;
+}

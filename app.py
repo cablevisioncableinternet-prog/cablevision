@@ -2370,6 +2370,7 @@ def superadmin_reviews():
     transaction = request.args.get("transaction", "all")
     comment = request.args.get("comment", "all")   # all | with | without
     rating = request.args.get("rating", "all")
+    visibility = request.args.get("visibility", "all")   # all | shown | hidden
 
     where, params = [], []
 
@@ -2390,10 +2391,15 @@ def superadmin_reviews():
         where.append("r.rating = %s")
         params.append(int(rating))
 
+    if visibility == "shown":
+        where.append("r.is_hidden = 0")
+    elif visibility == "hidden":
+        where.append("r.is_hidden = 1")
+
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    conn = get_db_connection()          # palitan ng DB helper mo
-    cur = conn.cursor(dictionary=True)  # mysql.connector style
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
     try:
         # Summary
         cur.execute(f"SELECT COUNT(*) AS total, COALESCE(AVG(r.rating), 0) AS average "
@@ -2409,7 +2415,7 @@ def superadmin_reviews():
         # Latest 10 reviews (WALANG JOIN para iwas collation error)
         cur.execute(f"""
             SELECT r.id, r.user_id, r.transaction_type, r.transaction_id, r.plan_name,
-                   r.rating, r.comment, r.is_anonymous, r.created_at
+                   r.rating, r.comment, r.is_anonymous, r.is_hidden, r.created_at
             FROM reviews r
             {where_sql}
             ORDER BY r.created_at DESC
@@ -2441,12 +2447,13 @@ def superadmin_reviews():
 
             reviews.append({
                 "id": r["id"],
-                "display_name": display_name,   # ito lang ang pangalang ipinapadala sa browser
+                "display_name": display_name,
                 "transaction_type": r["transaction_type"],
                 "transaction_id": r["transaction_id"],
                 "plan_name": r["plan_name"],
                 "rating": r["rating"],
                 "comment": r["comment"],
+                "is_hidden": int(r["is_hidden"] or 0),
                 "created_at": created_str,
             })
 
@@ -2470,12 +2477,35 @@ def superadmin_reviews():
             "transaction_types": transaction_types
         })
     except Exception as e:
-        traceback.print_exc()   # makikita ang totoong error sa terminal
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     finally:
         cur.close()
         conn.close()
 
+
+
+@app.route("/api/superadmin/reviews/<int:review_id>/visibility", methods=["POST"])
+def superadmin_toggle_review_visibility(review_id):
+    data = request.get_json(silent=True) or {}
+    hidden = 1 if data.get("hidden") else 0
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT id FROM reviews WHERE id = %s", (review_id,))
+        if not cur.fetchone():
+            return jsonify({"error": "Review not found"}), 404
+
+        cur.execute("UPDATE reviews SET is_hidden = %s WHERE id = %s", (hidden, review_id))
+        conn.commit()
+        return jsonify({"success": True, "id": review_id, "is_hidden": hidden})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
 
 
 

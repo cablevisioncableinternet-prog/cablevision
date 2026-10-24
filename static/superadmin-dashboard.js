@@ -1911,16 +1911,28 @@ function formatTransactionType(type) {
 
 function buildReviewItem(r) {
     const name = r.display_name || "User";
+    const isHidden = Number(r.is_hidden) === 1;
     const comment = r.comment && r.comment.trim()
         ? `<div class="review-comment">${escapeHtml(r.comment)}</div>`
         : `<div class="review-comment none">No comment</div>`;
     return `
-        <div class="review-item">
+        <div class="review-item ${isHidden ? "review-item-hidden" : ""}">
             <div class="review-item-top">
                 <span class="review-user">${escapeHtml(String(name))}</span>
-                <span class="review-stars">${renderStarIcons(r.rating)}</span>
+                <span class="review-top-right">
+                    <span class="review-stars">${renderStarIcons(r.rating)}</span>
+                    <button type="button"
+                            class="review-eye-btn ${isHidden ? "is-hidden" : ""}"
+                            data-review-id="${r.id}"
+                            data-hidden="${isHidden ? 1 : 0}"
+                            title="${isHidden ? "Hidden: click to show" : "Shown: click to hide"}"
+                            aria-label="${isHidden ? "Show review" : "Hide review"}">
+                        <i class="fas ${isHidden ? "fa-eye-slash" : "fa-eye"}"></i>
+                    </button>
+                </span>
             </div>
             <div class="review-meta">
+                ${isHidden ? `<span class="review-hidden-badge">Hidden</span>` : ""}
                 ${r.transaction_type ? `<span class="review-txn-badge"><i class="fas fa-receipt"></i>${escapeHtml(formatTransactionType(r.transaction_type))}</span>` : ""}
                 ${r.plan_name ? `<span class="review-plan-badge">${escapeHtml(r.plan_name)}</span>` : ""}
                 <span>${formatReviewDate(r.created_at)}</span>
@@ -1964,8 +1976,9 @@ async function loadReviews() {
     const transaction = document.getElementById("reviewsTransactionFilter")?.value || "all";
     const comment = document.getElementById("reviewsCommentFilter")?.value || "all";
     const rating = document.getElementById("reviewsStarFilter")?.value || "all";
+    const visibility = document.getElementById("reviewsVisibilityFilter")?.value || "all";
 
-    const params = new URLSearchParams({ plan, transaction, comment, rating });
+    const params = new URLSearchParams({ plan, transaction, comment, rating, visibility });
 
     try {
         const res = await fetch(`/api/superadmin/reviews?${params.toString()}`);
@@ -2011,7 +2024,13 @@ async function initReviewsCard() {
         fillSelect("reviewsTransactionFilter", data.transaction_types, formatTransactionType);
     }
 
-    const filterIds = ["reviewsPlanFilter", "reviewsTransactionFilter", "reviewsCommentFilter", "reviewsStarFilter"];
+    const filterIds = [
+        "reviewsPlanFilter",
+        "reviewsTransactionFilter",
+        "reviewsCommentFilter",
+        "reviewsStarFilter",
+        "reviewsVisibilityFilter"
+    ];
 
     filterIds.forEach(id => {
         document.getElementById(id)?.addEventListener("change", loadReviews);
@@ -2024,6 +2043,38 @@ async function initReviewsCard() {
         });
         loadReviews();
         showToast("Reviews filters reset successfully", "success");
+    });
+
+    // ===== EYE ICON: HIDE / SHOW REVIEW =====
+    document.getElementById("reviewsTrack")?.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".review-eye-btn");
+        if (!btn) return;
+
+        const reviewId = btn.dataset.reviewId;
+        const willHide = btn.dataset.hidden !== "1";
+
+        btn.disabled = true;
+        try {
+            const res = await fetch(`/api/superadmin/reviews/${reviewId}/visibility`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hidden: willHide })
+            });
+            const result = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                showToast(result.error || "Failed to update review visibility", "error");
+                btn.disabled = false;
+                return;
+            }
+
+            showToast(willHide ? "Review hidden" : "Review is now shown", "success");
+            await loadReviews();
+        } catch (err) {
+            console.error("Toggle review visibility error:", err);
+            showToast("Network error. Please try again.", "error");
+            btn.disabled = false;
+        }
     });
 }
 
