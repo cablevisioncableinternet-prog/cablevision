@@ -2727,6 +2727,7 @@ function setupAdminEventListeners() {
         adminCurrentFilter = filterValue;
         console.log(` Filter changed to: ${adminCurrentFilter}`);
         renderAdminSlotsGrid();
+        syncLegendFromSlotFilter();
     }
     
     // Refresh button
@@ -2740,6 +2741,8 @@ function setupAdminEventListeners() {
         showToast('Refreshing data...', 'info');
         adminCurrentFilter = 'all';
         adminCurrentBarangay = '';
+        activeAdminLegendFilter = null;
+        updateAdminLegendActiveState();
         
         const filterChips = document.querySelectorAll('.filter-chip');
         filterChips.forEach(btn => {
@@ -2753,6 +2756,7 @@ function setupAdminEventListeners() {
         if (barangayFilter) barangayFilter.value = '';
         
         await loadAdminNapboxData();
+        applyAdminLegendMapVisibility();
         showToast('Data refreshed successfully', 'success');
     }
     
@@ -3606,3 +3610,138 @@ function getContractNumberOnly(input) {
     // Kung walang laman, ibalik ang empty
     return cleanNumber;
 }
+
+
+// ================= CLICKABLE MAP LEGEND FILTER (ADMIN) =================
+let activeAdminLegendFilter = null; // null | 'available' | 'occupied' | 'napbox' | 'coverage' | 'boundary'
+
+// Alin ang makikita sa map kada legend mode
+const ADMIN_LEGEND_MAP_MODES = {
+    napbox:   { markers: true,  circles: false, boundary: false },
+    coverage: { markers: false, circles: true,  boundary: false },
+    boundary: { markers: false, circles: false, boundary: true  }
+};
+
+function applyAdminLegendMapVisibility() {
+    if (!adminMap) return;
+
+    // available / occupied / walang napili = ipakita lahat sa map
+    const mode = ADMIN_LEGEND_MAP_MODES[activeAdminLegendFilter] || { markers: true, circles: true, boundary: true };
+
+    const toggleLayer = (layer, show) => {
+        if (!layer) return;
+        const onMap = adminMap.hasLayer(layer);
+        if (show && !onMap) layer.addTo(adminMap);
+        else if (!show && onMap) adminMap.removeLayer(layer);
+    };
+
+    adminMarkers.forEach(m => toggleLayer(m, mode.markers));
+    adminCircles.forEach(c => toggleLayer(c, mode.circles));
+    toggleLayer(adminCityBoundaryLayer, mode.boundary);
+
+    if (mode.boundary && adminCityBoundaryLayer && adminMap.hasLayer(adminCityBoundaryLayer)) {
+        adminCityBoundaryLayer.bringToFront();
+    }
+}
+
+function updateAdminLegendActiveState() {
+    const legend = document.querySelector('.map-legend-footer');
+    if (legend) legend.classList.toggle('has-active', !!activeAdminLegendFilter);
+
+    document.querySelectorAll('.map-legend-footer .legend-item[data-legend]').forEach(item => {
+        item.classList.toggle('legend-active', item.dataset.legend === activeAdminLegendFilter);
+    });
+}
+
+function setAdminSlotFilter(filterValue) {
+    adminCurrentFilter = filterValue;
+    document.querySelectorAll('.filter-chip').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-filter') === filterValue);
+    });
+    renderAdminSlotsGrid();
+}
+
+function scrollToAdminSlotsSection() {
+    const slotsCard = document.querySelector('.slots-card');
+    if (slotsCard) {
+        slotsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function handleAdminLegendClick(type) {
+    const isSlotType = (type === 'available' || type === 'occupied');
+
+    if (activeAdminLegendFilter === type) {
+        // Pinindot ulit = i-reset, ipakita lahat
+        activeAdminLegendFilter = null;
+        if (isSlotType) setAdminSlotFilter('all');
+    } else {
+        activeAdminLegendFilter = type;
+        if (isSlotType) {
+            setAdminSlotFilter(type);
+        } else if (adminCurrentFilter !== 'all') {
+            setAdminSlotFilter('all');
+        }
+    }
+
+    updateAdminLegendActiveState();
+    applyAdminLegendMapVisibility();
+
+    // Auto scroll pababa sa slot cards (available/occupied lang)
+    if (isSlotType && activeAdminLegendFilter === type) {
+        scrollToAdminSlotsSection();
+    }
+}
+
+// Para sa manual na pagpindot ng All/Available/Occupied chips
+function syncLegendFromSlotFilter() {
+    if (adminCurrentFilter === 'available' || adminCurrentFilter === 'occupied') {
+        activeAdminLegendFilter = adminCurrentFilter;
+    } else if (activeAdminLegendFilter === 'available' || activeAdminLegendFilter === 'occupied') {
+        activeAdminLegendFilter = null;
+    }
+    updateAdminLegendActiveState();
+    applyAdminLegendMapVisibility();
+}
+
+function setupAdminLegendFilters() {
+    document.querySelectorAll('.map-legend-footer .legend-item[data-legend]').forEach(item => {
+        item.addEventListener('click', () => handleAdminLegendClick(item.dataset.legend));
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleAdminLegendClick(item.dataset.legend);
+            }
+        });
+    });
+}
+
+// Siguraduhing mananatili ang legend mode kahit ma-rebuild ang markers/boundary
+// (refresh, barangay filter, add/delete napbox, atbp.)
+(function wrapAdminLayerBuilders() {
+    const origAddMarkers = addAdminNapboxMarkers;
+    addAdminNapboxMarkers = function () {
+        origAddMarkers.apply(this, arguments);
+        applyAdminLegendMapVisibility();
+    };
+
+    const origAddMarkersFiltered = addAdminNapboxMarkersFiltered;
+    addAdminNapboxMarkersFiltered = function () {
+        origAddMarkersFiltered.apply(this, arguments);
+        applyAdminLegendMapVisibility();
+    };
+
+    const origDisplayBoundary = displayAdminBoundaryOnly;
+    displayAdminBoundaryOnly = function () {
+        origDisplayBoundary.apply(this, arguments);
+        applyAdminLegendMapVisibility();
+    };
+
+    const origBoundaryNominatim = showAdminBoundaryFromNominatim;
+    showAdminBoundaryFromNominatim = async function () {
+        await origBoundaryNominatim.apply(this, arguments);
+        applyAdminLegendMapVisibility();
+    };
+})();
+
+setupAdminLegendFilters();

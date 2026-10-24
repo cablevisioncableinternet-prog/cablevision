@@ -2976,6 +2976,8 @@ let superCurrentFilter = 'all';
 let superCurrentArea = '';
 let superCurrentBarangay = '';
 let superAreaBoundaryLayer = null;
+let superCircles = [];
+let activeSuperLegendFilter = null; // null | 'available' | 'occupied' | 'napbox' | 'coverage' | 'boundary'
 
 const LAGUNA_GEOJSON_URLS = {
     "Santa Cruz": "https://raw.githubusercontent.com/faeldon/philippines-json-maps/master/2023/geojson/municities/lowres/bgysubmuns-municity-0434280000.0.001.json",
@@ -3046,6 +3048,8 @@ async function loadSuperNapboxData() {
         const barangayFilter = document.getElementById('superBarangayFilter');
         if (areaFilter) areaFilter.value = '';
         if (barangayFilter) barangayFilter.innerHTML = '<option value="">All Barangays</option>';
+        activeSuperLegendFilter = null;
+        updateSuperLegendActiveState();
         
         document.querySelectorAll('.super-filter-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -3192,6 +3196,9 @@ function initSuperMap() {
     const mapContainer = document.getElementById('superNapboxMap');
     if (!mapContainer) return;
     if (superMap) superMap.remove();
+    superMarkers = [];
+    superCircles = [];
+    superAreaBoundaryLayer = null;
     superMap = L.map('superNapboxMap').setView([14.25, 121.45], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(superMap);
     addSuperNapboxMarkers();
@@ -3200,7 +3207,9 @@ function initSuperMap() {
 function addSuperNapboxMarkers() {
     if (!superMap) return;
     superMarkers.forEach(m => { if (superMap.hasLayer(m)) superMap.removeLayer(m); });
+    superCircles.forEach(c => { if (superMap.hasLayer(c)) superMap.removeLayer(c); });
     superMarkers = [];
+    superCircles = [];
     let napboxesToShow = [...superAllNapboxes];
     if (superCurrentArea) napboxesToShow = napboxesToShow.filter(n => n.area === superCurrentArea);
     if (superCurrentBarangay) napboxesToShow = napboxesToShow.filter(n => n.barangay === superCurrentBarangay);
@@ -3208,6 +3217,8 @@ function addSuperNapboxMarkers() {
         const lat = napbox.latitude;
         const lng = napbox.longitude;
         if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            const coverageRadius = napbox.coverage_radius || 500;
+
             const marker = L.marker([lat, lng], {
                 icon: L.divIcon({
                     className: 'napbox-marker-super',
@@ -3216,10 +3227,17 @@ function addSuperNapboxMarkers() {
                 })
             }).addTo(superMap);
 
+            const circle = L.circle([lat, lng], {
+                radius: coverageRadius,
+                color: '#c52222',
+                fillColor: '#c52222',
+                fillOpacity: 0.1,
+                weight: 2
+            }).addTo(superMap);
+
             const napboxSlots = superAllSlots.filter(slot => slot.napbox_id === napbox.id);
             const availableCount = napboxSlots.filter(slot => slot.status === 'available').length;
             const occupiedCount = napboxSlots.filter(slot => slot.status === 'occupied').length;
-            const coverageRadius = napbox.coverage_radius || 500;
 
             const popupContent = `
                 <div style="min-width: 200px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
@@ -3233,8 +3251,10 @@ function addSuperNapboxMarkers() {
             `;
             marker.bindPopup(popupContent);
             superMarkers.push(marker);
+            superCircles.push(circle);
         }
     });
+    applySuperLegendMapVisibility();
 }
 
 async function showSuperAreaBoundary(areaName) {
@@ -3502,21 +3522,11 @@ function setupSuperEventListeners() {
     });
     
     document.querySelectorAll('.super-filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.super-filter-btn').forEach(b => {
-            b.classList.remove('active');
-            b.style.background = 'white';
-            b.style.color = '#333';
+        btn.addEventListener('click', () => {
+            setSuperSlotFilter(btn.dataset.filter);
+            syncSuperLegendFromSlotFilter();
         });
-        btn.classList.add('active');
-        btn.style.background = '#0047ab';
-        btn.style.color = 'white';
-        superCurrentFilter = btn.dataset.filter;
-        
-        // ✅ RENDER LANG - automatic 3 columns
-        renderSuperSlotsGrid();
     });
-});
     
     document.getElementById('superRefreshDataBtn')?.addEventListener('click', async () => {
         showToast('Refreshing data...', 'info');
@@ -3589,3 +3599,133 @@ window.addEventListener('focus', function() {
     sessionStorage.removeItem('techniciansCache');
     loadTechnicians(true);
 });
+
+
+// ================= CLICKABLE MAP LEGEND FILTER (SUPERADMIN) =================
+// Alin ang makikita sa map kada legend mode
+const SUPER_LEGEND_MAP_MODES = {
+    napbox:   { markers: true,  circles: false, boundary: false },
+    coverage: { markers: false, circles: true,  boundary: false },
+    boundary: { markers: false, circles: false, boundary: true  }
+};
+
+function applySuperLegendMapVisibility() {
+    if (!superMap) return;
+
+    // available / occupied / walang napili = ipakita lahat sa map
+    const mode = SUPER_LEGEND_MAP_MODES[activeSuperLegendFilter] || { markers: true, circles: true, boundary: true };
+
+    const toggleLayer = (layer, show) => {
+        if (!layer) return;
+        const onMap = superMap.hasLayer(layer);
+        if (show && !onMap) layer.addTo(superMap);
+        else if (!show && onMap) superMap.removeLayer(layer);
+    };
+
+    superMarkers.forEach(m => toggleLayer(m, mode.markers));
+    superCircles.forEach(c => toggleLayer(c, mode.circles));
+    toggleLayer(superAreaBoundaryLayer, mode.boundary);
+
+    if (mode.boundary && superAreaBoundaryLayer && superMap.hasLayer(superAreaBoundaryLayer)) {
+        superAreaBoundaryLayer.bringToFront();
+    }
+}
+
+function updateSuperLegendActiveState() {
+    const legend = document.querySelector('.map-legend');
+    if (legend) legend.classList.toggle('has-active', !!activeSuperLegendFilter);
+
+    document.querySelectorAll('.map-legend .legend-item[data-legend]').forEach(item => {
+        item.classList.toggle('legend-active', item.dataset.legend === activeSuperLegendFilter);
+    });
+}
+
+function setSuperSlotFilter(filterValue) {
+    superCurrentFilter = filterValue;
+    document.querySelectorAll('.super-filter-btn').forEach(b => {
+        const isActive = b.dataset.filter === filterValue;
+        b.classList.toggle('active', isActive);
+        b.style.background = isActive ? '#0047ab' : 'white';
+        b.style.color = isActive ? 'white' : '#334155';
+    });
+    renderSuperSlotsGrid();
+}
+
+function scrollToSuperSlotsSection() {
+    const slotsContainer = document.querySelector('.slots-container');
+    if (slotsContainer) {
+        slotsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function handleSuperLegendClick(type) {
+    const isSlotType = (type === 'available' || type === 'occupied');
+
+    // Boundary lang lumalabas kapag may napiling area
+    if (type === 'boundary' && activeSuperLegendFilter !== 'boundary' && !superAreaBoundaryLayer) {
+        showToast('Select an area in "Filter by Area" to show its boundary', 'info');
+        return;
+    }
+
+    if (activeSuperLegendFilter === type) {
+        // Pinindot ulit = i-reset, ipakita lahat
+        activeSuperLegendFilter = null;
+        if (isSlotType) setSuperSlotFilter('all');
+    } else {
+        activeSuperLegendFilter = type;
+        if (isSlotType) {
+            setSuperSlotFilter(type);
+        } else if (superCurrentFilter !== 'all') {
+            setSuperSlotFilter('all');
+        }
+    }
+
+    updateSuperLegendActiveState();
+    applySuperLegendMapVisibility();
+
+    // Auto scroll pababa sa slot cards (available/occupied lang)
+    if (isSlotType && activeSuperLegendFilter === type) {
+        scrollToSuperSlotsSection();
+    }
+}
+
+// Para sa manual na pagpindot ng All/Available/Occupied buttons
+function syncSuperLegendFromSlotFilter() {
+    if (superCurrentFilter === 'available' || superCurrentFilter === 'occupied') {
+        activeSuperLegendFilter = superCurrentFilter;
+    } else if (activeSuperLegendFilter === 'available' || activeSuperLegendFilter === 'occupied') {
+        activeSuperLegendFilter = null;
+    }
+    updateSuperLegendActiveState();
+    applySuperLegendMapVisibility();
+}
+
+function setupSuperLegendFilters() {
+    document.querySelectorAll('.map-legend .legend-item[data-legend]').forEach(item => {
+        item.addEventListener('click', () => handleSuperLegendClick(item.dataset.legend));
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleSuperLegendClick(item.dataset.legend);
+            }
+        });
+    });
+}
+
+// Siguraduhing mananatili ang legend mode kapag nag-area/barangay filter
+// at kapag nag-load ng bagong boundary
+(function wrapSuperBoundaryBuilders() {
+    const origDisplayBoundary = displaySuperBoundaryOnly;
+    displaySuperBoundaryOnly = function () {
+        origDisplayBoundary.apply(this, arguments);
+        applySuperLegendMapVisibility();
+    };
+
+    const origBoundaryNominatim = showSuperBoundaryFromNominatim;
+    showSuperBoundaryFromNominatim = async function () {
+        await origBoundaryNominatim.apply(this, arguments);
+        applySuperLegendMapVisibility();
+    };
+})();
+
+setupSuperLegendFilters();

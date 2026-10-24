@@ -581,24 +581,26 @@
             </button>
           </div>
           <div id="superNapboxMap" style="height: 420px; width: 100%; background: #f1f5f9;"></div>
-          <div class="map-legend" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+          <div class="map-legend" style="display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+            <div class="legend-item" data-legend="available" role="button" tabindex="0" title="Show available slots only" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
               <span style="width: 14px; height: 14px; background: #22c55e; border-radius: 3px; display: inline-block;"></span>
               <span>Available Slot</span>
             </div>
-            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+            <div class="legend-item" data-legend="occupied" role="button" tabindex="0" title="Show occupied slots only" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
               <span style="width: 14px; height: 14px; background: #ef4444; border-radius: 3px; display: inline-block;"></span>
               <span>Occupied Slot</span>
             </div>
-            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+            <div class="legend-item" data-legend="napbox" role="button" tabindex="0" title="Show NAP box locations only" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
               <span style="width: 14px; height: 14px; background: #dc2626; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px white;"></span>
               <span>NAP Box Location</span>
             </div>
-            <div class="legend-item" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+            <div class="legend-item" data-legend="coverage" role="button" tabindex="0" title="Show 500m coverage only" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
               <span style="width: 20px; height: 3px; background: #dc2626; border-radius: 2px; display: inline-block;"></span>
               <span>500m Coverage</span>
             </div>
-              <div class="legend-item"><span class="legend-color boundary"></span><span>Municipal Boundary</span></div>
+            <div class="legend-item" data-legend="boundary" role="button" tabindex="0" title="Show municipal boundary only" style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+              <span class="legend-color boundary"></span><span>Municipal Boundary</span>
+            </div>
           </div>
         </div>
 

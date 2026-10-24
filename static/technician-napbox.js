@@ -3263,6 +3263,7 @@ function setupEventListeners() {
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
             renderSlotsGrid();
+            syncLegendFromSlotFilter();
         });
     });
 
@@ -5582,3 +5583,126 @@ function setupCoordinatePasteAutoFill() {
 // Make functions global
 window.copyCustomerCoordinates = copyCustomerCoordinates;
 window.setupCoordinatePasteAutoFill = setupCoordinatePasteAutoFill;
+
+
+// ================= CLICKABLE MAP LEGEND FILTER =================
+let activeLegendFilter = null; // null | 'available' | 'occupied' | 'napbox' | 'coverage' | 'boundary'
+
+// Alin ang makikita sa map kada legend mode
+const LEGEND_MAP_MODES = {
+    napbox:   { markers: true,  circles: false, boundary: false },
+    coverage: { markers: false, circles: true,  boundary: false },
+    boundary: { markers: false, circles: false, boundary: true  }
+};
+
+function applyLegendMapVisibility() {
+    if (!map) return;
+
+    // available / occupied / walang napili = ipakita lahat sa map
+    const mode = LEGEND_MAP_MODES[activeLegendFilter] || { markers: true, circles: true, boundary: true };
+
+    const toggleLayer = (layer, show) => {
+        if (!layer) return;
+        const onMap = map.hasLayer(layer);
+        if (show && !onMap) layer.addTo(map);
+        else if (!show && onMap) map.removeLayer(layer);
+    };
+
+    currentNapboxMarkers.forEach(m => toggleLayer(m, mode.markers));
+    currentCircles.forEach(c => toggleLayer(c, mode.circles));
+    toggleLayer(cityBoundaryLayer, mode.boundary);
+
+    if (mode.boundary && cityBoundaryLayer && map.hasLayer(cityBoundaryLayer)) {
+        cityBoundaryLayer.bringToFront();
+    }
+}
+
+function updateLegendActiveState() {
+    const legend = document.querySelector('.map-legend');
+    if (legend) legend.classList.toggle('has-active', !!activeLegendFilter);
+
+    document.querySelectorAll('.map-legend .legend-item[data-legend]').forEach(item => {
+        item.classList.toggle('legend-active', item.dataset.legend === activeLegendFilter);
+    });
+}
+
+function setSlotFilter(filterValue) {
+    currentFilter = filterValue;
+    document.querySelectorAll('.slot-filters .filter-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.filter === filterValue);
+    });
+    renderSlotsGrid();
+}
+
+function scrollToSlotsSection() {
+    const slotsContainer = document.querySelector('.slots-container');
+    if (slotsContainer) {
+        slotsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function handleLegendClick(type) {
+    const isSlotType = (type === 'available' || type === 'occupied');
+
+    if (activeLegendFilter === type) {
+        // Pinindot ulit = i-reset, ipakita lahat
+        activeLegendFilter = null;
+        if (isSlotType) setSlotFilter('all');
+    } else {
+        activeLegendFilter = type;
+        if (isSlotType) {
+            setSlotFilter(type);
+        } else if (currentFilter !== 'all') {
+            setSlotFilter('all');
+        }
+    }
+
+    updateLegendActiveState();
+    applyLegendMapVisibility();
+
+    // Auto scroll pababa sa slot cards (available/occupied lang)
+    if (isSlotType && activeLegendFilter === type) {
+        scrollToSlotsSection();
+    }
+}
+
+// Para sa manual na pagpindot ng All/Available/Occupied buttons
+function syncLegendFromSlotFilter() {
+    if (currentFilter === 'available' || currentFilter === 'occupied') {
+        activeLegendFilter = currentFilter;
+    } else if (activeLegendFilter === 'available' || activeLegendFilter === 'occupied') {
+        activeLegendFilter = null;
+    }
+    updateLegendActiveState();
+    applyLegendMapVisibility();
+}
+
+function setupLegendFilters() {
+    document.querySelectorAll('.map-legend .legend-item[data-legend]').forEach(item => {
+        item.addEventListener('click', () => handleLegendClick(item.dataset.legend));
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleLegendClick(item.dataset.legend);
+            }
+        });
+    });
+}
+
+// Siguraduhing mananatili ang legend mode kahit ma-rebuild ang markers/boundary
+// (refresh map, edit slot, add/delete napbox, atbp.)
+(function wrapLayerBuilders() {
+    const originalAddNapboxMarkers = addNapboxMarkers;
+    addNapboxMarkers = function (napboxes) {
+        originalAddNapboxMarkers(napboxes);
+        applyLegendMapVisibility();
+    };
+
+    const originalDisplayBoundaryOnly = displayBoundaryOnly;
+    displayBoundaryOnly = function (geojsonData, cityName) {
+        originalDisplayBoundaryOnly(geojsonData, cityName);
+        applyLegendMapVisibility();
+    };
+})();
+
+setupLegendFilters();
