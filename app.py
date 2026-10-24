@@ -2372,6 +2372,16 @@ def superadmin_reviews():
     rating = request.args.get("rating", "all")
     visibility = request.args.get("visibility", "all")   # all | shown | hidden
 
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+    try:
+        per_page = int(request.args.get("per_page", 5))
+    except (TypeError, ValueError):
+        per_page = 5
+    per_page = max(1, min(per_page, 50))
+
     where, params = [], []
 
     if plan != "all":
@@ -2406,21 +2416,26 @@ def superadmin_reviews():
                     f"FROM reviews r {where_sql}", params)
         s = cur.fetchone()
 
+        total = int(s["total"] or 0)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        page = min(page, total_pages)          # kung na-hide ang laman ng huling page
+        offset = (page - 1) * per_page
+
         # Distribution
         cur.execute(f"SELECT r.rating, COUNT(*) AS cnt FROM reviews r {where_sql} GROUP BY r.rating", params)
         distribution = {i: 0 for i in range(1, 6)}
         for row in cur.fetchall():
             distribution[int(row["rating"])] = row["cnt"]
 
-        # Latest 10 reviews (WALANG JOIN para iwas collation error)
+        # Reviews para sa napiling page (WALANG JOIN para iwas collation error)
         cur.execute(f"""
             SELECT r.id, r.user_id, r.transaction_type, r.transaction_id, r.plan_name,
                    r.rating, r.comment, r.is_anonymous, r.is_hidden, r.created_at
             FROM reviews r
             {where_sql}
-            ORDER BY r.created_at DESC
-            LIMIT 10
-        """, params)
+            ORDER BY r.created_at DESC, r.id DESC
+            LIMIT %s OFFSET %s
+        """, params + [per_page, offset])
         rows = cur.fetchall()
 
         # Kunin ang full names sa hiwalay na query
@@ -2468,9 +2483,15 @@ def superadmin_reviews():
 
         return jsonify({
             "summary": {
-                "total": int(s["total"] or 0),
+                "total": total,
                 "average": round(float(s["average"] or 0), 2),
                 "distribution": distribution
+            },
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "total_pages": total_pages
             },
             "reviews": reviews,
             "plans": plans,

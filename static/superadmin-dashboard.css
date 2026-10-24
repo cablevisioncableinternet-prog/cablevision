@@ -3112,14 +3112,14 @@ body {
 
 .reviews-viewport {
   height: 340px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   border: 1px solid #e1e8f0;
   border-radius: 8px;
   background: #f8fafc;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
-          mask-image: linear-gradient(to bottom, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
 }
+.reviews-left { min-width: 0; }
 
 .reviews-track {
   display: flex;
@@ -3308,4 +3308,58 @@ body {
 /* Para madaling ma-click ang eye icon habang nag-i-scroll ang list */
 .reviews-viewport:hover .reviews-track.scrolling {
     animation-play-state: paused;
+}
+
+
+
+/* ===== REVIEWS PAGINATION ===== */
+.reviews-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.reviews-page-info {
+  font-size: 12px;
+  color: #68798b;
+  font-weight: 500;
+}
+.reviews-page-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.reviews-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #cbd7e3;
+  border-radius: 6px;
+  background: #fff;
+  color: #24364b;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.reviews-page-btn:hover:not(:disabled):not(.active) {
+  background: #edf4fa;
+  border-color: #075a9e;
+}
+.reviews-page-btn.active {
+  background: #075a9e;
+  border-color: #075a9e;
+  color: #fff;
+  cursor: default;
+}
+.reviews-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.reviews-page-dots {
+  padding: 0 4px;
+  color: #94a3b8;
 }

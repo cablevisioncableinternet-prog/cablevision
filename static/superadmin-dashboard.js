@@ -1958,17 +1958,61 @@ function renderReviewsList(reviews) {
         return;
     }
 
-    const html = reviews.map(buildReviewItem).join("");
+    // Walang auto-scroll at walang duplicate: isang beses lang ang bawat review
+    track.innerHTML = reviews.map(buildReviewItem).join("");
+}
 
-    // Mag-scroll lang kapag 3 pataas ang reviews. I-duplicate para seamless ang loop.
-    if (reviews.length >= 3) {
-        track.innerHTML = html + html;
-        track.style.setProperty("--scroll-duration", `${reviews.length * 5}s`);
-        void track.offsetWidth; // restart animation
-        track.classList.add("scrolling");
-    } else {
-        track.innerHTML = html;
+// ===== PAGINATION =====
+const REVIEWS_PER_PAGE = 5;
+let reviewsCurrentPage = 1;
+
+function renderReviewsPagination(p = {}) {
+    const el = document.getElementById("reviewsPagination");
+    if (!el) return;
+
+    const total = Number(p.total || 0);
+    const perPage = Number(p.per_page || REVIEWS_PER_PAGE);
+    const page = Number(p.page || 1);
+    const totalPages = Number(p.total_pages || 1);
+
+    if (total === 0) {
+        el.innerHTML = "";
+        return;
     }
+
+    const from = (page - 1) * perPage + 1;
+    const to = Math.min(page * perPage, total);
+    const info = `<span class="reviews-page-info">${from}–${to} of ${total}</span>`;
+
+    if (totalPages <= 1) {
+        el.innerHTML = info;
+        return;
+    }
+
+    // Hanggang 5 page numbers sa paligid ng kasalukuyang page
+    let start = Math.max(1, page - 2);
+    let end = Math.min(totalPages, start + 4);
+    start = Math.max(1, end - 4);
+
+    let buttons = `<button type="button" class="reviews-page-btn" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Previous page"><i class="fas fa-chevron-left"></i></button>`;
+
+    if (start > 1) {
+        buttons += `<button type="button" class="reviews-page-btn" data-page="1">1</button>`;
+        if (start > 2) buttons += `<span class="reviews-page-dots">…</span>`;
+    }
+
+    for (let i = start; i <= end; i++) {
+        buttons += `<button type="button" class="reviews-page-btn ${i === page ? "active" : ""}" data-page="${i}">${i}</button>`;
+    }
+
+    if (end < totalPages) {
+        if (end < totalPages - 1) buttons += `<span class="reviews-page-dots">…</span>`;
+        buttons += `<button type="button" class="reviews-page-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+
+    buttons += `<button type="button" class="reviews-page-btn" data-page="${page + 1}" ${page === totalPages ? "disabled" : ""} aria-label="Next page"><i class="fas fa-chevron-right"></i></button>`;
+
+    el.innerHTML = `${info}<div class="reviews-page-controls">${buttons}</div>`;
 }
 
 async function loadReviews() {
@@ -1978,15 +2022,23 @@ async function loadReviews() {
     const rating = document.getElementById("reviewsStarFilter")?.value || "all";
     const visibility = document.getElementById("reviewsVisibilityFilter")?.value || "all";
 
-    const params = new URLSearchParams({ plan, transaction, comment, rating, visibility });
+    const params = new URLSearchParams({
+        plan, transaction, comment, rating, visibility,
+        page: reviewsCurrentPage,
+        per_page: REVIEWS_PER_PAGE
+    });
 
     try {
         const res = await fetch(`/api/superadmin/reviews?${params.toString()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
+        // Sundin ang page na ibinalik ng server (na-clamp kung walang laman ang page)
+        if (data.pagination) reviewsCurrentPage = data.pagination.page;
+
         renderReviewsSummary(data.summary || {});
         renderReviewsList(data.reviews || []);
+        renderReviewsPagination(data.pagination || {});
         return data;
     } catch (err) {
         console.error("Error loading reviews:", err);
@@ -1999,6 +2051,8 @@ async function loadReviews() {
                     <span>Failed to load reviews.</span>
                 </div>`;
         }
+        const pagination = document.getElementById("reviewsPagination");
+        if (pagination) pagination.innerHTML = "";
     }
 }
 
@@ -2032,8 +2086,12 @@ async function initReviewsCard() {
         "reviewsVisibilityFilter"
     ];
 
+    // Kapag nagpalit ng filter, bumalik sa page 1
     filterIds.forEach(id => {
-        document.getElementById(id)?.addEventListener("change", loadReviews);
+        document.getElementById(id)?.addEventListener("change", () => {
+            reviewsCurrentPage = 1;
+            loadReviews();
+        });
     });
 
     document.getElementById("reviewsResetBtn")?.addEventListener("click", () => {
@@ -2041,8 +2099,22 @@ async function initReviewsCard() {
             const el = document.getElementById(id);
             if (el) el.value = "all";
         });
+        reviewsCurrentPage = 1;
         loadReviews();
         showToast("Reviews filters reset successfully", "success");
+    });
+
+    // ===== PAGINATION CLICK =====
+    document.getElementById("reviewsPagination")?.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".reviews-page-btn");
+        if (!btn || btn.disabled || btn.classList.contains("active")) return;
+
+        const targetPage = parseInt(btn.dataset.page, 10);
+        if (!targetPage || targetPage < 1) return;
+
+        reviewsCurrentPage = targetPage;
+        await loadReviews();
+        document.getElementById("reviewsViewport")?.scrollTo({ top: 0 });
     });
 
     // ===== EYE ICON: HIDE / SHOW REVIEW =====
@@ -2069,7 +2141,7 @@ async function initReviewsCard() {
             }
 
             showToast(willHide ? "Review hidden" : "Review is now shown", "success");
-            await loadReviews();
+            await loadReviews();   // nananatili sa kasalukuyang page
         } catch (err) {
             console.error("Toggle review visibility error:", err);
             showToast("Network error. Please try again.", "error");
